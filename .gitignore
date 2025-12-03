@@ -84,3 +84,19 @@ android/generated
 
 # React Native Nitro Modules
 nitrogen/
+
+# NPM lockfile (using Yarn)
+package-lock.json
+
+# Ruby bundler artifacts
+example/Gemfile.lock
+
+# Xcode workspace (generated)
+example/ios/*.xcworkspace/
+
+# CocoaPods artifacts (if pods not committed)
+example/ios/Pods/
+
+# Metro / build caches
+.expo
+node_modules/
