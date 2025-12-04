@@ -7,10 +7,13 @@ import com.facebook.react.uimanager.ViewManager
 import java.util.ArrayList
 
 class PlatformComponentsViewPackage : ReactPackage {
-  override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
-    val viewManagers: MutableList<ViewManager<*, *>> = ArrayList()
-    viewManagers.add(PlatformComponentsViewManager())
-    return viewManagers
+  override fun createViewManagers(
+      reactContext: ReactApplicationContext
+  ): List<ViewManager<*, *>> {
+      return listOf(
+          PlatformComponentsViewManager(),
+          DatePickerViewManager(reactContext),   // 👈 add this
+      )
   }
 
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
