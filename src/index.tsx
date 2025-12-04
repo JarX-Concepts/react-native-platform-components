@@ -1,2 +1,2 @@
-export { default as PlatformComponentsView } from './PlatformComponentsViewNativeComponent';
-export * from './PlatformComponentsViewNativeComponent';
+export { default as PlatformComponentsView } from './DatePickerNativeComponent';
+export * from './DatePickerNativeComponent';

@@ -119,7 +119,8 @@
     },
     "ios": {
       "componentProvider": {
-        "PlatformComponentsView": "PlatformComponentsView"
+        "PlatformComponentsView": "PlatformComponentsView",
+        "DatePicker": "DatePicker"
       }
     }
   },

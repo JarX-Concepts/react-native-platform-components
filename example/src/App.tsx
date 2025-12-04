@@ -4,7 +4,7 @@ import { PlatformComponentsView } from 'react-native-platform-components';
 export default function App() {
   return (
     <View style={styles.container}>
-      <PlatformComponentsView color="#32a852" style={styles.box} />
+      <PlatformComponentsView style={styles.box} />
     </View>
   );
 }
