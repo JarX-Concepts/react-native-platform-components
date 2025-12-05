@@ -1,14 +1,26 @@
 import UIKit
 
 @objcMembers
-public class DatePickerView: UIControl {
+public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate {
 
     private let picker = UIDatePicker()
+    private var modalVC: UIViewController?
 
-    // MARK: Props from React — must be @objc public
+    // MARK: Props
 
     @objc public var mode: String = "date" {
         didSet { updateMode() }
+    }
+
+    @objc public var open: NSNumber? {
+        didSet {
+            guard let isOpen = open?.boolValue else { return }
+            if isOpen {
+                presentModal()
+            } else {
+                dismissModal()
+            }
+        }
     }
 
     @objc public var date: NSNumber? {
@@ -60,66 +72,117 @@ public class DatePickerView: UIControl {
         }
     }
 
-    // MARK: Event callback exposed to ObjC/React Native
-    //
-    // Swift closures DO NOT appear in -Swift.h.
-    // So we expose a selector-based callback instead.
-
     @objc public var onChangeHandler: ((NSNumber) -> Void)?
 
     @objc public func setOnChangeTarget(_ target: Any, action: Selector) {
-        // ObjC++ will call this and set a selector for change notifications.
         addTarget(target, action: action, for: .valueChanged)
     }
 
     // MARK: Init
 
-    @objc public override init(frame: CGRect) {
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         commonInit()
     }
 
-    @objc public required init?(coder: NSCoder) {
+    required public init?(coder: NSCoder) {
         super.init(coder: coder)
         commonInit()
     }
 
     private func commonInit() {
-        addSubview(picker)
         picker.addTarget(self, action: #selector(handleValueChanged), for: .valueChanged)
         updateMode()
     }
 
-    // MARK: Layout
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        picker.frame = bounds
-    }
-
-    // MARK: Internal helpers
+    // MARK: Mode
 
     private func updateMode() {
         switch mode {
         case "time":
             picker.datePickerMode = .time
+            picker.preferredDatePickerStyle = .wheels
         case "datetime":
             picker.datePickerMode = .dateAndTime
+            picker.preferredDatePickerStyle = .wheels
         default:
             picker.datePickerMode = .date
+            picker.preferredDatePickerStyle = .inline   // calendar style
         }
+    }
+
+    // MARK: Modal (popover) presentation
+
+  private func presentModal() {
+      guard modalVC == nil else { return }
+
+      let vc = UIViewController()
+      vc.view.backgroundColor = .systemBackground
+
+      picker.translatesAutoresizingMaskIntoConstraints = false
+      vc.view.addSubview(picker)
+
+      NSLayoutConstraint.activate([
+          picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+          picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+          picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
+          picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor)
+      ])
+
+      // Let Auto Layout compute the natural size of the picker
+      vc.view.setNeedsLayout()
+      vc.view.layoutIfNeeded()
+      let targetSize = vc.view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+      vc.preferredContentSize = targetSize   // <- no magic numbers
+
+      vc.modalPresentationStyle = .popover
+
+      guard
+          let root = UIApplication.shared
+              .connectedScenes
+              .compactMap({ $0 as? UIWindowScene })
+              .flatMap({ $0.windows })
+              .first(where: { $0.isKeyWindow })?
+              .rootViewController
+      else {
+          return
+      }
+
+      if let pop = vc.popoverPresentationController {
+          pop.delegate = self               // to return .none for adaptive style
+          pop.sourceView = self
+          pop.sourceRect = bounds
+          pop.permittedArrowDirections = [] // no arrow -> compact-style popup
+          // pop.backgroundColor = .systemBackground // optional
+      }
+
+      root.present(vc, animated: true)
+      modalVC = vc
+  }
+
+    private func dismissModal() {
+        guard let vc = modalVC else { return }
+        vc.dismiss(animated: true)
+        modalVC = nil
+    }
+
+    // MARK: UIPopoverPresentationControllerDelegate
+
+    /// **This is the key bit** – prevents auto-adaptation to full screen on iPhone.
+    public func adaptivePresentationStyle(
+        for controller: UIPresentationController,
+        traitCollection: UITraitCollection
+    ) -> UIModalPresentationStyle {
+        return .none
     }
 
     // MARK: Value change
 
     @objc private func handleValueChanged() {
         let ms = picker.date.timeIntervalSince1970 * 1000.0
-        let value = NSNumber(value: ms)
+        let num = NSNumber(value: ms)
 
-        // Swift callback (for Fabric)
-        onChangeHandler?(value)
-
-        // Notify ObjC/UIControl listeners
+        onChangeHandler?(num)
         sendActions(for: .valueChanged)
     }
 }

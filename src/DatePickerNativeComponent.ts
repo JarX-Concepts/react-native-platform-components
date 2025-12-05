@@ -23,6 +23,7 @@ type CommonProps = {
   mode?: string;
   locale?: string;
   timeZoneName?: string;
+  open?: boolean;
   //onChange?: CodegenTypes.BubblingEventHandler<DateChangeEvent> | null;
 };
 
