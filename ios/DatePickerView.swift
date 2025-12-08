@@ -6,52 +6,63 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
 
-    // MARK: Props
+    // MARK: - Props from ObjC / Fabric
 
-    @objc public var mode: String = "date" {
+    /// Mode string: "date" | "time" | "dateAndTime" | "countDownTimer"
+    public var mode: String = "date" {
         didSet { updateMode() }
     }
 
-    @objc public var open: NSNumber? {
+    /// Controls whether the picker is presented in a modal/popover.
+    public var open: NSNumber? {
         didSet {
-            guard let isOpen = open?.boolValue else { return }
-            if isOpen {
-                presentModal()
+            let shouldOpen = open?.boolValue ?? true
+            if shouldOpen {
+                presentIfNeeded()
             } else {
-                dismissModal()
+                dismissIfNeeded()
             }
         }
     }
 
-    @objc public var date: NSNumber? {
+    /// Controlled value in ms since Unix epoch, or nil for "no value".
+    public var dateMs: NSNumber? {
         didSet {
-            if let ms = date?.doubleValue {
-                picker.date = Date(timeIntervalSince1970: ms / 1000.0)
+            guard let ms = dateMs?.doubleValue, ms >= 0 else {
+                // Leave picker at its current date if sentinel / nil.
+                return
             }
+            let date = Date(timeIntervalSince1970: ms / 1000.0)
+            picker.setDate(date, animated: false)
         }
     }
 
-    @objc public var minimumDate: NSNumber? {
+    /// Minimum selectable date in ms since Unix epoch.
+    public var minDateMs: NSNumber? {
         didSet {
-            if let ms = minimumDate?.doubleValue {
-                picker.minimumDate = Date(timeIntervalSince1970: ms / 1000.0)
-            } else {
+            guard let ms = minDateMs?.doubleValue, ms >= 0 else {
                 picker.minimumDate = nil
+                return
             }
+            let date = Date(timeIntervalSince1970: ms / 1000.0)
+            picker.minimumDate = date
         }
     }
 
-    @objc public var maximumDate: NSNumber? {
+    /// Maximum selectable date in ms since Unix epoch.
+    public var maxDateMs: NSNumber? {
         didSet {
-            if let ms = maximumDate?.doubleValue {
-                picker.maximumDate = Date(timeIntervalSince1970: ms / 1000.0)
-            } else {
+            guard let ms = maxDateMs?.doubleValue, ms >= 0 else {
                 picker.maximumDate = nil
+                return
             }
+            let date = Date(timeIntervalSince1970: ms / 1000.0)
+            picker.maximumDate = date
         }
     }
 
-    @objc public var localeIdentifier: String? {
+    /// Locale identifier, e.g. "en-US".
+    public var localeIdentifier: String? {
         didSet {
             if let id = localeIdentifier {
                 picker.locale = Locale(identifier: id)
@@ -61,7 +72,8 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         }
     }
 
-    @objc public var timeZoneName: String? {
+    /// IANA time zone name, e.g. "America/Los_Angeles".
+    public var timeZoneName: String? {
         didSet {
             if let name = timeZoneName,
                let tz = TimeZone(identifier: name) {
@@ -72,111 +84,181 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         }
     }
 
-    @objc public var onChangeHandler: ((NSNumber) -> Void)?
-
-    @objc public func setOnChangeTarget(_ target: Any, action: Selector) {
-        addTarget(target, action: action, for: .valueChanged)
+    /// UIDatePicker.preferredDatePickerStyle as a string: "automatic" | "wheels" | "compact" | "inline"
+    public var preferredStyle: String? {
+        didSet {
+            updatePreferredStyle()
+        }
     }
 
-    // MARK: Init
+    /// For `countDownTimer` mode, duration in seconds.
+    public var countDownDurationSeconds: NSNumber? {
+        didSet {
+            if let seconds = countDownDurationSeconds?.doubleValue {
+                picker.countDownDuration = seconds
+            }
+        }
+    }
+
+    /// UIDatePicker.minuteInterval, kept separate from the property name.
+    public var minuteIntervalValue: NSNumber? {
+        didSet {
+            if let value = minuteIntervalValue?.intValue {
+                picker.minuteInterval = value
+            }
+        }
+    }
+
+    /// UIDatePicker.roundsToMinuteInterval (iOS 14+).
+    public var roundsToMinuteIntervalValue: NSNumber? {
+        didSet {
+            if #available(iOS 14.0, *) {
+                picker.roundsToMinuteInterval = roundsToMinuteIntervalValue?.boolValue ?? false
+            }
+        }
+    }
+
+    /// Callback invoked when the picker value changes, passing ms since epoch.
+    public var onChangeHandler: ((NSNumber) -> Void)?
+    public var onCancelHandler: (() -> Void)?
+
+    // MARK: - Init
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
         commonInit()
     }
 
-    required public init?(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         super.init(coder: coder)
         commonInit()
     }
 
     private func commonInit() {
+        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+
         picker.addTarget(self, action: #selector(handleValueChanged), for: .valueChanged)
-        updateMode()
+        picker.datePickerMode = .date
+
+        isUserInteractionEnabled = true
     }
 
-    // MARK: Mode
+    // MARK: - Mode / Style
 
     private func updateMode() {
         switch mode {
+        case "date":
+            picker.datePickerMode = .date
         case "time":
             picker.datePickerMode = .time
-            picker.preferredDatePickerStyle = .wheels
-        case "datetime":
+        case "dateAndTime":
             picker.datePickerMode = .dateAndTime
-            picker.preferredDatePickerStyle = .wheels
+        case "countDownTimer":
+            picker.datePickerMode = .countDownTimer
         default:
             picker.datePickerMode = .date
-            picker.preferredDatePickerStyle = .inline   // calendar style
         }
     }
 
-    // MARK: Modal (popover) presentation
+    private func updatePreferredStyle() {
+        let value = preferredStyle ?? "inline"
 
-  private func presentModal() {
-      guard modalVC == nil else { return }
+        if #available(iOS 13.4, *) {
+            switch value {
+            case "wheels":
+                picker.preferredDatePickerStyle = .wheels
+            default:
+                picker.preferredDatePickerStyle = .inline
+            }
+        } else {
+            // Pre-iOS 13.4 only has wheels.
+            picker.preferredDatePickerStyle = .wheels
+        }
+    }
 
-      let vc = UIViewController()
-      vc.view.backgroundColor = .systemBackground
+    // MARK: - Presentation
 
-      picker.translatesAutoresizingMaskIntoConstraints = false
-      vc.view.addSubview(picker)
+    @objc private func handleTap() {
+        presentIfNeeded()
+    }
 
-      NSLayoutConstraint.activate([
-          picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
-          picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
-          picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
-          picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor)
-      ])
+    private func presentIfNeeded() {
+        guard modalVC == nil else { return }
 
-      // Let Auto Layout compute the natural size of the picker
-      vc.view.setNeedsLayout()
-      vc.view.layoutIfNeeded()
-      let targetSize = vc.view.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-      vc.preferredContentSize = targetSize   // <- no magic numbers
+        let vc = UIViewController()
+        vc.view.backgroundColor = .clear
 
-      vc.modalPresentationStyle = .popover
+        picker.translatesAutoresizingMaskIntoConstraints = false
+        vc.view.addSubview(picker)
 
-      guard
-          let root = UIApplication.shared
-              .connectedScenes
-              .compactMap({ $0 as? UIWindowScene })
-              .flatMap({ $0.windows })
-              .first(where: { $0.isKeyWindow })?
-              .rootViewController
-      else {
-          return
-      }
+        NSLayoutConstraint.activate([
+            picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
+            picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor),
+            picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+            picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+        ])
+      
+        picker.setNeedsLayout()
+        picker.layoutIfNeeded()
+        let fittingSize = picker.systemLayoutSizeFitting(
+            UIView.layoutFittingCompressedSize
+        )
+      
+        vc.modalPresentationStyle = .popover
+        vc.preferredContentSize = fittingSize
 
-      if let pop = vc.popoverPresentationController {
-          pop.delegate = self               // to return .none for adaptive style
-          pop.sourceView = self
-          pop.sourceRect = bounds
-          pop.permittedArrowDirections = [] // no arrow -> compact-style popup
-          // pop.backgroundColor = .systemBackground // optional
-      }
+        if let popover = vc.popoverPresentationController {
+            popover.delegate = self
+            popover.sourceView = self
+            popover.sourceRect = bounds
+            popover.permittedArrowDirections = [.down, .up]
+        }
 
-      root.present(vc, animated: true)
-      modalVC = vc
-  }
+        topViewController()?.present(vc, animated: true, completion: nil)
+        modalVC = vc
+    }
 
-    private func dismissModal() {
+    private func dismissIfNeeded() {
         guard let vc = modalVC else { return }
-        vc.dismiss(animated: true)
+        vc.dismiss(animated: true) { [weak self] in
+            // When dismissed without selecting a value → onCancel
+            self?.onCancelHandler?()
+        }
         modalVC = nil
     }
 
-    // MARK: UIPopoverPresentationControllerDelegate
-
-    /// **This is the key bit** – prevents auto-adaptation to full screen on iPhone.
-    public func adaptivePresentationStyle(
-        for controller: UIPresentationController,
-        traitCollection: UITraitCollection
-    ) -> UIModalPresentationStyle {
-        return .none
+    private func topViewController(
+        base: UIViewController? = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }
+            .first
+    ) -> UIViewController? {
+        if let nav = base as? UINavigationController {
+            return topViewController(base: nav.visibleViewController)
+        }
+        if let tab = base as? UITabBarController {
+            return topViewController(base: tab.selectedViewController)
+        }
+        if let presented = base?.presentedViewController {
+            return topViewController(base: presented)
+        }
+        return base
     }
 
-    // MARK: Value change
+    // MARK: - UIPopoverPresentationControllerDelegate
+
+    public func adaptivePresentationStyle(
+        for controller: UIPresentationController
+    ) -> UIModalPresentationStyle {
+        // Keep as popover where possible.
+        return .none
+    }
+  
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        // User dismissed the popover (tap outside, swipe, etc.)
+        onCancelHandler?()
+    }
+
+    // MARK: - Value change
 
     @objc private func handleValueChanged() {
         let ms = picker.date.timeIntervalSince1970 * 1000.0
