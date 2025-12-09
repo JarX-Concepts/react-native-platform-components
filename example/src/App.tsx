@@ -1,38 +1,106 @@
 import { useState } from 'react';
-import { View, StyleSheet, Button, Text } from 'react-native';
+import { View, StyleSheet, Text, Switch, TextInput } from 'react-native';
 import { DatePicker } from 'react-native-platform-components';
+
+const printPrettyDate = (date?: Date | null) => {
+  return date?.toISOString().split('T')[0];
+};
 
 export default function App() {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [modal, setModal] = useState<boolean>(false);
+  const [wheel, setWheel] = useState<boolean>(false);
 
   return (
     <View style={styles.container}>
-      <Text>Selected timestamp (ms): {date?.getDay()}</Text>
-      <Button title="Open" onPress={() => setOpen(true)} />
-      <DatePicker
-        visible={open}
-        ios={{ mode: 'date', preferredStyle: 'calendar' }}
-        onCancel={() => setOpen(false)}
-        onConfirm={(newDate: Date) => {
-          console.log('Selected date:', newDate);
-          setDate(newDate);
-          setOpen(false);
+      <Text style={styles.header}>Demo App</Text>
+
+      <View style={styles.row}>
+        <Text>Modal Mode:</Text>
+        <Switch
+          value={modal}
+          onValueChange={(val) => {
+            setModal(val);
+            if (!val) setOpen(false);
+          }}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <Text>Wheel Mode: </Text>
+        <Switch value={wheel} onValueChange={setWheel} />
+      </View>
+
+      <TextInput
+        style={styles.input}
+        value={printPrettyDate(date)}
+        editable={false}
+        placeholder="Set Date"
+        onPress={() => {
+          if (modal) {
+            setOpen((prev) => !prev);
+          }
         }}
+        onChangeText={() => {}}
       />
+
+      <View>
+        <DatePicker
+          style={styles.box}
+          visible={open}
+          modal={modal}
+          date={date}
+          ios={{ mode: 'date', preferredStyle: wheel ? 'wheels' : 'calendar' }}
+          onCancel={() => setOpen(false)}
+          onConfirm={(newDate: Date) => {
+            setDate(newDate);
+            setOpen(false);
+          }}
+        />
+      </View>
+
+      <Text style={styles.footer}>react-native-platform-components</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   container: {
     flex: 1,
+    paddingTop: 100,
+    padding: 30,
+    backgroundColor: '#ecf0f1',
+  },
+  row: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginVertical: 10,
+    justifyContent: 'space-between',
+  },
+  button: {
+    backgroundColor: 'lightgray',
   },
   box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+    alignSelf: 'center',
+  },
+  input: {
+    height: 40,
+    marginTop: 12,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    padding: 10,
+    color: 'gray',
+  },
+  footer: {
+    textAlign: 'center',
+    marginTop: 50,
+    color: 'gray',
   },
 });

@@ -77,6 +77,35 @@ using namespace facebook::react;
   const auto &newViewProps =
       *std::static_pointer_cast<DatePickerProps const>(props);
 
+  // Convert new prop to an NSString (or default)
+    NSString *newPresentation =
+      newViewProps.presentation.empty()
+          ? @"modal"
+          : [NSString stringWithUTF8String:newViewProps.presentation.c_str()];
+  if (![_datePickerView.presentation isEqualToString:newPresentation]) {
+      _datePickerView.presentation = newPresentation;
+  }  
+  
+/*   if (oldViewProps.presentation != newViewProps.presentation) {
+    if (newViewProps.presentation == true) {
+      _datePickerView.presentation = @("modal");
+    } else {
+      _datePickerView.presentation = @("inline");
+    }
+  } */
+  
+  // --- visible -> open ---
+   BOOL shouldOpen = (newViewProps.visible == "open");
+  NSNumber *newValue = @(shouldOpen);
+  if (![_datePickerView.open isEqual:newValue]) {
+      _datePickerView.open = newValue;
+  } 
+/* 
+  if (oldViewProps.visible != newViewProps.visible) {
+    _datePickerView.open = @(newViewProps.visible);
+  } */
+
+
   // --- Controlled dateMs (sentinel -1 = "no value") ---
   if (oldViewProps.dateMs != newViewProps.dateMs) {
     if (newViewProps.dateMs >= 0) {
@@ -85,12 +114,7 @@ using namespace facebook::react;
       _datePickerView.dateMs = nil;
     }
   }
-
-  // --- visible -> open ---
-  if (oldViewProps.visible != newViewProps.visible) {
-    _datePickerView.open = @(newViewProps.visible);
-  }
-
+  
   // --- minDateMs / maxDateMs (sentinel -1 = unbounded) ---
   if (oldViewProps.minDateMs != newViewProps.minDateMs) {
     if (newViewProps.minDateMs >= 0) {

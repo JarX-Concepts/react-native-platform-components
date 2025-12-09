@@ -98,8 +98,11 @@ export type CommonProps = {
    */
   timeZoneName?: string;
 
-  /** Visibility / "open" state. */
-  visible?: CodegenTypes.WithDefault<boolean, true>;
+  /** Visibility / "open" or "close" state. (only used in modal mode) */
+  visible?: CodegenTypes.WithDefault<string, 'close'>;
+
+  /** Presentation: "modal" vs "inline". */
+  presentation?: CodegenTypes.WithDefault<string, 'modal'>;
 };
 
 export interface NativeProps extends ViewProps, CommonProps {

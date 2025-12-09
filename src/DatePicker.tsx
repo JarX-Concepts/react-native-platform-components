@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type {
   DateChangeEvent,
   IOSProps,
   NativeProps,
 } from './DatePickerNativeComponent';
-import type { NativeSyntheticEvent } from 'react-native';
+import { StyleSheet, type NativeSyntheticEvent } from 'react-native';
 import { default as NativeDatePicker } from './DatePickerNativeComponent';
 
 export type IOSDatePickerMode =
@@ -17,11 +17,20 @@ export type IOSDatePickerStyle = 'calendar' | 'wheels';
 
 export type DatePickerProps = Omit<
   NativeProps,
-  'onConfirm' | 'onCancel' | 'dateMs' | 'minDateMs' | 'maxDateMs' | 'ios'
+  | 'onConfirm'
+  | 'onCancel'
+  | 'dateMs'
+  | 'minDateMs'
+  | 'maxDateMs'
+  | 'ios'
+  | 'visible'
+  | 'modal'
 > & {
   date?: Date;
   minDate?: Date;
   maxDate?: Date;
+  visible?: boolean;
+  modal?: boolean;
 
   /** Fired when the user selects a date/time. */
   onConfirm?: (dateTime: Date) => void;
@@ -35,8 +44,23 @@ export type DatePickerProps = Omit<
   };
 };
 
+const IOS_INLINE_HEIGHTS: Record<IOSDatePickerStyle, number> = {
+  calendar: 320,
+  wheels: 216,
+};
+
 export function DatePicker(props: DatePickerProps) {
-  const { onConfirm, onCancel, date, minDate, maxDate, ...rest } = props;
+  const {
+    onConfirm,
+    onCancel,
+    date,
+    minDate,
+    maxDate,
+    style,
+    visible,
+    modal,
+    ...rest
+  } = props;
 
   const handleConfirm = React.useCallback(
     (e: NativeSyntheticEvent<DateChangeEvent>) => {
@@ -47,9 +71,23 @@ export function DatePicker(props: DatePickerProps) {
 
   const handleCancel = React.useCallback(() => onCancel?.(), [onCancel]);
 
+  const height = useMemo(() => {
+    if (modal === false) {
+      return rest.ios?.preferredStyle === 'wheels'
+        ? IOS_INLINE_HEIGHTS.wheels
+        : IOS_INLINE_HEIGHTS.calendar;
+    }
+    return undefined;
+  }, [modal, rest.ios?.preferredStyle]);
+
+  const styles = useMemo(() => createStyles(height), [height]);
+
   return (
     <NativeDatePicker
       {...rest}
+      presentation={modal ? 'modal' : 'inline'}
+      visible={visible ? 'open' : 'close'}
+      style={[styles.picker, style]}
       onConfirm={handleConfirm}
       onCancel={handleCancel}
       dateMs={date?.getTime()}
@@ -57,4 +95,14 @@ export function DatePicker(props: DatePickerProps) {
       maxDateMs={maxDate?.getTime()}
     />
   );
+}
+
+function createStyles(height?: number) {
+  const styles = StyleSheet.create({
+    picker: {
+      height,
+      width: height != null ? '100%' : undefined,
+    },
+  });
+  return styles;
 }
