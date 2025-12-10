@@ -91,10 +91,6 @@ const styles = StyleSheet.create({
   },
   box: {
     alignSelf: 'center',
-    alignContent: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'blue',
   },
   input: {
     height: 40,

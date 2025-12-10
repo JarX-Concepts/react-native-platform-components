@@ -102,24 +102,12 @@ using namespace facebook::react;
     needsToUpdateMeasurements = YES;
   }
 
-  /*   if (oldViewProps.presentation != newViewProps.presentation) {
-      if (newViewProps.presentation == true) {
-        _datePickerView.presentation = @("modal");
-      } else {
-        _datePickerView.presentation = @("inline");
-      }
-    } */
-
   // --- visible -> open ---
   BOOL shouldOpen = (newViewProps.visible == "open");
   NSNumber *newValue = @(shouldOpen);
   if (![_datePickerView.open isEqual:newValue]) {
     _datePickerView.open = newValue;
   }
-  /*
-    if (oldViewProps.visible != newViewProps.visible) {
-      _datePickerView.open = @(newViewProps.visible);
-    } */
 
   // --- Controlled dateMs (sentinel -1 = "no value") ---
   if (oldViewProps.dateMs != newViewProps.dateMs) {
@@ -179,6 +167,8 @@ using namespace facebook::react;
     } else {
       _datePickerView.mode = @"date";
     }
+    
+    needsToUpdateMeasurements = YES;
   }
 
   // preferredStyle: "automatic" | "wheels" | "compact" | "inline"
@@ -189,6 +179,8 @@ using namespace facebook::react;
     } else {
       _datePickerView.preferredStyle = nil;
     }
+    
+    needsToUpdateMeasurements = YES;
   }
 
   // countDownDurationSeconds (Double)
@@ -252,7 +244,7 @@ using namespace facebook::react;
                                          UILayoutFittingCompressedSize.height)];
 
   // Guard against nonsense.
-  if (size.width <= 0 || size.height <= 0) {
+  if (size.width < 0 || size.height < 0) {
     return;
   }
 

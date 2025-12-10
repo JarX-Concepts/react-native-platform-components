@@ -36,7 +36,7 @@ namespace facebook::react
                 auto stateData = state->getData();
                 auto frameSize = stateData.frameSize;
 
-                if (frameSize.width > 0 && frameSize.height > 0)
+                if (frameSize.width >= 0 && frameSize.height >= 0)
                 {
                     layoutableShadowNode.setSize(Size{
                         frameSize.width,

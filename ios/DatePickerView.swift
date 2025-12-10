@@ -324,8 +324,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
             )
             return CGSize(width: fitted.width, height: fitted.height)
         } else {
-            // Modal mode: let JS decide height (often just a button-ish row)
-            return CGSize(width: size.width, height: 0)
+            return CGSize(width: 0, height: 0)
         }
     }
     

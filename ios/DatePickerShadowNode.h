@@ -22,14 +22,6 @@ namespace facebook::react
     {
     public:
         using ConcreteViewShadowNode::ConcreteViewShadowNode;
-
-        static ShadowNodeTraits BaseTraits()
-        {
-            auto traits = ConcreteViewShadowNode::BaseTraits();
-            traits.set(ShadowNodeTraits::Trait::LeafYogaNode); // leaf, size from state
-            // IMPORTANT: no MeasurableYogaNode, no measure() override.
-            return traits;
-        }
     };
 
 } // namespace facebook::react
