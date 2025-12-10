@@ -6,9 +6,11 @@
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/RCTComponentViewHelpers.h>
+#import <React/RCTConversions.h>
 
 #import "RCTFabricComponentsPlugins.h"
 #import "PlatformComponents-Swift.h"
+#import "DatePickerShadowNode.h"
 
 using namespace facebook::react;
 
@@ -21,7 +23,7 @@ using namespace facebook::react;
 
 + (ComponentDescriptorProvider)componentDescriptorProvider
 {
-  return concreteComponentDescriptorProvider<DatePickerComponentDescriptor>();
+  return concreteComponentDescriptorProvider<MeasuringDatePickerComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -65,6 +67,12 @@ using namespace facebook::react;
   }
 
   return self;
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  _datePickerView.frame = self.bounds;
 }
 
 #pragma mark - Props
@@ -195,6 +203,15 @@ using namespace facebook::react;
   }
 
   [super updateProps:props oldProps:oldProps];
+}
+
+- (void)updateLayoutMetrics:(const facebook::react::LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const facebook::react::LayoutMetrics &)oldLayoutMetrics
+{
+  [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+
+  // Just fill whatever Yoga decided the content frame is.
+  _datePickerView.frame = self.contentView.bounds;
 }
 
 // Strongly-typed event emitter helper

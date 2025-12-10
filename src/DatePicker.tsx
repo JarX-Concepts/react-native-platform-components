@@ -97,12 +97,9 @@ export function DatePicker(props: DatePickerProps) {
   );
 }
 
-function createStyles(height?: number) {
+function createStyles(_height?: number) {
   const styles = StyleSheet.create({
-    picker: {
-      height,
-      width: height != null ? '100%' : undefined,
-    },
+    picker: {},
   });
   return styles;
 }

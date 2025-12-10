@@ -32,20 +32,22 @@ export default function App() {
         <Switch value={wheel} onValueChange={setWheel} />
       </View>
 
-      <TextInput
-        style={styles.input}
-        value={printPrettyDate(date)}
-        editable={false}
-        placeholder="Set Date"
-        onPress={() => {
-          if (modal) {
-            setOpen((prev) => !prev);
-          }
-        }}
-        onChangeText={() => {}}
-      />
+      {modal && (
+        <TextInput
+          style={styles.input}
+          value={printPrettyDate(date)}
+          editable={false}
+          placeholder="Set Date"
+          onPress={() => {
+            if (modal) {
+              setOpen((prev) => !prev);
+            }
+          }}
+          onChangeText={() => {}}
+        />
+      )}
 
-      <View>
+      <View style={styles.picker}>
         <DatePicker
           style={styles.box}
           visible={open}
@@ -81,7 +83,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 15,
     justifyContent: 'space-between',
   },
   button: {
@@ -89,11 +91,14 @@ const styles = StyleSheet.create({
   },
   box: {
     alignSelf: 'center',
+    alignContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'blue',
   },
   input: {
     height: 40,
-    marginTop: 12,
-    borderRadius: 20,
+    borderRadius: 10,
     backgroundColor: 'white',
     padding: 10,
     color: 'gray',
@@ -102,5 +107,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
     color: 'gray',
+  },
+  picker: {
+    backgroundColor: 'white',
+    borderRadius: 10,
   },
 });

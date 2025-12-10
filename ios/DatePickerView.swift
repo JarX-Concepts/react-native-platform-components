@@ -20,9 +20,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
     /// "inline" | "modal"
     public var presentation: String = "modal" {
       didSet {
-          guard oldValue != presentation else {
-            return
-          }
+          guard oldValue != presentation else { return }
           updatePresentation()
       }
     }
@@ -31,9 +29,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
     /// Only meaningful when `presentation == "modal"`.
     public var open: NSNumber? {
         didSet {
-            guard oldValue != open else {
-              return
-            }
+            guard oldValue != open else { return }
             guard presentation == "modal" else { return }
             let shouldOpen = open?.boolValue ?? true
             if shouldOpen {
@@ -317,19 +313,22 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         onCancelHandler?()
         modalVC = nil
     }
-
-    // MARK: - Value change
   
-/*     public override var intrinsicContentSize: CGSize {
-        // For inline we want to size ourselves to the picker.
+    public func sizeForLayout(constrainedTo size: CGSize) -> CGSize {
+        // Only inline needs height; modal can be “zero height button”
         if presentation == "inline" {
-            picker.setNeedsLayout()
-            picker.layoutIfNeeded()
-            let size = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-            return size
+            // Ask the UIDatePicker how tall it wants to be
+            let fitted = picker.sizeThatFits(
+                CGSize(width: size.width > 0 ? size.width : UIView.noIntrinsicMetric,
+                       height: UIView.layoutFittingCompressedSize.height)
+            )
+            return CGSize(width: size.width, height: fitted.height)
+        } else {
+            // Modal mode: let JS decide height (often just a button-ish row)
+            return CGSize(width: size.width, height: 0)
         }
-        return super.intrinsicContentSize
-    } */
+    }
+    
   
     public override func layoutSubviews() {
         super.layoutSubviews()
