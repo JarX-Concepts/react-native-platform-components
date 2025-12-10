@@ -2,15 +2,18 @@
 
 #import "DatePicker.h"
 
+#import <React/RCTConversions.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/RCTComponentViewHelpers.h>
-#import <React/RCTConversions.h>
+#import <react/renderer/core/LayoutPrimitives.h>
 
-#import "RCTFabricComponentsPlugins.h"
-#import "PlatformComponents-Swift.h"
 #import "DatePickerShadowNode.h"
+#import "DatePickerState.h"
+#import "DatePickerComponentDescriptors.h"
+#import "PlatformComponents-Swift.h"
+#import "RCTFabricComponentsPlugins.h"
 
 using namespace facebook::react;
 
@@ -19,15 +22,15 @@ using namespace facebook::react;
 
 @implementation DatePicker {
   DatePickerView *_datePickerView;
+  MeasuringDatePickerShadowNode::ConcreteState::Shared _state;
 }
 
-+ (ComponentDescriptorProvider)componentDescriptorProvider
-{
-  return concreteComponentDescriptorProvider<MeasuringDatePickerComponentDescriptor>();
++ (ComponentDescriptorProvider)componentDescriptorProvider {
+  return concreteComponentDescriptorProvider<
+      MeasuringDatePickerComponentDescriptor>();
 }
 
-- (instancetype)initWithFrame:(CGRect)frame
-{
+- (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     _datePickerView = [DatePickerView new];
     _datePickerView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -42,35 +45,38 @@ using namespace facebook::react;
       // Build the OnConfirm payload the emitter expects
       DatePickerEventEmitter::OnConfirm event{};
       event.timestampMs = ms.doubleValue;
-      
+
       strongSelf.eventEmitterTyped.onConfirm(event);
     };
 
     _datePickerView.onCancelHandler = ^{
-        DatePicker *strongSelf = weakSelf;
-        if (!strongSelf) {
-            return;
-        }
+      DatePicker *strongSelf = weakSelf;
+      if (!strongSelf) {
+        return;
+      }
 
-        DatePickerEventEmitter::OnCancel event{};
-        strongSelf.eventEmitterTyped.onCancel(event);
+      DatePickerEventEmitter::OnCancel event{};
+      strongSelf.eventEmitterTyped.onCancel(event);
     };
 
     self.contentView = _datePickerView;
 
     [NSLayoutConstraint activateConstraints:@[
-      [_datePickerView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
-      [_datePickerView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
-      [_datePickerView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
-      [_datePickerView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+      [_datePickerView.topAnchor
+          constraintEqualToAnchor:self.contentView.topAnchor],
+      [_datePickerView.bottomAnchor
+          constraintEqualToAnchor:self.contentView.bottomAnchor],
+      [_datePickerView.leadingAnchor
+          constraintEqualToAnchor:self.contentView.leadingAnchor],
+      [_datePickerView.trailingAnchor
+          constraintEqualToAnchor:self.contentView.trailingAnchor],
     ]];
   }
 
   return self;
 }
 
-- (void)layoutSubviews
-{
+- (void)layoutSubviews {
   [super layoutSubviews];
   _datePickerView.frame = self.bounds;
 }
@@ -78,41 +84,42 @@ using namespace facebook::react;
 #pragma mark - Props
 
 - (void)updateProps:(Props::Shared const &)props
-           oldProps:(Props::Shared const &)oldProps
-{
+           oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps =
       *std::static_pointer_cast<DatePickerProps const>(_props);
   const auto &newViewProps =
       *std::static_pointer_cast<DatePickerProps const>(props);
 
+  BOOL needsToUpdateMeasurements = NO;
+
   // Convert new prop to an NSString (or default)
-    NSString *newPresentation =
+  NSString *newPresentation =
       newViewProps.presentation.empty()
           ? @"modal"
           : [NSString stringWithUTF8String:newViewProps.presentation.c_str()];
   if (![_datePickerView.presentation isEqualToString:newPresentation]) {
-      _datePickerView.presentation = newPresentation;
-  }  
-  
-/*   if (oldViewProps.presentation != newViewProps.presentation) {
-    if (newViewProps.presentation == true) {
-      _datePickerView.presentation = @("modal");
-    } else {
-      _datePickerView.presentation = @("inline");
-    }
-  } */
-  
+    _datePickerView.presentation = newPresentation;
+    needsToUpdateMeasurements = YES;
+  }
+
+  /*   if (oldViewProps.presentation != newViewProps.presentation) {
+      if (newViewProps.presentation == true) {
+        _datePickerView.presentation = @("modal");
+      } else {
+        _datePickerView.presentation = @("inline");
+      }
+    } */
+
   // --- visible -> open ---
-   BOOL shouldOpen = (newViewProps.visible == "open");
+  BOOL shouldOpen = (newViewProps.visible == "open");
   NSNumber *newValue = @(shouldOpen);
   if (![_datePickerView.open isEqual:newValue]) {
-      _datePickerView.open = newValue;
-  } 
-/* 
-  if (oldViewProps.visible != newViewProps.visible) {
-    _datePickerView.open = @(newViewProps.visible);
-  } */
-
+    _datePickerView.open = newValue;
+  }
+  /*
+    if (oldViewProps.visible != newViewProps.visible) {
+      _datePickerView.open = @(newViewProps.visible);
+    } */
 
   // --- Controlled dateMs (sentinel -1 = "no value") ---
   if (oldViewProps.dateMs != newViewProps.dateMs) {
@@ -122,7 +129,7 @@ using namespace facebook::react;
       _datePickerView.dateMs = nil;
     }
   }
-  
+
   // --- minDateMs / maxDateMs (sentinel -1 = unbounded) ---
   if (oldViewProps.minDateMs != newViewProps.minDateMs) {
     if (newViewProps.minDateMs >= 0) {
@@ -192,8 +199,7 @@ using namespace facebook::react;
 
   // minuteInterval (Int32)
   if (oldIos.minuteInterval != newIos.minuteInterval) {
-    _datePickerView.minuteIntervalValue =
-        @(newIos.minuteInterval);
+    _datePickerView.minuteIntervalValue = @(newIos.minuteInterval);
   }
 
   // roundsToMinuteInterval (bool)
@@ -202,16 +208,61 @@ using namespace facebook::react;
         @(newIos.roundsToMinuteInterval);
   }
 
+  if (needsToUpdateMeasurements) {
+    [self updateMeasurements];
+  }
+
   [super updateProps:props oldProps:oldProps];
 }
 
-- (void)updateLayoutMetrics:(const facebook::react::LayoutMetrics &)layoutMetrics
-           oldLayoutMetrics:(const facebook::react::LayoutMetrics &)oldLayoutMetrics
-{
+- (void)updateLayoutMetrics:
+            (const facebook::react::LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:
+               (const facebook::react::LayoutMetrics &)oldLayoutMetrics {
   [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
 
   // Just fill whatever Yoga decided the content frame is.
   _datePickerView.frame = self.contentView.bounds;
+}
+
+- (void)updateState:(const facebook::react::State::Shared &)state
+           oldState:(const facebook::react::State::Shared &)oldState {
+  _state =
+      std::static_pointer_cast<
+          const MeasuringDatePickerShadowNode::ConcreteState
+      >(state);
+
+  if (oldState == nullptr) {
+    // First time: compute initial size.
+    [self updateMeasurements];
+  }
+
+  [super updateState:state oldState:oldState];
+}
+
+- (void)updateMeasurements {
+  if (_state == nullptr) {
+    return;
+  }
+
+  // Ask Swift view for intrinsic size. Use “compressed” constraints.
+  CGSize size = [_datePickerView
+      sizeForLayoutWithConstrainedTo:CGSizeMake(
+                                         UILayoutFittingCompressedSize.width,
+                                         UILayoutFittingCompressedSize.height)];
+
+  // Guard against nonsense.
+  if (size.width <= 0 || size.height <= 0) {
+    return;
+  }
+
+  DatePickerStateFrameSize newState;
+  newState.frameSize = {
+      static_cast<Float>(size.width),
+      static_cast<Float>(size.height),
+  };
+
+  _state->updateState(std::move(newState));
 }
 
 // Strongly-typed event emitter helper
