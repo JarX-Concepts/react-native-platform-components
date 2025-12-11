@@ -8,7 +8,7 @@ const printPrettyDate = (date?: Date | null) => {
 
 export default function App() {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [modal, setModal] = useState<boolean>(false);
   const [wheel, setWheel] = useState<boolean>(false);
 
@@ -107,5 +107,6 @@ const styles = StyleSheet.create({
   picker: {
     backgroundColor: 'white',
     borderRadius: 10,
+    alignSelf: 'center',
   },
 });
