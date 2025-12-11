@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { View, StyleSheet, Text, Switch, TextInput } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  Switch,
+  TextInput,
+  Pressable,
+} from 'react-native';
 import { DatePicker } from 'react-native-platform-components';
 
 const printPrettyDate = (date?: Date | null) => {
@@ -11,6 +18,8 @@ export default function App() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [modal, setModal] = useState<boolean>(false);
   const [wheel, setWheel] = useState<boolean>(false);
+
+  console.log('Render');
 
   return (
     <View style={styles.container}>
@@ -33,18 +42,21 @@ export default function App() {
       </View>
 
       {modal && (
-        <TextInput
-          style={styles.input}
-          value={printPrettyDate(date)}
-          editable={false}
-          placeholder="Set Date"
+        <Pressable
           onPress={() => {
             if (modal) {
               setOpen((prev) => !prev);
             }
           }}
-          onChangeText={() => {}}
-        />
+        >
+          <TextInput
+            style={styles.input}
+            value={printPrettyDate(date)}
+            editable={false}
+            placeholder="Set Date"
+            onChangeText={() => {}}
+          />
+        </Pressable>
       )}
 
       <View style={styles.picker}>
@@ -54,8 +66,12 @@ export default function App() {
           modal={modal}
           date={date}
           ios={{ mode: 'date', preferredStyle: wheel ? 'wheels' : 'calendar' }}
-          onCancel={() => setOpen(false)}
+          onCancel={() => {
+            console.log('cancel');
+            setOpen(false);
+          }}
           onConfirm={(newDate: Date) => {
+            console.log('confirm', newDate);
             setDate(newDate);
             setOpen(false);
           }}
