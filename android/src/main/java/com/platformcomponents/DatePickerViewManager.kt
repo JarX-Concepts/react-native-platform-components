@@ -24,7 +24,7 @@ class DatePickerViewManager(
         return DatePickerView(reactContext)
     }
 
-    // --- Props from codegen --------------------------------------------------
+    // --- Props wired from codegen -------------------------------------------
 
     override fun setMode(view: DatePickerView, value: String?) {
         view.setMode(value)
@@ -46,6 +46,7 @@ class DatePickerViewManager(
         view.setTimeZone(value)
     }
 
+    // Sentinel -1 from JS means "unset" / "no value"
     override fun setDateMs(view: DatePickerView, value: Double) {
         val v: Double? = if (value >= 0.0) value else null
         view.setDateMs(v)

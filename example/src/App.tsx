@@ -71,9 +71,14 @@ export default function App() {
           visible={open}
           modal={modal}
           date={date}
-          mode={'time'}
+          mode={'date'}
           ios={{ preferredStyle: wheel ? 'wheels' : 'calendar' }}
-          android={{ useMaterial3: m3 }}
+          android={{
+            useMaterial3: m3,
+            dialogTitle: 'Hello',
+            positiveButtonTitle: 'Yes',
+            negativeButtonTitle: 'No',
+          }}
           onCancel={() => {
             console.log('cancel');
             setOpen(false);

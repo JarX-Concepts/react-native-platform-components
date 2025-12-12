@@ -28,11 +28,23 @@ import java.util.TimeZone
  *
  * - mode: "date" | "time"
  * - presentation: "modal" | "inline"
- * - android.useMaterial3: try M3 modal pickers if theme supports them,
- *   otherwise silently fall back to platform dialogs.
- * - android.firstDayOfWeek: applied to platform DatePicker / DatePickerDialog.
  *
- * Inline is ALWAYS the platform DatePicker (never M3-only widgets).
+ * Inline:
+ *   - "date" -> platform DatePicker view.
+ *   - "time" -> platform TimePicker view.
+ *
+ * Modal:
+ *   - If android.useMaterial3 === true AND theme supports materialCalendarTheme:
+ *       -> MaterialDatePicker / MaterialTimePicker
+ *   - Else:
+ *       -> platform DatePickerDialog / TimePickerDialog
+ *
+ * Android props:
+ *   - firstDayOfWeek
+ *   - useMaterial3
+ *   - dialogTitle
+ *   - positiveButtonTitle
+ *   - negativeButtonTitle
  */
 class DatePickerView(
     private val reactContext: ThemedReactContext
@@ -41,17 +53,23 @@ class DatePickerView(
     TimePickerDialog.OnTimeSetListener {
 
     // ------------------------------------------------------------------------
-    // Child widgets / dialogs
+    // Inline widgets
     // ------------------------------------------------------------------------
 
-    // Inline (platform) DatePicker
-    private var inlinePicker: DatePicker? = null
+    private var inlineDatePicker: DatePicker? = null
+    private var inlineTimePicker: TimePicker? = null
 
-    // Platform dialogs
+    // ------------------------------------------------------------------------
+    // Modal dialogs - platform
+    // ------------------------------------------------------------------------
+
     private var dateDialog: DatePickerDialog? = null
     private var timeDialog: TimePickerDialog? = null
 
-    // Material 3 dialogs
+    // ------------------------------------------------------------------------
+    // Modal dialogs - Material 3
+    // ------------------------------------------------------------------------
+
     private var materialDatePicker: MaterialDatePicker<Long>? = null
     private var materialTimePicker: MaterialTimePicker? = null
 
@@ -74,6 +92,10 @@ class DatePickerView(
     private var useMaterial3: Boolean = false
     private var firstDayOfWeek: Int? = null
 
+    private var dialogTitle: String? = null
+    private var positiveButtonTitle: String? = null
+    private var negativeButtonTitle: String? = null
+
     private var lastEmittedMs: Long? = null
 
     // ------------------------------------------------------------------------
@@ -89,8 +111,7 @@ class DatePickerView(
     /**
      * Returns true iff:
      *  - JS requested android.useMaterial3 === true, AND
-     *  - The current theme actually defines materialCalendarTheme
-     *    (otherwise MaterialDatePicker will crash).
+     *  - The current theme defines materialCalendarTheme.
      *
      * If this returns false, we ALWAYS fallback to platform dialogs.
      */
@@ -147,16 +168,11 @@ class DatePickerView(
         mode = newMode
 
         if (presentation == "inline") {
-            // Inline is date-only on Android.
-            removeInlinePicker()
-            if (mode == "date") {
-                ensureInlinePicker()
-            }
-        } else {
-            if (visible == "open") {
-                dismissAllDialogs()
-                showDialog()
-            }
+            removeInlinePickers()
+            ensureInlinePicker()
+        } else if (visible == "open") {
+            dismissAllDialogs()
+            showDialog()
         }
     }
 
@@ -173,15 +189,12 @@ class DatePickerView(
             "inline" -> {
                 visible = "closed"
                 dismissAllDialogs()
-                if (mode == "date") {
-                    ensureInlinePicker()
-                    requestLayout()
-                } else {
-                    removeInlinePicker()
-                }
+                removeInlinePickers()
+                ensureInlinePicker()
+                requestLayout()
             }
             "modal" -> {
-                removeInlinePicker()
+                removeInlinePickers()
             }
         }
     }
@@ -244,24 +257,42 @@ class DatePickerView(
         firstDayOfWeek =
             if (map != null && map.hasKey("firstDayOfWeek")) map.getInt("firstDayOfWeek") else null
 
+        dialogTitle =
+            if (map != null && map.hasKey("dialogTitle")) map.getString("dialogTitle") else null
+        positiveButtonTitle =
+            if (map != null && map.hasKey("positiveButtonTitle")) map.getString("positiveButtonTitle") else null
+        negativeButtonTitle =
+            if (map != null && map.hasKey("negativeButtonTitle")) map.getString("negativeButtonTitle") else null
+
         applyConstraints()
     }
 
     // ------------------------------------------------------------------------
-    // Inline picker (platform DatePicker only)
+    // Inline picker helpers
     // ------------------------------------------------------------------------
 
+    private fun removeInlinePickers() {
+        inlineDatePicker?.let { if (it.parent === this) removeView(it) }
+        inlineTimePicker?.let { if (it.parent === this) removeView(it) }
+        inlineDatePicker = null
+        inlineTimePicker = null
+    }
+
     private fun ensureInlinePicker() {
-        if (mode != "date") {
-            removeInlinePicker()
+        when (mode) {
+            "time" -> ensureInlineTimePicker()
+            else -> ensureInlineDatePicker()
+        }
+    }
+
+    private fun ensureInlineDatePicker() {
+        if (inlineDatePicker != null) {
+            applyDateToInlineDatePicker()
+            applyConstraintsTo(inlineDatePicker!!)
             return
         }
 
-        if (inlinePicker != null) {
-            applyDateToInlinePicker()
-            applyConstraintsTo(inlinePicker!!)
-            return
-        }
+        removeInlinePickers()
 
         val picker = DatePicker(context).apply {
             layoutParams = LayoutParams(
@@ -279,20 +310,40 @@ class DatePickerView(
             handleDateChangedFromWidget(year, month, dayOfMonth)
         }
 
+        inlineDatePicker = picker
         addView(picker)
-        inlinePicker = picker
         applyConstraintsTo(picker)
-
         requestLayout()
     }
 
-    private fun removeInlinePicker() {
-        inlinePicker?.let { picker ->
-            if (picker.parent === this) {
-                removeView(picker)
-            }
+    private fun ensureInlineTimePicker() {
+        if (inlineTimePicker != null) {
+            applyDateToInlineTimePicker()
+            return
         }
-        inlinePicker = null
+
+        removeInlinePickers()
+
+        val picker = TimePicker(context).apply {
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val cal = buildInitialCalendar()
+        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+        picker.setIs24HourView(is24Hour)
+        picker.hour = cal.get(Calendar.HOUR_OF_DAY)
+        picker.minute = cal.get(Calendar.MINUTE)
+
+        picker.setOnTimeChangedListener { _, hourOfDay, minute ->
+            handleTimeChangedFromWidget(hourOfDay, minute)
+        }
+
+        inlineTimePicker = picker
+        addView(picker)
+        requestLayout()
     }
 
     // ------------------------------------------------------------------------
@@ -317,7 +368,7 @@ class DatePickerView(
         }
     }
 
-    // -- Platform -------------------------------------------------------------
+    // -- Platform dialogs -----------------------------------------------------
 
     private fun showPlatformDateDialog() {
         val cal = buildInitialCalendar()
@@ -333,6 +384,18 @@ class DatePickerView(
         minDateMs?.let { dlg.datePicker.minDate = it }
         maxDateMs?.let { dlg.datePicker.maxDate = it }
         firstDayOfWeek?.let { dlg.datePicker.firstDayOfWeek = it }
+
+        dialogTitle?.let { dlg.setTitle(it) }
+
+        // Apply custom button text AFTER the dialog is created & shown
+        dlg.setOnShowListener {
+            positiveButtonTitle?.let { text ->
+                dlg.getButton(DialogInterface.BUTTON_POSITIVE)?.text = text
+            }
+            negativeButtonTitle?.let { text ->
+                dlg.getButton(DialogInterface.BUTTON_NEGATIVE)?.text = text
+            }
+        }
 
         dlg.setOnDismissListener { _: DialogInterface ->
             visible = "closed"
@@ -360,6 +423,17 @@ class DatePickerView(
             is24Hour
         )
 
+        dialogTitle?.let { dlg.setTitle(it) }
+
+        dlg.setOnShowListener {
+            positiveButtonTitle?.let { text ->
+                dlg.getButton(DialogInterface.BUTTON_POSITIVE)?.text = text
+            }
+            negativeButtonTitle?.let { text ->
+                dlg.getButton(DialogInterface.BUTTON_NEGATIVE)?.text = text
+            }
+        }
+
         dlg.setOnDismissListener {
             visible = "closed"
         }
@@ -374,7 +448,7 @@ class DatePickerView(
         dlg.show()
     }
 
-    // -- Material 3 -----------------------------------------------------------
+    // -- Material 3 dialogs ---------------------------------------------------
 
     private fun buildCalendarConstraints(): CalendarConstraints? {
         if (minDateMs == null && maxDateMs == null) return null
@@ -410,6 +484,13 @@ class DatePickerView(
 
             constraints?.let { builder.setCalendarConstraints(it) }
 
+            // Title
+            dialogTitle?.let { builder.setTitleText(it) }
+
+            // ✅ Button titles for M3 date picker
+            positiveButtonTitle?.let { builder.setPositiveButtonText(it) }
+            negativeButtonTitle?.let { builder.setNegativeButtonText(it) }
+
             val picker = builder.build()
 
             picker.addOnPositiveButtonClickListener { sel ->
@@ -438,7 +519,6 @@ class DatePickerView(
             visible = "open"
             picker.show(activity.supportFragmentManager, "MaterialDatePicker")
         } catch (e: IllegalArgumentException) {
-            // Theme still not right? Log & fallback.
             Log.w(
                 "DatePickerView",
                 "MaterialDatePicker crashed; falling back to platform DatePickerDialog",
@@ -464,6 +544,13 @@ class DatePickerView(
                 .setTimeFormat(timeFormat)
                 .setHour(cal.get(Calendar.HOUR_OF_DAY))
                 .setMinute(cal.get(Calendar.MINUTE))
+
+            // Title
+            dialogTitle?.let { builder.setTitleText(it) }
+
+            // ✅ Button titles for M3 time picker
+            positiveButtonTitle?.let { builder.setPositiveButtonText(it) }
+            negativeButtonTitle?.let { builder.setNegativeButtonText(it) }
 
             val picker = builder.build()
 
@@ -541,7 +628,7 @@ class DatePickerView(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (presentation == "inline" && mode == "date") {
+        if (presentation == "inline") {
             ensureInlinePicker()
         }
     }
@@ -549,7 +636,7 @@ class DatePickerView(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (presentation == "inline") {
             ensureInlinePicker()
-            val child = inlinePicker
+            val child = inlineDatePicker ?: inlineTimePicker
 
             if (child != null) {
                 val screenWidth = resources.displayMetrics.widthPixels
@@ -581,10 +668,11 @@ class DatePickerView(
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        inlinePicker?.let { picker ->
+        val child = inlineDatePicker ?: inlineTimePicker
+        child?.let {
             val width = right - left
             val height = bottom - top
-            picker.layout(0, 0, width, height)
+            it.layout(0, 0, width, height)
         }
     }
 
@@ -600,13 +688,14 @@ class DatePickerView(
     }
 
     private fun applyDateToWidgets() {
-        applyDateToInlinePicker()
-        applyDateToPlatformDialog()
+        applyDateToInlineDatePicker()
+        applyDateToInlineTimePicker()
+        applyDateToPlatformDateDialog()
         // M3 dialogs read date when shown; no live update needed.
     }
 
-    private fun applyDateToInlinePicker() {
-        val picker = inlinePicker ?: return
+    private fun applyDateToInlineDatePicker() {
+        val picker = inlineDatePicker ?: return
         val cal = buildInitialCalendar()
         picker.init(
             cal.get(Calendar.YEAR),
@@ -617,7 +706,16 @@ class DatePickerView(
         }
     }
 
-    private fun applyDateToPlatformDialog() {
+    private fun applyDateToInlineTimePicker() {
+        val picker = inlineTimePicker ?: return
+        val cal = buildInitialCalendar()
+        val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+        picker.setIs24HourView(is24Hour)
+        picker.hour = cal.get(Calendar.HOUR_OF_DAY)
+        picker.minute = cal.get(Calendar.MINUTE)
+    }
+
+    private fun applyDateToPlatformDateDialog() {
         val dlg = dateDialog ?: return
         val cal = buildInitialCalendar()
         dlg.updateDate(
@@ -628,9 +726,9 @@ class DatePickerView(
     }
 
     private fun applyConstraints() {
-        inlinePicker?.let { applyConstraintsTo(it) }
+        inlineDatePicker?.let { applyConstraintsTo(it) }
         dateDialog?.datePicker?.let { applyConstraintsTo(it) }
-        // M3 date constraints are applied when building picker.
+        // M3 constraints applied when building picker.
     }
 
     private fun applyConstraintsTo(picker: DatePicker) {
@@ -655,11 +753,7 @@ class DatePickerView(
         sendConfirmEvent(ms.toDouble())
     }
 
-    override fun onDateSet(view: DatePicker, year: Int, month: Int, dayOfMonth: Int) {
-        handleDateChangedFromWidget(year, month, dayOfMonth)
-    }
-
-    override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
+    private fun handleTimeChangedFromWidget(hourOfDay: Int, minute: Int) {
         val cal = buildInitialCalendar()
         cal.set(Calendar.HOUR_OF_DAY, hourOfDay)
         cal.set(Calendar.MINUTE, minute)
@@ -667,9 +761,17 @@ class DatePickerView(
         cal.set(Calendar.MILLISECOND, 0)
 
         val ms = cal.timeInMillis
-        dateMs = ms
         lastEmittedMs = ms
+        dateMs = ms
         sendConfirmEvent(ms.toDouble())
+    }
+
+    override fun onDateSet(view: DatePicker, year: Int, month: Int, dayOfMonth: Int) {
+        handleDateChangedFromWidget(year, month, dayOfMonth)
+    }
+
+    override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
+        handleTimeChangedFromWidget(hourOfDay, minute)
     }
 
     // ------------------------------------------------------------------------
@@ -700,6 +802,7 @@ class DatePickerView(
         alpha = if (enabled) 1.0f else 0.4f
         isClickable = enabled
         isFocusable = enabled
-        inlinePicker?.isEnabled = enabled
+        inlineDatePicker?.isEnabled = enabled
+        inlineTimePicker?.isEnabled = enabled
     }
 }

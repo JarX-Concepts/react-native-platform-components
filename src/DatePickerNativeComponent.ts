@@ -44,6 +44,15 @@ export type AndroidProps = {
 
   /** Use Material 3 */
   useMaterial3?: boolean;
+
+  /** Title of the dialog. */
+  dialogTitle?: string;
+
+  /** Title of the positive button. */
+  positiveButtonTitle?: string;
+
+  /** Title of the negative button. */
+  negativeButtonTitle?: string;
 };
 
 export type WebProps = {
