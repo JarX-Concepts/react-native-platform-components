@@ -44,11 +44,6 @@ export type DatePickerProps = Omit<
   };
 };
 
-const IOS_INLINE_HEIGHTS: Record<IOSDatePickerStyle, number> = {
-  calendar: 320,
-  wheels: 216,
-};
-
 export function DatePicker(props: DatePickerProps) {
   const {
     onConfirm,
@@ -71,16 +66,7 @@ export function DatePicker(props: DatePickerProps) {
 
   const handleCancel = React.useCallback(() => onCancel?.(), [onCancel]);
 
-  const height = useMemo(() => {
-    if (modal === false) {
-      return rest.ios?.preferredStyle === 'wheels'
-        ? IOS_INLINE_HEIGHTS.wheels
-        : IOS_INLINE_HEIGHTS.calendar;
-    }
-    return undefined;
-  }, [modal, rest.ios?.preferredStyle]);
-
-  const styles = useMemo(() => createStyles(height), [height]);
+  const styles = useMemo(() => createStyles(), []);
 
   return (
     <NativeDatePicker
@@ -97,7 +83,7 @@ export function DatePicker(props: DatePickerProps) {
   );
 }
 
-function createStyles(_height?: number) {
+function createStyles() {
   const styles = StyleSheet.create({
     picker: {},
   });

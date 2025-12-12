@@ -16,9 +16,6 @@ export type DateChangeEvent = {
 };
 
 export type IOSProps = {
-  /** UIDatePicker.mode */
-  mode?: string; //IOSDatePickerMode;
-
   /** UIDatePicker.preferredDatePickerStyle */
   preferredStyle?: string; //IOSDatePickerStyle;
 
@@ -44,6 +41,9 @@ export type AndroidProps = {
    * If not set, use system default.
    */
   firstDayOfWeek?: CodegenTypes.Int32;
+
+  /** Use Material 3 */
+  useMaterial3?: boolean;
 };
 
 export type WebProps = {
@@ -65,6 +65,9 @@ export type MacOSProps = {};
  *   - `-1` for TimestampMs means "no date / unbounded".
  */
 export type CommonProps = {
+  /** UIDatePicker.mode */
+  mode?: string; //IOSDatePickerMode (only 'date' | 'time' for Android);
+
   /**
    * Controlled value.
    *

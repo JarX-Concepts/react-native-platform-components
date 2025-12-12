@@ -154,22 +154,22 @@ using namespace facebook::react;
       _datePickerView.timeZoneName = nil;
     }
   }
-
-  // --- iOS-specific nested props ---
-  const auto &oldIos = oldViewProps.ios;
-  const auto &newIos = newViewProps.ios;
-
+  
   // mode: "date" | "time" | "dateAndTime" | "countDownTimer"
-  if (oldIos.mode != newIos.mode) {
-    if (!newIos.mode.empty()) {
+  if (oldViewProps.mode != newViewProps.mode) {
+    if (!newViewProps.mode.empty()) {
       _datePickerView.mode =
-          [NSString stringWithUTF8String:newIos.mode.c_str()];
+          [NSString stringWithUTF8String:newViewProps.mode.c_str()];
     } else {
       _datePickerView.mode = @"date";
     }
     
     needsToUpdateMeasurements = YES;
   }
+
+  // --- iOS-specific nested props ---
+  const auto &oldIos = oldViewProps.ios;
+  const auto &newIos = newViewProps.ios;
 
   // preferredStyle: "automatic" | "wheels" | "compact" | "inline"
   if (oldIos.preferredStyle != newIos.preferredStyle) {

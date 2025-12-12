@@ -4,8 +4,8 @@ import {
   StyleSheet,
   Text,
   Switch,
-  TextInput,
   Pressable,
+  Platform,
 } from 'react-native';
 import { DatePicker } from 'react-native-platform-components';
 
@@ -18,6 +18,7 @@ export default function App() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [modal, setModal] = useState<boolean>(false);
   const [wheel, setWheel] = useState<boolean>(false);
+  const [m3, setM3] = useState<boolean>(false);
 
   console.log('Render');
 
@@ -36,10 +37,19 @@ export default function App() {
         />
       </View>
 
-      <View style={styles.row}>
-        <Text>Wheel Mode: </Text>
-        <Switch value={wheel} onValueChange={setWheel} />
-      </View>
+      {Platform.OS === 'ios' && (
+        <View style={styles.row}>
+          <Text>Wheel Mode: </Text>
+          <Switch value={wheel} onValueChange={setWheel} />
+        </View>
+      )}
+
+      {Platform.OS === 'android' && (
+        <View style={styles.row}>
+          <Text>Material 3: </Text>
+          <Switch value={m3} onValueChange={setM3} />
+        </View>
+      )}
 
       {modal && (
         <Pressable
@@ -49,13 +59,9 @@ export default function App() {
             }
           }}
         >
-          <TextInput
-            style={styles.input}
-            value={printPrettyDate(date)}
-            editable={false}
-            placeholder="Set Date"
-            onChangeText={() => {}}
-          />
+          <Text style={styles.input}>
+            Selected Date: {printPrettyDate(date)}
+          </Text>
         </Pressable>
       )}
 
@@ -65,7 +71,9 @@ export default function App() {
           visible={open}
           modal={modal}
           date={date}
-          ios={{ mode: 'date', preferredStyle: wheel ? 'wheels' : 'calendar' }}
+          mode={'time'}
+          ios={{ preferredStyle: wheel ? 'wheels' : 'calendar' }}
+          android={{ useMaterial3: m3 }}
           onCancel={() => {
             console.log('cancel');
             setOpen(false);
@@ -107,6 +115,9 @@ const styles = StyleSheet.create({
   },
   box: {
     alignSelf: 'center',
+
+    width: 400,
+    height: 500,
   },
   input: {
     height: 40,

@@ -26,6 +26,10 @@ class DatePickerViewManager(
 
     // --- Props from codegen --------------------------------------------------
 
+    override fun setMode(view: DatePickerView, value: String?) {
+        view.setMode(value)
+    }
+
     override fun setPresentation(view: DatePickerView, value: String?) {
         view.setPresentation(value)
     }
@@ -42,7 +46,6 @@ class DatePickerViewManager(
         view.setTimeZone(value)
     }
 
-    // Sentinel -1 from JS means "unset" / "no value" (matches iOS bridge).
     override fun setDateMs(view: DatePickerView, value: Double) {
         val v: Double? = if (value >= 0.0) value else null
         view.setDateMs(v)
@@ -62,12 +65,9 @@ class DatePickerViewManager(
         view.setAndroidConfig(value)
     }
 
-    // Required by the interface but not used on Android.
+    // Unused platform-specific props on Android
     override fun setIos(view: DatePickerView, value: ReadableMap?) { /* no-op */ }
-
     override fun setWeb(view: DatePickerView, value: ReadableMap?) { /* no-op */ }
-
     override fun setWindows(view: DatePickerView, value: ReadableMap?) { /* no-op */ }
-
     override fun setMacos(view: DatePickerView, value: ReadableMap?) { /* no-op */ }
 }
