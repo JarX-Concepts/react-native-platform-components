@@ -25,7 +25,6 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <SelectionMenuTest />
       <Text style={styles.header}>Demo App</Text>
 
       <View style={styles.row}>
@@ -52,6 +51,8 @@ export default function App() {
           <Switch value={m3} onValueChange={setM3} />
         </View>
       )}
+
+      <SelectionMenuTest />
 
       {modal && (
         <Pressable

@@ -12,40 +12,32 @@ export type SelectionMenuSelectEvent = {
   value: string;
 };
 
-/**
- * iOS-specific configuration.
- * (Keep this extensible; we can add popover arrow directions, search, etc.)
- */
-export type IOSProps = {
-  /**
-   * Presentation hint for iOS.
-   * - "auto" (default): iPad popover, iPhone sheet
-   * - "popover"
-   * - "sheet"
-   */
-  presentation?: string;
-
-  inlineMode?: boolean; // ✅ when true, iOS renders its own anchor UI
-};
+export type SelectionMenuVisible = 'open' | 'closed';
 
 /**
- * Android-specific configuration.
- * (Placeholder for future Material3 behavior: exposed dropdown menu vs dialog, etc.)
+ * Presentation hint for headless mode (inlineMode === false).
+ *
+ * - "auto": platform default (recommended)
+ * - "popover": iOS popover (iPad-style) / Android dialog-like
+ * - "sheet": iOS sheet / Android bottom-sheet-like
+ *
+ * Note: this is a best-effort hint; platforms may adapt.
  */
-export type AndroidProps = {
-  /**
-   * Presentation hint for Android.
-   * - "auto" (default)
-   * - "dropdown"
-   * - "dialog"
-   */
-  presentation?: string;
-};
+export type SelectionMenuPresentation = 'auto' | 'popover' | 'sheet';
+
+/**
+ * iOS-specific configuration (reserved for future extension).
+ */
+export type IOSProps = {};
+
+/**
+ * Android-specific configuration (reserved for future extension).
+ */
+export type AndroidProps = {};
 
 export interface SelectionMenuProps extends ViewProps {
   /**
    * The options displayed by the menu.
-   * For a US state selector, pass the 50 state names.
    */
   options: ReadonlyArray<string>;
 
@@ -66,11 +58,28 @@ export interface SelectionMenuProps extends ViewProps {
   placeholder?: string;
 
   /**
-   * Controlled presentation:
-   * - "open": show the menu UI (popover/sheet/dropdown depending on platform)
-   * - "closed": dismiss it
+   * If true, native renders its own interactive inline anchor UI and manages
+   * opening/closing internally (platform-native).
+   *
+   * If false (default), the component is "headless" and is controlled by `visible`.
    */
-  visible?: string;
+  inlineMode?: boolean;
+
+  /**
+   * Controlled presentation for headless mode (inlineMode === false):
+   * - "open": show the menu UI (popover/sheet/dialog depending on platform)
+   * - "closed": dismiss it
+   *
+   * Note: when inlineMode === true, implementations should ignore this.
+   */
+  visible?: string; //SelectionMenuVisible;
+
+  /**
+   * Presentation hint for headless mode (inlineMode === false).
+   *
+   * Note: when inlineMode === true, implementations should ignore this.
+   */
+  presentation?: string; //SelectionMenuPresentation;
 
   /**
    * Called when the user selects an option.

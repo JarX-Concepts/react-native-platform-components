@@ -93,8 +93,8 @@ export function SelectionMenuTest(): React.JSX.Element {
         selectedIndex={selectedIndex}
         visible={open ? 'open' : 'closed'}
         placeholder="Select a state"
-        ios={{ presentation: 'popover' }}
-        onSelect={(index) => {
+        presentation="popover"
+        onSelect={(index, _value) => {
           setSelectedIndex(index);
           setOpen(false);
         }}

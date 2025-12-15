@@ -1,5 +1,5 @@
-import UIKit
 import SwiftUI
+import UIKit
 
 // MARK: - SwiftUI inline picker model (file-scoped so SwiftUI can see it)
 
@@ -42,7 +42,7 @@ private struct SelectionMenuInlinePickerView: View {
                 Text(model.options[i]).tag(i)
             }
         }
-        .pickerStyle(.menu) // ✅ system popup menu style
+        .pickerStyle(.menu)  // ✅ system popup menu style
         .disabled(model.disabled || !model.hasOptions)
     }
 }
@@ -51,8 +51,9 @@ private struct SelectionMenuInlinePickerView: View {
 
 @objcMembers
 public final class SelectionMenuView: UIControl,
-                                      UIPopoverPresentationControllerDelegate,
-                                      UIAdaptivePresentationControllerDelegate {
+    UIPopoverPresentationControllerDelegate,
+    UIAdaptivePresentationControllerDelegate
+{
 
     // MARK: - Props (set from ObjC++)
 
@@ -205,8 +206,8 @@ public final class SelectionMenuView: UIControl,
     // MARK: - Headless presentation (non-inline)
 
     private func updatePresentation() {
-        guard !inlineMode else { return }     // inline ignores visible
-        guard !disabled else { return }       // disabled => don't present
+        guard !inlineMode else { return }  // inline ignores visible
+        guard !disabled else { return }  // disabled => don't present
 
         if visible == "open" {
             presentIfNeeded()
@@ -249,7 +250,8 @@ public final class SelectionMenuView: UIControl,
 
                 // ✅ Invisible anchor (top-center of the presenting VC)
                 pop.sourceView = top.view
-                pop.sourceRect = invisibleAnchorRect(in: top.view)
+                let rectInTopView = self.convert(self.bounds, to: top.view)
+                pop.sourceRect = rectInTopView
 
                 pop.permittedArrowDirections = [.up, .down]
                 pop.backgroundColor = list.view.backgroundColor
@@ -284,7 +286,7 @@ public final class SelectionMenuView: UIControl,
             return .popover
         case "sheet":
             return .pageSheet
-        default: // "auto"
+        default:  // "auto"
             return isPad ? .popover : .pageSheet
         }
     }
@@ -308,7 +310,8 @@ public final class SelectionMenuView: UIControl,
         onRequestClose?()
     }
 
-    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController)
+    {
         presentedVC = nil
         onRequestClose?()
     }
@@ -393,10 +396,12 @@ private final class SelectionMenuListViewController: UITableViewController {
         options.count
     }
 
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
+        -> UITableViewCell
+    {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         cell.textLabel?.text = options[indexPath.row]
-        cell.accessoryType = .none // no checkmark UI
+        cell.accessoryType = .none  // no checkmark UI
         return cell
     }
 

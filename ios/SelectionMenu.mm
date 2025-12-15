@@ -32,42 +32,36 @@ using namespace facebook::react;
 
     _view.onSelect = ^(NSInteger index, NSString *value) {
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf) {
+      if (!strongSelf)
         return;
-      }
 
       auto eventEmitter =
           std::static_pointer_cast<const SelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
-      if (!eventEmitter) {
+      if (!eventEmitter)
         return;
-      }
 
       SelectionMenuEventEmitter::OnSelect payload = {
           .index = (int)index,
           .value = value.UTF8String,
       };
-
       eventEmitter->onSelect(payload);
     };
 
     _view.onRequestClose = ^{
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf) {
+      if (!strongSelf)
         return;
-      }
 
       auto eventEmitter =
           std::static_pointer_cast<const SelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
-      if (!eventEmitter) {
+      if (!eventEmitter)
         return;
-      }
 
       eventEmitter->onRequestClose({});
     };
   }
-
   return self;
 }
 
@@ -107,7 +101,22 @@ using namespace facebook::react;
     }
   }
 
-  // visible
+  // inlineMode (top-level, default false)
+  if (!prevProps || newProps.inlineMode != prevProps->inlineMode) {
+    _view.inlineMode = (BOOL)newProps.inlineMode;
+  }
+
+  // presentation (top-level, default "auto")
+  if (!prevProps || newProps.presentation != prevProps->presentation) {
+    if (!newProps.presentation.empty()) {
+      _view.presentation =
+          [NSString stringWithUTF8String:newProps.presentation.c_str()];
+    } else {
+      _view.presentation = @"auto";
+    }
+  }
+
+  // visible (top-level, default "closed")
   if (!prevProps || newProps.visible != prevProps->visible) {
     if (!newProps.visible.empty()) {
       _view.visible = [NSString stringWithUTF8String:newProps.visible.c_str()];
@@ -116,21 +125,7 @@ using namespace facebook::react;
     }
   }
 
-  // ios.presentation
-  if (!prevProps || newProps.ios.presentation != prevProps->ios.presentation) {
-    if (!newProps.ios.presentation.empty()) {
-      _view.presentation =
-          [NSString stringWithUTF8String:newProps.ios.presentation.c_str()];
-    } else {
-      _view.presentation = @"auto";
-    }
-  }
-  
-  // ios.inlineMode
-  //if (!prevProps || newProps.ios.inlineMode != prevProps->ios.inlineMode) {
-    _view.inlineMode = false;
-  //}
-
   [super updateProps:props oldProps:oldProps];
 }
+
 @end
