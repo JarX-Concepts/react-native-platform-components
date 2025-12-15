@@ -112,10 +112,14 @@
   },
   "codegenConfig": {
     "name": "PlatformComponentsViewSpec",
-    "type": "all",
+    "type": "components",
     "jsSrcsDir": "src",
     "android": {
       "javaPackageName": "com.platformcomponents"
+    },
+    "componentProvider": {
+      "SelectionMenu": "SelectionMenu",
+      "DatePicker": "DatePicker"
     },
     "ios": {
       "componentProvider": {
