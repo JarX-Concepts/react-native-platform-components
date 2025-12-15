@@ -119,7 +119,7 @@
     },
     "ios": {
       "componentProvider": {
-        "PlatformComponentsView": "PlatformComponentsView",
+        "SelectionMenu": "SelectionMenu",
         "DatePicker": "DatePicker"
       }
     }

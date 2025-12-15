@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { DatePicker } from 'react-native-platform-components';
+import SelectionMenuTest from './SelectionMenuTest';
 
 const printPrettyDate = (date?: Date | null) => {
   return date?.toISOString().split('T')[0];
@@ -24,6 +25,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      <SelectionMenuTest />
       <Text style={styles.header}>Demo App</Text>
 
       <View style={styles.row}>
@@ -75,9 +77,9 @@ export default function App() {
           ios={{ preferredStyle: wheel ? 'wheels' : 'calendar' }}
           android={{
             useMaterial3: m3,
-            dialogTitle: 'Hello',
-            positiveButtonTitle: 'Yes',
-            negativeButtonTitle: 'No',
+            dialogTitle: 'Custom Title',
+            positiveButtonTitle: 'Custom OK',
+            negativeButtonTitle: 'Custom Cancel',
           }}
           onCancel={() => {
             console.log('cancel');
