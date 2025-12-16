@@ -9,16 +9,16 @@
 #include <react/renderer/core/ShadowNodeTraits.h>
 #include <react/renderer/mounting/ShadowView.h>
 
-#include "DatePickerState.h"
+#include "PCDatePickerState-custom.h"
 
 namespace facebook::react
 {
-    class MeasuringDatePickerShadowNode final
+    class MeasuringPCDatePickerShadowNode final
         : public ConcreteViewShadowNode<
-              DatePickerComponentName,
-              DatePickerProps,
-              DatePickerEventEmitter,
-              DatePickerStateFrameSize>
+              PCDatePickerComponentName,
+              PCDatePickerProps,
+              PCDatePickerEventEmitter,
+              PCDatePickerStateFrameSize>
     {
     public:
         using ConcreteViewShadowNode::ConcreteViewShadowNode;

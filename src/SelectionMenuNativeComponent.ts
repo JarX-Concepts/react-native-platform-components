@@ -96,4 +96,4 @@ export interface SelectionMenuProps extends ViewProps {
   android?: AndroidProps;
 }
 
-export default codegenNativeComponent<SelectionMenuProps>('SelectionMenu');
+export default codegenNativeComponent<SelectionMenuProps>('PCSelectionMenu');

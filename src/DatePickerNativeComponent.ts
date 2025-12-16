@@ -131,4 +131,4 @@ export interface NativeProps extends ViewProps, CommonProps {
   onCancel?: CodegenTypes.BubblingEventHandler<Readonly<{}>> | null;
 }
 
-export default codegenNativeComponent<NativeProps>('DatePicker');
+export default codegenNativeComponent<NativeProps>('PCDatePicker');

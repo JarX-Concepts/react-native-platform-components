@@ -1,6 +1,6 @@
 // ios/DatePicker.mm
 
-#import "DatePicker.h"
+#import "PCDatePicker.h"
 
 #import <React/RCTConversions.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
@@ -9,53 +9,58 @@
 #import <react/renderer/components/PlatformComponentsViewSpec/RCTComponentViewHelpers.h>
 #import <react/renderer/core/LayoutPrimitives.h>
 
-#import "DatePickerShadowNode.h"
-#import "DatePickerState.h"
-#import "DatePickerComponentDescriptors.h"
+#if __has_include(<PlatformComponents/PlatformComponents-Swift.h>)
+#import <PlatformComponents/PlatformComponents-Swift.h>
+#else
 #import "PlatformComponents-Swift.h"
+#endif
+
+#import "PCDatePickerComponentDescriptors-custom.h"
+#import "PCDatePickerShadowNode-custom.h"
+#import "PCDatePickerState-custom.h"
 #import "RCTFabricComponentsPlugins.h"
 
 using namespace facebook::react;
 
-@interface DatePicker () <RCTDatePickerViewProtocol>
+@interface PCDatePicker () <RCTPCDatePickerViewProtocol>
 @end
 
-@implementation DatePicker {
-  DatePickerView *_datePickerView;
-  MeasuringDatePickerShadowNode::ConcreteState::Shared _state;
+@implementation PCDatePicker {
+  PCDatePickerView *_datePickerView;
+  MeasuringPCDatePickerShadowNode::ConcreteState::Shared _state;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-      MeasuringDatePickerComponentDescriptor>();
+      MeasuringPCDatePickerComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
-    _datePickerView = [DatePickerView new];
+    _datePickerView = [PCDatePickerView new];
     _datePickerView.translatesAutoresizingMaskIntoConstraints = NO;
 
-    __weak DatePicker *weakSelf = self;
+    __weak PCDatePicker *weakSelf = self;
     _datePickerView.onChangeHandler = ^(NSNumber *ms) {
-      DatePicker *strongSelf = weakSelf;
+      PCDatePicker *strongSelf = weakSelf;
       if (!strongSelf) {
         return;
       }
 
       // Build the OnConfirm payload the emitter expects
-      DatePickerEventEmitter::OnConfirm event{};
+      PCDatePickerEventEmitter::OnConfirm event{};
       event.timestampMs = ms.doubleValue;
 
       strongSelf.eventEmitterTyped.onConfirm(event);
     };
 
     _datePickerView.onCancelHandler = ^{
-      DatePicker *strongSelf = weakSelf;
+      PCDatePicker *strongSelf = weakSelf;
       if (!strongSelf) {
         return;
       }
 
-      DatePickerEventEmitter::OnCancel event{};
+      PCDatePickerEventEmitter::OnCancel event{};
       strongSelf.eventEmitterTyped.onCancel(event);
     };
 
@@ -86,9 +91,9 @@ using namespace facebook::react;
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps =
-      *std::static_pointer_cast<DatePickerProps const>(_props);
+      *std::static_pointer_cast<PCDatePickerProps const>(_props);
   const auto &newViewProps =
-      *std::static_pointer_cast<DatePickerProps const>(props);
+      *std::static_pointer_cast<PCDatePickerProps const>(props);
 
   BOOL needsToUpdateMeasurements = NO;
 
@@ -154,7 +159,7 @@ using namespace facebook::react;
       _datePickerView.timeZoneName = nil;
     }
   }
-  
+
   // mode: "date" | "time" | "dateAndTime" | "countDownTimer"
   if (oldViewProps.mode != newViewProps.mode) {
     if (!newViewProps.mode.empty()) {
@@ -163,7 +168,7 @@ using namespace facebook::react;
     } else {
       _datePickerView.mode = @"date";
     }
-    
+
     needsToUpdateMeasurements = YES;
   }
 
@@ -179,7 +184,7 @@ using namespace facebook::react;
     } else {
       _datePickerView.preferredStyle = nil;
     }
-    
+
     needsToUpdateMeasurements = YES;
   }
 
@@ -219,10 +224,8 @@ using namespace facebook::react;
 
 - (void)updateState:(const facebook::react::State::Shared &)state
            oldState:(const facebook::react::State::Shared &)oldState {
-  _state =
-      std::static_pointer_cast<
-          const MeasuringDatePickerShadowNode::ConcreteState
-      >(state);
+  _state = std::static_pointer_cast<
+      const MeasuringPCDatePickerShadowNode::ConcreteState>(state);
 
   if (oldState == nullptr) {
     // First time: compute initial size.
@@ -248,7 +251,7 @@ using namespace facebook::react;
     return;
   }
 
-  DatePickerStateFrameSize newState;
+  PCDatePickerStateFrameSize newState;
   newState.frameSize = {
       static_cast<Float>(size.width),
       static_cast<Float>(size.height),
@@ -258,13 +261,13 @@ using namespace facebook::react;
 }
 
 // Strongly-typed event emitter helper
-- (const DatePickerEventEmitter &)eventEmitterTyped {
-  return static_cast<const DatePickerEventEmitter &>(*_eventEmitter);
+- (const PCDatePickerEventEmitter &)eventEmitterTyped {
+  return static_cast<const PCDatePickerEventEmitter &>(*_eventEmitter);
 }
 
 @end
 
 // Factory hook for Fabric
-Class<RCTComponentViewProtocol> RCTDatePickerCls(void) {
-  return DatePicker.class;
+Class<RCTComponentViewProtocol> RCTPCDatePickerCls(void) {
+  return PCDatePicker.class;
 }

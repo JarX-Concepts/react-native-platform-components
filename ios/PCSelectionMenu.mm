@@ -1,6 +1,6 @@
 // SelectionMenu.mm
 
-#import "SelectionMenu.h"
+#import "PCSelectionMenu.h"
 
 #import <React/RCTComponentViewFactory.h>
 #import <React/RCTConversions.h>
@@ -10,22 +10,28 @@
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
 
+#if __has_include(<PlatformComponents/PlatformComponents-Swift.h>)
+#import <PlatformComponents/PlatformComponents-Swift.h>
+#else
 #import "PlatformComponents-Swift.h"
+#endif
+
+#import "PCSelectionMenuComponentDescriptors-custom.h"
 
 using namespace facebook::react;
 
-@implementation SelectionMenu {
-  SelectionMenuView *_view;
+@implementation PCSelectionMenu {
+  PCSelectionMenuView *_view;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-      SelectionMenuComponentDescriptor>();
+    MeasuringPCDatePickerComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
-    _view = [SelectionMenuView new];
+    _view = [PCSelectionMenuView new];
     self.contentView = _view;
 
     __weak __typeof(self) weakSelf = self;
@@ -36,12 +42,12 @@ using namespace facebook::react;
         return;
 
       auto eventEmitter =
-          std::static_pointer_cast<const SelectionMenuEventEmitter>(
+          std::static_pointer_cast<const PCSelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
       if (!eventEmitter)
         return;
 
-      SelectionMenuEventEmitter::OnSelect payload = {
+      PCSelectionMenuEventEmitter::OnSelect payload = {
           .index = (int)index,
           .value = value.UTF8String,
       };
@@ -54,7 +60,7 @@ using namespace facebook::react;
         return;
 
       auto eventEmitter =
-          std::static_pointer_cast<const SelectionMenuEventEmitter>(
+          std::static_pointer_cast<const PCSelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
       if (!eventEmitter)
         return;
@@ -68,9 +74,9 @@ using namespace facebook::react;
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &newProps =
-      *std::static_pointer_cast<const SelectionMenuProps>(props);
+      *std::static_pointer_cast<const PCSelectionMenuProps>(props);
   const auto prevProps =
-      std::static_pointer_cast<const SelectionMenuProps>(oldProps);
+      std::static_pointer_cast<const PCSelectionMenuProps>(oldProps);
 
   // options
   if (!prevProps || newProps.options != prevProps->options) {

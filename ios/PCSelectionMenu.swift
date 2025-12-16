@@ -3,7 +3,7 @@ import UIKit
 
 // MARK: - SwiftUI inline picker model (file-scoped so SwiftUI can see it)
 
-final class SelectionMenuModel: ObservableObject {
+final class PCSelectionMenuModel: ObservableObject {
     @Published var options: [String] = []
     @Published var selectedIndex: Int = -1
     @Published var placeholder: String = "Select"
@@ -26,8 +26,9 @@ final class SelectionMenuModel: ObservableObject {
 
 // MARK: - SwiftUI inline picker (system anchor + system popup)
 
-private struct SelectionMenuInlinePickerView: View {
-    @ObservedObject var model: SelectionMenuModel
+/*
+private struct PCSelectionMenuInlinePickerView: View {
+    @ObservedObject var model: PCSelectionMenuModel
     let onSelectIndex: (Int) -> Void
 
     var body: some View {
@@ -45,12 +46,41 @@ private struct SelectionMenuInlinePickerView: View {
         .pickerStyle(.menu)  // ✅ system popup menu style
         .disabled(model.disabled || !model.hasOptions)
     }
+}*/
+
+private struct PCSelectionMenuInlinePickerView: View {
+    @ObservedObject var model: PCSelectionMenuModel
+    let onSelectIndex: (Int) -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(Array(model.options.enumerated()), id: \.offset) { i, title in
+                Button(title) { onSelectIndex(i) }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text(model.displayTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .imageScale(.small)
+                    .opacity(0.7)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .padding(.vertical, 10)     // gives you a nice ~44pt-ish hit target
+        }
+        .disabled(model.disabled || !model.hasOptions)
+    }
 }
 
 // MARK: - Main view
 
 @objcMembers
-public final class SelectionMenuView: UIControl,
+public final class PCSelectionMenuView: UIControl,
     UIPopoverPresentationControllerDelegate,
     UIAdaptivePresentationControllerDelegate
 {
@@ -90,8 +120,8 @@ public final class SelectionMenuView: UIControl,
     private weak var presentedVC: UIViewController?
 
     // Inline SwiftUI hosting
-    private let model = SelectionMenuModel()
-    private var hostingController: UIHostingController<SelectionMenuInlinePickerView>?
+    private let model = PCSelectionMenuModel()
+    private var hostingController: UIHostingController<PCSelectionMenuInlinePickerView>?
 
     // MARK: - Init
 
@@ -138,7 +168,6 @@ public final class SelectionMenuView: UIControl,
     }
 
     private func sync() {
-        // Update SwiftUI model (inline mode only)
         model.options = options
         model.selectedIndex = selectedIndex
         model.placeholder = placeholder ?? "Select"
@@ -147,10 +176,13 @@ public final class SelectionMenuView: UIControl,
         if inlineMode {
             hostingController?.rootView = makeInlineRootView()
         }
+
+        invalidateIntrinsicContentSize()
+        setNeedsLayout()
     }
 
-    private func makeInlineRootView() -> SelectionMenuInlinePickerView {
-        SelectionMenuInlinePickerView(
+    private func makeInlineRootView() -> PCSelectionMenuInlinePickerView {
+        PCSelectionMenuInlinePickerView(
             model: model,
             onSelectIndex: { [weak self] (idx: Int) in
                 guard let self else { return }
@@ -220,7 +252,7 @@ public final class SelectionMenuView: UIControl,
         guard presentedVC == nil else { return }
         guard let top = topViewController() else { return }
 
-        let list = SelectionMenuListViewController(
+        let list = PCSelectionMenuListViewController(
             titleText: placeholder ?? "Select",
             options: options,
             onSelect: { [weak self] (idx: Int) in
@@ -350,11 +382,31 @@ public final class SelectionMenuView: UIControl,
         }
         return top
     }
+
+    public override func sizeThatFits(_ size: CGSize) -> CGSize {
+        // RN may ask with width/height = 0 during measurement.
+        let minH: CGFloat = 44
+
+        guard inlineMode, let host = hostingController else {
+            return CGSize(width: size.width, height: minH)
+        }
+
+        let w = (size.width > 1) ? size.width : 320 // fallback width for measurement
+        let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
+
+        return CGSize(width: size.width, height: max(minH, fitted.height))
+    }
+
+    public override var intrinsicContentSize: CGSize {
+        // Gives RN a default “real” height even if it doesn’t measure properly.
+        let h = max(44, sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
+        return CGSize(width: UIView.noIntrinsicMetric, height: h)
+    }
 }
 
 // MARK: - List VC (used only for headless non-inline presentation)
 
-private final class SelectionMenuListViewController: UITableViewController {
+private final class PCSelectionMenuListViewController: UITableViewController {
 
     private let titleText: String
     private let options: [String]

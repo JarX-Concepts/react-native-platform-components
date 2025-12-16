@@ -7,8 +7,7 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
-import { DatePicker } from 'react-native-platform-components';
-import SelectionMenuTest from './SelectionMenuTest';
+import { DatePicker, SelectionMenu } from 'react-native-platform-components';
 
 const printPrettyDate = (date?: Date | null) => {
   return date?.toISOString().split('T')[0];
@@ -21,77 +20,91 @@ export default function App() {
   const [wheel, setWheel] = useState<boolean>(false);
   const [m3, setM3] = useState<boolean>(false);
 
-  console.log('Render');
-
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Demo App</Text>
+      <Text style={styles.header}>DatePicker Demo</Text>
 
-      <View style={styles.row}>
-        <Text>Modal Mode:</Text>
-        <Switch
-          value={modal}
-          onValueChange={(val) => {
-            setModal(val);
-            if (!val) setOpen(false);
-          }}
-        />
-      </View>
-
-      {Platform.OS === 'ios' && (
+      <View style={styles.options}>
         <View style={styles.row}>
-          <Text>Wheel Mode: </Text>
-          <Switch value={wheel} onValueChange={setWheel} />
+          <Text style={styles.label}>Modal Mode</Text>
+          <Switch
+            value={modal}
+            onValueChange={(val) => {
+              setModal(val);
+              if (!val) setOpen(false);
+            }}
+          />
         </View>
-      )}
 
-      {Platform.OS === 'android' && (
-        <View style={styles.row}>
-          <Text>Material 3: </Text>
-          <Switch value={m3} onValueChange={setM3} />
+        <View style={styles.divider} />
+
+        {Platform.OS === 'ios' && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Mode</Text>
+
+            <SelectionMenu
+              style={styles.smenu}
+              options={['Wheels', 'Calendar']}
+              selectedIndex={wheel ? 0 : 1}
+              inlineMode={true}
+              placeholder="Date Picker Style"
+              onSelect={(index, _value) => {
+                setWheel(index === 0);
+              }}
+            />
+          </View>
+        )}
+
+        {Platform.OS === 'android' && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Material 3: </Text>
+            <Switch value={m3} onValueChange={setM3} />
+          </View>
+        )}
+
+        <View style={styles.divider} />
+
+        {modal && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Date</Text>
+            <Pressable
+              style={styles.input}
+              onPress={() => {
+                if (modal) {
+                  setOpen((prev) => !prev);
+                }
+              }}
+            >
+              <Text style={styles.dateLabel}>{printPrettyDate(date)}</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.picker}>
+          <DatePicker
+            style={styles.box}
+            visible={open}
+            modal={modal}
+            date={date}
+            mode={'date'}
+            ios={{ preferredStyle: wheel ? 'wheels' : 'calendar' }}
+            android={{
+              useMaterial3: m3,
+              dialogTitle: 'Custom Title',
+              positiveButtonTitle: 'Custom OK',
+              negativeButtonTitle: 'Custom Cancel',
+            }}
+            onCancel={() => {
+              console.log('cancel');
+              setOpen(false);
+            }}
+            onConfirm={(newDate: Date) => {
+              console.log('confirm', newDate);
+              setDate(newDate);
+              setOpen(false);
+            }}
+          />
         </View>
-      )}
-
-      <SelectionMenuTest />
-
-      {modal && (
-        <Pressable
-          onPress={() => {
-            if (modal) {
-              setOpen((prev) => !prev);
-            }
-          }}
-        >
-          <Text style={styles.input}>
-            Selected Date: {printPrettyDate(date)}
-          </Text>
-        </Pressable>
-      )}
-
-      <View style={styles.picker}>
-        <DatePicker
-          style={styles.box}
-          visible={open}
-          modal={modal}
-          date={date}
-          mode={'date'}
-          ios={{ preferredStyle: wheel ? 'wheels' : 'calendar' }}
-          android={{
-            useMaterial3: m3,
-            dialogTitle: 'Custom Title',
-            positiveButtonTitle: 'Custom OK',
-            negativeButtonTitle: 'Custom Cancel',
-          }}
-          onCancel={() => {
-            console.log('cancel');
-            setOpen(false);
-          }}
-          onConfirm={(newDate: Date) => {
-            console.log('confirm', newDate);
-            setDate(newDate);
-            setOpen(false);
-          }}
-        />
       </View>
 
       <Text style={styles.footer}>react-native-platform-components</Text>
@@ -112,28 +125,31 @@ const styles = StyleSheet.create({
     padding: 30,
     backgroundColor: '#ecf0f1',
   },
+  options: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
   row: {
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    justifyContent: 'space-between',
+    height: 44,
+  },
+  smenu: {
+    flex: 1,
+  },
+  divider: {
+    marginHorizontal: 10,
+    borderColor: '#bdc3c7',
+    borderBottomWidth: 0.5,
   },
   button: {
     backgroundColor: 'lightgray',
   },
   box: {
     alignSelf: 'center',
-
-    width: 400,
-    height: 500,
   },
-  input: {
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: 'white',
-    padding: 10,
-    color: 'gray',
-  },
+  input: { flex: 1 },
   footer: {
     textAlign: 'center',
     marginTop: 50,
@@ -143,5 +159,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 10,
     alignSelf: 'center',
+  },
+  dateLabel: {
+    color: 'blue',
+  },
+  label: {
+    color: 'gray',
+    width: 140,
   },
 });

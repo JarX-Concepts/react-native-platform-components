@@ -4,8 +4,8 @@
 
 namespace facebook::react {
 
-struct DatePickerStateFrameSize final {
-  using Shared = std::shared_ptr<const DatePickerStateFrameSize>;
+struct PCDatePickerStateFrameSize final {
+  using Shared = std::shared_ptr<const PCDatePickerStateFrameSize>;
 
   Size frameSize{}; // {width, height} in points
 };

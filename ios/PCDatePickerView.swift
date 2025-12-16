@@ -1,11 +1,11 @@
 import UIKit
 
 @objcMembers
-public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate {
+public class PCDatePickerView: UIControl, UIPopoverPresentationControllerDelegate {
 
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
-  
+
     private lazy var tapRecognizer: UITapGestureRecognizer = {
         UITapGestureRecognizer(target: self, action: #selector(handleTap))
     }()
@@ -19,10 +19,10 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
 
     /// "inline" | "modal"
     public var presentation: String = "modal" {
-      didSet {
-          guard oldValue != presentation else { return }
-          updatePresentation()
-      }
+        didSet {
+            guard oldValue != presentation else { return }
+            updatePresentation()
+        }
     }
 
     /// Controls whether the picker is presented in a modal/popover.
@@ -84,7 +84,8 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
     public var timeZoneName: String? {
         didSet {
             if let name = timeZoneName,
-               let tz = TimeZone(identifier: name) {
+                let tz = TimeZone(identifier: name)
+            {
                 picker.timeZone = tz
             } else {
                 picker.timeZone = nil
@@ -138,12 +139,12 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
     }
 
     private func commonInit() {
-      picker.addTarget(self, action: #selector(handleValueChanged), for: .valueChanged)
-      picker.datePickerMode = .date
+        picker.addTarget(self, action: #selector(handleValueChanged), for: .valueChanged)
+        picker.datePickerMode = .date
 
-      isUserInteractionEnabled = true
+        isUserInteractionEnabled = true
 
-      updatePresentation()
+        updatePresentation()
     }
 
     // MARK: - Mode / Style
@@ -174,7 +175,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
                 picker.preferredDatePickerStyle = .compact
             case "calendar", "inline":
                 picker.preferredDatePickerStyle = .inline
-            default: // "automatic"
+            default:  // "automatic"
                 picker.preferredDatePickerStyle = .automatic
             }
         } else {
@@ -195,7 +196,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
             // Acts like a button; picker lives in the popover VC.
             removeInlinePickerIfNeeded()
             if !(gestureRecognizers?.contains(tapRecognizer) ?? false) {
-              addGestureRecognizer(tapRecognizer)
+                addGestureRecognizer(tapRecognizer)
             }
         default:
             embedInlinePicker()
@@ -231,7 +232,7 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         guard presentation == "modal" else { return }
         presentIfNeeded()
     }
-  
+
     // handleValueChanged just calls onChangeHandler, no sendActions(for:) now.
     @objc private func handleValueChanged() {
         let ms = picker.date.timeIntervalSince1970 * 1000.0
@@ -258,8 +259,8 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         ])
 
         let fittingSize = vc.view.systemLayoutSizeFitting(
-              UIView.layoutFittingCompressedSize
-          )
+            UIView.layoutFittingCompressedSize
+        )
 
         vc.modalPresentationStyle = .popover
         vc.preferredContentSize = fittingSize
@@ -308,27 +309,28 @@ public class DatePickerView: UIControl, UIPopoverPresentationControllerDelegate 
         return .none
     }
 
-    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController)
+    {
         // User dismissed the popover (tap outside, swipe, etc.)
         onCancelHandler?()
         modalVC = nil
     }
-  
+
     public func sizeForLayout(constrainedTo size: CGSize) -> CGSize {
         // Only inline needs height; modal can be “zero height button”
         if presentation == "inline" {
             // Ask the UIDatePicker how tall it wants to be
             let fitted = picker.sizeThatFits(
-                CGSize(width: size.width > 0 ? size.width : UIView.noIntrinsicMetric,
-                       height: UIView.layoutFittingCompressedSize.height)
+                CGSize(
+                    width: size.width > 0 ? size.width : UIView.noIntrinsicMetric,
+                    height: UIView.layoutFittingCompressedSize.height)
             )
             return CGSize(width: fitted.width, height: fitted.height)
         } else {
             return CGSize(width: 0, height: 0)
         }
     }
-    
-  
+
     public override func layoutSubviews() {
         super.layoutSubviews()
 

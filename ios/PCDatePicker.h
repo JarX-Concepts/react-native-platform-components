@@ -5,7 +5,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface DatePicker : RCTViewComponentView
+@interface PCDatePicker : RCTViewComponentView
 @end
 
 NS_ASSUME_NONNULL_END

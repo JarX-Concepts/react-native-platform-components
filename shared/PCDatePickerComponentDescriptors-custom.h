@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DatePickerShadowNode.h"
+#include "PCDatePickerShadowNode-custom.h"
 
 #include <react/renderer/core/ConcreteComponentDescriptor.h>
 #include <react/renderer/mounting/ShadowView.h>
@@ -13,8 +13,8 @@
 namespace facebook::react
 {
 
-    class MeasuringDatePickerComponentDescriptor final
-        : public ConcreteComponentDescriptor<MeasuringDatePickerShadowNode>
+    class MeasuringPCDatePickerComponentDescriptor final
+        : public ConcreteComponentDescriptor<MeasuringPCDatePickerShadowNode>
     {
     public:
         using ConcreteComponentDescriptor::ConcreteComponentDescriptor;
@@ -22,13 +22,13 @@ namespace facebook::react
         void adopt(ShadowNode &shadowNode) const override
         {
             auto &pickerShadowNode =
-                static_cast<MeasuringDatePickerShadowNode &>(shadowNode);
+                static_cast<MeasuringPCDatePickerShadowNode &>(shadowNode);
             auto &layoutableShadowNode =
                 static_cast<YogaLayoutableShadowNode &>(pickerShadowNode);
 
             auto state =
                 std::static_pointer_cast<
-                    const MeasuringDatePickerShadowNode::ConcreteState
+                    const MeasuringPCDatePickerShadowNode::ConcreteState
                 >(shadowNode.getState());
 
             if (state)
