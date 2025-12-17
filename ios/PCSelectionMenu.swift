@@ -384,21 +384,24 @@ public final class PCSelectionMenuView: UIControl,
     }
 
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
-        // RN may ask with width/height = 0 during measurement.
-        let minH: CGFloat = 44
+        if !inlineMode {
+            return CGSize(width: size.width, height: 0)
+        }
 
-        guard inlineMode, let host = hostingController else {
+        let minH: CGFloat = 44
+        guard let host = hostingController else {
             return CGSize(width: size.width, height: minH)
         }
 
-        let w = (size.width > 1) ? size.width : 320 // fallback width for measurement
+        let w = (size.width > 1) ? size.width : 320
         let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
-
         return CGSize(width: size.width, height: max(minH, fitted.height))
     }
 
     public override var intrinsicContentSize: CGSize {
-        // Gives RN a default “real” height even if it doesn’t measure properly.
+        if !inlineMode {
+            return CGSize(width: UIView.noIntrinsicMetric, height: 0)
+        }
         let h = max(44, sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
         return CGSize(width: UIView.noIntrinsicMetric, height: h)
     }
@@ -432,12 +435,6 @@ private final class PCSelectionMenuListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .cancel,
-            target: self,
-            action: #selector(cancelTapped)
-        )
     }
 
     @objc private func cancelTapped() {
@@ -463,8 +460,6 @@ private final class PCSelectionMenuListViewController: UITableViewController {
     }
 
     func computePreferredSize() -> CGSize {
-        let width: CGFloat = 320
-        let rowsVisible = min(options.count, 10)
-        return CGSize(width: width, height: 44 + CGFloat(rowsVisible) * 44)
+        return CGSize(width: -1, height: CGFloat(options.count) * 44)
     }
 }

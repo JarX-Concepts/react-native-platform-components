@@ -1,6 +1,6 @@
 // SelectionMenuTest.tsx
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SelectionMenu } from 'react-native-platform-components';
 
 const US_STATES = [
@@ -56,7 +56,7 @@ const US_STATES = [
   'Wyoming',
 ] as const;
 
-export function SelectionMenuTest(): React.JSX.Element {
+export function SelectionMenuDemo(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
 
@@ -66,31 +66,18 @@ export function SelectionMenuTest(): React.JSX.Element {
   }, [selectedIndex]);
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>SelectionMenu Test</Text>
-
+    <>
       <View style={styles.row}>
-        <Text style={styles.label}>Selected:</Text>
-        <Text style={styles.value}>{selectedLabel}</Text>
+        <Text style={styles.label}>US State:</Text>
+        <Pressable style={styles.input} onPress={() => setOpen(true)}>
+          <Text style={styles.dateLabel}>{selectedLabel}</Text>
+        </Pressable>
       </View>
 
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={() => setOpen(true)}
-      >
-        <Text style={styles.buttonText}>Open menu</Text>
-      </Pressable>
-
-      <View style={{ height: 16 }} />
-
-      {/* This is the anchor view for the native popover/sheet */}
       <SelectionMenu
-        style={styles.anchor}
         options={US_STATES}
         selectedIndex={selectedIndex}
+        inlineMode={false}
         visible={open ? 'open' : 'closed'}
         placeholder="Select a state"
         presentation="popover"
@@ -100,37 +87,62 @@ export function SelectionMenuTest(): React.JSX.Element {
         }}
         onRequestClose={() => setOpen(false)}
       />
-
-      <Text style={styles.hint}>
-        iOS: tap "Open menu" or tap the field. iPad should popover-anchor to the
-        field; iPhone uses a sheet (auto).
-        {'\n'}
-        Platform: {Platform.OS}
-      </Text>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: 20, gap: 12 },
-  title: { fontSize: 22, fontWeight: '700' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  label: { fontSize: 16, opacity: 0.7 },
-  value: { fontSize: 16, fontWeight: '600' },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  container: {
+    flex: 1,
+    paddingTop: 100,
+    padding: 30,
+    backgroundColor: '#ecf0f1',
+  },
+  options: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
+  row: {
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  smenu: {
+    flex: 1,
+  },
+  divider: {
+    marginHorizontal: 10,
+    borderColor: '#bdc3c7',
+    borderBottomWidth: 0.5,
+  },
   button: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    backgroundColor: 'lightgray',
   },
-  buttonPressed: { opacity: 0.7 },
-  buttonText: { fontSize: 16, fontWeight: '600' },
-  anchor: {
-    height: 44,
-    justifyContent: 'center',
+  box: {
+    alignSelf: 'center',
   },
-  hint: { marginTop: 16, fontSize: 13, opacity: 0.7, lineHeight: 18 },
+  input: { flex: 1 },
+  footer: {
+    textAlign: 'center',
+    marginTop: 50,
+    color: 'gray',
+  },
+  picker: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignSelf: 'center',
+  },
+  dateLabel: {
+    color: 'blue',
+  },
+  label: {
+    opacity: 0.7,
+    width: 140,
+  },
 });
-
-export default SelectionMenuTest;
