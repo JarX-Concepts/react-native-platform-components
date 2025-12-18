@@ -1,5 +1,7 @@
 # react-native-platform-components
 
+> 🚧 In development — not ready for public use.
+
 High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.
 
 This library focuses on **true native behavior**, not JavaScript re-implementations — starting with:
