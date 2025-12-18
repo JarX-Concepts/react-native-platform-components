@@ -16,7 +16,12 @@ export default function App() {
       {demo === 'datePicker' && <DatePickerDemo />}
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
 
-      <Button title={'DatePicker Demo'} onPress={() => setDemo('datePicker')} />
+      <View style={styles.space}>
+        <Button
+          title={'DatePicker Demo'}
+          onPress={() => setDemo('datePicker')}
+        />
+      </View>
 
       <Button
         title={'SelectionMenu Demo'}
@@ -44,5 +49,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
     color: 'gray',
+  },
+  space: {
+    marginVertical: 20,
   },
 });

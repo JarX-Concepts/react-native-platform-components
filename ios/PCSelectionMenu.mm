@@ -1,4 +1,4 @@
-// SelectionMenu.mm
+// PCSelectionMenu.mm
 
 #import "PCSelectionMenu.h"
 
@@ -20,13 +20,26 @@
 
 using namespace facebook::react;
 
+namespace {
+static inline bool OptionsEqual(
+    const std::vector<facebook::react::PCSelectionMenuOptionsStruct> &a,
+    const std::vector<facebook::react::PCSelectionMenuOptionsStruct> &b) {
+  if (a.size() != b.size()) return false;
+  for (size_t i = 0; i < a.size(); i++) {
+    if (a[i].label != b[i].label) return false;
+    if (a[i].data != b[i].data) return false;
+  }
+  return true;
+}
+} // namespace
+
 @implementation PCSelectionMenu {
   PCSelectionMenuView *_view;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-    MeasuringPCDatePickerComponentDescriptor>();
+      MeasuringPCSelectionMenuComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -36,34 +49,32 @@ using namespace facebook::react;
 
     __weak __typeof(self) weakSelf = self;
 
-    _view.onSelect = ^(NSInteger index, NSString *value) {
+    _view.onSelect = ^(NSInteger index, NSString *label, NSString *data) {
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf)
-        return;
+      if (!strongSelf) return;
 
       auto eventEmitter =
           std::static_pointer_cast<const PCSelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
-      if (!eventEmitter)
-        return;
+      if (!eventEmitter) return;
 
       PCSelectionMenuEventEmitter::OnSelect payload = {
           .index = (int)index,
-          .value = value.UTF8String,
+          .label = label.UTF8String,
+          .data = data.UTF8String,
       };
+
       eventEmitter->onSelect(payload);
     };
 
     _view.onRequestClose = ^{
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf)
-        return;
+      if (!strongSelf) return;
 
       auto eventEmitter =
           std::static_pointer_cast<const PCSelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
-      if (!eventEmitter)
-        return;
+      if (!eventEmitter) return;
 
       eventEmitter->onRequestClose({});
     };
@@ -78,23 +89,39 @@ using namespace facebook::react;
   const auto prevProps =
       std::static_pointer_cast<const PCSelectionMenuProps>(oldProps);
 
-  // options
-  if (!prevProps || newProps.options != prevProps->options) {
-    NSMutableArray<NSString *> *arr = [NSMutableArray new];
+  // options: [{label,data}]
+  if (!prevProps || !OptionsEqual(newProps.options, prevProps->options)) {
+    NSMutableArray *arr = [NSMutableArray new];
     for (const auto &opt : newProps.options) {
-      [arr addObject:[NSString stringWithUTF8String:opt.c_str()]];
+      NSString *label = opt.label.empty()
+                            ? @""
+                            : [NSString stringWithUTF8String:opt.label.c_str()];
+      NSString *data = opt.data.empty()
+                           ? @""
+                           : [NSString stringWithUTF8String:opt.data.c_str()];
+      [arr addObject:@{@"label" : label, @"data" : data}];
     }
     _view.options = arr;
   }
 
-  // selectedIndex
-  if (!prevProps || newProps.selectedIndex != prevProps->selectedIndex) {
-    _view.selectedIndex = (NSInteger)newProps.selectedIndex;
+  // selectedData (default "")
+  if (!prevProps || newProps.selectedData != prevProps->selectedData) {
+    if (!newProps.selectedData.empty()) {
+      _view.selectedData =
+          [NSString stringWithUTF8String:newProps.selectedData.c_str()];
+    } else {
+      _view.selectedData = @""; // sentinel
+    }
   }
 
-  // disabled
-  if (!prevProps || newProps.disabled != prevProps->disabled) {
-    _view.disabled = (BOOL)newProps.disabled;
+  // interactivity: "enabled" | "disabled"
+  if (!prevProps || newProps.interactivity != prevProps->interactivity) {
+    if (!newProps.interactivity.empty()) {
+      _view.interactivity =
+          [NSString stringWithUTF8String:newProps.interactivity.c_str()];
+    } else {
+      _view.interactivity = @"enabled";
+    }
   }
 
   // placeholder
@@ -107,12 +134,17 @@ using namespace facebook::react;
     }
   }
 
-  // inlineMode (top-level, default false)
-  if (!prevProps || newProps.inlineMode != prevProps->inlineMode) {
-    _view.inlineMode = (BOOL)newProps.inlineMode;
+  // anchorMode: "inline" | "headless"
+  if (!prevProps || newProps.anchorMode != prevProps->anchorMode) {
+    if (!newProps.anchorMode.empty()) {
+      _view.anchorMode =
+          [NSString stringWithUTF8String:newProps.anchorMode.c_str()];
+    } else {
+      _view.anchorMode = @"headless";
+    }
   }
 
-  // presentation (top-level, default "auto")
+  // presentation: "auto" | "popover" | "sheet"
   if (!prevProps || newProps.presentation != prevProps->presentation) {
     if (!newProps.presentation.empty()) {
       _view.presentation =
@@ -122,12 +154,25 @@ using namespace facebook::react;
     }
   }
 
-  // visible (top-level, default "closed")
+  // visible: "open" | "closed"
   if (!prevProps || newProps.visible != prevProps->visible) {
     if (!newProps.visible.empty()) {
       _view.visible = [NSString stringWithUTF8String:newProps.visible.c_str()];
     } else {
       _view.visible = @"closed";
+    }
+  }
+
+  // android.material (plumbed through; iOS can ignore)
+  const auto &newAndroid = newProps.android;
+  const auto &oldAndroid =
+      prevProps ? prevProps->android : PCSelectionMenuAndroidStruct{};
+  if (!prevProps || newAndroid.material != oldAndroid.material) {
+    if (!newAndroid.material.empty()) {
+      _view.androidMaterial =
+          [NSString stringWithUTF8String:newAndroid.material.c_str()];
+    } else {
+      _view.androidMaterial = nil;
     }
   }
 

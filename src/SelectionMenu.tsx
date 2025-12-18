@@ -3,16 +3,24 @@ import React, { useCallback, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import NativeSelectionMenu, {
+  type SelectionMenuOption,
   type SelectionMenuSelectEvent,
-  type SelectionMenuVisible,
   type SelectionMenuPresentation,
 } from './SelectionMenuNativeComponent';
+
+import type { AndroidMaterialMode } from './sharedTypes';
 
 export type SelectionMenuProps = {
   style?: StyleProp<ViewStyle>;
 
-  options: readonly string[];
-  selectedIndex: number;
+  /** Options are label + data (payload) */
+  options: readonly SelectionMenuOption[];
+
+  /**
+   * Controlled selection by the option's `data`.
+   * Use `null` for "no selection".
+   */
+  selected: string | null;
 
   disabled?: boolean;
   placeholder?: string;
@@ -27,7 +35,7 @@ export type SelectionMenuProps = {
    * Headless mode only (inlineMode === false):
    * controls whether the native menu UI is presented.
    */
-  visible?: SelectionMenuVisible;
+  visible?: boolean;
 
   /**
    * Headless mode only (inlineMode === false):
@@ -37,9 +45,9 @@ export type SelectionMenuProps = {
 
   /**
    * Called when the user selects an option.
-   * Receives the selected index and value.
+   * Receives the selected `data` payload, plus label/index for convenience.
    */
-  onSelect?: (index: number, value: string) => void;
+  onSelect?: (data: string, label: string, index: number) => void;
 
   /**
    * Called when the user dismisses without selecting.
@@ -47,33 +55,30 @@ export type SelectionMenuProps = {
   onRequestClose?: () => void;
 
   /**
-   * Pass-through platform props (reserved for future extension).
+   * Pass-through platform props.
    */
   ios?: {};
-  android?: {};
+
+  android?: {
+    /** Material preference ("auto" | "m2" | "m3"). */
+    material?: AndroidMaterialMode;
+  };
 };
 
-function clampSelectedIndex(
-  selectedIndex: number,
-  optionsLength: number
-): number {
-  if (!Number.isFinite(selectedIndex)) return -1;
-  const i = Math.trunc(selectedIndex);
-  if (i < -1) return -1;
-  if (i >= optionsLength) return optionsLength > 0 ? optionsLength - 1 : -1;
-  return i;
+function normalizeSelectedData(selected: string | null): string {
+  return selected ?? '';
 }
 
-function normalizeVisible(
+function normalizeNativeVisible(
   inlineMode: boolean | undefined,
-  visible: SelectionMenuVisible | undefined
-): SelectionMenuVisible | undefined {
+  visible: boolean | undefined
+): 'open' | 'closed' | undefined {
   // Inline mode ignores visible; keep it undefined so native isn't spammed.
   if (inlineMode) return undefined;
-  return visible ?? 'closed';
+  return visible ? 'open' : 'closed';
 }
 
-function normalizePresentation(
+function normalizeNativePresentation(
   inlineMode: boolean | undefined,
   presentation: SelectionMenuPresentation | undefined
 ): SelectionMenuPresentation | undefined {
@@ -86,7 +91,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
     style,
     options,
-    selectedIndex,
+    selected,
     disabled,
     placeholder,
     inlineMode,
@@ -98,25 +103,25 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     android,
   } = props;
 
-  const normalizedSelectedIndex = useMemo(
-    () => clampSelectedIndex(selectedIndex, options.length),
-    [selectedIndex, options.length]
+  const selectedData = useMemo(
+    () => normalizeSelectedData(selected),
+    [selected]
   );
 
-  const normalizedVisible = useMemo(
-    () => normalizeVisible(inlineMode, visible),
+  const nativeVisible = useMemo(
+    () => normalizeNativeVisible(inlineMode, visible),
     [inlineMode, visible]
   );
 
-  const normalizedPresentation = useMemo(
-    () => normalizePresentation(inlineMode, presentation),
+  const nativePresentation = useMemo(
+    () => normalizeNativePresentation(inlineMode, presentation),
     [inlineMode, presentation]
   );
 
   const handleSelect = useCallback(
     (e: { nativeEvent: SelectionMenuSelectEvent }) => {
-      const { index, value } = e.nativeEvent;
-      onSelect?.(index, value);
+      const { index, label, data } = e.nativeEvent;
+      onSelect?.(data, label, index);
     },
     [onSelect]
   );
@@ -125,20 +130,26 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     onRequestClose?.();
   }, [onRequestClose]);
 
+  // Keep android prop stable and codegen-friendly (string unions live in native spec).
+  const nativeAndroid = useMemo(() => {
+    if (!android) return undefined;
+    return { material: android.material };
+  }, [android]);
+
   return (
     <NativeSelectionMenu
       style={style}
       options={options}
-      selectedIndex={normalizedSelectedIndex}
-      disabled={disabled}
+      selectedData={selectedData}
+      interactivity={disabled ? 'disabled' : 'enabled'}
       placeholder={placeholder}
-      inlineMode={inlineMode}
-      visible={normalizedVisible}
-      presentation={normalizedPresentation}
+      anchorMode={inlineMode ? 'inline' : 'headless'}
+      visible={nativeVisible}
+      presentation={nativePresentation}
       onSelect={onSelect ? handleSelect : undefined}
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
       ios={ios}
-      android={android}
+      android={nativeAndroid}
     />
   );
 }

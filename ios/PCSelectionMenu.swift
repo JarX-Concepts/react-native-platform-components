@@ -1,52 +1,30 @@
 import SwiftUI
 import UIKit
 
-// MARK: - SwiftUI inline picker model (file-scoped so SwiftUI can see it)
+// MARK: - Option model (bridged from ObjC++ as dictionaries)
+
+struct PCSelectionMenuOption {
+    let label: String
+    let data: String
+}
 
 final class PCSelectionMenuModel: ObservableObject {
-    @Published var options: [String] = []
-    @Published var selectedIndex: Int = -1
+    @Published var options: [PCSelectionMenuOption] = []
+    @Published var selectedData: String = ""  // sentinel = no selection
     @Published var placeholder: String = "Select"
-    @Published var disabled: Bool = false
+    @Published var interactivity: String = "enabled"  // "enabled" | "disabled"
+
+    var isDisabled: Bool { interactivity == "disabled" }
 
     var displayTitle: String {
-        if selectedIndex >= 0, selectedIndex < options.count {
-            return options[selectedIndex]
+        if let opt = options.first(where: { $0.data == selectedData }), !selectedData.isEmpty {
+            return opt.label
         }
         return placeholder
     }
 
-    var effectiveSelection: Int {
-        if selectedIndex >= 0, selectedIndex < options.count { return selectedIndex }
-        return 0
-    }
-
     var hasOptions: Bool { !options.isEmpty }
 }
-
-// MARK: - SwiftUI inline picker (system anchor + system popup)
-
-/*
-private struct PCSelectionMenuInlinePickerView: View {
-    @ObservedObject var model: PCSelectionMenuModel
-    let onSelectIndex: (Int) -> Void
-
-    var body: some View {
-        Picker(
-            model.displayTitle,
-            selection: Binding<Int>(
-                get: { model.effectiveSelection },
-                set: { (newValue: Int) in onSelectIndex(newValue) }
-            )
-        ) {
-            ForEach(0..<model.options.count, id: \.self) { (i: Int) in
-                Text(model.options[i]).tag(i)
-            }
-        }
-        .pickerStyle(.menu)  // ✅ system popup menu style
-        .disabled(model.disabled || !model.hasOptions)
-    }
-}*/
 
 private struct PCSelectionMenuInlinePickerView: View {
     @ObservedObject var model: PCSelectionMenuModel
@@ -54,8 +32,8 @@ private struct PCSelectionMenuInlinePickerView: View {
 
     var body: some View {
         Menu {
-            ForEach(Array(model.options.enumerated()), id: \.offset) { i, title in
-                Button(title) { onSelectIndex(i) }
+            ForEach(Array(model.options.enumerated()), id: \.offset) { i, opt in
+                Button(opt.label) { onSelectIndex(i) }
             }
         } label: {
             HStack(spacing: 8) {
@@ -71,26 +49,27 @@ private struct PCSelectionMenuInlinePickerView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
-            .padding(.vertical, 10)     // gives you a nice ~44pt-ish hit target
+            .padding(.vertical, 10)
         }
-        .disabled(model.disabled || !model.hasOptions)
+        .disabled(model.isDisabled || !model.hasOptions)
     }
 }
-
-// MARK: - Main view
 
 @objcMembers
 public final class PCSelectionMenuView: UIControl,
     UIPopoverPresentationControllerDelegate,
     UIAdaptivePresentationControllerDelegate
 {
-
     // MARK: - Props (set from ObjC++)
 
-    public var options: [String] = [] { didSet { sync() } }
-    public var selectedIndex: Int = -1 { didSet { sync() } }
+    /// ObjC++ sets this as an array of dictionaries: [{label,data}]
+    public var options: [Any] = [] { didSet { sync() } }
 
-    public var disabled: Bool = false {
+    /// Controlled selection by data. "" = no selection.
+    public var selectedData: String = "" { didSet { sync() } }
+
+    /// "enabled" | "disabled"
+    public var interactivity: String = "enabled" {
         didSet {
             updateEnabled()
             sync()
@@ -99,29 +78,38 @@ public final class PCSelectionMenuView: UIControl,
 
     public var placeholder: String? { didSet { sync() } }
 
-    /// "open" | "closed"
-    /// ✅ Used only when inlineMode == false (headless presenter)
+    /// "open" | "closed" (headless only)
     public var visible: String = "closed" { didSet { updatePresentation() } }
 
-    /// "auto" | "popover" | "sheet"
+    /// "auto" | "popover" | "sheet" (headless only)
     public var presentation: String = "auto" { didSet { updatePresentation() } }
 
-    /// ✅ true = inline SwiftUI Picker(.menu)
-    /// ✅ false = headless presenter controlled by `visible`
-    public var inlineMode: Bool = false { didSet { updateInlineMode() } }
+    /// "inline" | "headless"
+    public var anchorMode: String = "headless" { didSet { updateAnchorMode() } }
+
+    /// Android material preference (ignored on iOS; retained for debugging/log parity)
+    public var androidMaterial: String? = nil
 
     // MARK: - Events back to ObjC++
 
-    public var onSelect: ((Int, String) -> Void)?
+    public var onSelect: ((Int, String, String) -> Void)?  // (index,label,data)
     public var onRequestClose: (() -> Void)?
 
     // MARK: - Internal
 
     private weak var presentedVC: UIViewController?
 
-    // Inline SwiftUI hosting
     private let model = PCSelectionMenuModel()
     private var hostingController: UIHostingController<PCSelectionMenuInlinePickerView>?
+
+    private var parsedOptions: [PCSelectionMenuOption] {
+        options.compactMap { any in
+            guard let dict = any as? [String: Any] else { return nil }
+            let label = (dict["label"] as? String) ?? ""
+            let data = (dict["data"] as? String) ?? ""
+            return PCSelectionMenuOption(label: label, data: data)
+        }
+    }
 
     // MARK: - Init
 
@@ -138,42 +126,37 @@ public final class PCSelectionMenuView: UIControl,
     private func setup() {
         backgroundColor = .clear
         updateEnabled()
-        updateInlineMode()
+        updateAnchorMode()
         sync()
     }
 
     private func updateEnabled() {
+        let disabled = (interactivity == "disabled")
         alpha = disabled ? 0.5 : 1.0
         isUserInteractionEnabled = !disabled
         accessibilityTraits = disabled ? [.notEnabled] : [.button]
     }
 
-    // MARK: - Inline vs headless mode
+    // MARK: - Inline vs headless
 
-    private func updateInlineMode() {
-        if inlineMode {
-            // Inline: remove any headless presentation if currently shown.
+    private func updateAnchorMode() {
+        if anchorMode == "inline" {
             dismissIfNeeded(emitClose: false)
-
-            // Inline ignores `visible` (interactive UI)
             installInlineIfNeeded()
             sync()
         } else {
-            // Headless: remove inline SwiftUI view
             uninstallInlineIfNeeded()
-
-            // Apply current `visible`
             updatePresentation()
         }
     }
 
     private func sync() {
-        model.options = options
-        model.selectedIndex = selectedIndex
+        model.options = parsedOptions
+        model.selectedData = selectedData
         model.placeholder = placeholder ?? "Select"
-        model.disabled = disabled
+        model.interactivity = interactivity
 
-        if inlineMode {
+        if anchorMode == "inline" {
             hostingController?.rootView = makeInlineRootView()
         }
 
@@ -184,11 +167,13 @@ public final class PCSelectionMenuView: UIControl,
     private func makeInlineRootView() -> PCSelectionMenuInlinePickerView {
         PCSelectionMenuInlinePickerView(
             model: model,
-            onSelectIndex: { [weak self] (idx: Int) in
+            onSelectIndex: { [weak self] idx in
                 guard let self else { return }
-                guard idx >= 0, idx < self.options.count else { return }
-                self.selectedIndex = idx
-                self.onSelect?(idx, self.options[idx])
+                let opts = self.parsedOptions
+                guard idx >= 0, idx < opts.count else { return }
+                let opt = opts[idx]
+                self.selectedData = opt.data
+                self.onSelect?(idx, opt.label, opt.data)
             }
         )
     }
@@ -208,7 +193,6 @@ public final class PCSelectionMenuView: UIControl,
             host.view.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
 
-        // Attach to nearest VC to avoid lifecycle warnings
         if let parent = nearestViewController() {
             parent.addChild(host)
             host.didMove(toParent: parent)
@@ -235,11 +219,11 @@ public final class PCSelectionMenuView: UIControl,
         return nil
     }
 
-    // MARK: - Headless presentation (non-inline)
+    // MARK: - Headless presentation
 
     private func updatePresentation() {
-        guard !inlineMode else { return }  // inline ignores visible
-        guard !disabled else { return }  // disabled => don't present
+        guard anchorMode != "inline" else { return }
+        guard interactivity != "disabled" else { return }
 
         if visible == "open" {
             presentIfNeeded()
@@ -252,16 +236,17 @@ public final class PCSelectionMenuView: UIControl,
         guard presentedVC == nil else { return }
         guard let top = topViewController() else { return }
 
+        let opts = parsedOptions
         let list = PCSelectionMenuListViewController(
             titleText: placeholder ?? "Select",
-            options: options,
-            onSelect: { [weak self] (idx: Int) in
+            options: opts,
+            selectedData: selectedData,
+            onSelect: { [weak self] idx in
                 guard let self else { return }
-                guard idx >= 0, idx < self.options.count else { return }
-                self.selectedIndex = idx
-                self.onSelect?(idx, self.options[idx])
-
-                // Dismiss immediately for headless mode.
+                guard idx >= 0, idx < opts.count else { return }
+                let opt = opts[idx]
+                self.selectedData = opt.data
+                self.onSelect?(idx, opt.label, opt.data)
                 self.dismissIfNeeded(emitClose: true)
             },
             onCancel: { [weak self] in
@@ -270,7 +255,6 @@ public final class PCSelectionMenuView: UIControl,
         )
 
         let nav = UINavigationController(rootViewController: list)
-
         let style = resolvedModalStyle(for: top)
         nav.modalPresentationStyle = style
 
@@ -279,12 +263,9 @@ public final class PCSelectionMenuView: UIControl,
 
             if let pop = nav.popoverPresentationController {
                 pop.delegate = self
-
-                // ✅ Invisible anchor (top-center of the presenting VC)
                 pop.sourceView = top.view
                 let rectInTopView = self.convert(self.bounds, to: top.view)
                 pop.sourceRect = rectInTopView
-
                 pop.permittedArrowDirections = [.up, .down]
                 pop.backgroundColor = list.view.backgroundColor
             }
@@ -293,7 +274,6 @@ public final class PCSelectionMenuView: UIControl,
             nav.presentationController?.delegate = self
         }
 
-        // Track swipe-to-dismiss for sheets
         nav.presentationController?.delegate = self
 
         presentedVC = nav
@@ -305,9 +285,7 @@ public final class PCSelectionMenuView: UIControl,
         presentedVC = nil
         vc.dismiss(animated: true) { [weak self] in
             guard let self else { return }
-            if emitClose {
-                self.onRequestClose?()
-            }
+            if emitClose { self.onRequestClose?() }
         }
     }
 
@@ -318,26 +296,16 @@ public final class PCSelectionMenuView: UIControl,
             return .popover
         case "sheet":
             return .pageSheet
-        default:  // "auto"
+        default:
             return isPad ? .popover : .pageSheet
         }
     }
 
-    private func invisibleAnchorRect(in container: UIView) -> CGRect {
-        // Top-center, slightly below safe-area so it feels like a dropdown.
-        container.layoutIfNeeded()
-        let w = container.bounds.width
-        let topInset = container.safeAreaInsets.top
-        let y = topInset + 8
-        return CGRect(x: w * 0.5, y: y, width: 1, height: 1)
-    }
-
-    // MARK: - Dismiss callbacks (user tapped outside / swiped down)
+    // MARK: - Dismiss callbacks
 
     public func popoverPresentationControllerDidDismissPopover(
         _ popoverPresentationController: UIPopoverPresentationController
     ) {
-        // If the user dismisses the popover, notify JS to flip visible to "closed".
         presentedVC = nil
         onRequestClose?()
     }
@@ -351,7 +319,6 @@ public final class PCSelectionMenuView: UIControl,
     public func adaptivePresentationStyle(for controller: UIPresentationController)
         -> UIModalPresentationStyle
     {
-        // Keep popover as popover on iPhone if forced; otherwise UIKit may adapt.
         .none
     }
 
@@ -383,10 +350,10 @@ public final class PCSelectionMenuView: UIControl,
         return top
     }
 
+    // MARK: - sizing (inline only)
+
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
-        if !inlineMode {
-            return CGSize(width: size.width, height: 0)
-        }
+        if anchorMode != "inline" { return CGSize(width: size.width, height: 0) }
 
         let minH: CGFloat = 44
         guard let host = hostingController else {
@@ -399,31 +366,35 @@ public final class PCSelectionMenuView: UIControl,
     }
 
     public override var intrinsicContentSize: CGSize {
-        if !inlineMode {
+        if anchorMode != "inline" {
             return CGSize(width: UIView.noIntrinsicMetric, height: 0)
         }
-        let h = max(44, sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
+        let h = max(
+            44, sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
         return CGSize(width: UIView.noIntrinsicMetric, height: h)
     }
 }
 
-// MARK: - List VC (used only for headless non-inline presentation)
+// MARK: - List VC (headless)
 
 private final class PCSelectionMenuListViewController: UITableViewController {
 
     private let titleText: String
-    private let options: [String]
+    private let options: [PCSelectionMenuOption]
+    private let selectedData: String
     private let onSelectIndex: (Int) -> Void
     private let onCancel: () -> Void
 
     init(
         titleText: String,
-        options: [String],
+        options: [PCSelectionMenuOption],
+        selectedData: String,
         onSelect: @escaping (Int) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.titleText = titleText
         self.options = options
+        self.selectedData = selectedData
         self.onSelectIndex = onSelect
         self.onCancel = onCancel
         super.init(style: .insetGrouped)
@@ -437,10 +408,6 @@ private final class PCSelectionMenuListViewController: UITableViewController {
         view.backgroundColor = .systemBackground
     }
 
-    @objc private func cancelTapped() {
-        onCancel()
-    }
-
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         options.count
     }
@@ -449,8 +416,10 @@ private final class PCSelectionMenuListViewController: UITableViewController {
         -> UITableViewCell
     {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.textLabel?.text = options[indexPath.row]
-        cell.accessoryType = .none  // no checkmark UI
+        let opt = options[indexPath.row]
+        cell.textLabel?.text = opt.label
+        cell.accessoryType =
+            (opt.data == selectedData && !selectedData.isEmpty) ? .checkmark : .none
         return cell
     }
 
@@ -460,6 +429,6 @@ private final class PCSelectionMenuListViewController: UITableViewController {
     }
 
     func computePreferredSize() -> CGSize {
-        return CGSize(width: -1, height: CGFloat(options.count) * 44)
+        CGSize(width: 320, height: min(480, CGFloat(options.count) * 44))
     }
 }

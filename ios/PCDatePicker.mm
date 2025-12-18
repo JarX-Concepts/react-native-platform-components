@@ -1,4 +1,4 @@
-// ios/DatePicker.mm
+// ios/PCDatePicker.mm
 
 #import "PCDatePicker.h"
 
@@ -23,6 +23,10 @@
 using namespace facebook::react;
 
 @interface PCDatePicker () <RCTPCDatePickerViewProtocol>
+
+- (void)updateMeasurements;
+- (const PCDatePickerEventEmitter &)eventEmitterTyped;
+
 @end
 
 @implementation PCDatePicker {
@@ -31,8 +35,7 @@ using namespace facebook::react;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
-  return concreteComponentDescriptorProvider<
-      MeasuringPCDatePickerComponentDescriptor>();
+  return concreteComponentDescriptorProvider<MeasuringPCDatePickerComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -40,14 +43,12 @@ using namespace facebook::react;
     _datePickerView = [PCDatePickerView new];
     _datePickerView.translatesAutoresizingMaskIntoConstraints = NO;
 
-    __weak PCDatePicker *weakSelf = self;
-    _datePickerView.onChangeHandler = ^(NSNumber *ms) {
-      PCDatePicker *strongSelf = weakSelf;
-      if (!strongSelf) {
-        return;
-      }
+    __weak __typeof(self) weakSelf = self;
 
-      // Build the OnConfirm payload the emitter expects
+    _datePickerView.onChangeHandler = ^(NSNumber *ms) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
       PCDatePickerEventEmitter::OnConfirm event{};
       event.timestampMs = ms.doubleValue;
 
@@ -55,10 +56,8 @@ using namespace facebook::react;
     };
 
     _datePickerView.onCancelHandler = ^{
-      PCDatePicker *strongSelf = weakSelf;
-      if (!strongSelf) {
-        return;
-      }
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
 
       PCDatePickerEventEmitter::OnCancel event{};
       strongSelf.eventEmitterTyped.onCancel(event);
@@ -67,14 +66,10 @@ using namespace facebook::react;
     self.contentView = _datePickerView;
 
     [NSLayoutConstraint activateConstraints:@[
-      [_datePickerView.topAnchor
-          constraintEqualToAnchor:self.contentView.topAnchor],
-      [_datePickerView.bottomAnchor
-          constraintEqualToAnchor:self.contentView.bottomAnchor],
-      [_datePickerView.leadingAnchor
-          constraintEqualToAnchor:self.contentView.leadingAnchor],
-      [_datePickerView.trailingAnchor
-          constraintEqualToAnchor:self.contentView.trailingAnchor],
+      [_datePickerView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+      [_datePickerView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+      [_datePickerView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+      [_datePickerView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
     ]];
   }
 
@@ -89,120 +84,99 @@ using namespace facebook::react;
 #pragma mark - Props
 
 - (void)updateProps:(Props::Shared const &)props
-           oldProps:(Props::Shared const &)oldProps {
+           oldProps:(Props::Shared const &)oldProps
+{
   const auto &oldViewProps =
-      *std::static_pointer_cast<PCDatePickerProps const>(_props);
+      *std::static_pointer_cast<const PCDatePickerProps>(_props);
   const auto &newViewProps =
-      *std::static_pointer_cast<PCDatePickerProps const>(props);
+      *std::static_pointer_cast<const PCDatePickerProps>(props);
 
   BOOL needsToUpdateMeasurements = NO;
 
-  // Convert new prop to an NSString (or default)
+  // presentation (default "modal")
   NSString *newPresentation =
       newViewProps.presentation.empty()
           ? @"modal"
           : [NSString stringWithUTF8String:newViewProps.presentation.c_str()];
+
   if (![_datePickerView.presentation isEqualToString:newPresentation]) {
     _datePickerView.presentation = newPresentation;
     needsToUpdateMeasurements = YES;
   }
 
-  // --- visible -> open ---
+  // visible: treat only "open" as open; everything else as closed
   BOOL shouldOpen = (newViewProps.visible == "open");
-  NSNumber *newValue = @(shouldOpen);
-  if (![_datePickerView.open isEqual:newValue]) {
-    _datePickerView.open = newValue;
+  NSNumber *newOpen = @(shouldOpen);
+  if (![_datePickerView.open isEqual:newOpen]) {
+    _datePickerView.open = newOpen;
   }
 
-  // --- Controlled dateMs (sentinel -1 = "no value") ---
+  // dateMs (sentinel -1)
   if (oldViewProps.dateMs != newViewProps.dateMs) {
-    if (newViewProps.dateMs >= 0) {
-      _datePickerView.dateMs = @(newViewProps.dateMs);
-    } else {
-      _datePickerView.dateMs = nil;
-    }
+    _datePickerView.dateMs = (newViewProps.dateMs >= 0) ? @(newViewProps.dateMs) : nil;
   }
 
-  // --- minDateMs / maxDateMs (sentinel -1 = unbounded) ---
+  // min/max (sentinel -1)
   if (oldViewProps.minDateMs != newViewProps.minDateMs) {
-    if (newViewProps.minDateMs >= 0) {
-      _datePickerView.minDateMs = @(newViewProps.minDateMs);
-    } else {
-      _datePickerView.minDateMs = nil;
-    }
+    _datePickerView.minDateMs = (newViewProps.minDateMs >= 0) ? @(newViewProps.minDateMs) : nil;
   }
-
   if (oldViewProps.maxDateMs != newViewProps.maxDateMs) {
-    if (newViewProps.maxDateMs >= 0) {
-      _datePickerView.maxDateMs = @(newViewProps.maxDateMs);
-    } else {
-      _datePickerView.maxDateMs = nil;
-    }
+    _datePickerView.maxDateMs = (newViewProps.maxDateMs >= 0) ? @(newViewProps.maxDateMs) : nil;
   }
 
-  // --- Locale ---
+  // locale
   if (oldViewProps.locale != newViewProps.locale) {
-    if (!newViewProps.locale.empty()) {
-      _datePickerView.localeIdentifier =
-          [NSString stringWithUTF8String:newViewProps.locale.c_str()];
-    } else {
-      _datePickerView.localeIdentifier = nil;
-    }
+    _datePickerView.localeIdentifier =
+        (!newViewProps.locale.empty())
+            ? [NSString stringWithUTF8String:newViewProps.locale.c_str()]
+            : nil;
   }
 
-  // --- Time zone ---
+  // time zone
   if (oldViewProps.timeZoneName != newViewProps.timeZoneName) {
-    if (!newViewProps.timeZoneName.empty()) {
-      _datePickerView.timeZoneName =
-          [NSString stringWithUTF8String:newViewProps.timeZoneName.c_str()];
-    } else {
-      _datePickerView.timeZoneName = nil;
-    }
+    _datePickerView.timeZoneName =
+        (!newViewProps.timeZoneName.empty())
+            ? [NSString stringWithUTF8String:newViewProps.timeZoneName.c_str()]
+            : nil;
   }
 
-  // mode: "date" | "time" | "dateAndTime" | "countDownTimer"
+  // mode
   if (oldViewProps.mode != newViewProps.mode) {
-    if (!newViewProps.mode.empty()) {
-      _datePickerView.mode =
-          [NSString stringWithUTF8String:newViewProps.mode.c_str()];
-    } else {
-      _datePickerView.mode = @"date";
-    }
-
+    _datePickerView.mode =
+        (!newViewProps.mode.empty())
+            ? [NSString stringWithUTF8String:newViewProps.mode.c_str()]
+            : @"date";
     needsToUpdateMeasurements = YES;
   }
 
-  // --- iOS-specific nested props ---
+  // ----- iOS nested props -----
   const auto &oldIos = oldViewProps.ios;
   const auto &newIos = newViewProps.ios;
 
-  // preferredStyle: "automatic" | "wheels" | "compact" | "inline"
   if (oldIos.preferredStyle != newIos.preferredStyle) {
-    if (!newIos.preferredStyle.empty()) {
-      _datePickerView.preferredStyle =
-          [NSString stringWithUTF8String:newIos.preferredStyle.c_str()];
-    } else {
-      _datePickerView.preferredStyle = nil;
-    }
-
+    _datePickerView.preferredStyle =
+        (!newIos.preferredStyle.empty())
+            ? [NSString stringWithUTF8String:newIos.preferredStyle.c_str()]
+            : nil;
     needsToUpdateMeasurements = YES;
   }
 
-  // countDownDurationSeconds (Double)
   if (oldIos.countDownDurationSeconds != newIos.countDownDurationSeconds) {
-    _datePickerView.countDownDurationSeconds =
-        @(newIos.countDownDurationSeconds);
+    _datePickerView.countDownDurationSeconds = @(newIos.countDownDurationSeconds);
   }
 
-  // minuteInterval (Int32)
   if (oldIos.minuteInterval != newIos.minuteInterval) {
     _datePickerView.minuteIntervalValue = @(newIos.minuteInterval);
   }
 
-  // roundsToMinuteInterval (bool)
+  // Expecting: "inherit" | "round" | "noRound"
   if (oldIos.roundsToMinuteInterval != newIos.roundsToMinuteInterval) {
-    _datePickerView.roundsToMinuteIntervalValue =
-        @(newIos.roundsToMinuteInterval);
+    if (!newIos.roundsToMinuteInterval.empty()) {
+      _datePickerView.roundsToMinuteIntervalMode =
+          [NSString stringWithUTF8String:newIos.roundsToMinuteInterval.c_str()];
+    } else {
+      _datePickerView.roundsToMinuteIntervalMode = @"inherit";
+    }
   }
 
   if (needsToUpdateMeasurements) {
@@ -212,20 +186,22 @@ using namespace facebook::react;
   [super updateProps:props oldProps:oldProps];
 }
 
-- (void)updateLayoutMetrics:
-            (const facebook::react::LayoutMetrics &)layoutMetrics
-           oldLayoutMetrics:
-               (const facebook::react::LayoutMetrics &)oldLayoutMetrics {
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics
+{
   [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
 
-  // Just fill whatever Yoga decided the content frame is.
+  // Fill whatever Yoga decided the content frame is.
   _datePickerView.frame = self.contentView.bounds;
 }
 
-- (void)updateState:(const facebook::react::State::Shared &)state
-           oldState:(const facebook::react::State::Shared &)oldState {
-  _state = std::static_pointer_cast<
-      const MeasuringPCDatePickerShadowNode::ConcreteState>(state);
+#pragma mark - State (Measuring)
+
+- (void)updateState:(const State::Shared &)state
+           oldState:(const State::Shared &)oldState
+{
+  _state =
+      std::static_pointer_cast<const MeasuringPCDatePickerShadowNode::ConcreteState>(state);
 
   if (oldState == nullptr) {
     // First time: compute initial size.
@@ -236,38 +212,26 @@ using namespace facebook::react;
 }
 
 - (void)updateMeasurements {
-  if (_state == nullptr) {
-    return;
-  }
+  if (_state == nullptr) return;
 
-  // Ask Swift view for intrinsic size. Use “compressed” constraints.
-  CGSize size = [_datePickerView
-      sizeForLayoutWithConstrainedTo:CGSizeMake(
-                                         UILayoutFittingCompressedSize.width,
-                                         UILayoutFittingCompressedSize.height)];
+  // Use the real width Yoga gave us (bounds is correct here after layoutMetrics update)
+  const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 320;
 
-  // Guard against nonsense.
-  if (size.width < 0 || size.height < 0) {
-    return;
-  }
+  CGSize size = [_datePickerView sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
 
-  PCDatePickerStateFrameSize newState;
-  newState.frameSize = {
-      static_cast<Float>(size.width),
-      static_cast<Float>(size.height),
-  };
-
-  _state->updateState(std::move(newState));
+  PCDatePickerStateFrameSize next;
+  next.frameSize = { (Float)size.width, (Float)size.height };
+  _state->updateState(std::move(next));
 }
 
-// Strongly-typed event emitter helper
+#pragma mark - Strongly typed emitter
+
 - (const PCDatePickerEventEmitter &)eventEmitterTyped {
   return static_cast<const PCDatePickerEventEmitter &>(*_eventEmitter);
 }
 
 @end
 
-// Factory hook for Fabric
 Class<RCTComponentViewProtocol> RCTPCDatePickerCls(void) {
   return PCDatePicker.class;
 }

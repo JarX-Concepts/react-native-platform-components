@@ -3,92 +3,99 @@ import type { CodegenTypes, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
 /**
+ * A single option in the menu.
+ */
+export type SelectionMenuOption = Readonly<{
+  label: string;
+  data: string;
+}>;
+
+/**
  * Event emitted when the user selects an option.
  */
-export type SelectionMenuSelectEvent = {
-  /** Selected option index (0-based). */
+export type SelectionMenuSelectEvent = Readonly<{
+  /** Selected option index (implementation detail; stable for this render) */
   index: CodegenTypes.Int32;
-  /** Selected option label/value (as provided in `options`). */
-  value: string;
-};
 
+  /** Selected option label */
+  label: string;
+
+  /** Selected option data payload (source of truth) */
+  data: string;
+}>;
+
+/** Visibility state (headless mode only). */
 export type SelectionMenuVisible = 'open' | 'closed';
 
-/**
- * Presentation hint for headless mode (inlineMode === false).
- *
- * - "auto": platform default (recommended)
- * - "popover": iOS popover (iPad-style) / Android dialog-like
- * - "sheet": iOS sheet / Android bottom-sheet-like
- *
- * Note: this is a best-effort hint; platforms may adapt.
- */
+/** Presentation hint (headless mode only). */
 export type SelectionMenuPresentation = 'auto' | 'popover' | 'sheet';
 
-/**
- * iOS-specific configuration (reserved for future extension).
- */
-export type IOSProps = {};
+/** Interactivity state (no booleans). */
+export type SelectionMenuInteractivity = 'enabled' | 'disabled';
+
+/** Anchor behavior (no booleans). */
+export type SelectionMenuAnchorMode = 'inline' | 'headless';
 
 /**
- * Android-specific configuration (reserved for future extension).
+ * iOS-specific configuration (reserved).
  */
-export type AndroidProps = {};
+export type IOSProps = Readonly<{}>;
+
+/**
+ * Android-specific configuration.
+ */
+export type AndroidProps = Readonly<{
+  material?: string; // AndroidMaterialMode
+}>;
 
 export interface SelectionMenuProps extends ViewProps {
   /**
-   * The options displayed by the menu.
+   * Menu options.
    */
-  options: ReadonlyArray<string>;
+  options: ReadonlyArray<SelectionMenuOption>;
 
   /**
-   * Currently selected index (controlled).
-   * Use -1 for "no selection".
+   * Controlled selection by `data`.
+   *
+   * - Empty string means "no selection".
+   * - Native should treat this as the single source of truth.
    */
-  selectedIndex: CodegenTypes.Int32;
+  selectedData?: CodegenTypes.WithDefault<string, ''>;
 
   /**
-   * If true, the control should not open and should not emit selection.
+   * Enabled / disabled state.
    */
-  disabled?: boolean;
+  interactivity?: string; // SelectionMenuInteractivity
 
   /**
-   * Optional placeholder text when selectedIndex === -1.
+   * Placeholder text shown when selectedData === "".
    */
   placeholder?: string;
 
   /**
-   * If true, native renders its own interactive inline anchor UI and manages
-   * opening/closing internally (platform-native).
-   *
-   * If false (default), the component is "headless" and is controlled by `visible`.
+   * Inline vs headless behavior.
    */
-  inlineMode?: boolean;
+  anchorMode?: string; // SelectionMenuAnchorMode
 
   /**
-   * Controlled presentation for headless mode (inlineMode === false):
-   * - "open": show the menu UI (popover/sheet/dialog depending on platform)
-   * - "closed": dismiss it
-   *
-   * Note: when inlineMode === true, implementations should ignore this.
+   * Headless mode only:
+   * controls visibility.
    */
-  visible?: string; //SelectionMenuVisible;
+  visible?: string; // SelectionMenuVisible
 
   /**
-   * Presentation hint for headless mode (inlineMode === false).
-   *
-   * Note: when inlineMode === true, implementations should ignore this.
+   * Headless mode only:
+   * presentation hint.
    */
-  presentation?: string; //SelectionMenuPresentation;
+  presentation?: string; // SelectionMenuPresentation
 
   /**
-   * Called when the user selects an option.
+   * Fired when the user selects an option.
    */
   onSelect?: CodegenTypes.BubblingEventHandler<SelectionMenuSelectEvent>;
 
   /**
-   * Called when the user dismisses without selecting (tap outside / back / escape).
-   * (Implementations should set `visible` back to "closed" in JS.)
+   * Fired when dismissed without selection.
    */
   onRequestClose?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
 

@@ -1,91 +1,146 @@
-import React, { useMemo } from 'react';
-import type {
-  DateChangeEvent,
-  IOSProps,
-  NativeProps,
+// DatePicker.tsx
+import React, { useCallback, useMemo } from 'react';
+import type { NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import NativeDatePicker, {
+  type DateChangeEvent,
+  type NativeProps as NativeDatePickerProps,
+  type IOSProps as NativeIOSProps,
+  type AndroidProps as NativeAndroidProps,
+  type DatePickerPresentation,
+  type DatePickerMode,
+  type IOSRoundsToMinuteInterval,
+  type IOSDatePickerStyle,
 } from './DatePickerNativeComponent';
-import { StyleSheet, type NativeSyntheticEvent } from 'react-native';
-import { default as NativeDatePicker } from './DatePickerNativeComponent';
 
-export type IOSDatePickerMode =
-  | 'date'
-  | 'time'
-  | 'dateAndTime'
-  | 'countDownTimer';
+import type { AndroidMaterialMode, Visible } from './sharedTypes';
 
-export type IOSDatePickerStyle = 'calendar' | 'wheels';
+export type DatePickerProps = {
+  style?: StyleProp<ViewStyle>;
 
-export type DatePickerProps = Omit<
-  NativeProps,
-  | 'onConfirm'
-  | 'onCancel'
-  | 'dateMs'
-  | 'minDateMs'
-  | 'maxDateMs'
-  | 'ios'
-  | 'visible'
-  | 'modal'
-> & {
-  date?: Date;
-  minDate?: Date;
-  maxDate?: Date;
+  /** Controlled value. Use `null` for "no date selected". */
+  date: Date | null;
+
+  /** Optional bounds. Use `null` for "unbounded". */
+  minDate?: Date | null;
+  maxDate?: Date | null;
+
+  locale?: string;
+  timeZoneName?: string;
+  mode?: DatePickerMode;
+  presentation?: DatePickerPresentation;
+
+  /**
+   * Modal only. If presentation !== "modal", ignored.
+   * Wrapper ergonomics: boolean.
+   */
   visible?: boolean;
-  modal?: boolean;
 
-  /** Fired when the user selects a date/time. */
   onConfirm?: (dateTime: Date) => void;
-
-  /** Fired when the user cancels the date picker. */
   onCancel?: () => void;
 
-  ios?: Omit<IOSProps, 'mode' | 'preferredStyle'> & {
-    mode?: IOSDatePickerMode;
+  ios?: {
     preferredStyle?: IOSDatePickerStyle;
+    countDownDurationSeconds?: NativeIOSProps['countDownDurationSeconds'];
+    minuteInterval?: NativeIOSProps['minuteInterval'];
+    roundsToMinuteInterval?: IOSRoundsToMinuteInterval;
+  };
+
+  android?: {
+    firstDayOfWeek?: NativeAndroidProps['firstDayOfWeek'];
+    material?: AndroidMaterialMode;
+    dialogTitle?: NativeAndroidProps['dialogTitle'];
+    positiveButtonTitle?: NativeAndroidProps['positiveButtonTitle'];
+    negativeButtonTitle?: NativeAndroidProps['negativeButtonTitle'];
   };
 };
 
-export function DatePicker(props: DatePickerProps) {
+function dateToMsOrMinusOne(d: Date | null | undefined): number {
+  return d ? d.getTime() : -1;
+}
+
+function normalizeVisible(
+  presentation: NativeDatePickerProps['presentation'] | undefined,
+  visible: boolean | undefined
+): Visible | undefined {
+  // Only meaningful in modal presentation. Keep undefined for inline to avoid noise.
+  if (presentation !== 'modal') return undefined;
+  return visible ? 'open' : 'closed';
+}
+
+export function DatePicker(props: DatePickerProps): React.ReactElement {
   const {
-    onConfirm,
-    onCancel,
+    style,
     date,
     minDate,
     maxDate,
-    style,
+    locale,
+    timeZoneName,
+    mode,
+    presentation = 'modal',
     visible,
-    modal,
-    ...rest
+    onConfirm,
+    onCancel,
+    ios,
+    android,
   } = props;
 
-  const handleConfirm = React.useCallback(
+  const handleConfirm = useCallback(
     (e: NativeSyntheticEvent<DateChangeEvent>) => {
       onConfirm?.(new Date(e.nativeEvent.timestampMs));
     },
     [onConfirm]
   );
 
-  const handleCancel = React.useCallback(() => onCancel?.(), [onCancel]);
+  const handleCancel = useCallback(() => {
+    onCancel?.();
+  }, [onCancel]);
 
   const styles = useMemo(() => createStyles(), []);
 
-  return (
-    <NativeDatePicker
-      {...rest}
-      presentation={modal ? 'modal' : 'inline'}
-      visible={visible ? 'open' : 'close'}
-      style={[styles.picker, style]}
-      onConfirm={handleConfirm}
-      onCancel={handleCancel}
-      dateMs={date?.getTime()}
-      minDateMs={minDate?.getTime()}
-      maxDateMs={maxDate?.getTime()}
-    />
-  );
+  const nativeProps: NativeDatePickerProps = {
+    style: [styles.picker, style] as any,
+
+    mode,
+    locale,
+    timeZoneName,
+
+    presentation,
+    visible: normalizeVisible(presentation, visible) as any,
+
+    dateMs: dateToMsOrMinusOne(date) as any,
+    minDateMs: dateToMsOrMinusOne(minDate ?? null) as any,
+    maxDateMs: dateToMsOrMinusOne(maxDate ?? null) as any,
+
+    onConfirm: onConfirm ? handleConfirm : undefined,
+    onCancel: onCancel ? handleCancel : undefined,
+
+    ios: ios
+      ? {
+          preferredStyle: ios.preferredStyle,
+          countDownDurationSeconds: ios.countDownDurationSeconds,
+          minuteInterval: ios.minuteInterval,
+          roundsToMinuteInterval: ios.roundsToMinuteInterval,
+        }
+      : undefined,
+
+    android: android
+      ? {
+          firstDayOfWeek: android.firstDayOfWeek,
+          material: android.material as any,
+          dialogTitle: android.dialogTitle,
+          positiveButtonTitle: android.positiveButtonTitle,
+          negativeButtonTitle: android.negativeButtonTitle,
+        }
+      : undefined,
+  };
+
+  return <NativeDatePicker {...nativeProps} />;
 }
 
 function createStyles() {
-  const styles = StyleSheet.create({
+  return StyleSheet.create({
     picker: {},
   });
-  return styles;
 }

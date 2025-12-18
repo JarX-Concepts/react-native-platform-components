@@ -11,8 +11,8 @@ class PlatformComponentsViewPackage : ReactPackage {
       reactContext: ReactApplicationContext
   ): List<ViewManager<*, *>> {
       return listOf(
-          SelectionMenuViewManager(),
-          DatePickerViewManager(reactContext),
+          PCSelectionMenuViewManager(),
+          PCDatePickerViewManager(reactContext),
       )
   }
 

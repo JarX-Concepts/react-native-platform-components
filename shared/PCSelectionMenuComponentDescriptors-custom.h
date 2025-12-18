@@ -12,7 +12,7 @@
 
 namespace facebook::react
 {
-using MeasuringPCDatePickerComponentDescriptor = ConcreteComponentDescriptor<MeasuringPCSelectionMenuShadowNode>;
+using MeasuringPCSelectionMenuComponentDescriptor = ConcreteComponentDescriptor<MeasuringPCSelectionMenuShadowNode>;
 
 /*
     class MeasuringPCDatePickerComponentDescriptor final

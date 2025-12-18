@@ -15,7 +15,7 @@ namespace facebook::react {
     const Float measuredW = (maxW > 0 && maxW < kHuge) ? maxW : 0;
 
     const auto& props = *std::static_pointer_cast<const PCSelectionMenuProps>(getProps());
-    const bool inlineMode = props.inlineMode;
+    const bool inlineMode = props.anchorMode == "inline";
 
     Float measuredH = 0;
 

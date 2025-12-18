@@ -2,133 +2,67 @@
 import type { CodegenTypes, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
-/**
- * Timestamp in **milliseconds since Unix epoch** (JS Date.getTime()).
- */
 export type TimestampMs = CodegenTypes.Double;
 
-/**
- * Event emitted when the date changes.
- */
 export type DateChangeEvent = {
-  /** Selected date/time in ms since Unix epoch. */
   timestampMs: CodegenTypes.Double;
 };
 
+export type DatePickerMode = 'date' | 'time' | 'dateAndTime' | 'countDownTimer';
+export type DatePickerPresentation = 'modal' | 'inline';
+
+export type IOSDatePickerStyle = 'automatic' | 'compact' | 'inline' | 'wheels';
+export type IOSRoundsToMinuteInterval = 'inherit' | 'round' | 'noRound';
+
 export type IOSProps = {
-  /** UIDatePicker.preferredDatePickerStyle */
-  preferredStyle?: string; //IOSDatePickerStyle;
-
-  /**
-   * For `countDownTimer` mode.
-   * Duration in seconds.
-   */
+  preferredStyle?: string; // IOSDatePickerStyle
   countDownDurationSeconds?: CodegenTypes.Double;
-
-  /** UIDatePicker.minuteInterval */
   minuteInterval?: CodegenTypes.Int32;
-
-  /** UIDatePicker.roundsToMinuteInterval (iOS 14+) */
-  roundsToMinuteInterval?: boolean;
+  roundsToMinuteInterval?: string; // IOSRoundsToMinuteInterval
 };
 
-/**
- * Android-specific configuration.
- */
 export type AndroidProps = {
-  /**
-   * First day of week in ISO-8601 (1 = Monday ... 7 = Sunday).
-   * If not set, use system default.
-   */
   firstDayOfWeek?: CodegenTypes.Int32;
-
-  /** Use Material 3 */
-  useMaterial3?: boolean;
-
-  /** Title of the dialog. */
+  material?: string; // AndroidMaterialMode
   dialogTitle?: string;
-
-  /** Title of the positive button. */
   positiveButtonTitle?: string;
-
-  /** Title of the negative button. */
   negativeButtonTitle?: string;
 };
 
-export type WebProps = {
-  // Future: web-specific options (inputMode, etc.).
-};
-
-export type WindowsProps = {};
-export type MacOSProps = {};
+export type WebProps = Readonly<{}>;
+export type WindowsProps = Readonly<{}>;
+export type MacOSProps = Readonly<{}>;
 
 /**
- * Common cross-platform props.
- *
- * NOTE on "optional" numeric props:
- * ---------------------------------
- * Codegen numeric types (`Double`, `Int32`, etc.) always get a native default
- * value. To represent "not provided" / "no value", we use a sentinel.
- *
- * Sentinel convention in this component:
- *   - `-1` for TimestampMs means "no date / unbounded".
+ * Sentinel convention:
+ * - `-1` means "no value / unbounded / unset".
  */
 export type CommonProps = {
-  /** UIDatePicker.mode */
-  mode?: string; //IOSDatePickerMode (only 'date' | 'time' for Android);
+  mode?: string; // DatePickerMode
 
-  /**
-   * Controlled value.
-   *
-   * - `dateMs` is the **only source of truth** for the selected date.
-   * - `-1` means "no date selected" (empty value).
-   *
-   * Even though it's technically optional here, JS code should treat this as a
-   * controlled prop: always pass a value (`-1` or a real timestamp).
-   */
   dateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
-
-  /**
-   * Minimum selectable date. `-1` → no minimum bound.
-   */
   minDateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
-
-  /**
-   * Maximum selectable date. `-1` → no maximum bound.
-   */
   maxDateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
 
-  /**
-   * Locale identifier, e.g. "en-US", "fr-FR".
-   * Let the platform handle invalid / unsupported values.
-   */
   locale?: string;
-
-  /**
-   * IANA time zone name, e.g. "America/Los_Angeles".
-   * If omitted, use system default.
-   */
   timeZoneName?: string;
 
-  /** Visibility / "open" or "close" state. (only used in modal mode) */
-  visible?: CodegenTypes.WithDefault<string, 'close'>;
+  /**
+   * Only used when presentation === "modal".
+   * Defaults should be applied in JS wrapper (recommended).
+   */
+  visible?: string; // Visible
 
-  /** Presentation: "modal" vs "inline". */
-  presentation?: CodegenTypes.WithDefault<string, 'modal'>;
+  /** Defaults should be applied in JS wrapper (recommended). */
+  presentation?: string; // DatePickerPresentation
 };
 
 export interface NativeProps extends ViewProps, CommonProps {
   ios?: IOSProps;
   android?: AndroidProps;
-  web?: WebProps;
-  windows?: WindowsProps;
-  macos?: MacOSProps;
 
-  /** Fired when the user selects a date/time. */
-  onConfirm?: CodegenTypes.BubblingEventHandler<DateChangeEvent> | null;
-
-  /** Fired when the user cancels the date picker. */
-  onCancel?: CodegenTypes.BubblingEventHandler<Readonly<{}>> | null;
+  onConfirm?: CodegenTypes.BubblingEventHandler<DateChangeEvent>;
+  onCancel?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
 }
 
 export default codegenNativeComponent<NativeProps>('PCDatePicker');
