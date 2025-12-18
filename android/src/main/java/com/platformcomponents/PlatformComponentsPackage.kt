@@ -12,7 +12,7 @@ class PlatformComponentsViewPackage : ReactPackage {
   ): List<ViewManager<*, *>> {
       return listOf(
           PCSelectionMenuViewManager(),
-          PCDatePickerViewManager(reactContext),
+          PCDatePickerViewManager(),
       )
   }
 

@@ -1,339 +1,276 @@
-package com.platformcomponents.selectionmenu
+package com.platformcomponents
 
-import android.app.Dialog
 import android.content.Context
-import android.content.ContextWrapper
-import android.view.Gravity
-import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.appcompat.view.ContextThemeWrapper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.facebook.react.bridge.ReactContext
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.FragmentActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-
-data class SelectionOption(
-  val label: String,
-  val data: String,
-)
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputLayout
+import android.widget.LinearLayout
 
 class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
-  // ---------- Props (set by manager) ----------
+  data class Option(val label: String, val data: String)
 
-  var options: List<SelectionOption> = emptyList()
-    set(value) {
-      field = value
-      syncLabel()
-      // If open, refresh list UI by re-presenting (simple + predictable)
-      if (isPresented()) {
-        dismiss(emitClose = false)
-        presentIfNeeded()
-      }
-    }
+  // --- Props ---
+  var options: List<Option> = emptyList()
+  var selectedData: String = "" // sentinel for none
 
-  /** Controlled selection. "" means no selection. */
-  var selectedData: String = ""
-    set(value) {
-      field = value
-      syncLabel()
-      // No other side effects.
-    }
-
-  /** "enabled" | "disabled" */
-  var interactivity: String = "enabled"
-    set(value) {
-      field = value
-      updateEnabled()
-    }
-
+  var interactivity: String = "enabled" // "enabled" | "disabled"
   var placeholder: String? = null
-    set(value) {
-      field = value
-      syncLabel()
-    }
 
-  /** "inline" | "headless" */
-  var anchorMode: String = "headless"
-    set(value) {
-      field = value
-      updateAnchorMode()
-    }
+  var anchorMode: String = "headless" // "inline" | "headless"
+  var visible: String = "closed"      // "open" | "closed" (headless only)
+  var presentation: String = "auto"   // "auto" | "popover" | "sheet" (headless only)
 
-  /** headless only: "open" | "closed" */
-  var visible: String = "closed"
-    set(value) {
-      field = value
-      updatePresentationFromProps()
-    }
+  var androidMaterial: String? = null // "auto" | "m2" | "m3"
 
-  /** headless only: "auto" | "popover" | "sheet" */
-  var presentation: String = "auto"
-    set(value) {
-      field = value
-      updatePresentationFromProps()
-    }
-
-  /** android.material: "auto" | "m2" | "m3" */
-  var material: String? = null
-    set(value) {
-      field = value
-      // If a dialog is open, rebuild with new theme.
-      if (isPresented()) {
-        dismiss(emitClose = false)
-        presentIfNeeded()
-      }
-    }
-
-  // ---------- Events back to RN ----------
-
+  // --- Events ---
   var onSelect: ((index: Int, label: String, data: String) -> Unit)? = null
   var onRequestClose: (() -> Unit)? = null
 
-  // ---------- Internal UI ----------
+  // --- Inline UI ---
+  private var inlineLayout: TextInputLayout? = null
+  private var inlineText: MaterialAutoCompleteTextView? = null
 
-  private val anchorRow: LinearLayout = LinearLayout(context).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    isClickable = true
-    isFocusable = true
-    setPadding(dp(12), dp(10), dp(12), dp(10))
-    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-    setOnClickListener { handleAnchorPress() }
-  }
-
-  private val labelView: TextView = TextView(context).apply {
-    layoutParams = LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
-    maxLines = 1
-  }
-
-  private val chevronView: TextView = TextView(context).apply {
-    layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-    text = "▾"
-    setPadding(dp(8), 0, 0, 0)
-    alpha = 0.7f
-  }
-
-  private var presentedDialog: Dialog? = null
+  private var showingDialog: Boolean = false
 
   init {
-    anchorRow.addView(labelView)
-    anchorRow.addView(chevronView)
-    addView(anchorRow)
-
-    updateEnabled()
+    minimumHeight = 0
+    minimumWidth = 0
     updateAnchorMode()
-    syncLabel()
   }
 
-  private fun dp(v: Int): Int =
-    (v * resources.displayMetrics.density).toInt()
+  // --- Public apply* (called by manager) ---
 
-  private fun updateEnabled() {
-    val disabled = (interactivity == "disabled")
-    anchorRow.isEnabled = !disabled
-    anchorRow.alpha = if (disabled) 0.5f else 1.0f
+  fun applyOptions(newOptions: List<Option>) {
+    options = newOptions
+    refreshInlineAdapter()
+    refreshInlineSelection()
   }
 
-  private fun updateAnchorMode() {
-    // Inline: show anchor UI + manage open/close internally (tap on anchor).
-    // Headless: hide anchor UI (height 0) and respond to visible/presentation props.
-    if (anchorMode == "inline") {
-      anchorRow.visibility = View.VISIBLE
-      updatePresentationFromProps() // ensures headless doesn't keep a dialog open
-    } else {
-      anchorRow.visibility = View.GONE
-      updatePresentationFromProps()
-    }
+  fun applySelectedData(data: String?) {
+    selectedData = data ?: ""
+    refreshInlineSelection()
   }
 
-  private fun syncLabel() {
-    val selected = options.firstOrNull { it.data == selectedData && selectedData.isNotEmpty() }
-    labelView.text = selected?.label ?: (placeholder ?: "Select")
-  }
-
-  private fun handleAnchorPress() {
-    if (interactivity == "disabled") return
-    if (anchorMode != "inline") return
-    // Inline manages its own presentation: just open.
-    presentIfNeeded()
-  }
-
-  private fun updatePresentationFromProps() {
-    if (anchorMode == "inline") {
-      // Ignore headless props.
-      return
-    }
-
-    if (interactivity == "disabled") {
-      dismiss(emitClose = false)
-      return
-    }
-
-    if (visible == "open") {
-      presentIfNeeded()
-    } else {
-      dismiss(emitClose = false)
-    }
-  }
-
-  private fun isPresented(): Boolean = presentedDialog?.isShowing == true
-
-  private fun presentIfNeeded() {
-    if (isPresented()) return
-    if (options.isEmpty()) return
-
-    val mode = (material ?: "auto")
-    val isSheet = when (presentation) {
-      "sheet" -> true
-      "popover" -> false
-      else -> {
-        // "auto"
-        // Common Android UX: bottom sheet on phones, dialog on tablets.
-        // Keep it simple: sheet by default.
-        true
-      }
-    }
-
-    if (isSheet) {
-      presentBottomSheet(mode)
-    } else {
-      presentDialog(mode)
-    }
-  }
-
-  private fun themedContext(mode: String): Context {
-    val themeRes = when (mode) {
-      "m3" -> resolveMaterial3DialogTheme()
-      "m2" -> resolveMaterial2DialogTheme()
-      else -> 0
-    }
-    return if (themeRes != 0) ContextThemeWrapper(context, themeRes) else context
-  }
-
-  private fun resolveMaterial2DialogTheme(): Int {
-    // Exists in Material Components
-    return try {
-      com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog
-    } catch (_: Throwable) {
-      0
-    }
-  }
-
-  private fun resolveMaterial3DialogTheme(): Int {
-    // Exists in Material 3 (MaterialComponents 1.8+ typically)
-    return try {
-      com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog
-    } catch (_: Throwable) {
-      // Fall back to M2 overlay if M3 overlay is missing
-      resolveMaterial2DialogTheme()
-    }
-  }
-
-  private fun resolveMaterial2BottomSheetTheme(): Int {
-    return try {
-      com.google.android.material.R.style.ThemeOverlay_MaterialComponents_BottomSheetDialog
-    } catch (_: Throwable) {
-      0
-    }
-  }
-
-  private fun resolveMaterial3BottomSheetTheme(): Int {
-    return try {
-      com.google.android.material.R.style.ThemeOverlay_Material3_BottomSheetDialog
-    } catch (_: Throwable) {
-      resolveMaterial2BottomSheetTheme()
-    }
-  }
-
-  private fun presentDialog(mode: String) {
-    val ctx = themedContext(mode)
-
-    val items = options.map { it.label }.toTypedArray()
-    val selectedIndex = options.indexOfFirst { it.data == selectedData }.coerceAtLeast(-1)
-
-    val builder = MaterialAlertDialogBuilder(ctx)
-      .setTitle(placeholder ?: "Select")
-      .setSingleChoiceItems(items, selectedIndex) { dialog, which ->
-        val opt = options[which]
-        selectedData = opt.data
-        onSelect?.invoke(which, opt.label, opt.data)
-        dialog.dismiss()
-      }
-      .setOnDismissListener {
-        presentedDialog = null
-        onRequestClose?.invoke()
-      }
-
-    val dlg = builder.create()
-    presentedDialog = dlg
-    dlg.show()
-  }
-
-  private fun presentBottomSheet(mode: String) {
-    val themeRes = when (mode) {
-      "m3" -> resolveMaterial3BottomSheetTheme()
-      "m2" -> resolveMaterial2BottomSheetTheme()
-      else -> 0
-    }
-
-    val dlg = if (themeRes != 0) BottomSheetDialog(context, themeRes) else BottomSheetDialog(context)
-
-    val rv = RecyclerView(dlg.context).apply {
-      layoutManager = LinearLayoutManager(dlg.context)
-      adapter = OptionsAdapter(options, selectedData) { idx ->
-        val opt = options[idx]
-        selectedData = opt.data
-        onSelect?.invoke(idx, opt.label, opt.data)
-        dlg.dismiss()
-      }
-    }
-
-    dlg.setContentView(rv)
-    dlg.setOnDismissListener {
-      presentedDialog = null
+  fun applyInteractivity(value: String?) {
+    interactivity = if (value == "disabled") "disabled" else "enabled"
+    updateEnabledState()
+    if (interactivity != "enabled" && showingDialog) {
+      // Can't forcibly dismiss without keeping refs; just mark closed and notify
+      showingDialog = false
       onRequestClose?.invoke()
     }
+  }
 
-    presentedDialog = dlg
+  fun applyPlaceholder(value: String?) {
+    placeholder = value
+    inlineLayout?.hint = placeholder
+  }
+
+  fun applyAnchorMode(value: String?) {
+    anchorMode = when (value) {
+      "inline", "headless" -> value
+      else -> "headless"
+    }
+    updateAnchorMode()
+  }
+
+  fun applyVisible(value: String?) {
+    visible = when (value) {
+      "open", "closed" -> value
+      else -> "closed"
+    }
+
+    // Only meaningful in headless mode.
+    if (anchorMode != "headless") return
+
+    if (visible == "open") presentIfNeeded()
+    else dismissIfNeeded()
+  }
+
+  fun applyPresentation(value: String?) {
+    presentation = when (value) {
+      "auto", "popover", "sheet" -> value
+      else -> "auto"
+    }
+  }
+
+  fun applyAndroidMaterial(value: String?) {
+    androidMaterial = value
+  }
+
+  // --- Layout: headless should take no space ---
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    if (anchorMode == "headless") {
+      setMeasuredDimension(0, 0)
+      return
+    }
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+  }
+
+  // --- Anchor mode switching ---
+  private fun updateAnchorMode() {
+    removeAllViews()
+    inlineLayout = null
+    inlineText = null
+
+    if (anchorMode == "inline") {
+      val til = TextInputLayout(context).apply {
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        hint = placeholder
+      }
+
+      val actv = MaterialAutoCompleteTextView(til.context).apply {
+        layoutParams = LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        isSingleLine = true
+
+        setOnItemClickListener { _, _, position, _ ->
+          val opt = options.getOrNull(position) ?: return@setOnItemClickListener
+          selectedData = opt.data
+          onSelect?.invoke(position, opt.label, opt.data)
+        }
+      }
+
+      til.addView(actv)
+      addView(til)
+
+      inlineLayout = til
+      inlineText = actv
+
+      refreshInlineAdapter()
+      refreshInlineSelection()
+      updateEnabledState()
+    }
+
+    requestLayout()
+  }
+
+  private fun updateEnabledState() {
+    val enabled = interactivity == "enabled"
+    inlineLayout?.isEnabled = enabled
+    inlineText?.isEnabled = enabled
+  }
+
+  private fun refreshInlineAdapter() {
+    val actv = inlineText ?: return
+    val labels = options.map { it.label }
+    val adapter = ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels)
+    actv.setAdapter(adapter)
+  }
+
+  private fun refreshInlineSelection() {
+    val actv = inlineText ?: return
+    val idx = options.indexOfFirst { it.data == selectedData }
+    val label = if (idx >= 0) options[idx].label else ""
+    // setText(label, false) prevents dropdown from reopening
+    actv.setText(label, false)
+  }
+
+  // --- Headless presentation ---
+
+  private fun presentIfNeeded() {
+    if (showingDialog) return
+    if (interactivity != "enabled") return
+
+    val act = findFragmentActivity() ?: run {
+      onRequestClose?.invoke()
+      return
+    }
+
+    showingDialog = true
+
+    val requested = parseMaterialMode(androidMaterial)
+    val resolved = resolveAutoMaterialMode(act, requested)
+
+    val useSheet = when (presentation) {
+      "sheet" -> true
+      "popover" -> false
+      else -> true // auto => sheet
+    }
+
+    if (useSheet) showBottomSheet(act, resolved) else showAlert(act, resolved)
+  }
+
+  private fun dismissIfNeeded() {
+    // dialogs dismiss themselves; we just reset state
+    if (!showingDialog) return
+    showingDialog = false
+  }
+
+  private fun showAlert(act: FragmentActivity, resolved: PCMaterialMode) {
+    val ctx = act
+
+    val labels = options.map { it.label }.toTypedArray()
+    val checked = options.indexOfFirst { it.data == selectedData } // -1 allowed
+
+    val builder =
+      if (resolved == PCMaterialMode.M3) MaterialAlertDialogBuilder(ctx)
+      else AlertDialog.Builder(ctx)
+
+    val dlg = builder
+      .setTitle(placeholder ?: "")
+      .setSingleChoiceItems(labels, checked) { dialog, which ->
+        val opt = options.getOrNull(which)
+        if (opt != null) {
+          selectedData = opt.data
+          onSelect?.invoke(which, opt.label, opt.data)
+        }
+        dialog.dismiss()
+      }
+      .setOnCancelListener {
+        onRequestClose?.invoke()
+        showingDialog = false
+      }
+      .setOnDismissListener {
+        onRequestClose?.invoke()
+        showingDialog = false
+      }
+      .create()
+
     dlg.show()
   }
 
-  private class OptionsAdapter(
-    private val options: List<SelectionOption>,
-    private val selectedData: String,
-    private val onTapIndex: (Int) -> Unit,
-  ) : RecyclerView.Adapter<OptionVH>() {
+  private fun showBottomSheet(act: FragmentActivity, resolved: PCMaterialMode) {
+    val ctx = act
+    val dlg = BottomSheetDialog(ctx)
 
-    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): OptionVH {
-      val tv = TextView(parent.context).apply {
-        setPadding(dp(parent.context, 16), dp(parent.context, 14), dp(parent.context, 16), dp(parent.context, 14))
-        maxLines = 1
+    val list = android.widget.ListView(ctx)
+    val labels = options.map { it.label }
+    list.adapter = ArrayAdapter(ctx, android.R.layout.simple_list_item_1, labels)
+    list.setOnItemClickListener { _, _, position, _ ->
+      val opt = options.getOrNull(position)
+      if (opt != null) {
+        selectedData = opt.data
+        onSelect?.invoke(position, opt.label, opt.data)
       }
-      return OptionVH(tv)
+      dlg.dismiss()
     }
 
-    override fun onBindViewHolder(holder: OptionVH, position: Int) {
-      val opt = options[position]
-      val tv = holder.itemView as TextView
-      tv.text = if (opt.data == selectedData && selectedData.isNotEmpty()) "✓  ${opt.label}" else opt.label
-      tv.setOnClickListener { onTapIndex(position) }
+    dlg.setContentView(list)
+    dlg.setOnCancelListener {
+      onRequestClose?.invoke()
+      showingDialog = false
+    }
+    dlg.setOnDismissListener {
+      onRequestClose?.invoke()
+      showingDialog = false
     }
 
-    override fun getItemCount(): Int = options.size
-
-    private fun dp(ctx: Context, v: Int): Int = (v * ctx.resources.displayMetrics.density).toInt()
+    dlg.show()
   }
 
-  private class OptionVH(view: View) : RecyclerView.ViewHolder(view)
-
-  private fun dismiss(emitClose: Boolean) {
-    val dlg = presentedDialog ?: return
-    presentedDialog = null
-    dlg.dismiss()
-    if (emitClose) onRequestClose?.invoke()
-  }
+  private fun findFragmentActivity(): FragmentActivity? =
+    context as? FragmentActivity
 }

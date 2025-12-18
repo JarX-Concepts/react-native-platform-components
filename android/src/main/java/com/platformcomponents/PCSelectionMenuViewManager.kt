@@ -1,115 +1,114 @@
-package com.platformcomponents.selectionmenu
+package com.platformcomponents
 
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContext
-import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.annotations.ReactProp
+import com.facebook.react.uimanager.ViewManagerDelegate
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.events.Event
 import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.viewmanagers.PCSelectionMenuManagerDelegate
+import com.facebook.react.viewmanagers.PCSelectionMenuManagerInterface
 
-class PCSelectionMenuViewManager(
-  private val appContext: ReactApplicationContext
-) : SimpleViewManager<PCSelectionMenuView>() {
+class PCSelectionMenuViewManager :
+  SimpleViewManager<PCSelectionMenuView>(),
+  PCSelectionMenuManagerInterface<PCSelectionMenuView> {
+
+  private val delegate: ViewManagerDelegate<PCSelectionMenuView> =
+    PCSelectionMenuManagerDelegate(this)
 
   override fun getName(): String = "PCSelectionMenu"
 
+  override fun getDelegate(): ViewManagerDelegate<PCSelectionMenuView> = delegate
+
   override fun createViewInstance(reactContext: ThemedReactContext): PCSelectionMenuView {
-    val view = PCSelectionMenuView(reactContext)
+    return PCSelectionMenuView(reactContext)
+  }
+
+  override fun addEventEmitters(reactContext: ThemedReactContext, view: PCSelectionMenuView) {
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onSelect = { index, label, data ->
-      val event = com.facebook.react.bridge.Arguments.createMap().apply {
+      dispatcher?.dispatchEvent(SelectEvent(view.id, index, label, data))
+    }
+
+    view.onRequestClose = {
+      dispatcher?.dispatchEvent(RequestCloseEvent(view.id))
+    }
+  }
+
+  // options: array of {label,data}
+  override fun setOptions(view: PCSelectionMenuView, value: ReadableArray?) {
+    val out = ArrayList<PCSelectionMenuView.Option>()
+    if (value != null) {
+      for (i in 0 until value.size()) {
+        val m = value.getMap(i) ?: continue
+        val label = if (m.hasKey("label") && !m.isNull("label")) m.getString("label") ?: "" else ""
+        val data = if (m.hasKey("data") && !m.isNull("data")) m.getString("data") ?: "" else ""
+        out.add(PCSelectionMenuView.Option(label = label, data = data))
+      }
+    }
+    view.applyOptions(out)
+  }
+
+  override fun setSelectedData(view: PCSelectionMenuView, value: String?) {
+    // Spec sentinel: empty string means "no selection"
+    view.applySelectedData(value ?: "")
+  }
+
+  override fun setInteractivity(view: PCSelectionMenuView, value: String?) {
+    view.applyInteractivity(value)
+  }
+
+  override fun setPlaceholder(view: PCSelectionMenuView, value: String?) {
+    view.applyPlaceholder(value)
+  }
+
+  override fun setAnchorMode(view: PCSelectionMenuView, value: String?) {
+    view.applyAnchorMode(value)
+  }
+
+  override fun setVisible(view: PCSelectionMenuView, value: String?) {
+    view.applyVisible(value)
+  }
+
+  override fun setPresentation(view: PCSelectionMenuView, value: String?) {
+    view.applyPresentation(value)
+  }
+
+  override fun setAndroid(view: PCSelectionMenuView, value: ReadableMap?) {
+    val material =
+      if (value != null && value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
+    view.applyAndroidMaterial(material)
+  }
+
+  override fun setIos(view: PCSelectionMenuView, value: ReadableMap?) {
+    // Android ignores iOS config
+  }
+
+  // --- Events ---
+  private class SelectEvent(
+    surfaceId: Int,
+    private val index: Int,
+    private val label: String,
+    private val data: String
+  ) : Event<SelectEvent>(surfaceId) {
+    override fun getEventName(): String = "topSelect"
+    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
+      val payload = com.facebook.react.bridge.Arguments.createMap().apply {
         putInt("index", index)
         putString("label", label)
         putString("data", data)
       }
-      reactContext.getJSModule(RCTEventEmitter::class.java)
-        .receiveEvent(view.id, "onSelect", event)
+      rctEventEmitter.receiveEvent(viewTag, eventName, payload)
     }
+  }
 
-    view.onRequestClose = {
-      val event = com.facebook.react.bridge.Arguments.createMap()
-      reactContext.getJSModule(RCTEventEmitter::class.java)
-        .receiveEvent(view.id, "onRequestClose", event)
+  private class RequestCloseEvent(surfaceId: Int) : Event<RequestCloseEvent>(surfaceId) {
+    override fun getEventName(): String = "topRequestClose"
+    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
+      rctEventEmitter.receiveEvent(viewTag, eventName, com.facebook.react.bridge.Arguments.createMap())
     }
-
-    return view
-  }
-
-  override fun getExportedCustomBubblingEventTypeConstants(): MutableMap<String, Any> {
-    return MapBuilder.builder<String, Any>()
-      .put(
-        "onSelect",
-        MapBuilder.of(
-          "phasedRegistrationNames",
-          MapBuilder.of("bubbled", "onSelect")
-        )
-      )
-      .put(
-        "onRequestClose",
-        MapBuilder.of(
-          "phasedRegistrationNames",
-          MapBuilder.of("bubbled", "onRequestClose")
-        )
-      )
-      .build()
-  }
-
-  // ---------------- Props ----------------
-
-  @ReactProp(name = "options")
-  fun setOptions(view: PCSelectionMenuView, options: ReadableArray?) {
-    if (options == null) {
-      view.options = emptyList()
-      return
-    }
-
-    val out = ArrayList<SelectionOption>(options.size())
-    for (i in 0 until options.size()) {
-      val m = options.getMap(i) ?: continue
-      val label = m.getString("label") ?: ""
-      val data = m.getString("data") ?: ""
-      out.add(SelectionOption(label = label, data = data))
-    }
-    view.options = out
-  }
-
-  @ReactProp(name = "selectedData")
-  fun setSelectedData(view: PCSelectionMenuView, selectedData: String?) {
-    view.selectedData = selectedData ?: ""
-  }
-
-  @ReactProp(name = "interactivity")
-  fun setInteractivity(view: PCSelectionMenuView, interactivity: String?) {
-    view.interactivity = interactivity ?: "enabled"
-  }
-
-  @ReactProp(name = "placeholder")
-  fun setPlaceholder(view: PCSelectionMenuView, placeholder: String?) {
-    view.placeholder = placeholder
-  }
-
-  @ReactProp(name = "anchorMode")
-  fun setAnchorMode(view: PCSelectionMenuView, anchorMode: String?) {
-    view.anchorMode = anchorMode ?: "headless"
-  }
-
-  @ReactProp(name = "visible")
-  fun setVisible(view: PCSelectionMenuView, visible: String?) {
-    view.visible = visible ?: "closed"
-  }
-
-  @ReactProp(name = "presentation")
-  fun setPresentation(view: PCSelectionMenuView, presentation: String?) {
-    view.presentation = presentation ?: "auto"
-  }
-
-  @ReactProp(name = "android")
-  fun setAndroid(view: PCSelectionMenuView, android: ReadableMap?) {
-    // android.material: "auto" | "m2" | "m3"
-    val material = android?.getString("material")
-    view.material = material
   }
 }

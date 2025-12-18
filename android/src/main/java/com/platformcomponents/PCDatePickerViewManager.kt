@@ -1,94 +1,125 @@
-package com.platformcomponents.datepicker
+package com.platformcomponents
 
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.annotations.ReactProp
+import com.facebook.react.uimanager.ViewManagerDelegate
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.events.Event
 import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.viewmanagers.PCDatePickerManagerDelegate
+import com.facebook.react.viewmanagers.PCDatePickerManagerInterface
 
-class PCDatePickerViewManager : SimpleViewManager<PCDatePickerView>() {
+class PCDatePickerViewManager :
+  SimpleViewManager<PCDatePickerView>(),
+  PCDatePickerManagerInterface<PCDatePickerView> {
+
+  private val delegate: ViewManagerDelegate<PCDatePickerView> =
+    PCDatePickerManagerDelegate(this)
 
   override fun getName(): String = "PCDatePicker"
 
+  override fun getDelegate(): ViewManagerDelegate<PCDatePickerView> = delegate
+
   override fun createViewInstance(reactContext: ThemedReactContext): PCDatePickerView {
-    val view = PCDatePickerView(reactContext)
+    return PCDatePickerView(reactContext)
+  }
 
-    view.onConfirm = { ms ->
-      val event = Arguments.createMap().apply { putDouble("timestampMs", ms) }
-      reactContext.getJSModule(RCTEventEmitter::class.java)
-        .receiveEvent(view.id, "onConfirm", event)
+  override fun addEventEmitters(reactContext: ThemedReactContext, view: PCDatePickerView) {
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
+
+    view.onConfirm = { ts ->
+      dispatcher?.dispatchEvent(ConfirmEvent(view.id, ts))
     }
-
     view.onCancel = {
-      val event = Arguments.createMap()
-      reactContext.getJSModule(RCTEventEmitter::class.java)
-        .receiveEvent(view.id, "onCancel", event)
+      dispatcher?.dispatchEvent(CancelEvent(view.id))
+    }
+  }
+
+  // --- Common props ---
+
+  override fun setMode(view: PCDatePickerView, value: String?) {
+    view.applyMode(value)
+  }
+
+  override fun setPresentation(view: PCDatePickerView, value: String?) {
+    view.applyPresentation(value)
+  }
+
+  override fun setVisible(view: PCDatePickerView, value: String?) {
+    view.applyVisible(value)
+  }
+
+  override fun setLocale(view: PCDatePickerView, value: String?) {
+    view.applyLocale(value)
+  }
+
+  override fun setTimeZoneName(view: PCDatePickerView, value: String?) {
+    view.applyTimeZoneName(value)
+  }
+
+  // WithDefault<double,-1> comes through as primitive Double
+  override fun setDateMs(view: PCDatePickerView, value: Double) {
+    view.applyDateMs(if (value >= 0.0) value.toLong() else null)
+  }
+
+  override fun setMinDateMs(view: PCDatePickerView, value: Double) {
+    view.applyMinDateMs(if (value >= 0.0) value.toLong() else null)
+  }
+
+  override fun setMaxDateMs(view: PCDatePickerView, value: Double) {
+    view.applyMaxDateMs(if (value >= 0.0) value.toLong() else null)
+  }
+
+  // --- platform objects ---
+
+  override fun setAndroid(view: PCDatePickerView, value: ReadableMap?) {
+    if (value == null) {
+      view.applyAndroidConfig(null, null, null, null, null)
+      return
     }
 
-    return view
+    val firstDay =
+      if (value.hasKey("firstDayOfWeek") && !value.isNull("firstDayOfWeek")) value.getInt("firstDayOfWeek") else null
+
+    val material =
+      if (value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
+
+    val title =
+      if (value.hasKey("dialogTitle") && !value.isNull("dialogTitle")) value.getString("dialogTitle") else null
+
+    val pos =
+      if (value.hasKey("positiveButtonTitle") && !value.isNull("positiveButtonTitle")) value.getString("positiveButtonTitle") else null
+
+    val neg =
+      if (value.hasKey("negativeButtonTitle") && !value.isNull("negativeButtonTitle")) value.getString("negativeButtonTitle") else null
+
+    view.applyAndroidConfig(firstDay, material, title, pos, neg)
   }
 
-  override fun getExportedCustomBubblingEventTypeConstants(): MutableMap<String, Any> {
-    return MapBuilder.builder<String, Any>()
-      .put(
-        "onConfirm",
-        MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onConfirm"))
-      )
-      .put(
-        "onCancel",
-        MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onCancel"))
-      )
-      .build()
+  override fun setIos(view: PCDatePickerView, value: ReadableMap?) {
+    // Android ignores iOS config
   }
 
-  @ReactProp(name = "mode")
-  fun setMode(view: PCDatePickerView, mode: String?) {
-    view.mode = mode ?: "date"
+  // --- Events (Fabric -> JS) ---
+
+  private class ConfirmEvent(
+    surfaceId: Int,
+    private val ts: Double
+  ) : Event<ConfirmEvent>(surfaceId) {
+    override fun getEventName(): String = "topConfirm"
+    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
+      val payload = com.facebook.react.bridge.Arguments.createMap().apply {
+        putDouble("timestampMs", ts)
+      }
+      rctEventEmitter.receiveEvent(viewTag, eventName, payload)
+    }
   }
 
-  @ReactProp(name = "presentation")
-  fun setPresentation(view: PCDatePickerView, presentation: String?) {
-    view.presentation = presentation ?: "modal"
-  }
-
-  @ReactProp(name = "visible")
-  fun setVisible(view: PCDatePickerView, visible: String?) {
-    view.visible = visible ?: "closed"
-  }
-
-  @ReactProp(name = "dateMs")
-  fun setDateMs(view: PCDatePickerView, dateMs: Double) {
-    view.dateMs = dateMs
-  }
-
-  @ReactProp(name = "minDateMs")
-  fun setMinDateMs(view: PCDatePickerView, minDateMs: Double) {
-    view.minDateMs = minDateMs
-  }
-
-  @ReactProp(name = "maxDateMs")
-  fun setMaxDateMs(view: PCDatePickerView, maxDateMs: Double) {
-    view.maxDateMs = maxDateMs
-  }
-
-  @ReactProp(name = "locale")
-  fun setLocale(view: PCDatePickerView, locale: String?) {
-    view.locale = locale
-  }
-
-  @ReactProp(name = "timeZoneName")
-  fun setTimeZoneName(view: PCDatePickerView, tz: String?) {
-    view.timeZoneName = tz
-  }
-
-  @ReactProp(name = "android")
-  fun setAndroid(view: PCDatePickerView, android: ReadableMap?) {
-    view.firstDayOfWeek = android?.getInt("firstDayOfWeek")
-    view.dialogTitle = android?.getString("dialogTitle")
-    view.positiveButtonTitle = android?.getString("positiveButtonTitle")
-    view.negativeButtonTitle = android?.getString("negativeButtonTitle")
-    view.material = android?.getString("material") // "auto" | "m2" | "m3"
+  private class CancelEvent(surfaceId: Int) : Event<CancelEvent>(surfaceId) {
+    override fun getEventName(): String = "topCancel"
+    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
+      rctEventEmitter.receiveEvent(viewTag, eventName, com.facebook.react.bridge.Arguments.createMap())
+    }
   }
 }
