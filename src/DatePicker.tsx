@@ -38,7 +38,7 @@ export type DatePickerProps = {
   visible?: boolean;
 
   onConfirm?: (dateTime: Date) => void;
-  onCancel?: () => void;
+  onClosed?: () => void;
 
   ios?: {
     preferredStyle?: IOSDatePickerStyle;
@@ -81,7 +81,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     presentation = 'modal',
     visible,
     onConfirm,
-    onCancel,
+    onClosed,
     ios,
     android,
   } = props;
@@ -93,9 +93,9 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     [onConfirm]
   );
 
-  const handleCancel = useCallback(() => {
-    onCancel?.();
-  }, [onCancel]);
+  const handleClosed = useCallback(() => {
+    onClosed?.();
+  }, [onClosed]);
 
   const styles = useMemo(() => createStyles(), []);
 
@@ -114,7 +114,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     maxDateMs: dateToMsOrMinusOne(maxDate ?? null) as any,
 
     onConfirm: onConfirm ? handleConfirm : undefined,
-    onCancel: onCancel ? handleCancel : undefined,
+    onClosed: onClosed ? handleClosed : undefined,
 
     ios: ios
       ? {

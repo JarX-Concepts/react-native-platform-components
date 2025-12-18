@@ -62,7 +62,7 @@ export interface NativeProps extends ViewProps, CommonProps {
   android?: AndroidProps;
 
   onConfirm?: CodegenTypes.BubblingEventHandler<DateChangeEvent>;
-  onCancel?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
+  onClosed?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
 }
 
 export default codegenNativeComponent<NativeProps>('PCDatePicker');

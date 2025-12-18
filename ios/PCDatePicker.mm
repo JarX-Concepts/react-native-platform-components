@@ -35,7 +35,8 @@ using namespace facebook::react;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
-  return concreteComponentDescriptorProvider<MeasuringPCDatePickerComponentDescriptor>();
+  return concreteComponentDescriptorProvider<
+      MeasuringPCDatePickerComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -47,7 +48,8 @@ using namespace facebook::react;
 
     _datePickerView.onChangeHandler = ^(NSNumber *ms) {
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf) return;
+      if (!strongSelf)
+        return;
 
       PCDatePickerEventEmitter::OnConfirm event{};
       event.timestampMs = ms.doubleValue;
@@ -57,19 +59,24 @@ using namespace facebook::react;
 
     _datePickerView.onCancelHandler = ^{
       __typeof(self) strongSelf = weakSelf;
-      if (!strongSelf) return;
+      if (!strongSelf)
+        return;
 
-      PCDatePickerEventEmitter::OnCancel event{};
-      strongSelf.eventEmitterTyped.onCancel(event);
+      PCDatePickerEventEmitter::OnClosed event{};
+      strongSelf.eventEmitterTyped.onClosed(event);
     };
 
     self.contentView = _datePickerView;
 
     [NSLayoutConstraint activateConstraints:@[
-      [_datePickerView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
-      [_datePickerView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
-      [_datePickerView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
-      [_datePickerView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+      [_datePickerView.topAnchor
+          constraintEqualToAnchor:self.contentView.topAnchor],
+      [_datePickerView.bottomAnchor
+          constraintEqualToAnchor:self.contentView.bottomAnchor],
+      [_datePickerView.leadingAnchor
+          constraintEqualToAnchor:self.contentView.leadingAnchor],
+      [_datePickerView.trailingAnchor
+          constraintEqualToAnchor:self.contentView.trailingAnchor],
     ]];
   }
 
@@ -84,8 +91,7 @@ using namespace facebook::react;
 #pragma mark - Props
 
 - (void)updateProps:(Props::Shared const &)props
-           oldProps:(Props::Shared const &)oldProps
-{
+           oldProps:(Props::Shared const &)oldProps {
   const auto &oldViewProps =
       *std::static_pointer_cast<const PCDatePickerProps>(_props);
   const auto &newViewProps =
@@ -113,15 +119,18 @@ using namespace facebook::react;
 
   // dateMs (sentinel -1)
   if (oldViewProps.dateMs != newViewProps.dateMs) {
-    _datePickerView.dateMs = (newViewProps.dateMs >= 0) ? @(newViewProps.dateMs) : nil;
+    _datePickerView.dateMs =
+        (newViewProps.dateMs >= 0) ? @(newViewProps.dateMs) : nil;
   }
 
   // min/max (sentinel -1)
   if (oldViewProps.minDateMs != newViewProps.minDateMs) {
-    _datePickerView.minDateMs = (newViewProps.minDateMs >= 0) ? @(newViewProps.minDateMs) : nil;
+    _datePickerView.minDateMs =
+        (newViewProps.minDateMs >= 0) ? @(newViewProps.minDateMs) : nil;
   }
   if (oldViewProps.maxDateMs != newViewProps.maxDateMs) {
-    _datePickerView.maxDateMs = (newViewProps.maxDateMs >= 0) ? @(newViewProps.maxDateMs) : nil;
+    _datePickerView.maxDateMs =
+        (newViewProps.maxDateMs >= 0) ? @(newViewProps.maxDateMs) : nil;
   }
 
   // locale
@@ -162,7 +171,8 @@ using namespace facebook::react;
   }
 
   if (oldIos.countDownDurationSeconds != newIos.countDownDurationSeconds) {
-    _datePickerView.countDownDurationSeconds = @(newIos.countDownDurationSeconds);
+    _datePickerView.countDownDurationSeconds =
+        @(newIos.countDownDurationSeconds);
   }
 
   if (oldIos.minuteInterval != newIos.minuteInterval) {
@@ -187,8 +197,7 @@ using namespace facebook::react;
 }
 
 - (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
-           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics
-{
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
   [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
 
   // Fill whatever Yoga decided the content frame is.
@@ -198,10 +207,9 @@ using namespace facebook::react;
 #pragma mark - State (Measuring)
 
 - (void)updateState:(const State::Shared &)state
-           oldState:(const State::Shared &)oldState
-{
-  _state =
-      std::static_pointer_cast<const MeasuringPCDatePickerShadowNode::ConcreteState>(state);
+           oldState:(const State::Shared &)oldState {
+  _state = std::static_pointer_cast<
+      const MeasuringPCDatePickerShadowNode::ConcreteState>(state);
 
   if (oldState == nullptr) {
     // First time: compute initial size.
@@ -212,15 +220,18 @@ using namespace facebook::react;
 }
 
 - (void)updateMeasurements {
-  if (_state == nullptr) return;
+  if (_state == nullptr)
+    return;
 
-  // Use the real width Yoga gave us (bounds is correct here after layoutMetrics update)
+  // Use the real width Yoga gave us (bounds is correct here after layoutMetrics
+  // update)
   const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 320;
 
-  CGSize size = [_datePickerView sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
+  CGSize size =
+      [_datePickerView sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
 
   PCDatePickerStateFrameSize next;
-  next.frameSize = { (Float)size.width, (Float)size.height };
+  next.frameSize = {(Float)size.width, (Float)size.height};
   _state->updateState(std::move(next));
 }
 

@@ -143,6 +143,7 @@ export function DatePickerDemo(): React.JSX.Element {
             selected={mode}
             inlineMode
             placeholder="Mode"
+            android={{ material: 'm3' }}
             onSelect={(data) => setMode(data as any)}
           />
         </Row>
@@ -300,7 +301,7 @@ export function DatePickerDemo(): React.JSX.Element {
               positiveButtonTitle: positiveTitle,
               negativeButtonTitle: negativeTitle,
             }}
-            onCancel={() => setOpen(false)}
+            onClosed={() => setOpen(false)}
             onConfirm={(newDate: Date) => {
               setDate(newDate);
               // optionally close modal here:

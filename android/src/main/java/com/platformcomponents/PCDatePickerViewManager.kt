@@ -30,6 +30,8 @@ class PCDatePickerViewManager :
 
     view.onConfirm = { tsMs: Long ->
       dispatcher?.dispatchEvent(ConfirmEvent(view.id, tsMs.toDouble()))
+
+      dispatcher?.dispatchEvent(CancelEvent(view.id))
     }
     view.onCancel = {
       dispatcher?.dispatchEvent(CancelEvent(view.id))
@@ -135,7 +137,7 @@ class PCDatePickerViewManager :
   }
 
   private class CancelEvent(surfaceId: Int) : Event<CancelEvent>(surfaceId) {
-    override fun getEventName(): String = "topCancel"
+    override fun getEventName(): String = "topClosed"
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
       rctEventEmitter.receiveEvent(
         viewTag,

@@ -59,13 +59,25 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     rebuildUI()
   }
 
+  private val minInlineHeightPx: Int by lazy {
+    (56f * resources.displayMetrics.density).toInt() // M3 default touch target
+  }
+
   // Headless needs a non-zero anchor rect for dropdown
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     if (anchorMode == "headless") {
-      setMeasuredDimension(1, 1)
+      val w = MeasureSpec.getSize(widthMeasureSpec)
+      setMeasuredDimension(if (w > 0) w else 1, 1)
       return
     }
+
+    // Inline: measure children, but never allow a collapsed height
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+    val measuredH = measuredHeight
+    if (measuredH < minInlineHeightPx) {
+      setMeasuredDimension(measuredWidth, minInlineHeightPx)
+    }
   }
 
   // ---- Public apply* (called by manager) ----
@@ -92,15 +104,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   fun applyPlaceholder(value: String?) {
+    if (placeholder == value) return
     placeholder = value
     inlineLayout?.hint = placeholder
   }
 
   fun applyAnchorMode(value: String?) {
-    anchorMode = when (value) {
+    val newMode = when (value) {
       "inline", "headless" -> value
       else -> "headless"
     }
+    if (anchorMode == newMode) return
+    anchorMode = newMode
     rebuildUI()
   }
 
@@ -128,7 +143,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   fun applyAndroidMaterial(value: String?) {
-    androidMaterial = value
+    val newValue = value ?: "system"
+    if (androidMaterial == newValue) return
+    androidMaterial = newValue
     if (anchorMode == "inline") rebuildUI()
   }
 
@@ -165,7 +182,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       val til = TextInputLayout(context).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
+          FrameLayout.LayoutParams.MATCH_PARENT
         )
         hint = placeholder
       }
@@ -310,16 +327,26 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       onRequestClose?.invoke()
       return
     }
-    if (!isAttachedToWindow) {
-      onRequestClose?.invoke()
-      return
+    post {
+      if (!isAttachedToWindow) {
+        onRequestClose?.invoke()
+        return@post
+      }
+
+      // Make dropdown match the anchor view width
+      val anchorW = this@PCSelectionMenuView.width
+      if (anchorW > 0) {
+        sp.dropDownWidth = anchorW
+      }
+
+      // Align dropdown’s left edge with the anchor’s left edge.
+      // (X positioning comes from the anchor itself; this is just extra explicit.)
+      sp.dropDownHorizontalOffset = 0
+      sp.dropDownVerticalOffset = 0
+
+      hookSpinnerDismiss(sp)
+      sp.performClick()
     }
-
-    // Best-effort: hook dismiss so tapping outside acts like "cancel/close"
-    hookSpinnerDismiss(sp)
-
-    // Open the native dropdown
-    sp.performClick()
   }
 
   /**

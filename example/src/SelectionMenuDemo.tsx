@@ -72,7 +72,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
   const [inlineMode, setInlineMode] = useState(false);
 
   const [presentation, setPresentation] = useState<Presentation>('popover');
-  const [material, setMaterial] = useState<AndroidMaterialMode>('system');
+  const [material, setMaterial] = useState<AndroidMaterialMode>('m3');
 
   const selectedLabel = useMemo(() => selected ?? 'None', [selected]);
 
@@ -90,7 +90,6 @@ export function SelectionMenuDemo(): React.JSX.Element {
     () =>
       [
         { label: 'System', data: 'system' },
-
         { label: 'M3', data: 'm3' },
       ] as const,
     []
@@ -216,28 +215,30 @@ export function SelectionMenuDemo(): React.JSX.Element {
                   setOpen((p) => !p);
                 }}
               />
+
+              <SelectionMenu
+                options={STATE_OPTIONS}
+                selected={selected}
+                disabled={disabled}
+                placeholder="Select a state"
+                inlineMode={false}
+                visible={open}
+                presentation={presentation as any}
+                android={Platform.OS === 'android' ? { material } : undefined}
+                onSelect={(data) => {
+                  console.log('Selected:', data);
+                  setSelected(data);
+                  setOpen(false);
+                }}
+                onRequestClose={() => {
+                  console.log('cancelled');
+                  setOpen(false);
+                }}
+              />
             </Row>
           </>
         )}
       </Section>
-
-      {!inlineMode && (
-        <SelectionMenu
-          options={STATE_OPTIONS}
-          selected={selected}
-          disabled={disabled}
-          placeholder="Select a state"
-          inlineMode={false}
-          visible={open}
-          presentation={presentation as any}
-          android={Platform.OS === 'android' ? { material } : undefined}
-          onSelect={(data) => {
-            setSelected(data);
-            setOpen(false);
-          }}
-          onRequestClose={() => setOpen(false)}
-        />
-      )}
     </>
   );
 }

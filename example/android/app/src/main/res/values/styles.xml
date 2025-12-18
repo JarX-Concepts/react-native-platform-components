@@ -1,9 +1,18 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+
+      <item name="textInputStyle">@style/PC.ExposedDropdown.TIL</item>
+      <item name="autoCompleteTextViewStyle">@style/PC.ExposedDropdown.ACTV</item>
     </style>
 
+    <style name="PC.ExposedDropdown.TIL"
+      parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+    </style>
+
+    <style name="PC.ExposedDropdown.ACTV"
+      parent="Widget.Material3.AutoCompleteTextView.OutlinedBox">
+    </style>
 </resources>
