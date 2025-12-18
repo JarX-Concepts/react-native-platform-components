@@ -1,68 +1,93 @@
 package com.platformcomponents
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import android.app.Activity
 import android.content.Context
-import android.view.View
+import android.content.ContextWrapper
+import android.content.DialogInterface
+import android.os.Build
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.DatePicker
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TimePicker
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentActivity
+import com.facebook.react.uimanager.ThemedReactContext
 import com.google.android.material.datepicker.CalendarConstraints
-import com.google.android.material.datepicker.CompositeDateValidator
-import com.google.android.material.datepicker.DateValidatorPointBackward
-import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import java.util.Calendar
+import java.util.Locale
 import java.util.TimeZone
+import kotlin.math.max
+import kotlin.math.min
 
 class PCDatePickerView(context: Context) : FrameLayout(context) {
 
-  // ---- Spec props ----
-  var mode: String = "date"
-  var presentation: String = "modal" // "modal" | "inline"
-  var visible: String = "closed"     // "open" | "closed" (modal only)
+  // --- Public props (set by manager) ---
+  private var mode: String = "date" // "date" | "time" | "dateAndTime"
+  private var presentation: String = "modal" // "inline" | "modal" | "popover" | "sheet" | "auto" (we treat non-inline as modal-ish)
+  private var visible: String = "closed" // "open" | "closed" (only for non-inline)
+  private var locale: Locale? = null
+  private var timeZone: TimeZone = TimeZone.getDefault()
 
-  var locale: String? = null
-  var timeZoneName: String? = null
+  private var dateMs: Long? = null
+  private var minDateMs: Long? = null
+  private var maxDateMs: Long? = null
 
-  var dateMs: Long? = null
-  var minDateMs: Long? = null
-  var maxDateMs: Long? = null
+  // --- Android config from nested `android` prop ---
+  private var androidFirstDayOfWeek: Int? = null
+  private var androidMaterialMode: PCMaterialMode = PCMaterialMode.SYSTEM // SYSTEM | M3
+  private var androidDialogTitle: String? = null
+  private var androidPositiveTitle: String? = null
+  private var androidNegativeTitle: String? = null
 
-  // Android props (spec)
-  var firstDayOfWeek: Int? = null
-  var material: String? = null       // "auto" | "m2" | "m3"
-  var dialogTitle: String? = null
-  var positiveButtonTitle: String? = null
-  var negativeButtonTitle: String? = null
-
-  // Events (manager wires these)
-  var onConfirm: ((Double) -> Unit)? = null
+  // --- Events (wired by manager) ---
+  var onConfirm: ((Long) -> Unit)? = null
   var onCancel: (() -> Unit)? = null
 
-  private var showing = false
+  // --- Inline UI ---
+  private var inlineContainer: LinearLayout? = null
+  private var inlineDatePicker: DatePicker? = null
+  private var inlineTimePicker: TimePicker? = null
+  private var suppressInlineCallbacks = false
+
+  // --- Modal state ---
+  private var showingModal = false
 
   init {
-    visibility = View.VISIBLE
     minimumHeight = 0
     minimumWidth = 0
+    rebuildUI()
   }
 
-  // --- Apply methods used by Manager ---
+  // Headless layout when not inline
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    if (!isInline()) {
+      setMeasuredDimension(0, 0)
+      return
+    }
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+  }
+
+  // -----------------------------
+  // Manager-facing apply* methods
+  // -----------------------------
 
   fun applyMode(value: String?) {
-    mode = value ?: "date"
-    if (showing) dismissIfNeeded()
+    mode = when (value) {
+      "date", "time", "dateAndTime" -> value
+      else -> "date"
+    }
+    rebuildUI()
   }
 
   fun applyPresentation(value: String?) {
-    presentation = when (value) {
-      "modal", "inline" -> value
-      else -> "modal"
-    }
-    requestLayout()
-    if (presentation != "modal" && showing) dismissIfNeeded()
+    presentation = value ?: "modal"
+    rebuildUI()
+    // If we were showing and presentation changed, we’ll let JS drive visible again.
   }
 
   fun applyVisible(value: String?) {
@@ -70,299 +95,590 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       "open", "closed" -> value
       else -> "closed"
     }
-    if (presentation != "modal") return
+    if (isInline()) return
 
-    if (visible == "open") presentIfNeeded()
-    else dismissIfNeeded()
+    if (visible == "open") presentIfNeeded() else dismissIfNeeded()
   }
 
   fun applyLocale(value: String?) {
-    locale = value
+    locale =
+      try {
+        if (value.isNullOrBlank()) null else Locale.forLanguageTag(value)
+      } catch (_: Throwable) {
+        null
+      }
+    // Inline pickers don’t render strings; no-op other than storing.
   }
 
   fun applyTimeZoneName(value: String?) {
-    timeZoneName = value
+    timeZone =
+      try {
+        if (value.isNullOrBlank()) TimeZone.getDefault() else TimeZone.getTimeZone(value)
+      } catch (_: Throwable) {
+        TimeZone.getDefault()
+      }
+    // Update inline display
+    syncInlineFromState()
   }
 
-  fun applyDateMs(ms: Long?) {
-    dateMs = ms
+  fun applyDateMs(value: Long?) {
+    dateMs = value
+    syncInlineFromState()
   }
 
-  fun applyMinDateMs(ms: Long?) {
-    minDateMs = ms
+  fun applyMinDateMs(value: Long?) {
+    minDateMs = value
+    // clamp if needed
+    dateMs = clamp(dateMs ?: System.currentTimeMillis())
+    syncInlineFromState()
   }
 
-  fun applyMaxDateMs(ms: Long?) {
-    maxDateMs = ms
+  fun applyMaxDateMs(value: Long?) {
+    maxDateMs = value
+    // clamp if needed
+    dateMs = clamp(dateMs ?: System.currentTimeMillis())
+    syncInlineFromState()
   }
 
+  /**
+   * REQUIRED by your manager (nested `android` object).
+   * Only supports material: "system" | "m3"
+   */
   fun applyAndroidConfig(
     firstDayOfWeek: Int?,
     material: String?,
     dialogTitle: String?,
     positiveButtonTitle: String?,
-    negativeButtonTitle: String?,
+    negativeButtonTitle: String?
   ) {
-    this.firstDayOfWeek = firstDayOfWeek
-    this.material = material
-    this.dialogTitle = dialogTitle
-    this.positiveButtonTitle = positiveButtonTitle
-    this.negativeButtonTitle = negativeButtonTitle
+    androidFirstDayOfWeek = firstDayOfWeek
+
+    androidMaterialMode = when (material) {
+      "m3" -> PCMaterialMode.M3
+      "system", null -> PCMaterialMode.SYSTEM
+      else -> PCMaterialMode.SYSTEM
+    }
+
+    androidDialogTitle = dialogTitle
+    androidPositiveTitle = positiveButtonTitle
+    androidNegativeTitle = negativeButtonTitle
+
+    // Inline date picker can use firstDayOfWeek in its internal Calendar calculations
+    syncInlineFromState()
   }
 
-  // Modal should be headless (0x0)
-  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    if (presentation == "modal") {
-      setMeasuredDimension(0, 0)
+  // -----------------------------
+  // UI construction
+  // -----------------------------
+
+  private fun isInline(): Boolean = presentation == "inline"
+
+  private fun rebuildUI() {
+    removeAllViews()
+    inlineContainer = null
+    inlineDatePicker = null
+    inlineTimePicker = null
+
+    if (!isInline()) {
+      requestLayout()
       return
     }
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+    val container = LinearLayout(context).apply {
+      layoutParams = LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      )
+      orientation = LinearLayout.VERTICAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+
+    // date and/or time
+    if (mode == "date" || mode == "dateAndTime") {
+      val dp = DatePicker(context).apply {
+        layoutParams = LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        calendarViewShown = true
+        spinnersShown = false
+      }
+      container.addView(dp)
+      inlineDatePicker = dp
+
+      dp.setOnDateChangedListener { _, year, month, day ->
+        if (suppressInlineCallbacks) return@setOnDateChangedListener
+        onInlineDateChanged(year, month, day)
+      }
+    }
+
+    if (mode == "time" || mode == "dateAndTime") {
+      val tp = TimePicker(context).apply {
+        layoutParams = LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        val is24 = android.text.format.DateFormat.is24HourFormat(context)
+        setIs24HourView(is24)
+      }
+      container.addView(tp)
+      inlineTimePicker = tp
+
+      tp.setOnTimeChangedListener { _, hour, minute ->
+        if (suppressInlineCallbacks) return@setOnTimeChangedListener
+        onInlineTimeChanged(hour, minute)
+      }
+    }
+
+    addView(container)
+    inlineContainer = container
+
+    syncInlineFromState()
+    requestLayout()
   }
+
+  private fun syncInlineFromState() {
+    if (!isInline()) return
+
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+    dateMs = ts
+
+    val cal = calendarFor(ts)
+
+    suppressInlineCallbacks = true
+    try {
+      inlineDatePicker?.let { dp ->
+        // Apply min/max bounds on the widget itself where possible
+        minDateMs?.let { dp.minDate = it }
+        maxDateMs?.let { dp.maxDate = it }
+
+        val y = cal.get(Calendar.YEAR)
+        val m = cal.get(Calendar.MONTH)
+        val d = cal.get(Calendar.DAY_OF_MONTH)
+        dp.updateDate(y, m, d)
+      }
+
+      inlineTimePicker?.let { tp ->
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+        if (Build.VERSION.SDK_INT >= 23) {
+          if (tp.hour != hour) tp.hour = hour
+          if (tp.minute != minute) tp.minute = minute
+        } else {
+          @Suppress("DEPRECATION")
+          if (tp.currentHour != hour) tp.currentHour = hour
+          @Suppress("DEPRECATION")
+          if (tp.currentMinute != minute) tp.currentMinute = minute
+        }
+      }
+    } finally {
+      suppressInlineCallbacks = false
+    }
+  }
+
+  // -----------------------------
+  // Inline change handlers
+  // -----------------------------
+
+  private fun onInlineDateChanged(year: Int, month: Int, day: Int) {
+    val base = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(base)
+
+    cal.set(Calendar.YEAR, year)
+    cal.set(Calendar.MONTH, month)
+    cal.set(Calendar.DAY_OF_MONTH, day)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+
+    dateMs = clamp(cal.timeInMillis)
+    // Inline = no confirm/cancel; treat as immediate confirm (same as your old behavior)
+    onConfirm?.invoke(dateMs!!)
+  }
+
+  private fun onInlineTimeChanged(hour: Int, minute: Int) {
+    val base = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(base)
+
+    cal.set(Calendar.HOUR_OF_DAY, hour)
+    cal.set(Calendar.MINUTE, minute)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+
+    dateMs = clamp(cal.timeInMillis)
+    onConfirm?.invoke(dateMs!!)
+  }
+
+  // -----------------------------
+  // Headless modal presentation
+  // -----------------------------
 
   private fun presentIfNeeded() {
-    if (showing) return
+    if (showingModal) return
     val act = findFragmentActivity() ?: run {
+      // If we cannot present, treat as cancel
       onCancel?.invoke()
+      showingModal = false
       return
     }
 
-    showing = true
-
-    val requested = parseMaterialMode(material)
-    val resolved = resolveAutoMaterialMode(act, requested)
+    showingModal = true
 
     when (mode) {
-      "time" -> showTime(act, resolved)
-      "dateAndTime" -> showDateThenTime(act, resolved)
-      "countDownTimer" -> showTime(act, resolved) // Android doesn't have countDown dialog; treat as time
-      else -> showDate(act, resolved)
+      "time" -> presentTime(act)
+      "dateAndTime" -> presentDateThenTime(act)
+      else -> presentDate(act)
     }
   }
 
   private fun dismissIfNeeded() {
-    // Dialogs dismiss themselves; we just reset state.
-    if (!showing) return
-    showing = false
+    // We don’t retain dialog instances here; JS will close by dismissing itself or user action.
+    // This keeps parity with Fabric headless patterns.
+    showingModal = false
   }
 
-  private fun showDateThenTime(act: FragmentActivity, m: PCMaterialMode) {
-    showDate(act, m) { pickedDate ->
-      // store date part then show time
-      dateMs = pickedDate
-      showTime(act, m) { pickedDateTime ->
-        onConfirm?.invoke(pickedDateTime.toDouble())
-        showing = false
+  private fun presentDate(act: FragmentActivity) {
+    if (androidMaterialMode == PCMaterialMode.M3) presentM3Date(act) else presentSystemDate(act)
+  }
+
+  private fun presentTime(act: FragmentActivity) {
+    if (androidMaterialMode == PCMaterialMode.M3) presentM3Time(act) else presentSystemTime(act)
+  }
+
+  private fun presentDateThenTime(act: FragmentActivity) {
+    if (androidMaterialMode == PCMaterialMode.M3) {
+      presentM3DateThenTime(act)
+    } else {
+      presentSystemDateThenTime(act)
+    }
+  }
+
+  // -----------------------------
+  // SYSTEM dialogs (AlertDialog host for full control)
+  // -----------------------------
+
+  private fun presentSystemDate(act: FragmentActivity) {
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(ts)
+
+    val picker = DatePicker(act).apply {
+      calendarViewShown = true
+      spinnersShown = false
+      minDateMs?.let { minDate = it }
+      maxDateMs?.let { maxDate = it }
+      updateDate(
+        cal.get(Calendar.YEAR),
+        cal.get(Calendar.MONTH),
+        cal.get(Calendar.DAY_OF_MONTH)
+      )
+    }
+
+    val dlg = AlertDialog.Builder(act)
+      .setTitle(androidDialogTitle ?: "")
+      .setView(picker)
+      .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
+        val c = calendarFor(ts)
+        c.set(Calendar.YEAR, picker.year)
+        c.set(Calendar.MONTH, picker.month)
+        c.set(Calendar.DAY_OF_MONTH, picker.dayOfMonth)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
+
+        dateMs = clamp(c.timeInMillis)
+        onConfirm?.invoke(dateMs!!)
+        onCancelOrClose()
+      }
+      .setNegativeButton(androidNegativeTitle ?: "Cancel") { _, _ ->
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .setOnCancelListener {
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .create()
+
+    dlg.show()
+  }
+
+  private fun presentSystemTime(act: FragmentActivity) {
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(ts)
+
+    val picker = TimePicker(act).apply {
+      val is24 = android.text.format.DateFormat.is24HourFormat(act)
+      setIs24HourView(is24)
+
+      val hour = cal.get(Calendar.HOUR_OF_DAY)
+      val minute = cal.get(Calendar.MINUTE)
+
+      if (Build.VERSION.SDK_INT >= 23) {
+        this.hour = hour
+        this.minute = minute
+      } else {
+        @Suppress("DEPRECATION") this.currentHour = hour
+        @Suppress("DEPRECATION") this.currentMinute = minute
       }
     }
-  }
 
-  private fun showDate(
-    act: FragmentActivity,
-    m: PCMaterialMode,
-    onPicked: ((Long) -> Unit)? = null
-  ) {
-    if (m == PCMaterialMode.M3) {
-      showMaterial3Date(act, onPicked)
-    } else {
-      showMaterial2Date(act, onPicked)
-    }
-  }
-
-  private fun showTime(
-    act: FragmentActivity,
-    m: PCMaterialMode,
-    onPicked: ((Long) -> Unit)? = null
-  ) {
-    if (m == PCMaterialMode.M3) {
-      showMaterial3Time(act, onPicked)
-    } else {
-      showMaterial2Time(act, onPicked)
-    }
-  }
-
-  // --------------------------
-  // M2 (platform dialogs)
-  // --------------------------
-
-  private fun showMaterial2Date(act: FragmentActivity, onPicked: ((Long) -> Unit)?) {
-    val cal = calendarFor(dateMs ?: System.currentTimeMillis())
-
-    val dlg = DatePickerDialog(
-      act,
-      { _, year, month, day ->
-        val pickedCal = calendarFor(dateMs ?: System.currentTimeMillis())
-        pickedCal.set(Calendar.YEAR, year)
-        pickedCal.set(Calendar.MONTH, month)
-        pickedCal.set(Calendar.DAY_OF_MONTH, day)
-        pickedCal.set(Calendar.HOUR_OF_DAY, 0)
-        pickedCal.set(Calendar.MINUTE, 0)
-        pickedCal.set(Calendar.SECOND, 0)
-        pickedCal.set(Calendar.MILLISECOND, 0)
-
-        val picked = pickedCal.timeInMillis
-        if (onPicked != null) onPicked(picked)
-        else {
-          onConfirm?.invoke(picked.toDouble())
-          showing = false
+    val dlg = AlertDialog.Builder(act)
+      .setTitle(androidDialogTitle ?: "")
+      .setView(picker)
+      .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
+        val h: Int
+        val m: Int
+        if (Build.VERSION.SDK_INT >= 23) {
+          h = picker.hour
+          m = picker.minute
+        } else {
+          @Suppress("DEPRECATION") h = picker.currentHour
+          @Suppress("DEPRECATION") m = picker.currentMinute
         }
-      },
-      cal.get(Calendar.YEAR),
-      cal.get(Calendar.MONTH),
-      cal.get(Calendar.DAY_OF_MONTH)
-    )
 
-    // constraints
-    minDateMs?.let { dlg.datePicker.minDate = it }
-    maxDateMs?.let { dlg.datePicker.maxDate = it }
+        val c = calendarFor(ts)
+        c.set(Calendar.HOUR_OF_DAY, h)
+        c.set(Calendar.MINUTE, m)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
 
-    dlg.setOnCancelListener {
-      onCancel?.invoke()
-      showing = false
-    }
-
-    dlg.setOnDismissListener {
-      // if user dismissed by back/outside
-      if (visible == "open") onCancel?.invoke()
-      showing = false
-    }
+        dateMs = clamp(c.timeInMillis)
+        onConfirm?.invoke(dateMs!!)
+        onCancelOrClose()
+      }
+      .setNegativeButton(androidNegativeTitle ?: "Cancel") { _, _ ->
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .setOnCancelListener {
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .create()
 
     dlg.show()
   }
 
-  private fun showMaterial2Time(act: FragmentActivity, onPicked: ((Long) -> Unit)?) {
-    val base = dateMs ?: System.currentTimeMillis()
-    val cal = calendarFor(base)
+  private fun presentSystemDateThenTime(act: FragmentActivity) {
+    // date first
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(ts)
 
-    val dlg = TimePickerDialog(
-      act,
-      { _, hour, minute ->
-        val out = calendarFor(base)
-        out.set(Calendar.HOUR_OF_DAY, hour)
-        out.set(Calendar.MINUTE, minute)
-        out.set(Calendar.SECOND, 0)
-        out.set(Calendar.MILLISECOND, 0)
-        val picked = out.timeInMillis
-        if (onPicked != null) onPicked(picked)
-        else {
-          onConfirm?.invoke(picked.toDouble())
-          showing = false
-        }
-      },
-      cal.get(Calendar.HOUR_OF_DAY),
-      cal.get(Calendar.MINUTE),
-      true
-    )
-
-    dlg.setOnCancelListener {
-      onCancel?.invoke()
-      showing = false
+    val picker = DatePicker(act).apply {
+      calendarViewShown = true
+      spinnersShown = false
+      minDateMs?.let { minDate = it }
+      maxDateMs?.let { maxDate = it }
+      updateDate(
+        cal.get(Calendar.YEAR),
+        cal.get(Calendar.MONTH),
+        cal.get(Calendar.DAY_OF_MONTH)
+      )
     }
 
-    dlg.setOnDismissListener {
-      if (visible == "open") onCancel?.invoke()
-      showing = false
-    }
+    val dlg = AlertDialog.Builder(act)
+      .setTitle(androidDialogTitle ?: "")
+      .setView(picker)
+      .setPositiveButton(androidPositiveTitle ?: "Next") { _, _ ->
+        val c = calendarFor(ts)
+        c.set(Calendar.YEAR, picker.year)
+        c.set(Calendar.MONTH, picker.month)
+        c.set(Calendar.DAY_OF_MONTH, picker.dayOfMonth)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
+
+        dateMs = clamp(c.timeInMillis)
+        // then time dialog (same mode)
+        presentSystemTime(act)
+      }
+      .setNegativeButton(androidNegativeTitle ?: "Cancel") { _, _ ->
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .setOnCancelListener {
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+      .create()
 
     dlg.show()
   }
 
-  // --------------------------
-  // M3 (Material Components)
-  // --------------------------
+  // -----------------------------
+  // M3 dialogs
+  // -----------------------------
 
-  private fun showMaterial3Date(act: FragmentActivity, onPicked: ((Long) -> Unit)?) {
+  private fun presentM3Date(act: FragmentActivity) {
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+
     val builder = MaterialDatePicker.Builder.datePicker()
+      .setSelection(ts)
 
-    dialogTitle?.let { builder.setTitleText(it) }
-    positiveButtonTitle?.let { builder.setPositiveButtonText(it) }
-    negativeButtonTitle?.let { builder.setNegativeButtonText(it) }
+    androidDialogTitle?.let { builder.setTitleText(it) }
+    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
+    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
 
-    dateMs?.let { if (it >= 0) builder.setSelection(it) }
-
-    buildDateConstraints(minDateMs, maxDateMs)?.let { builder.setCalendarConstraints(it) }
+    val constraints = buildM3CalendarConstraints()
+    if (constraints != null) builder.setCalendarConstraints(constraints)
 
     val picker = builder.build()
 
-    picker.addOnPositiveButtonClickListener { utcMillis ->
-      val picked = utcMillis
-      if (onPicked != null) onPicked(picked)
-      else {
-        onConfirm?.invoke(picked.toDouble())
-        showing = false
+    picker.addOnPositiveButtonClickListener { selection ->
+      val sel = (selection ?: ts)
+      // Selection is date-based; merge with existing time-of-day
+      val base = calendarFor(ts)
+      val selUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = sel }
+      base.set(Calendar.YEAR, selUtc.get(Calendar.YEAR))
+      base.set(Calendar.MONTH, selUtc.get(Calendar.MONTH))
+      base.set(Calendar.DAY_OF_MONTH, selUtc.get(Calendar.DAY_OF_MONTH))
+      base.set(Calendar.SECOND, 0)
+      base.set(Calendar.MILLISECOND, 0)
+
+      dateMs = clamp(base.timeInMillis)
+      onConfirm?.invoke(dateMs!!)
+      onCancelOrClose()
+    }
+
+    picker.addOnDismissListener {
+      // If dismissed without confirm, treat as cancel
+      if (showingModal) {
+        onCancel?.invoke()
+        onCancelOrClose()
       }
     }
 
-    picker.addOnNegativeButtonClickListener {
-      onCancel?.invoke()
-      showing = false
-    }
-    picker.addOnCancelListener {
-      onCancel?.invoke()
-      showing = false
-    }
-    picker.addOnDismissListener {
-      if (visible == "open") onCancel?.invoke()
-      showing = false
-    }
-
-    picker.show(act.supportFragmentManager, "PCDatePicker_date_m3")
+    picker.show(act.supportFragmentManager, "PCDatePicker_M3_DATE")
   }
 
-  private fun showMaterial3Time(act: FragmentActivity, onPicked: ((Long) -> Unit)?) {
-    val base = dateMs ?: System.currentTimeMillis()
-    val cal = calendarFor(base)
+  private fun presentM3Time(act: FragmentActivity) {
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+    val cal = calendarFor(ts)
 
-    val picker = MaterialTimePicker.Builder()
-      .setTimeFormat(TimeFormat.CLOCK_24H)
+    val is24 = android.text.format.DateFormat.is24HourFormat(act)
+    val builder = MaterialTimePicker.Builder()
+      .setTimeFormat(if (is24) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
       .setHour(cal.get(Calendar.HOUR_OF_DAY))
       .setMinute(cal.get(Calendar.MINUTE))
-      .apply { dialogTitle?.let { setTitleText(it) } }
-      .build()
+
+    androidDialogTitle?.let { builder.setTitleText(it) }
+    // These exist in recent Material; if you’re on an older one, you’ll get compile errors.
+    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
+    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
+
+    val picker = builder.build()
 
     picker.addOnPositiveButtonClickListener {
-      val out = calendarFor(base)
-      out.set(Calendar.HOUR_OF_DAY, picker.hour)
-      out.set(Calendar.MINUTE, picker.minute)
-      out.set(Calendar.SECOND, 0)
-      out.set(Calendar.MILLISECOND, 0)
-      val picked = out.timeInMillis
-      if (onPicked != null) onPicked(picked)
-      else {
-        onConfirm?.invoke(picked.toDouble())
-        showing = false
+      val c = calendarFor(ts)
+      c.set(Calendar.HOUR_OF_DAY, picker.hour)
+      c.set(Calendar.MINUTE, picker.minute)
+      c.set(Calendar.SECOND, 0)
+      c.set(Calendar.MILLISECOND, 0)
+
+      dateMs = clamp(c.timeInMillis)
+      onConfirm?.invoke(dateMs!!)
+      onCancelOrClose()
+    }
+
+    picker.addOnDismissListener {
+      if (showingModal) {
+        onCancel?.invoke()
+        onCancelOrClose()
       }
     }
 
-    picker.addOnNegativeButtonClickListener {
-      onCancel?.invoke()
-      showing = false
+    picker.show(act.supportFragmentManager, "PCDatePicker_M3_TIME")
+  }
+
+  private fun presentM3DateThenTime(act: FragmentActivity) {
+    val ts = clamp(dateMs ?: System.currentTimeMillis())
+
+    val builder = MaterialDatePicker.Builder.datePicker()
+      .setSelection(ts)
+
+    androidDialogTitle?.let { builder.setTitleText(it) }
+    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
+    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
+
+    val constraints = buildM3CalendarConstraints()
+    if (constraints != null) builder.setCalendarConstraints(constraints)
+
+    val picker = builder.build()
+
+    picker.addOnPositiveButtonClickListener { selection ->
+      val sel = (selection ?: ts)
+      val base = calendarFor(ts)
+      val selUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = sel }
+      base.set(Calendar.YEAR, selUtc.get(Calendar.YEAR))
+      base.set(Calendar.MONTH, selUtc.get(Calendar.MONTH))
+      base.set(Calendar.DAY_OF_MONTH, selUtc.get(Calendar.DAY_OF_MONTH))
+      base.set(Calendar.SECOND, 0)
+      base.set(Calendar.MILLISECOND, 0)
+
+      dateMs = clamp(base.timeInMillis)
+      // then time
+      presentM3Time(act)
     }
-    picker.addOnCancelListener {
-      onCancel?.invoke()
-      showing = false
-    }
+
     picker.addOnDismissListener {
-      if (visible == "open") onCancel?.invoke()
-      showing = false
+      if (showingModal) {
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
     }
 
-    picker.show(act.supportFragmentManager, "PCDatePicker_time_m3")
+    picker.show(act.supportFragmentManager, "PCDatePicker_M3_DATE_THEN_TIME")
   }
 
-  private fun buildDateConstraints(minMs: Long?, maxMs: Long?): CalendarConstraints? {
-    val validators = ArrayList<CalendarConstraints.DateValidator>(2)
-    if (minMs != null) validators.add(DateValidatorPointForward.from(minMs))
-    if (maxMs != null) validators.add(DateValidatorPointBackward.before(maxMs + 1))
-    if (validators.isEmpty()) return null
-    val v = if (validators.size == 1) validators[0] else CompositeDateValidator.allOf(validators)
-    return CalendarConstraints.Builder().setValidator(v).build()
+  private fun buildM3CalendarConstraints(): CalendarConstraints? {
+    val min = minDateMs
+    val max = maxDateMs
+    if (min == null && max == null) return null
+
+    val b = CalendarConstraints.Builder()
+    min?.let { b.setStart(it) }
+    max?.let { b.setEnd(it) }
+    return b.build()
   }
 
-  private fun calendarFor(ms: Long): Calendar {
-    val tz = timeZoneName?.let { TimeZone.getTimeZone(it) } ?: TimeZone.getDefault()
-    return Calendar.getInstance(tz).apply { timeInMillis = ms }
+  // -----------------------------
+  // Utility
+  // -----------------------------
+
+  private fun onCancelOrClose() {
+    showingModal = false
+    // JS typically sets visible="closed" in response to onCancel/onConfirm,
+    // but we defensively mark ourselves closed.
   }
 
-  private fun findFragmentActivity(): FragmentActivity? =
-    context as? FragmentActivity
+  private fun clamp(valueMs: Long): Long {
+    var v = valueMs
+    minDateMs?.let { v = max(v, it) }
+    maxDateMs?.let { v = min(v, it) }
+    return v
+  }
+
+  private fun calendarFor(ts: Long): Calendar {
+    val cal = Calendar.getInstance(timeZone, locale ?: Locale.getDefault())
+    androidFirstDayOfWeek?.let { cal.firstDayOfWeek = it }
+    cal.timeInMillis = ts
+    return cal
+  }
+
+  private fun findFragmentActivity(): FragmentActivity? {
+    val trc = context as? ThemedReactContext
+    val a1 = trc?.currentActivity
+    if (a1 is FragmentActivity) return a1
+
+    var c: Context? = context
+    while (c is ContextWrapper) {
+      if (c is FragmentActivity) return c
+      val base = (c as ContextWrapper).baseContext
+      if (base == c) break
+      c = base
+    }
+
+    val a2 = (context as? Activity)
+    return a2 as? FragmentActivity
+  }
+
+  // Minimal enum for material mode
+  private enum class PCMaterialMode { SYSTEM, M3 }
 }

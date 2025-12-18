@@ -58,7 +58,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
   // ----- Android options -----
   const [androidMaterial, setAndroidMaterial] =
-    useState<AndroidMaterialMode>('auto');
+    useState<AndroidMaterialMode>('system');
 
   const [androidTitleEnabled, setAndroidTitleEnabled] = useState(true);
   const [androidButtonsEnabled, setAndroidButtonsEnabled] = useState(true);
@@ -114,8 +114,7 @@ export function DatePickerDemo(): React.JSX.Element {
   const androidMaterialOptions = useMemo(
     () =>
       [
-        { label: 'Auto', data: 'auto' },
-        { label: 'M2', data: 'm2' },
+        { label: 'System', data: 'system' },
         { label: 'M3', data: 'm3' },
       ] as const,
     []

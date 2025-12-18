@@ -28,8 +28,8 @@ class PCDatePickerViewManager :
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCDatePickerView) {
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
-    view.onConfirm = { ts ->
-      dispatcher?.dispatchEvent(ConfirmEvent(view.id, ts))
+    view.onConfirm = { tsMs: Long ->
+      dispatcher?.dispatchEvent(ConfirmEvent(view.id, tsMs.toDouble()))
     }
     view.onCancel = {
       dispatcher?.dispatchEvent(CancelEvent(view.id))
@@ -80,19 +80,37 @@ class PCDatePickerViewManager :
     }
 
     val firstDay =
-      if (value.hasKey("firstDayOfWeek") && !value.isNull("firstDayOfWeek")) value.getInt("firstDayOfWeek") else null
+      if (value.hasKey("firstDayOfWeek") && !value.isNull("firstDayOfWeek"))
+        value.getInt("firstDayOfWeek")
+      else null
 
+    val materialRaw =
+      if (value.hasKey("material") && !value.isNull("material"))
+        value.getString("material")
+      else null
+
+    // ✅ Only allow "system" or "m3" (anything else -> system)
     val material =
-      if (value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
+      when (materialRaw) {
+        "m3" -> "m3"
+        "system", null -> "system"
+        else -> "system"
+      }
 
     val title =
-      if (value.hasKey("dialogTitle") && !value.isNull("dialogTitle")) value.getString("dialogTitle") else null
+      if (value.hasKey("dialogTitle") && !value.isNull("dialogTitle"))
+        value.getString("dialogTitle")
+      else null
 
     val pos =
-      if (value.hasKey("positiveButtonTitle") && !value.isNull("positiveButtonTitle")) value.getString("positiveButtonTitle") else null
+      if (value.hasKey("positiveButtonTitle") && !value.isNull("positiveButtonTitle"))
+        value.getString("positiveButtonTitle")
+      else null
 
     val neg =
-      if (value.hasKey("negativeButtonTitle") && !value.isNull("negativeButtonTitle")) value.getString("negativeButtonTitle") else null
+      if (value.hasKey("negativeButtonTitle") && !value.isNull("negativeButtonTitle"))
+        value.getString("negativeButtonTitle")
+      else null
 
     view.applyAndroidConfig(firstDay, material, title, pos, neg)
   }
@@ -119,7 +137,11 @@ class PCDatePickerViewManager :
   private class CancelEvent(surfaceId: Int) : Event<CancelEvent>(surfaceId) {
     override fun getEventName(): String = "topCancel"
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
-      rctEventEmitter.receiveEvent(viewTag, eventName, com.facebook.react.bridge.Arguments.createMap())
+      rctEventEmitter.receiveEvent(
+        viewTag,
+        eventName,
+        com.facebook.react.bridge.Arguments.createMap()
+      )
     }
   }
 }

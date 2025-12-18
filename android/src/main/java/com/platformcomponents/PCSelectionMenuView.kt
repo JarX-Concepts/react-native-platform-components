@@ -1,16 +1,22 @@
 package com.platformcomponents
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.text.InputType
+import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import androidx.appcompat.app.AlertDialog
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.content.DialogInterface
 import androidx.fragment.app.FragmentActivity
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.facebook.react.uimanager.ThemedReactContext
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
-import android.widget.LinearLayout
 
 class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
@@ -25,9 +31,12 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   var anchorMode: String = "headless" // "inline" | "headless"
   var visible: String = "closed"      // "open" | "closed" (headless only)
-  var presentation: String = "auto"   // "auto" | "popover" | "sheet" (headless only)
 
-  var androidMaterial: String? = null // "auto" | "m2" | "m3"
+  // Kept for backward compatibility with your interface; headless uses Spinner regardless.
+  var presentation: String = "auto"   // "auto" | "popover" | "sheet"
+
+  // Only used to choose inline rendering style.
+  var androidMaterial: String? = "system" // "system" | "m3"
 
   // --- Events ---
   var onSelect: ((index: Int, label: String, data: String) -> Unit)? = null
@@ -36,34 +45,48 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   // --- Inline UI ---
   private var inlineLayout: TextInputLayout? = null
   private var inlineText: MaterialAutoCompleteTextView? = null
+  private var inlineSpinner: Spinner? = null
 
-  private var showingDialog: Boolean = false
+  // --- Headless UI (true picker) ---
+  private var headlessSpinner: Spinner? = null
+  private var headlessDismissHooked: Boolean = false
+
+  private var suppressSpinnerSelection = false
 
   init {
     minimumHeight = 0
     minimumWidth = 0
-    updateAnchorMode()
+    rebuildUI()
   }
 
-  // --- Public apply* (called by manager) ---
+  // Headless needs a non-zero anchor rect for dropdown
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    if (anchorMode == "headless") {
+      setMeasuredDimension(1, 1)
+      return
+    }
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+  }
+
+  // ---- Public apply* (called by manager) ----
 
   fun applyOptions(newOptions: List<Option>) {
     options = newOptions
-    refreshInlineAdapter()
-    refreshInlineSelection()
+    refreshAdapters()
+    refreshSelections()
   }
 
   fun applySelectedData(data: String?) {
     selectedData = data ?: ""
-    refreshInlineSelection()
+    refreshSelections()
   }
 
   fun applyInteractivity(value: String?) {
     interactivity = if (value == "disabled") "disabled" else "enabled"
     updateEnabledState()
-    if (interactivity != "enabled" && showingDialog) {
-      // Can't forcibly dismiss without keeping refs; just mark closed and notify
-      showingDialog = false
+
+    // If disabled while open, request close.
+    if (interactivity != "enabled" && visible == "open") {
       onRequestClose?.invoke()
     }
   }
@@ -78,7 +101,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       "inline", "headless" -> value
       else -> "headless"
     }
-    updateAnchorMode()
+    rebuildUI()
   }
 
   fun applyVisible(value: String?) {
@@ -87,11 +110,14 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       else -> "closed"
     }
 
-    // Only meaningful in headless mode.
     if (anchorMode != "headless") return
 
-    if (visible == "open") presentIfNeeded()
-    else dismissIfNeeded()
+    if (visible == "open") {
+      presentHeadlessIfNeeded()
+    } else {
+      // We can't reliably force-close a Spinner dropdown, but we can at least signal state.
+      // Most apps will set visible=closed after onSelect/onRequestClose anyway.
+    }
   }
 
   fun applyPresentation(value: String?) {
@@ -103,24 +129,39 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   fun applyAndroidMaterial(value: String?) {
     androidMaterial = value
+    if (anchorMode == "inline") rebuildUI()
   }
 
-  // --- Layout: headless should take no space ---
-  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    if (anchorMode == "headless") {
-      setMeasuredDimension(0, 0)
-      return
-    }
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-  }
+  // ---- UI building ----
 
-  // --- Anchor mode switching ---
-  private fun updateAnchorMode() {
+  private fun rebuildUI() {
     removeAllViews()
     inlineLayout = null
     inlineText = null
+    inlineSpinner = null
+    headlessSpinner = null
+    headlessDismissHooked = false
+
+    // Headless should be invisible but anchorable.
+    alpha = if (anchorMode == "headless") 0f else 1f
 
     if (anchorMode == "inline") {
+      buildInline()
+    } else {
+      buildHeadless()
+    }
+
+    refreshAdapters()
+    refreshSelections()
+    updateEnabledState()
+    requestLayout()
+  }
+
+  private fun buildInline() {
+    val mode = parseMaterial(androidMaterial)
+
+    if (mode == MaterialMode.M3) {
+      // M3 inline = exposed dropdown look, but forced read-only
       val til = TextInputLayout(context).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
@@ -135,6 +176,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
         isSingleLine = true
+        threshold = 0
+
+        // behave like picker
+        inputType = InputType.TYPE_NULL
+        keyListener = null
+        isCursorVisible = false
+        isFocusable = false
+        isFocusableInTouchMode = false
+
+        setOnClickListener {
+          if (interactivity == "enabled") showDropDown()
+        }
 
         setOnItemClickListener { _, _, position, _ ->
           val opt = options.getOrNull(position) ?: return@setOnItemClickListener
@@ -145,132 +198,186 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
       til.addView(actv)
       addView(til)
-
       inlineLayout = til
       inlineText = actv
+    } else {
+      // SYSTEM inline = native spinner
+      val sp = Spinner(context, Spinner.MODE_DROPDOWN).apply {
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+      }
 
-      refreshInlineAdapter()
-      refreshInlineSelection()
-      updateEnabledState()
+      sp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+          if (suppressSpinnerSelection) return
+          val opt = options.getOrNull(position) ?: return
+          if (opt.data == selectedData) return
+          selectedData = opt.data
+          onSelect?.invoke(position, opt.label, opt.data)
+        }
+        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+      }
+
+      addView(sp)
+      inlineSpinner = sp
+    }
+  }
+
+  private fun buildHeadless() {
+    // Headless = TRUE picker using Spinner dropdown
+    val sp = Spinner(context, Spinner.MODE_DROPDOWN).apply {
+      layoutParams = FrameLayout.LayoutParams(1, 1)
+      // keep it anchorable but not interactive unless we programmatically open it
+      isClickable = true
+      isFocusable = false
+      isFocusableInTouchMode = false
     }
 
-    requestLayout()
+    sp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+      override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        if (suppressSpinnerSelection) return
+        val opt = options.getOrNull(position) ?: return
+
+        selectedData = opt.data
+        onSelect?.invoke(position, opt.label, opt.data)
+
+        // After selection, close contract.
+        onRequestClose?.invoke()
+      }
+
+      override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+    }
+
+    addView(sp)
+    headlessSpinner = sp
   }
 
   private fun updateEnabledState() {
     val enabled = interactivity == "enabled"
     inlineLayout?.isEnabled = enabled
     inlineText?.isEnabled = enabled
+    inlineSpinner?.isEnabled = enabled
+    headlessSpinner?.isEnabled = enabled
   }
 
-  private fun refreshInlineAdapter() {
-    val actv = inlineText ?: return
+  private fun refreshAdapters() {
     val labels = options.map { it.label }
-    val adapter = ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels)
-    actv.setAdapter(adapter)
+
+    inlineText?.let { actv ->
+      actv.setAdapter(ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels))
+    }
+
+    fun applySpinnerAdapter(sp: Spinner) {
+      val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
+      adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+      sp.adapter = adapter
+    }
+
+    inlineSpinner?.let { applySpinnerAdapter(it) }
+    headlessSpinner?.let { applySpinnerAdapter(it) }
   }
 
-  private fun refreshInlineSelection() {
-    val actv = inlineText ?: return
+  private fun refreshSelections() {
     val idx = options.indexOfFirst { it.data == selectedData }
     val label = if (idx >= 0) options[idx].label else ""
-    // setText(label, false) prevents dropdown from reopening
-    actv.setText(label, false)
+
+    inlineText?.setText(label, false)
+
+    fun setSpinnerSelection(sp: Spinner) {
+      if (options.isEmpty()) return
+      val target = if (idx >= 0) idx else 0
+      if (sp.selectedItemPosition == target) return
+
+      suppressSpinnerSelection = true
+      try {
+        sp.setSelection(target, false)
+      } finally {
+        suppressSpinnerSelection = false
+      }
+    }
+
+    inlineSpinner?.let { setSpinnerSelection(it) }
+    headlessSpinner?.let { setSpinnerSelection(it) }
   }
 
-  // --- Headless presentation ---
+  // ---- Headless open ----
 
-  private fun presentIfNeeded() {
-    if (showingDialog) return
-    if (interactivity != "enabled") return
-
-    val act = findFragmentActivity() ?: run {
+  private fun presentHeadlessIfNeeded() {
+    val sp = headlessSpinner ?: return
+    if (interactivity != "enabled") {
+      onRequestClose?.invoke()
+      return
+    }
+    if (!isAttachedToWindow) {
       onRequestClose?.invoke()
       return
     }
 
-    showingDialog = true
+    // Best-effort: hook dismiss so tapping outside acts like "cancel/close"
+    hookSpinnerDismiss(sp)
 
-    val requested = parseMaterialMode(androidMaterial)
-    val resolved = resolveAutoMaterialMode(act, requested)
-
-    val useSheet = when (presentation) {
-      "sheet" -> true
-      "popover" -> false
-      else -> true // auto => sheet
-    }
-
-    if (useSheet) showBottomSheet(act, resolved) else showAlert(act, resolved)
+    // Open the native dropdown
+    sp.performClick()
   }
 
-  private fun dismissIfNeeded() {
-    // dialogs dismiss themselves; we just reset state
-    if (!showingDialog) return
-    showingDialog = false
-  }
+  /**
+   * Spinner doesn't expose dismiss callbacks publicly. Many Android builds use an internal
+   * DropdownPopup (ListPopupWindow) stored in a private field. We hook it if possible.
+   *
+   * If this fails, selection still works, but you may not get an "onRequestClose" when dismissed.
+   */
+  private fun hookSpinnerDismiss(sp: Spinner) {
+    if (headlessDismissHooked) return
 
-  private fun showAlert(act: FragmentActivity, resolved: PCMaterialMode) {
-    val ctx = act
+    try {
+      val f = Spinner::class.java.getDeclaredField("mPopup")
+      f.isAccessible = true
+      val popupObj = f.get(sp)
 
-    val labels = options.map { it.label }.toTypedArray()
-    val checked = options.indexOfFirst { it.data == selectedData } // -1 allowed
+      // AOSP DropdownPopup extends ListPopupWindow on many versions.
+      val setOnDismiss = popupObj?.javaClass?.methods?.firstOrNull { m ->
+        m.name == "setOnDismissListener" && m.parameterTypes.size == 1
+      }
 
-    val builder =
-      if (resolved == PCMaterialMode.M3) MaterialAlertDialogBuilder(ctx)
-      else AlertDialog.Builder(ctx)
-
-    val dlg = builder
-      .setTitle(placeholder ?: "")
-      .setSingleChoiceItems(labels, checked) { dialog, which ->
-        val opt = options.getOrNull(which)
-        if (opt != null) {
-          selectedData = opt.data
-          onSelect?.invoke(which, opt.label, opt.data)
+      if (setOnDismiss != null) {
+        val listener = DialogInterface.OnDismissListener {
+          onRequestClose?.invoke()
         }
-        dialog.dismiss()
+        setOnDismiss.invoke(popupObj, listener)
+        headlessDismissHooked = true
       }
-      .setOnCancelListener {
-        onRequestClose?.invoke()
-        showingDialog = false
-      }
-      .setOnDismissListener {
-        onRequestClose?.invoke()
-        showingDialog = false
-      }
-      .create()
-
-    dlg.show()
+    } catch (_: Throwable) {
+      // ignore; no dismiss hook available
+    }
   }
 
-  private fun showBottomSheet(act: FragmentActivity, resolved: PCMaterialMode) {
-    val ctx = act
-    val dlg = BottomSheetDialog(ctx)
+  // ---- Helpers ----
 
-    val list = android.widget.ListView(ctx)
-    val labels = options.map { it.label }
-    list.adapter = ArrayAdapter(ctx, android.R.layout.simple_list_item_1, labels)
-    list.setOnItemClickListener { _, _, position, _ ->
-      val opt = options.getOrNull(position)
-      if (opt != null) {
-        selectedData = opt.data
-        onSelect?.invoke(position, opt.label, opt.data)
-      }
-      dlg.dismiss()
+  private enum class MaterialMode { SYSTEM, M3 }
+
+  private fun parseMaterial(value: String?): MaterialMode =
+    when (value) {
+      "m3" -> MaterialMode.M3
+      "system", null -> MaterialMode.SYSTEM
+      else -> MaterialMode.SYSTEM
     }
 
-    dlg.setContentView(list)
-    dlg.setOnCancelListener {
-      onRequestClose?.invoke()
-      showingDialog = false
-    }
-    dlg.setOnDismissListener {
-      onRequestClose?.invoke()
-      showingDialog = false
+  private fun findFragmentActivity(): FragmentActivity? {
+    val trc = context as? ThemedReactContext
+    val a1 = trc?.currentActivity
+    if (a1 is FragmentActivity) return a1
+
+    var c: Context? = context
+    while (c is ContextWrapper) {
+      if (c is FragmentActivity) return c
+      val base = (c as ContextWrapper).baseContext
+      if (base == c) break
+      c = base
     }
 
-    dlg.show()
+    val a2 = (context as? Activity)
+    return a2 as? FragmentActivity
   }
-
-  private fun findFragmentActivity(): FragmentActivity? =
-    context as? FragmentActivity
 }

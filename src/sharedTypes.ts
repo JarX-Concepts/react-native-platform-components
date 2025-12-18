@@ -5,7 +5,7 @@ import type { CodegenTypes } from 'react-native';
 export type Visible = 'open' | 'closed';
 
 /** Shared Material preference (Android). */
-export type AndroidMaterialMode = 'auto' | 'm2' | 'm3';
+export type AndroidMaterialMode = 'system' | 'm3';
 
 /** Common event empty payload type. */
 export type EmptyEvent = Readonly<{}>;
