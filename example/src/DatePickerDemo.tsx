@@ -1,33 +1,32 @@
-import { useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Switch,
-  Pressable,
-  Platform,
-} from 'react-native';
+// DatePickerDemo.tsx
+import React, { useMemo, useState } from 'react';
+import { Platform, Switch, View } from 'react-native';
 import {
   DatePicker,
   SelectionMenu,
   type AndroidMaterialMode,
 } from 'react-native-platform-components';
 
-const pretty = (date?: Date | null) =>
-  date ? date.toISOString().split('T')[0] : '—';
+import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
 
-export function DatePickerDemo() {
-  // ----- Core controls -----
+const prettyISO = (date?: Date | null) => (date ? date.toISOString() : '—');
+
+export function DatePickerDemo(): React.JSX.Element {
+  // ----- Presentation -----
   const [presentationModal, setPresentationModal] = useState(true);
   const [open, setOpen] = useState(false);
 
+  const presentation = presentationModal ? 'modal' : 'embedded';
+  const visible = presentationModal ? open : undefined;
+
+  // ----- Core value -----
   const [mode, setMode] = useState<'date' | 'time' | 'dateAndTime'>('date');
   const [date, setDate] = useState<Date | null>(null);
 
+  // ----- Min / Max -----
   const [minEnabled, setMinEnabled] = useState(false);
   const [maxEnabled, setMaxEnabled] = useState(false);
 
-  // keep bounds deterministic for demo
   const minDate = useMemo(() => {
     if (!minEnabled) return null;
     const d = new Date();
@@ -44,20 +43,23 @@ export function DatePickerDemo() {
     return d;
   }, [maxEnabled]);
 
-  // ----- iOS controls -----
+  // ----- iOS options -----
   const [iosStyle, setIosStyle] = useState<
     'automatic' | 'compact' | 'inline' | 'wheels'
   >('automatic');
+
   const [iosMinuteInterval, setIosMinuteInterval] = useState<
     'inherit' | '1' | '5' | '10' | '15'
   >('inherit');
+
   const [iosRounds, setIosRounds] = useState<'inherit' | 'round' | 'noRound'>(
     'inherit'
   );
 
-  // ----- Android controls -----
+  // ----- Android options -----
   const [androidMaterial, setAndroidMaterial] =
     useState<AndroidMaterialMode>('auto');
+
   const [androidTitleEnabled, setAndroidTitleEnabled] = useState(true);
   const [androidButtonsEnabled, setAndroidButtonsEnabled] = useState(true);
 
@@ -65,7 +67,7 @@ export function DatePickerDemo() {
   const positiveTitle = androidButtonsEnabled ? 'Custom OK' : undefined;
   const negativeTitle = androidButtonsEnabled ? 'Custom Cancel' : undefined;
 
-  // ----- Selection menu options -----
+  // ----- SelectionMenu options -----
   const modeOptions = useMemo(
     () =>
       [
@@ -119,185 +121,166 @@ export function DatePickerDemo() {
     []
   );
 
-  // ----- Presentation behavior -----
-  const presentation = presentationModal ? 'modal' : 'inline';
-  const visible = presentationModal ? open : undefined;
-
+  // ----- Render -----
   return (
     <>
-      <View style={styles.options}>
-        {/* Presentation */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Modal</Text>
+      <Section title="Basics">
+        <Row label="Modal">
           <Switch
             value={presentationModal}
-            onValueChange={(val) => {
-              setPresentationModal(val);
-              if (!val) setOpen(false);
+            onValueChange={(v) => {
+              setPresentationModal(v);
+              if (!v) setOpen(false);
             }}
           />
-        </View>
+        </Row>
 
-        <View style={styles.divider} />
+        <Divider />
 
-        {/* Mode */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Mode</Text>
+        <Row label="Mode">
           <SelectionMenu
-            style={styles.smenu}
+            style={ui.fullFlex}
             options={modeOptions as any}
             selected={mode}
             inlineMode
             placeholder="Mode"
             onSelect={(data) => setMode(data as any)}
           />
-        </View>
+        </Row>
 
-        {/* Controlled value */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Value</Text>
-          <Pressable
-            style={styles.input}
+        <Divider />
+
+        <Row
+          label="Value"
+          right={
+            <PillButton
+              label="Clear"
+              disabled={!date}
+              onPress={() => setDate(null)}
+            />
+          }
+        >
+          <ActionField
+            text={prettyISO(date)}
+            placeholder="Tap to set now"
+            numberOfLines={1}
             onPress={() => {
-              // quick set "today"
               const d = new Date();
               d.setSeconds(0, 0);
               setDate(d);
             }}
-          >
-            <Text style={styles.valueText}>
-              {date ? date.toISOString() : '— (tap to set now)'}
-            </Text>
-          </Pressable>
+          />
+        </Row>
 
-          <Pressable style={styles.smallBtn} onPress={() => setDate(null)}>
-            <Text style={styles.smallBtnText}>Clear</Text>
-          </Pressable>
-        </View>
+        <Divider />
 
-        {/* Min/Max */}
-        <View style={styles.row}>
-          <Text style={styles.label}>Min (−30d)</Text>
+        <Row label="Min (−30d)">
           <Switch value={minEnabled} onValueChange={setMinEnabled} />
-          <Text style={styles.miniValue}>
-            {minEnabled ? pretty(minDate) : 'off'}
-          </Text>
-        </View>
+        </Row>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Max (+30d)</Text>
+        <Row label="Max (+30d)">
           <Switch value={maxEnabled} onValueChange={setMaxEnabled} />
-          <Text style={styles.miniValue}>
-            {maxEnabled ? pretty(maxDate) : 'off'}
-          </Text>
-        </View>
+        </Row>
+      </Section>
 
-        <View style={styles.divider} />
+      {Platform.OS === 'ios' && (
+        <Section title="iOS">
+          <Row label="Style">
+            <SelectionMenu
+              style={ui.fullFlex}
+              options={iosStyleOptions as any}
+              selected={iosStyle}
+              inlineMode
+              placeholder="Style"
+              onSelect={(data) => setIosStyle(data as any)}
+            />
+          </Row>
 
-        {/* iOS controls */}
-        {Platform.OS === 'ios' && (
-          <>
-            <View style={styles.row}>
-              <Text style={styles.label}>iOS Style</Text>
-              <SelectionMenu
-                style={styles.smenu}
-                options={iosStyleOptions as any}
-                selected={iosStyle}
-                inlineMode
-                placeholder="Style"
-                onSelect={(data) => setIosStyle(data as any)}
-              />
-            </View>
+          <Divider />
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Minute Int</Text>
-              <SelectionMenu
-                style={styles.smenu}
-                options={iosMinuteOptions as any}
-                selected={iosMinuteInterval}
-                inlineMode
-                placeholder="Minute Interval"
-                onSelect={(data) => setIosMinuteInterval(data as any)}
-              />
-            </View>
+          <Row label="Minute">
+            <SelectionMenu
+              style={ui.fullFlex}
+              options={iosMinuteOptions as any}
+              selected={iosMinuteInterval}
+              inlineMode
+              placeholder="Minute Interval"
+              onSelect={(data) => setIosMinuteInterval(data as any)}
+            />
+          </Row>
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Rounds</Text>
-              <SelectionMenu
-                style={styles.smenu}
-                options={iosRoundsOptions as any}
-                selected={iosRounds}
-                inlineMode
-                placeholder="Rounds"
-                onSelect={(data) => setIosRounds(data as any)}
-              />
-            </View>
+          <Divider />
 
-            <View style={styles.divider} />
-          </>
-        )}
+          <Row label="Rounds">
+            <SelectionMenu
+              style={ui.fullFlex}
+              options={iosRoundsOptions as any}
+              selected={iosRounds}
+              inlineMode
+              placeholder="Rounds"
+              onSelect={(data) => setIosRounds(data as any)}
+            />
+          </Row>
+        </Section>
+      )}
 
-        {/* Android controls */}
-        {Platform.OS === 'android' && (
-          <>
-            <View style={styles.row}>
-              <Text style={styles.label}>Material</Text>
-              <SelectionMenu
-                style={styles.smenu}
-                options={androidMaterialOptions as any}
-                selected={androidMaterial}
-                inlineMode
-                placeholder="Material"
-                onSelect={(data) =>
-                  setAndroidMaterial(data as AndroidMaterialMode)
-                }
-              />
-            </View>
+      {Platform.OS === 'android' && (
+        <Section title="Android">
+          <Row label="Material">
+            <SelectionMenu
+              style={ui.fullFlex}
+              options={androidMaterialOptions as any}
+              selected={androidMaterial}
+              inlineMode
+              placeholder="Material"
+              onSelect={(data) =>
+                setAndroidMaterial(data as AndroidMaterialMode)
+              }
+            />
+          </Row>
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Dialog Title</Text>
-              <Switch
-                value={androidTitleEnabled}
-                onValueChange={setAndroidTitleEnabled}
-              />
-              <Text style={styles.miniValue}>
-                {androidTitleEnabled ? 'on' : 'off'}
-              </Text>
-            </View>
+          <Divider />
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Buttons</Text>
-              <Switch
-                value={androidButtonsEnabled}
-                onValueChange={setAndroidButtonsEnabled}
-              />
-              <Text style={styles.miniValue}>
-                {androidButtonsEnabled ? 'on' : 'off'}
-              </Text>
-            </View>
+          <Row label="Dialog Title">
+            <Switch
+              value={androidTitleEnabled}
+              onValueChange={setAndroidTitleEnabled}
+            />
+          </Row>
 
-            <View style={styles.divider} />
-          </>
-        )}
+          <Row label="Buttons">
+            <Switch
+              value={androidButtonsEnabled}
+              onValueChange={setAndroidButtonsEnabled}
+            />
+          </Row>
+        </Section>
+      )}
 
-        {/* Open control (modal only) */}
+      <Section title="Picker">
         {presentationModal && (
-          <View style={styles.row}>
-            <Text style={styles.label}>Open</Text>
-            <Pressable style={styles.input} onPress={() => setOpen((p) => !p)}>
-              <Text style={styles.valueText}>
-                {open ? 'open' : 'closed'} (tap)
-              </Text>
-            </Pressable>
-          </View>
+          <>
+            <Row
+              label="Picker"
+              right={
+                <PillButton
+                  label={open ? 'Close' : 'Open'}
+                  onPress={() => setOpen((p) => !p)}
+                />
+              }
+            >
+              <ActionField
+                text={open ? 'open' : 'closed'}
+                onPress={() => setOpen((p) => !p)}
+              />
+            </Row>
+
+            <Divider />
+          </>
         )}
 
-        <View style={styles.divider} />
-
-        {/* Picker */}
-        <View style={styles.picker}>
+        <View style={ui.datePickerContainer}>
           <DatePicker
-            style={styles.box}
             presentation={presentation}
             visible={visible}
             date={date}
@@ -318,63 +301,15 @@ export function DatePickerDemo() {
               positiveButtonTitle: positiveTitle,
               negativeButtonTitle: negativeTitle,
             }}
-            onCancel={() => {
-              setOpen(false);
-            }}
+            onCancel={() => setOpen(false)}
             onConfirm={(newDate: Date) => {
               setDate(newDate);
+              // optionally close modal here:
+              // setOpen(false);
             }}
           />
         </View>
-      </View>
-
-      <Text style={styles.footer}>react-native-platform-components</Text>
+      </Section>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  options: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-  },
-  row: {
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 44,
-  },
-  divider: {
-    marginHorizontal: 10,
-    borderColor: '#bdc3c7',
-    borderBottomWidth: 0.5,
-  },
-  label: {
-    opacity: 0.7,
-    width: 120,
-  },
-  smenu: { flex: 1 },
-  input: { flex: 1, paddingVertical: 6 },
-  valueText: { color: 'blue' },
-  miniValue: { marginLeft: 10, opacity: 0.6 },
-  smallBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  smallBtnText: { opacity: 0.8 },
-  picker: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignSelf: 'center',
-    paddingVertical: 6,
-  },
-  box: { alignSelf: 'center' },
-  footer: {
-    textAlign: 'center',
-    marginTop: 50,
-    color: 'gray',
-  },
-});

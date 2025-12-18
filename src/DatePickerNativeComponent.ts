@@ -9,7 +9,7 @@ export type DateChangeEvent = {
 };
 
 export type DatePickerMode = 'date' | 'time' | 'dateAndTime' | 'countDownTimer';
-export type DatePickerPresentation = 'modal' | 'inline';
+export type DatePickerPresentation = 'modal' | 'embedded';
 
 export type IOSDatePickerStyle = 'automatic' | 'compact' | 'inline' | 'wheels';
 export type IOSRoundsToMinuteInterval = 'inherit' | 'round' | 'noRound';

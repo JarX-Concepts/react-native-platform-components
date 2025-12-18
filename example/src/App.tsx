@@ -1,56 +1,27 @@
-import { useState } from 'react';
-import { View, StyleSheet, Text, Button } from 'react-native';
+// App.tsx
+import React, { useState } from 'react';
 import { DatePickerDemo } from './DatePickerDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
+import { ChipTabs, Screen } from './DemoUI';
 
-export default function App() {
-  const [demo, setDemo] = useState<
-    'datePicker' | 'selectionMenu' | undefined
-  >();
+type DemoKey = 'datePicker' | 'selectionMenu';
+
+export default function App(): React.ReactElement {
+  const [demo, setDemo] = useState<DemoKey>('datePicker');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Platform Componnents</Text>
-      <Text style={styles.header}>Demo</Text>
+    <Screen title="Platform Components" subtitle="Demo">
+      <ChipTabs
+        value={demo}
+        onChange={setDemo}
+        options={[
+          { label: 'DatePicker', value: 'datePicker' },
+          { label: 'SelectionMenu', value: 'selectionMenu' },
+        ]}
+      />
 
       {demo === 'datePicker' && <DatePickerDemo />}
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
-
-      <View style={styles.space}>
-        <Button
-          title={'DatePicker Demo'}
-          onPress={() => setDemo('datePicker')}
-        />
-      </View>
-
-      <Button
-        title={'SelectionMenu Demo'}
-        onPress={() => setDemo('selectionMenu')}
-      />
-
-      <Text style={styles.footer}>react-native-platform-components</Text>
-    </View>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  container: {
-    flex: 1,
-    paddingTop: 100,
-    padding: 30,
-    backgroundColor: '#ecf0f1',
-  },
-  footer: {
-    textAlign: 'center',
-    marginTop: 50,
-    color: 'gray',
-  },
-  space: {
-    marginVertical: 20,
-  },
-});
