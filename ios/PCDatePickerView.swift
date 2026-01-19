@@ -159,9 +159,7 @@ public final class PCDatePickerView: UIControl,
         picker.layoutIfNeeded()
 
         let fitted = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        let minH: CGFloat = (preferredStyle == "wheels") ? 216 : 160
-        let minW: CGFloat = 280
-        return CGSize(width: max(minW, fitted.width), height: max(minH, fitted.height))
+        return fitted
     }
 
     // MARK: - Presentation
@@ -221,15 +219,8 @@ public final class PCDatePickerView: UIControl,
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
 
-        NSLayoutConstraint.activate([
-            picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
-            picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor),
-            picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
-            picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
-        ])
-
         let size = popoverContentSize()
-        vc.preferredContentSize = size
+        vc.preferredContentSize = size 
 
         // ✅ Anchored popover-style (not a full sheet)
         vc.modalPresentationStyle = .popover
