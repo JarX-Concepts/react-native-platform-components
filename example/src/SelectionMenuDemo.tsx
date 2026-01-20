@@ -174,6 +174,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               disabled={disabled}
               placeholder="Select a state"
               inlineMode={true}
+              android={Platform.OS === 'android' ? { material } : undefined}
               // headless-only props omitted on purpose
               onSelect={(data) => setSelected(data)}
             />

@@ -57,8 +57,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   private var headlessDismissProgrammatic = false
   private var headlessDismissAfterSelect = false
 
-  private var suppressSpinnerSelection = false
-
   init {
     minimumHeight = 0
     minimumWidth = 0
@@ -242,23 +240,26 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       inlineLayout = til
       inlineText = actv
     } else {
-      // SYSTEM inline = native spinner
-      val sp = Spinner(context, Spinner.MODE_DROPDOWN).apply {
+      // SYSTEM inline = Real Spinner widget, but intercept clicks to show PopupMenu
+      // This gives us themeable Spinner appearance + working callbacks
+      val sp = Spinner(context).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
-      }
+        visibility = View.VISIBLE
 
-      sp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-          if (suppressSpinnerSelection) return
-          val opt = options.getOrNull(position) ?: return
-          if (opt.data == selectedData) return
-          selectedData = opt.data
-          onSelect?.invoke(position, opt.label, opt.data)
+        // Intercept touch to prevent default Spinner dropdown
+        setOnTouchListener { view, event ->
+          if (event.action == android.view.MotionEvent.ACTION_UP) {
+            if (interactivity == "enabled") {
+              showSystemPopupMenu(view)
+            }
+            true // Consume the event to prevent Spinner's default behavior
+          } else {
+            false
+          }
         }
-        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
       }
 
       addView(sp)
@@ -331,17 +332,31 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     fun setSpinnerSelection(sp: Spinner) {
       if (options.isEmpty()) return
       val target = if (idx >= 0) idx else 0
-      if (sp.selectedItemPosition == target) return
-
-      suppressSpinnerSelection = true
-      try {
+      if (sp.selectedItemPosition != target) {
         sp.setSelection(target, false)
-      } finally {
-        suppressSpinnerSelection = false
       }
     }
 
     inlineSpinner?.let { setSpinnerSelection(it) }
+  }
+
+  private fun showSystemPopupMenu(anchor: View) {
+    if (options.isEmpty()) return
+
+    PopupMenu(context, anchor).apply {
+      options.forEachIndexed { index, opt ->
+        menu.add(0, index, index, opt.label)
+      }
+
+      setOnMenuItemClickListener { item ->
+        val index = item.itemId
+        val opt = options.getOrNull(index) ?: return@setOnMenuItemClickListener false
+        selectedData = opt.data
+        onSelect?.invoke(index, opt.label, opt.data)
+        refreshSelections()
+        true
+      }
+    }.show()
   }
 
   // ---- Headless open ----

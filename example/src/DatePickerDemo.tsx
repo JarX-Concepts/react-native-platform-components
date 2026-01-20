@@ -279,7 +279,9 @@ export function DatePickerDemo(): React.JSX.Element {
           </>
         )}
 
-        <View style={ui.datePickerContainer}>
+        <View
+          style={[ui.datePickerContainer, { flex: 1, width: 500, height: 500 }]}
+        >
           <DatePicker
             presentation={presentation}
             visible={visible}

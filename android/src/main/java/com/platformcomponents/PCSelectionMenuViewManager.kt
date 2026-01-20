@@ -35,12 +35,10 @@ class PCSelectionMenuViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onSelect = { index, label, data ->
-      Log.d(TAG, "dispatch onSelect index=$index data=$data label=$label")
       dispatcher?.dispatchEvent(SelectEvent(view.id, index, label, data))
     }
 
     view.onRequestClose = {
-      Log.d(TAG, "dispatch onRequestClose")
       dispatcher?.dispatchEvent(RequestCloseEvent(view.id))
     }
   }
