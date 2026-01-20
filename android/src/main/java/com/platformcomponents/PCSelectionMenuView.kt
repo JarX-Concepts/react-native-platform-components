@@ -1,12 +1,17 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.Spinner
 import androidx.appcompat.widget.PopupMenu
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputLayout
 
 class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
@@ -37,7 +42,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   var onRequestClose: (() -> Unit)? = null
 
   // --- Inline UI ---
+  private var inlineLayout: TextInputLayout? = null
+  private var inlineText: MaterialAutoCompleteTextView? = null
   private var inlineSpinner: Spinner? = null
+  private var inlineDropdownOverlay: View? = null
 
   // --- Headless UI (true picker) ---
   private var headlessMenu: PopupMenu? = null
@@ -105,8 +113,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   fun applyPlaceholder(value: String?) {
+    if (placeholder == value) return
     placeholder = value
-    // Spinner doesn't support placeholder/hint
+    inlineLayout?.hint = placeholder
+    // Spinner doesn't support placeholder
   }
 
   fun applyAnchorMode(value: String?) {
@@ -157,7 +167,12 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   // ---- UI building ----
 
   private fun rebuildUI() {
+    inlineText?.dismissDropDown()
+    detachInlineDropdownOverlay()
+    inlineDropdownOverlay = null
     removeAllViews()
+    inlineLayout = null
+    inlineText = null
     inlineSpinner = null
     headlessMenu = null
     headlessMenuShowing = false
@@ -165,7 +180,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     headlessDismissAfterSelect = false
 
     // Headless should be invisible but anchorable.
-    // Spinner dropdown dismisses if the anchor isn't visible; keep a tiny alpha > 0.
     alpha = if (anchorMode == "headless") 0.01f else 1f
     Log.d(TAG, "rebuildUI anchorMode=$anchorMode alpha=$alpha")
 
@@ -182,30 +196,102 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   private fun buildInline() {
-    // Inline mode uses Spinner for appearance + PopupMenu for dropdown behavior
-    // This works reliably and inherits the app's Material theme automatically
-    val sp = Spinner(context).apply {
-      layoutParams = FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.WRAP_CONTENT
-      )
-      visibility = View.VISIBLE
+    val mode = parseMaterial(androidMaterial)
 
-      // Intercept touch to prevent default Spinner dropdown, show PopupMenu instead
-      setOnTouchListener { view, event ->
-        if (event.action == android.view.MotionEvent.ACTION_UP) {
-          if (interactivity == "enabled") {
-            showInlinePopupMenu(view)
+    if (mode == MaterialMode.M3) {
+      // M3 exposed dropdown menu - the standard Material 3 way
+      val til = TextInputLayout(context).apply {
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        hint = placeholder
+        endIconMode = TextInputLayout.END_ICON_DROPDOWN_MENU
+      }
+
+      val actv = InlineAutoCompleteTextView(til.context)
+      inlineText = actv
+      actv.apply {
+        layoutParams = LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        // Keep it a real text editor so the popup behaves modally
+        inputType = InputType.TYPE_CLASS_TEXT
+
+        // Prevent keyboard
+        showSoftInputOnFocus = false
+
+        // Optional: keep it from being typed into
+        keyListener = null
+        isCursorVisible = false
+
+        // Nice UX: click anywhere opens dropdown
+        setOnClickListener { showDropDown() }
+
+        setOnItemClickListener { _, _, position, _ ->
+          val opt = options.getOrNull(position) ?: return@setOnItemClickListener
+          selectedData = opt.data
+          onSelect?.invoke(position, opt.label, opt.data)
+          detachInlineDropdownOverlay()
+        }
+
+        setOnTouchListener { _, e ->
+          if (e.action == android.view.MotionEvent.ACTION_UP) {
+            showDropDown()
           }
-          true // Consume the event to prevent Spinner's default behavior
-        } else {
-          false
+          false // let default handling run
         }
       }
-    }
 
-    addView(sp)
-    inlineSpinner = sp
+      til.addView(actv)
+      addView(til)
+      inlineLayout = til
+    } else {
+      // SYSTEM mode: Use Spinner + PopupMenu
+      val sp = Spinner(context).apply {
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        visibility = View.VISIBLE
+
+        // Intercept touch to prevent default Spinner dropdown, show PopupMenu instead
+        setOnTouchListener { view, event ->
+          if (event.action == android.view.MotionEvent.ACTION_UP) {
+            if (interactivity == "enabled") {
+              showSystemPopupMenu(view)
+            }
+            true // Consume the event to prevent Spinner's default behavior
+          } else {
+            false
+          }
+        }
+      }
+
+      addView(sp)
+      inlineSpinner = sp
+    }
+  }
+
+  private fun showSystemPopupMenu(anchor: View) {
+    if (options.isEmpty()) return
+
+    PopupMenu(context, anchor).apply {
+      options.forEachIndexed { index, opt ->
+        menu.add(0, index, index, opt.label)
+      }
+
+      setOnMenuItemClickListener { item ->
+        val index = item.itemId
+        val opt = options.getOrNull(index) ?: return@setOnMenuItemClickListener false
+        selectedData = opt.data
+        onSelect?.invoke(index, opt.label, opt.data)
+        refreshSelections()
+        true
+      }
+    }.show()
   }
 
   private fun buildHeadless() {
@@ -242,11 +328,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   private fun updateEnabledState() {
     val enabled = interactivity == "enabled"
+    inlineLayout?.isEnabled = enabled
+    inlineText?.isEnabled = enabled
     inlineSpinner?.isEnabled = enabled
   }
 
   private fun refreshAdapters() {
     val labels = options.map { it.label }
+
+    inlineText?.let { actv ->
+      val adapter = ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels)
+      actv.setAdapter(adapter)
+    }
 
     inlineSpinner?.let { sp ->
       val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
@@ -260,6 +353,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   private fun refreshSelections() {
     val idx = options.indexOfFirst { it.data == selectedData }
 
+    inlineText?.let { actv ->
+      if (idx >= 0) {
+        // Show selected value
+        actv.setText(options[idx].label, false)
+      } else {
+        // Clear text to show placeholder
+        actv.setText("", false)
+      }
+    }
+
     inlineSpinner?.let { sp ->
       if (options.isEmpty()) return
       val target = if (idx >= 0) idx else 0
@@ -269,23 +372,62 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     }
   }
 
-  private fun showInlinePopupMenu(anchor: View) {
-    if (options.isEmpty()) return
+  // ---- Inline dropdown overlay ----
 
-    PopupMenu(context, anchor).apply {
-      options.forEachIndexed { index, opt ->
-        menu.add(0, index, index, opt.label)
+  private inner class InlineAutoCompleteTextView(context: Context) :
+    MaterialAutoCompleteTextView(context) {
+    override fun showDropDown() {
+      if (interactivity != "enabled" || !isEnabled) return
+      attachInlineDropdownOverlay()
+      super.showDropDown()
+      post {
+        if (!isPopupShowing) {
+          detachInlineDropdownOverlay()
+        }
       }
+    }
 
-      setOnMenuItemClickListener { item ->
-        val index = item.itemId
-        val opt = options.getOrNull(index) ?: return@setOnMenuItemClickListener false
-        selectedData = opt.data
-        onSelect?.invoke(index, opt.label, opt.data)
-        refreshSelections()
-        true
-      }
-    }.show()
+    override fun dismissDropDown() {
+      super.dismissDropDown()
+      detachInlineDropdownOverlay()
+    }
+  }
+
+  private fun attachInlineDropdownOverlay() {
+    if (inlineDropdownOverlay?.parent != null) return
+    val parent = findInlineOverlayParent() ?: return
+    // Fullscreen touch guard to dismiss without leaking taps to underlying views.
+    val overlay = inlineDropdownOverlay
+      ?: View(parent.context).apply {
+        layoutParams = ViewGroup.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        isClickable = true
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        setOnTouchListener { _, event ->
+          if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+            inlineText?.dismissDropDown()
+            detachInlineDropdownOverlay()
+          }
+          true
+        }
+      }.also { inlineDropdownOverlay = it }
+    parent.addView(overlay)
+  }
+
+  private fun detachInlineDropdownOverlay() {
+    val overlay = inlineDropdownOverlay ?: return
+    (overlay.parent as? ViewGroup)?.removeView(overlay)
+  }
+
+  private fun findInlineOverlayParent(): ViewGroup? {
+    val activity = context.findActivity()
+    val contentRoot = activity?.findViewById<ViewGroup>(android.R.id.content)
+    if (contentRoot != null) return contentRoot
+    val activityRoot = activity?.window?.decorView as? ViewGroup
+    if (activityRoot != null) return activityRoot
+    return rootView as? ViewGroup
   }
 
   // ---- Headless open ----
@@ -334,6 +476,19 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     }
   }
 
+  override fun onDetachedFromWindow() {
+    detachInlineDropdownOverlay()
+    super.onDetachedFromWindow()
+  }
+
   // ---- Helpers ----
 
+  private enum class MaterialMode { SYSTEM, M3 }
+
+  private fun parseMaterial(value: String?): MaterialMode =
+    when (value) {
+      "m3" -> MaterialMode.M3
+      "system", null -> MaterialMode.SYSTEM
+      else -> MaterialMode.SYSTEM
+    }
 }
