@@ -72,7 +72,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
   const [inlineMode, setInlineMode] = useState(false);
 
   const [presentation, setPresentation] = useState<Presentation>('popover');
-  const [material, setMaterial] = useState<AndroidMaterialMode>('m3');
+  const [material, setMaterial] = useState<AndroidMaterialMode>('system');
 
   const selectedLabel = useMemo(() => selected ?? 'None', [selected]);
 

@@ -1,5 +1,6 @@
 package com.platformcomponents
 
+import android.util.Log
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.SimpleViewManager
@@ -14,6 +15,10 @@ import com.facebook.react.viewmanagers.PCSelectionMenuManagerInterface
 class PCSelectionMenuViewManager :
   SimpleViewManager<PCSelectionMenuView>(),
   PCSelectionMenuManagerInterface<PCSelectionMenuView> {
+
+  companion object {
+    private const val TAG = "PCSelectionMenu"
+  }
 
   private val delegate: ViewManagerDelegate<PCSelectionMenuView> =
     PCSelectionMenuManagerDelegate(this)
@@ -30,10 +35,12 @@ class PCSelectionMenuViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onSelect = { index, label, data ->
+      Log.d(TAG, "dispatch onSelect index=$index data=$data label=$label")
       dispatcher?.dispatchEvent(SelectEvent(view.id, index, label, data))
     }
 
     view.onRequestClose = {
+      Log.d(TAG, "dispatch onRequestClose")
       dispatcher?.dispatchEvent(RequestCloseEvent(view.id))
     }
   }
