@@ -1,22 +1,12 @@
 package com.platformcomponents
 
-import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
-import android.text.InputType
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.Spinner
 import androidx.appcompat.widget.PopupMenu
-import androidx.fragment.app.FragmentActivity
-import com.facebook.react.uimanager.ThemedReactContext
-import com.google.android.material.textfield.MaterialAutoCompleteTextView
-import com.google.android.material.textfield.TextInputLayout
 
 class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
@@ -47,8 +37,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   var onRequestClose: (() -> Unit)? = null
 
   // --- Inline UI ---
-  private var inlineLayout: TextInputLayout? = null
-  private var inlineText: MaterialAutoCompleteTextView? = null
   private var inlineSpinner: Spinner? = null
 
   // --- Headless UI (true picker) ---
@@ -117,9 +105,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   fun applyPlaceholder(value: String?) {
-    if (placeholder == value) return
     placeholder = value
-    inlineLayout?.hint = placeholder
+    // Spinner doesn't support placeholder/hint
   }
 
   fun applyAnchorMode(value: String?) {
@@ -171,8 +158,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   private fun rebuildUI() {
     removeAllViews()
-    inlineLayout = null
-    inlineText = null
     inlineSpinner = null
     headlessMenu = null
     headlessMenuShowing = false
@@ -197,74 +182,30 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   private fun buildInline() {
-    val mode = parseMaterial(androidMaterial)
+    // Inline mode uses Spinner for appearance + PopupMenu for dropdown behavior
+    // This works reliably and inherits the app's Material theme automatically
+    val sp = Spinner(context).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT
+      )
+      visibility = View.VISIBLE
 
-    if (mode == MaterialMode.M3) {
-      // M3 inline = exposed dropdown look, but forced read-only
-      val til = TextInputLayout(context).apply {
-        layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        hint = placeholder
-      }
-
-      val actv = MaterialAutoCompleteTextView(til.context).apply {
-        layoutParams = LinearLayout.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        isSingleLine = true
-        threshold = 0
-
-        // behave like picker
-        inputType = InputType.TYPE_NULL
-        keyListener = null
-        isCursorVisible = false
-        isFocusable = false
-        isFocusableInTouchMode = false
-
-        setOnClickListener {
-          if (interactivity == "enabled") showDropDown()
-        }
-
-        setOnItemClickListener { _, _, position, _ ->
-          val opt = options.getOrNull(position) ?: return@setOnItemClickListener
-          selectedData = opt.data
-          onSelect?.invoke(position, opt.label, opt.data)
-        }
-      }
-
-      til.addView(actv)
-      addView(til)
-      inlineLayout = til
-      inlineText = actv
-    } else {
-      // SYSTEM inline = Real Spinner widget, but intercept clicks to show PopupMenu
-      // This gives us themeable Spinner appearance + working callbacks
-      val sp = Spinner(context).apply {
-        layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
-        )
-        visibility = View.VISIBLE
-
-        // Intercept touch to prevent default Spinner dropdown
-        setOnTouchListener { view, event ->
-          if (event.action == android.view.MotionEvent.ACTION_UP) {
-            if (interactivity == "enabled") {
-              showSystemPopupMenu(view)
-            }
-            true // Consume the event to prevent Spinner's default behavior
-          } else {
-            false
+      // Intercept touch to prevent default Spinner dropdown, show PopupMenu instead
+      setOnTouchListener { view, event ->
+        if (event.action == android.view.MotionEvent.ACTION_UP) {
+          if (interactivity == "enabled") {
+            showInlinePopupMenu(view)
           }
+          true // Consume the event to prevent Spinner's default behavior
+        } else {
+          false
         }
       }
-
-      addView(sp)
-      inlineSpinner = sp
     }
+
+    addView(sp)
+    inlineSpinner = sp
   }
 
   private fun buildHeadless() {
@@ -301,46 +242,34 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   private fun updateEnabledState() {
     val enabled = interactivity == "enabled"
-    inlineLayout?.isEnabled = enabled
-    inlineText?.isEnabled = enabled
     inlineSpinner?.isEnabled = enabled
   }
 
   private fun refreshAdapters() {
     val labels = options.map { it.label }
 
-    inlineText?.let { actv ->
-      actv.setAdapter(ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels))
-    }
-
-    fun applySpinnerAdapter(sp: Spinner) {
+    inlineSpinner?.let { sp ->
       val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
       sp.adapter = adapter
     }
 
-    inlineSpinner?.let { applySpinnerAdapter(it) }
     refreshHeadlessMenu()
   }
 
   private fun refreshSelections() {
     val idx = options.indexOfFirst { it.data == selectedData }
-    val label = if (idx >= 0) options[idx].label else ""
 
-    inlineText?.setText(label, false)
-
-    fun setSpinnerSelection(sp: Spinner) {
+    inlineSpinner?.let { sp ->
       if (options.isEmpty()) return
       val target = if (idx >= 0) idx else 0
       if (sp.selectedItemPosition != target) {
         sp.setSelection(target, false)
       }
     }
-
-    inlineSpinner?.let { setSpinnerSelection(it) }
   }
 
-  private fun showSystemPopupMenu(anchor: View) {
+  private fun showInlinePopupMenu(anchor: View) {
     if (options.isEmpty()) return
 
     PopupMenu(context, anchor).apply {
@@ -407,29 +336,4 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   // ---- Helpers ----
 
-  private enum class MaterialMode { SYSTEM, M3 }
-
-  private fun parseMaterial(value: String?): MaterialMode =
-    when (value) {
-      "m3" -> MaterialMode.M3
-      "system", null -> MaterialMode.SYSTEM
-      else -> MaterialMode.SYSTEM
-    }
-
-  private fun findFragmentActivity(): FragmentActivity? {
-    val trc = context as? ThemedReactContext
-    val a1 = trc?.currentActivity
-    if (a1 is FragmentActivity) return a1
-
-    var c: Context? = context
-    while (c is ContextWrapper) {
-      if (c is FragmentActivity) return c
-      val base = (c as ContextWrapper).baseContext
-      if (base == c) break
-      c = base
-    }
-
-    val a2 = (context as? Activity)
-    return a2 as? FragmentActivity
-  }
 }
