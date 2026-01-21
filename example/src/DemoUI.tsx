@@ -50,6 +50,7 @@ export function ChipTabs<T extends string>(props: {
   value: T;
   options: readonly { label: string; value: T }[];
   onChange: (v: T) => void;
+  testID?: string;
 }) {
   return (
     <View style={ui.tabs}>
@@ -58,6 +59,7 @@ export function ChipTabs<T extends string>(props: {
         return (
           <Pressable
             key={o.value}
+            testID={props.testID ? `${props.testID}-${o.value}` : undefined}
             onPress={() => props.onChange(o.value)}
             style={({ pressed }) => [
               ui.tab,
@@ -79,9 +81,11 @@ export function PillButton(props: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  testID?: string;
 }) {
   return (
     <Pressable
+      testID={props.testID}
       onPress={props.onPress}
       disabled={props.disabled}
       style={({ pressed }) => [
@@ -101,10 +105,12 @@ export function ActionField(props: {
   onPress?: () => void;
   disabled?: boolean;
   numberOfLines?: number;
+  testID?: string;
 }) {
   const showPlaceholder = !props.text || props.text === '—';
   return (
     <Pressable
+      testID={props.testID}
       onPress={props.onPress}
       disabled={props.disabled || !props.onPress}
       style={({ pressed }) => [
@@ -226,4 +232,9 @@ export const ui = StyleSheet.create({
   pillText: { fontSize: 13, opacity: 0.8 },
   fullFlex: { flex: 1 },
   datePickerContainer: { alignItems: 'center', paddingVertical: 4 },
+
+  androidHardCodedDatePicker: {
+    width: 300,
+    height: 450,
+  },
 });

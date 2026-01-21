@@ -40,6 +40,9 @@ export type DatePickerProps = {
   onConfirm?: (dateTime: Date) => void;
   onClosed?: () => void;
 
+  /** Test identifier */
+  testID?: string;
+
   ios?: {
     preferredStyle?: IOSDatePickerStyle;
     countDownDurationSeconds?: NativeIOSProps['countDownDurationSeconds'];
@@ -84,6 +87,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     onClosed,
     ios,
     android,
+    testID,
   } = props;
 
   const handleConfirm = useCallback(
@@ -136,7 +140,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
       : undefined,
   };
 
-  return <NativeDatePicker {...nativeProps} />;
+  return <NativeDatePicker testID={testID} {...nativeProps} />;
 }
 
 function createStyles() {

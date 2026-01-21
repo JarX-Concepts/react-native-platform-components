@@ -126,6 +126,7 @@ export function DatePickerDemo(): React.JSX.Element {
       <Section title="Basics">
         <Row label="Modal">
           <Switch
+            testID="modal-switch"
             value={presentationModal}
             onValueChange={(v) => {
               setPresentationModal(v);
@@ -144,7 +145,6 @@ export function DatePickerDemo(): React.JSX.Element {
             inlineMode
             placeholder="Mode"
             testID="mode-menu"
-            android={{ material: 'm3' }}
             onSelect={(data) => setMode(data as any)}
           />
         </Row>
@@ -156,12 +156,14 @@ export function DatePickerDemo(): React.JSX.Element {
           right={
             <PillButton
               label="Clear"
+              testID="clear-date-button"
               disabled={!date}
               onPress={() => setDate(null)}
             />
           }
         >
           <ActionField
+            testID="set-date-now-field"
             text={prettyISO(date)}
             placeholder="Tap to set now"
             numberOfLines={1}
@@ -176,11 +178,19 @@ export function DatePickerDemo(): React.JSX.Element {
         <Divider />
 
         <Row label="Min (−30d)">
-          <Switch value={minEnabled} onValueChange={setMinEnabled} />
+          <Switch
+            testID="min-switch"
+            value={minEnabled}
+            onValueChange={setMinEnabled}
+          />
         </Row>
 
         <Row label="Max (+30d)">
-          <Switch value={maxEnabled} onValueChange={setMaxEnabled} />
+          <Switch
+            testID="max-switch"
+            value={maxEnabled}
+            onValueChange={setMaxEnabled}
+          />
         </Row>
       </Section>
 
@@ -188,6 +198,7 @@ export function DatePickerDemo(): React.JSX.Element {
         <Section title="iOS">
           <Row label="Style">
             <SelectionMenu
+              testID="ios-style-menu"
               style={ui.fullFlex}
               options={iosStyleOptions as any}
               selected={iosStyle}
@@ -201,6 +212,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Row label="Minute">
             <SelectionMenu
+              testID="ios-minute-menu"
               style={ui.fullFlex}
               options={iosMinuteOptions as any}
               selected={iosMinuteInterval}
@@ -214,6 +226,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Row label="Rounds">
             <SelectionMenu
+              testID="ios-rounds-menu"
               style={ui.fullFlex}
               options={iosRoundsOptions as any}
               selected={iosRounds}
@@ -229,6 +242,7 @@ export function DatePickerDemo(): React.JSX.Element {
         <Section title="Android">
           <Row label="Material">
             <SelectionMenu
+              testID="android-material-menu"
               style={ui.fullFlex}
               options={androidMaterialOptions as any}
               selected={androidMaterial}
@@ -244,6 +258,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Row label="Dialog Title">
             <Switch
+              testID="android-dialog-title-switch"
               value={androidTitleEnabled}
               onValueChange={setAndroidTitleEnabled}
             />
@@ -251,6 +266,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Row label="Buttons">
             <Switch
+              testID="android-buttons-switch"
               value={androidButtonsEnabled}
               onValueChange={setAndroidButtonsEnabled}
             />
@@ -265,12 +281,14 @@ export function DatePickerDemo(): React.JSX.Element {
               label="Picker"
               right={
                 <PillButton
+                  testID="picker-toggle-button"
                   label={open ? 'Close' : 'Open'}
                   onPress={() => setOpen((p) => !p)}
                 />
               }
             >
               <ActionField
+                testID="picker-toggle-field"
                 text={open ? 'open' : 'closed'}
                 onPress={() => setOpen((p) => !p)}
               />
@@ -280,10 +298,14 @@ export function DatePickerDemo(): React.JSX.Element {
           </>
         )}
 
-        <View
-          style={[ui.datePickerContainer, { flex: 1, width: 500, height: 500 }]}
-        >
+        <View style={ui.datePickerContainer}>
           <DatePicker
+            style={
+              presentation === 'embedded' && Platform.OS === 'android'
+                ? ui.androidHardCodedDatePicker
+                : undefined
+            }
+            testID="date-picker"
             presentation={presentation}
             visible={visible}
             date={date}

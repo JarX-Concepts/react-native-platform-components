@@ -12,6 +12,7 @@ export default function App(): React.ReactElement {
   return (
     <Screen title="Platform Components" subtitle="Demo">
       <ChipTabs
+        testID="demo-tabs"
         value={demo}
         onChange={setDemo}
         options={[

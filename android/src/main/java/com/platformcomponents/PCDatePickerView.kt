@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.content.DialogInterface
 import android.os.Build
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.DatePicker
 import android.widget.FrameLayout
@@ -58,8 +59,6 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
   private var showingModal = false
 
   init {
-    minimumHeight = 0
-    minimumWidth = 0
     rebuildUI()
   }
 
@@ -171,7 +170,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
   // UI construction
   // -----------------------------
 
-  private fun isInline(): Boolean = presentation == "inline"
+  private fun isInline(): Boolean = presentation == "inline" || presentation == "embedded"
 
   private fun rebuildUI() {
     removeAllViews()
@@ -185,19 +184,18 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
     }
 
     val container = LinearLayout(context).apply {
-      layoutParams = LayoutParams(
+      layoutParams = FrameLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
         ViewGroup.LayoutParams.WRAP_CONTENT
       )
       orientation = LinearLayout.VERTICAL
-      gravity = Gravity.CENTER_VERTICAL
     }
 
     // date and/or time
     if (mode == "date" || mode == "dateAndTime") {
       val dp = DatePicker(context).apply {
         layoutParams = LinearLayout.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
         calendarViewShown = true
@@ -215,7 +213,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
     if (mode == "time" || mode == "dateAndTime") {
       val tp = TimePicker(context).apply {
         layoutParams = LinearLayout.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
         val is24 = android.text.format.DateFormat.is24HourFormat(context)

@@ -100,6 +100,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
       <Section title="Controls">
         <Row label="Inline">
           <Switch
+            testID="inline-switch"
             value={inlineMode}
             onValueChange={(v) => {
               setInlineMode(v);
@@ -112,6 +113,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
 
         <Row label="Disabled">
           <Switch
+            testID="disabled-switch"
             value={disabled}
             onValueChange={(v) => {
               setDisabled(v);
@@ -124,6 +126,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
 
         <Row label="Presentation">
           <SelectionMenu
+            testID="presentation-menu"
             style={ui.fullFlex}
             options={presentationOptions as any}
             selected={presentation}
@@ -138,6 +141,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
             <Divider />
             <Row label="Material">
               <SelectionMenu
+                testID="material-menu"
                 style={ui.fullFlex}
                 options={materialOptions as any}
                 selected={material}
@@ -155,6 +159,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
           label="US State"
           right={
             <PillButton
+              testID="clear-state-button"
               label="Clear"
               disabled={!selected || disabled}
               onPress={() => {
@@ -168,6 +173,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
           {inlineMode ? (
             // ✅ Inline anchor lives INSIDE the row → feels attached
             <SelectionMenu
+              testID="state-menu-inline"
               style={ui.fullFlex}
               options={STATE_OPTIONS}
               selected={selected}
@@ -181,6 +187,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
           ) : (
             // ✅ Headless row anchor
             <ActionField
+              testID="state-field-headless"
               text={selectedLabel}
               placeholder="Select a state"
               disabled={disabled || !STATE_OPTIONS.length}
@@ -199,6 +206,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               label="Menu"
               right={
                 <PillButton
+                  testID="menu-toggle-button"
                   label={open ? 'Close' : 'Open'}
                   disabled={disabled}
                   onPress={() => {
@@ -209,6 +217,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               }
             >
               <ActionField
+                testID="menu-toggle-field"
                 text={open ? 'open' : 'closed'}
                 disabled={disabled}
                 onPress={() => {
@@ -218,6 +227,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               />
 
               <SelectionMenu
+                testID="state-menu-headless"
                 options={STATE_OPTIONS}
                 selected={selected}
                 disabled={disabled}
