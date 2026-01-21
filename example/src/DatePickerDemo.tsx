@@ -143,6 +143,7 @@ export function DatePickerDemo(): React.JSX.Element {
             selected={mode}
             inlineMode
             placeholder="Mode"
+            testID="mode-menu"
             android={{ material: 'm3' }}
             onSelect={(data) => setMode(data as any)}
           />

@@ -1,11 +1,6 @@
 // SelectionMenu.tsx
 import React, { useCallback, useMemo } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Platform, StyleSheet, type ViewProps } from 'react-native';
 
 import NativeSelectionMenu, {
   type SelectionMenuOption,
@@ -15,9 +10,7 @@ import NativeSelectionMenu, {
 
 import type { AndroidMaterialMode } from './sharedTypes';
 
-export type SelectionMenuProps = {
-  style?: StyleProp<ViewStyle>;
-
+export interface SelectionMenuProps extends ViewProps {
   /** Options are label + data (payload) */
   options: readonly SelectionMenuOption[];
 
@@ -68,7 +61,10 @@ export type SelectionMenuProps = {
     /** Material preference ("auto" | "m2" | "m3"). */
     material?: AndroidMaterialMode;
   };
-};
+
+  /** Test identifier */
+  testID?: string;
+}
 
 function normalizeSelectedData(selected: string | null): string {
   return selected ?? '';
@@ -106,6 +102,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     onRequestClose,
     ios,
     android,
+    ...viewProps
   } = props;
 
   const selectedData = useMemo(
@@ -161,6 +158,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
       ios={ios}
       android={nativeAndroid}
+      {...viewProps}
     />
   );
 }

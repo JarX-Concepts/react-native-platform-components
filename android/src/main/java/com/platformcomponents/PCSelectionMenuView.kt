@@ -5,6 +5,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -46,6 +47,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   private var inlineText: MaterialAutoCompleteTextView? = null
   private var inlineSpinner: Spinner? = null
   private var inlineDropdownOverlay: View? = null
+  private var inlineSpinnerSuppressCount = 0
+  private var inlineSpinnerUserInitiated = false
 
   // --- Headless UI (true picker) ---
   private var headlessMenu: PopupMenu? = null
@@ -83,6 +86,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   // ---- Public apply* (called by manager) ----
 
   fun applyOptions(newOptions: List<Option>) {
+    if (options == newOptions) return
     options = newOptions
     Log.d(TAG, "applyOptions size=${options.size}")
     refreshAdapters()
@@ -90,7 +94,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   fun applySelectedData(data: String?) {
-    selectedData = data ?: ""
+    val next = data ?: ""
+    if (selectedData == next) return
+    selectedData = next
     Log.d(TAG, "applySelectedData selectedData=$selectedData")
     refreshSelections()
   }
@@ -174,6 +180,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     inlineLayout = null
     inlineText = null
     inlineSpinner = null
+    inlineSpinnerSuppressCount = 0
+    inlineSpinnerUserInitiated = false
     headlessMenu = null
     headlessMenuShowing = false
     headlessDismissProgrammatic = false
@@ -249,23 +257,39 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       addView(til)
       inlineLayout = til
     } else {
-      // SYSTEM mode: Use Spinner + PopupMenu
+      // SYSTEM mode: Use default Spinner dropdown
       val sp = Spinner(context).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
         visibility = View.VISIBLE
+        setOnTouchListener { _, event ->
+          when (event.action) {
+            android.view.MotionEvent.ACTION_DOWN -> inlineSpinnerUserInitiated = true
+            android.view.MotionEvent.ACTION_CANCEL -> inlineSpinnerUserInitiated = false
+          }
+          false
+        }
+        onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+          override fun onItemSelected(
+            parent: AdapterView<*>,
+            view: View?,
+            position: Int,
+            id: Long
+          ) {
+            val userInitiated = inlineSpinnerUserInitiated
+            inlineSpinnerUserInitiated = false
+            if (!userInitiated && inlineSpinnerSuppressCount > 0) return
+            if (interactivity != "enabled") return
+            val opt = options.getOrNull(position) ?: return
+            selectedData = opt.data
+            onSelect?.invoke(position, opt.label, opt.data)
+          }
 
-        // Intercept touch to prevent default Spinner dropdown, show PopupMenu instead
-        setOnTouchListener { view, event ->
-          if (event.action == android.view.MotionEvent.ACTION_UP) {
-            if (interactivity == "enabled") {
-              showSystemPopupMenu(view)
-            }
-            true // Consume the event to prevent Spinner's default behavior
-          } else {
-            false
+          override fun onNothingSelected(parent: AdapterView<*>) {
+            // No-op
+            inlineSpinnerUserInitiated = false
           }
         }
       }
@@ -273,25 +297,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       addView(sp)
       inlineSpinner = sp
     }
-  }
-
-  private fun showSystemPopupMenu(anchor: View) {
-    if (options.isEmpty()) return
-
-    PopupMenu(context, anchor).apply {
-      options.forEachIndexed { index, opt ->
-        menu.add(0, index, index, opt.label)
-      }
-
-      setOnMenuItemClickListener { item ->
-        val index = item.itemId
-        val opt = options.getOrNull(index) ?: return@setOnMenuItemClickListener false
-        selectedData = opt.data
-        onSelect?.invoke(index, opt.label, opt.data)
-        refreshSelections()
-        true
-      }
-    }.show()
   }
 
   private fun buildHeadless() {
@@ -342,6 +347,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     }
 
     inlineSpinner?.let { sp ->
+      suppressInlineSpinnerCallbacks(sp)
       val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
       sp.adapter = adapter
@@ -367,6 +373,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       if (options.isEmpty()) return
       val target = if (idx >= 0) idx else 0
       if (sp.selectedItemPosition != target) {
+        suppressInlineSpinnerCallbacks(sp)
         sp.setSelection(target, false)
       }
     }
@@ -473,6 +480,17 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     menu.clear()
     options.forEachIndexed { index, opt ->
       menu.add(0, index, index, opt.label)
+    }
+  }
+
+  private fun suppressInlineSpinnerCallbacks(sp: Spinner) {
+    inlineSpinnerUserInitiated = false
+    inlineSpinnerSuppressCount += 1
+    val posted = sp.post {
+      inlineSpinnerSuppressCount = (inlineSpinnerSuppressCount - 1).coerceAtLeast(0)
+    }
+    if (!posted) {
+      inlineSpinnerSuppressCount = (inlineSpinnerSuppressCount - 1).coerceAtLeast(0)
     }
   }
 
