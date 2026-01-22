@@ -97,6 +97,9 @@ example/ios/*.xcworkspace/
 # CocoaPods artifacts (if pods not committed)
 example/ios/Pods/
 
+# artifacts
+example/artifacts
+
 # Metro / build caches
 .expo
 node_modules/

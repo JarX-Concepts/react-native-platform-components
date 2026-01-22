@@ -38,7 +38,7 @@ const expectMenuItem = async (text: string, not: boolean) => {
   }
 };
 
-describe('Android Spinner – Mode Selection', () => {
+describe('Agent Testing', () => {
   beforeAll(async () => {
     console.log('\n🚀 Launching app');
     await device.launchApp();
@@ -74,5 +74,37 @@ describe('Android Spinner – Mode Selection', () => {
     await step('Verify "Time" is now selected', async () => {
       await expectMenuItem('Time', false);
     });
+  });
+
+  it('compare inline and headless modes', async () => {
+    // Navigate to SelectionMenu tab
+    await element(by.id('demo-tabs-selectionMenu')).tap();
+
+    // Verify we're on the SelectionMenu screen
+    await expect(element(by.id('state-field-headless'))).toBeVisible();
+
+    // Test opening the headless menu
+    await element(by.id('state-field-headless')).tap();
+
+    // puase a second for menu to open
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // take a screenshot
+    await device.takeScreenshot('SelectionMenu-Headless-Open');
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    // dismiss it
+    await element(by.id('demo-tabs-selectionMenu')).tap();
+
+    await element(by.id('inline-switch')).tap();
+
+    await element(by.id('state-menu-inline')).tap();
+
+    // puase a second for menu to open
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // take a screenshot
+    await device.takeScreenshot('SelectionMenu-Inline-Open');
   });
 });

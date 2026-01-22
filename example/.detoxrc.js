@@ -3,6 +3,27 @@ module.exports = {
   logger: {
     level: 'info',
   },
+
+  artifacts: {
+    rootDir: 'artifacts',
+    plugins: {
+      // record a .mp4 per test
+      video: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+      // optional but very useful alongside video
+      screenshot: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+      log: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+    },
+  },
+
   testRunner: {
     args: {
       $0: 'yarn',
