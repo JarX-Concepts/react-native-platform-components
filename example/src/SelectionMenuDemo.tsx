@@ -62,8 +62,6 @@ const US_STATES = [
 
 const STATE_OPTIONS = US_STATES.map((s) => ({ label: s, data: s }));
 
-type Presentation = 'auto' | 'popover' | 'sheet';
-
 export function SelectionMenuDemo(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -71,20 +69,9 @@ export function SelectionMenuDemo(): React.JSX.Element {
   const [disabled, setDisabled] = useState(false);
   const [inlineMode, setInlineMode] = useState(false);
 
-  const [presentation, setPresentation] = useState<Presentation>('popover');
   const [material, setMaterial] = useState<AndroidMaterialMode>('system');
 
   const selectedLabel = useMemo(() => selected ?? 'None', [selected]);
-
-  const presentationOptions = useMemo(
-    () =>
-      [
-        { label: 'Auto', data: 'auto' },
-        { label: 'Popover', data: 'popover' },
-        { label: 'Sheet', data: 'sheet' },
-      ] as const,
-    []
-  );
 
   const materialOptions = useMemo(
     () =>
@@ -119,20 +106,6 @@ export function SelectionMenuDemo(): React.JSX.Element {
               setDisabled(v);
               if (v) setOpen(false);
             }}
-          />
-        </Row>
-
-        <Divider />
-
-        <Row label="Presentation">
-          <SelectionMenu
-            testID="presentation-menu"
-            style={ui.fullFlex}
-            options={presentationOptions as any}
-            selected={presentation}
-            inlineMode
-            placeholder="Presentation"
-            onSelect={(data) => setPresentation(data as Presentation)}
           />
         </Row>
 
@@ -234,7 +207,6 @@ export function SelectionMenuDemo(): React.JSX.Element {
                 placeholder="Select a state"
                 inlineMode={false}
                 visible={open}
-                presentation={presentation as any}
                 android={Platform.OS === 'android' ? { material } : undefined}
                 onSelect={(data) => {
                   console.log('Selected:', data);

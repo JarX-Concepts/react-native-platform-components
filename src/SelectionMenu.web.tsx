@@ -2,10 +2,7 @@
 import React, { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import type {
-  SelectionMenuOption,
-  SelectionMenuPresentation,
-} from './SelectionMenuNativeComponent';
+import type { SelectionMenuOption } from './SelectionMenuNativeComponent';
 
 export type SelectionMenuProps = {
   style?: StyleProp<ViewStyle>;
@@ -19,7 +16,6 @@ export type SelectionMenuProps = {
   // kept for parity; ignored by <select>
   inlineMode?: boolean;
   visible?: boolean;
-  presentation?: SelectionMenuPresentation;
 
   onSelect?: (data: string, label: string, index: number) => void;
   onRequestClose?: () => void;

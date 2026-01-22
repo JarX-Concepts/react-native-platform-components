@@ -32,9 +32,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   var anchorMode: String = "headless" // "inline" | "headless"
   var visible: String = "closed"      // "open" | "closed" (headless only)
 
-  // Kept for backward compatibility with your interface; ignored on Android headless.
-  var presentation: String = "auto"   // "auto" | "popover" | "sheet"
-
   // Only used to choose inline rendering style.
   var androidMaterial: String? = "system" // "system" | "m3"
 
@@ -152,13 +149,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
         headlessDismissProgrammatic = true
         headlessMenu?.dismiss()
       }
-    }
-  }
-
-  fun applyPresentation(value: String?) {
-    presentation = when (value) {
-      "auto", "popover", "sheet" -> value
-      else -> "auto"
     }
   }
 
@@ -323,7 +313,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       }
 
       sp.apply {
-        contentDescription = "spinnerTesting"
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT

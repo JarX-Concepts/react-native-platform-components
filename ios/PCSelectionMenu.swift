@@ -81,9 +81,6 @@ public final class PCSelectionMenuView: UIControl,
     /// "open" | "closed" (headless only)
     public var visible: String = "closed" { didSet { updatePresentation() } }
 
-    /// "auto" | "popover" | "sheet" (headless only)
-    public var presentation: String = "auto" { didSet { updatePresentation() } }
-
     /// "inline" | "headless"
     public var anchorMode: String = "headless" { didSet { updateAnchorMode() } }
 
@@ -255,23 +252,16 @@ public final class PCSelectionMenuView: UIControl,
         )
 
         let nav = UINavigationController(rootViewController: list)
-        let style = resolvedModalStyle(for: top)
-        nav.modalPresentationStyle = style
+        nav.modalPresentationStyle = .popover
+        nav.preferredContentSize = list.computePreferredSize()
 
-        if style == .popover {
-            nav.preferredContentSize = list.computePreferredSize()
-
-            if let pop = nav.popoverPresentationController {
-                pop.delegate = self
-                pop.sourceView = top.view
-                let rectInTopView = self.convert(self.bounds, to: top.view)
-                pop.sourceRect = rectInTopView
-                pop.permittedArrowDirections = [.up, .down]
-                pop.backgroundColor = list.view.backgroundColor
-            }
-        } else {
-            nav.modalPresentationStyle = .pageSheet
-            nav.presentationController?.delegate = self
+        if let pop = nav.popoverPresentationController {
+            pop.delegate = self
+            pop.sourceView = top.view
+            let rectInTopView = self.convert(self.bounds, to: top.view)
+            pop.sourceRect = rectInTopView
+            pop.permittedArrowDirections = [.up, .down]
+            pop.backgroundColor = list.view.backgroundColor
         }
 
         nav.presentationController?.delegate = self
@@ -286,18 +276,6 @@ public final class PCSelectionMenuView: UIControl,
         vc.dismiss(animated: true) { [weak self] in
             guard let self else { return }
             if emitClose { self.onRequestClose?() }
-        }
-    }
-
-    private func resolvedModalStyle(for top: UIViewController) -> UIModalPresentationStyle {
-        let isPad = (top.traitCollection.userInterfaceIdiom == .pad)
-        switch presentation {
-        case "popover":
-            return .popover
-        case "sheet":
-            return .pageSheet
-        default:
-            return isPad ? .popover : .pageSheet
         }
     }
 

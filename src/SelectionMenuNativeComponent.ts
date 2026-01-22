@@ -27,9 +27,6 @@ export type SelectionMenuSelectEvent = Readonly<{
 /** Visibility state (headless mode only). */
 export type SelectionMenuVisible = 'open' | 'closed';
 
-/** Presentation hint (headless mode only). */
-export type SelectionMenuPresentation = 'auto' | 'popover' | 'sheet';
-
 /** Interactivity state (no booleans). */
 export type SelectionMenuInteractivity = 'enabled' | 'disabled';
 
@@ -82,12 +79,6 @@ export interface SelectionMenuProps extends ViewProps {
    * controls visibility.
    */
   visible?: string; // SelectionMenuVisible
-
-  /**
-   * Headless mode only:
-   * presentation hint.
-   */
-  presentation?: string; // SelectionMenuPresentation
 
   /**
    * Fired when the user selects an option.

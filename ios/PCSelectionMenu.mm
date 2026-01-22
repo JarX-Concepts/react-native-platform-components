@@ -144,16 +144,6 @@ static inline bool OptionsEqual(
     }
   }
 
-  // presentation: "auto" | "popover" | "sheet"
-  if (!prevProps || newProps.presentation != prevProps->presentation) {
-    if (!newProps.presentation.empty()) {
-      _view.presentation =
-          [NSString stringWithUTF8String:newProps.presentation.c_str()];
-    } else {
-      _view.presentation = @"auto";
-    }
-  }
-
   // visible: "open" | "closed"
   if (!prevProps || newProps.visible != prevProps->visible) {
     if (!newProps.visible.empty()) {

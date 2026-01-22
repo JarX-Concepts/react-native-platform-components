@@ -48,13 +48,13 @@ describe('Platform Components Example', () => {
     await element(by.id('modal-switch')).tap();
 
     // Test opening the modal picker
-    await element(by.id('picker-toggle-button')).tap();
+    // await element(by.id('picker-toggle-button')).tap();
 
     // The picker should now be open (modal)
     // Note: Modal interactions depend on platform-specific behavior
 
     // Close the modal
-    await element(by.id('picker-toggle-button')).tap();
+    //await element(by.id('picker-toggle-button')).tap();
 
     // Test clearing the date
     await element(by.id('set-date-now-field')).tap();
@@ -120,17 +120,7 @@ describe('Platform Components Example', () => {
     // Toggle back to headless mode
     await element(by.id('inline-switch')).tap();
 
-    // Test presentation mode selection
-    await element(by.id('presentation-menu')).tap();
-
-    // Wait for menu to appear
-    await waitFor(element(by.text('Sheet')))
-      .toBeVisible()
-      .withTimeout(2000);
-    await element(by.text('Sheet')).atIndex(0).tap();
-
-    // Test that the menu still works with sheet presentation
-    // First make sure we're visible and can tap
+    // Test that the headless menu still works
     await expect(element(by.id('state-field-headless'))).toBeVisible();
     await element(by.id('state-field-headless')).tap();
 

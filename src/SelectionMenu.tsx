@@ -5,7 +5,6 @@ import { Platform, StyleSheet, type ViewProps } from 'react-native';
 import NativeSelectionMenu, {
   type SelectionMenuOption,
   type SelectionMenuSelectEvent,
-  type SelectionMenuPresentation,
 } from './SelectionMenuNativeComponent';
 
 import type { AndroidMaterialMode } from './sharedTypes';
@@ -34,12 +33,6 @@ export interface SelectionMenuProps extends ViewProps {
    * controls whether the native menu UI is presented.
    */
   visible?: boolean;
-
-  /**
-   * Headless mode only (inlineMode === false):
-   * presentation hint ("auto" | "popover" | "sheet").
-   */
-  presentation?: SelectionMenuPresentation;
 
   /**
    * Called when the user selects an option.
@@ -79,15 +72,6 @@ function normalizeNativeVisible(
   return visible ? 'open' : 'closed';
 }
 
-function normalizeNativePresentation(
-  inlineMode: boolean | undefined,
-  presentation: SelectionMenuPresentation | undefined
-): SelectionMenuPresentation | undefined {
-  // Inline mode ignores presentation.
-  if (inlineMode) return undefined;
-  return presentation ?? 'auto';
-}
-
 export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
     style,
@@ -97,7 +81,6 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     placeholder,
     inlineMode,
     visible,
-    presentation,
     onSelect,
     onRequestClose,
     ios,
@@ -113,11 +96,6 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const nativeVisible = useMemo(
     () => normalizeNativeVisible(inlineMode, visible),
     [inlineMode, visible]
-  );
-
-  const nativePresentation = useMemo(
-    () => normalizeNativePresentation(inlineMode, presentation),
-    [inlineMode, presentation]
   );
 
   const handleSelect = useCallback(
@@ -153,7 +131,6 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       placeholder={placeholder}
       anchorMode={inlineMode ? 'inline' : 'headless'}
       visible={nativeVisible}
-      presentation={nativePresentation}
       onSelect={onSelect ? handleSelect : undefined}
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
       ios={ios}

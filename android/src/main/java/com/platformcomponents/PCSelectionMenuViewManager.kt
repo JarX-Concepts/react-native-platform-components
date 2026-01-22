@@ -78,10 +78,6 @@ class PCSelectionMenuViewManager :
     view.applyVisible(value)
   }
 
-  override fun setPresentation(view: PCSelectionMenuView, value: String?) {
-    view.applyPresentation(value)
-  }
-
   override fun setAndroid(view: PCSelectionMenuView, value: ReadableMap?) {
     val material =
       if (value != null && value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
