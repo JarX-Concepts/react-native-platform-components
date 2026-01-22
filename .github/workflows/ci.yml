@@ -115,6 +115,10 @@ jobs:
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
+      - name: Run Detox e2e tests (Android)
+        run: |
+          yarn workspace react-native-platform-components-example test:e2e:android
+
   build-ios:
     runs-on: macos-latest
 
@@ -164,3 +168,7 @@ jobs:
       - name: Build example for iOS
         run: |
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+      - name: Run Detox e2e tests (iOS)
+        run: |
+          yarn workspace react-native-platform-components-example test:e2e:ios
