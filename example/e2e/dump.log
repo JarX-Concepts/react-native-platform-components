@@ -6,9 +6,9 @@
         <FitWindowsLinearLayout class="androidx.appcompat.widget.FitWindowsLinearLayout" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" x="0" y="0">
           <ViewStubCompat class="androidx.appcompat.widget.ViewStubCompat" width="0" height="0" visibility="gone" alpha="1.0" focused="false" x="0" y="0" />
           <ContentFrameLayout class="androidx.appcompat.widget.ContentFrameLayout" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" x="0" y="0">
-            <ReactSurfaceView class="com.facebook.react.runtime.ReactSurfaceView" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, Date, , , Show dropdown menu, Error, Value, 2026-01-21T21:42:00.000Z, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, System, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="0" y="0">
-              <ReactScrollView class="com.facebook.react.views.scroll.ReactScrollView" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, Date, , , Show dropdown menu, Error, Value, 2026-01-21T21:42:00.000Z, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, System, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="0" y="0">
-                <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="3428" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, Date, , , Show dropdown menu, Error, Value, 2026-01-21T21:42:00.000Z, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, System, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="37" y="179">
+            <ReactSurfaceView class="com.facebook.react.runtime.ReactSurfaceView" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, spinnerTesting, Value, Tap to set now, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, spinnerTesting, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="0" y="0">
+              <ReactScrollView class="com.facebook.react.views.scroll.ReactScrollView" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, spinnerTesting, Value, Tap to set now, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, spinnerTesting, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="0" y="0">
+                <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="2021" visibility="visible" alpha="1.0" focused="false" label="Platform Components, Demo, DatePicker, SelectionMenu, BASICS, Modal, , Mode, spinnerTesting, Value, Tap to set now, Clear, Min (−30d), , Max (+30d), , ANDROID, Material, spinnerTesting, Dialog Title, , Buttons, , PICKER, Picker, closed, Open, react-native-platform-components" x="37" y="179">
                   <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="1008" height="92" visibility="visible" alpha="1.0" focused="false" label="Platform Components" x="37" y="179" text="Platform Components" />
                   <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="1008" height="51" visibility="visible" alpha="0.55" focused="false" label="Demo" x="37" y="276" text="Demo" />
                   <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="579" height="107" visibility="visible" alpha="1.0" focused="false" x="251" y="380" />
@@ -19,89 +19,66 @@
                     <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="237" height="47" visibility="visible" alpha="0.65" focused="false" label="SelectionMenu" x="550" y="410" text="SelectionMenu" />
                   </ReactViewGroup>
                   <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="996" height="39" visibility="visible" alpha="0.55" focused="false" label="BASICS" x="47" y="534" text="BASICS" />
-                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="829" visibility="visible" alpha="1.0" focused="false" label="Modal, , Mode, Date, , , Show dropdown menu, Error, Value, 2026-01-21T21:42:00.000Z, Clear, Min (−30d), , Max (+30d), " x="37" y="584">
+                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="734" visibility="visible" alpha="1.0" focused="false" label="Modal, , Mode, spinnerTesting, Value, Tap to set now, Clear, Min (−30d), , Max (+30d), " x="37" y="584">
                     <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Modal" x="64" y="643" text="Modal" />
                     <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="606" id="modal-switch" />
                     <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="753" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Mode" x="64" y="828" text="Mode" />
-                    <PCSelectionMenuView class="com.platformcomponents.PCSelectionMenuView" width="663" height="157" visibility="visible" alpha="1.0" focused="false" x="353" y="775" id="mode-menu">
-                      <TextInputLayout class="com.google.android.material.textfield.TextInputLayout" width="663" height="157" visibility="visible" alpha="1.0" focused="false" x="353" y="775">
-                        <FrameLayout class="android.widget.FrameLayout" width="663" height="143" visibility="visible" alpha="1.0" focused="false" x="353" y="789">
-                          <InlineAutoCompleteTextView class="com.platformcomponents.PCSelectionMenuView$InlineAutoCompleteTextView" width="663" height="143" visibility="visible" alpha="1.0" focused="true" label="Date" x="353" y="789" text="Date" />
-                          <StartCompoundLayout class="com.google.android.material.textfield.StartCompoundLayout" width="0" height="0" visibility="gone" alpha="1.0" focused="false" x="353" y="789">
-                            <CheckableImageButton class="com.google.android.material.internal.CheckableImageButton" width="0" height="0" visibility="gone" alpha="1.0" focused="false" x="353" y="789" />
-                            <AppCompatTextView class="androidx.appcompat.widget.AppCompatTextView" width="0" height="0" visibility="gone" alpha="1.0" focused="false" x="353" y="789" />
-                          </StartCompoundLayout>
-                          <EndCompoundLayout class="com.google.android.material.textfield.EndCompoundLayout" width="137" height="143" visibility="visible" alpha="1.0" focused="false" x="879" y="789">
-                            <AppCompatTextView class="androidx.appcompat.widget.AppCompatTextView" width="0" height="0" visibility="gone" alpha="1.0" focused="false" x="879" y="789" />
-                            <FrameLayout class="android.widget.FrameLayout" width="137" height="143" visibility="visible" alpha="1.0" focused="false" x="879" y="789">
-                              <CheckableImageButton class="com.google.android.material.internal.CheckableImageButton" width="126" height="126" visibility="visible" alpha="1.0" focused="false" value="Show dropdown menu" label="Show dropdown menu" x="890" y="797" />
-                            </FrameLayout>
-                            <CheckableImageButton class="com.google.android.material.internal.CheckableImageButton" width="0" height="0" visibility="gone" alpha="1.0" focused="false" value="Error" label="Error" x="879" y="789" />
-                          </EndCompoundLayout>
-                        </FrameLayout>
-                      </TextInputLayout>
-                    </PCSelectionMenuView>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="954" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Value" x="64" y="989" text="Value" />
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="508" height="79" visibility="visible" alpha="1.0" focused="false" label="2026-01-21T21:42:00.000Z" x="353" y="976" id="set-date-now-field">
-                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="467" height="47" visibility="visible" alpha="1.0" focused="false" label="2026-01-21T21:42:00.000Z" x="374" y="991" text="2026-01-21T21:42:00.000Z" />
-                    </ReactViewGroup>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="134" height="79" visibility="visible" alpha="1.0" focused="false" label="Clear" x="882" y="976" id="clear-date-button">
-                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="82" height="47" visibility="visible" alpha="0.8" focused="false" label="Clear" x="908" y="991" text="Clear" />
-                    </ReactViewGroup>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="1075" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Min (−30d)" x="64" y="1134" text="Min (−30d)" />
-                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1097" id="min-switch" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Max (+30d)" x="64" y="1302" text="Max (+30d)" />
-                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1265" id="max-switch" />
-                  </ReactViewGroup>
-                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="996" height="39" visibility="visible" alpha="0.55" focused="false" label="ANDROID" x="47" y="1439" text="ANDROID" />
-                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="444" visibility="visible" alpha="1.0" focused="false" label="Material, System, Dialog Title, , Buttons, " x="37" y="1489">
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Material" x="64" y="1517" text="Material" />
-                    <PCSelectionMenuView class="com.platformcomponents.PCSelectionMenuView" width="663" height="63" visibility="visible" alpha="1.0" focused="false" x="353" y="1511" id="android-material-menu">
-                      <Spinner class="android.widget.Spinner" width="663" height="63" visibility="visible" alpha="1.0" focused="false" x="353" y="1511">
-                        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="537" height="57" visibility="visible" alpha="1.0" focused="false" label="System" x="353" y="1514" text="System" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Mode" x="64" y="781" text="Mode" />
+                    <PCSelectionMenuView class="com.platformcomponents.PCSelectionMenuView" width="663" height="63" visibility="visible" alpha="1.0" focused="false" x="353" y="775" id="mode-menu">
+                      <Spinner class="android.widget.Spinner" width="663" height="63" visibility="visible" alpha="1.0" focused="false" value="spinnerTesting" label="spinnerTesting" x="353" y="775">
+                        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="537" height="57" visibility="visible" alpha="1.0" focused="false" label="Date" x="353" y="778" text="Date" />
                       </Spinner>
                     </PCSelectionMenuView>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="1595" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Dialog Title" x="64" y="1654" text="Dialog Title" />
-                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1617" id="android-dialog-title-switch" />
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Buttons" x="64" y="1822" text="Buttons" />
-                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1785" id="android-buttons-switch" />
-                  </ReactViewGroup>
-                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="996" height="39" visibility="visible" alpha="0.55" focused="false" label="PICKER" x="47" y="1958" text="PICKER" />
-                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="1457" visibility="visible" alpha="1.0" focused="false" label="Picker, closed, Open" x="37" y="2008">
-                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Picker" x="64" y="2043" text="Picker" />
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="508" height="79" visibility="visible" alpha="1.0" focused="false" label="closed" x="353" y="2030" id="picker-toggle-field">
-                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="467" height="47" visibility="visible" alpha="1.0" focused="false" label="closed" x="374" y="2045" text="closed" />
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="859" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Value" x="64" y="894" text="Value" />
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="508" height="78" visibility="visible" alpha="1.0" focused="false" label="Tap to set now" x="353" y="881" id="set-date-now-field">
+                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="467" height="47" visibility="visible" alpha="1.0" focused="false" label="Tap to set now" x="374" y="896" text="Tap to set now" />
                     </ReactViewGroup>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="134" height="79" visibility="visible" alpha="1.0" focused="false" label="Open" x="882" y="2030" id="picker-toggle-button">
-                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="82" height="47" visibility="visible" alpha="0.8" focused="false" label="Open" x="908" y="2045" text="Open" />
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="134" height="78" visibility="visible" alpha="0.45" focused="false" label="Clear" x="882" y="881" id="clear-date-button">
+                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="82" height="47" visibility="visible" alpha="0.8" focused="false" label="Clear" x="908" y="896" text="Clear" />
                     </ReactViewGroup>
-                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="2130" />
-                    <PCDatePickerView class="com.platformcomponents.PCDatePickerView" width="1312" height="1313" visibility="visible" alpha="1.0" focused="false" x="-116" y="2142" id="date-picker" />
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="981" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Min (−30d)" x="64" y="1040" text="Min (−30d)" />
+                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1003" id="min-switch" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Max (+30d)" x="64" y="1208" text="Max (+30d)" />
+                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1171" id="max-switch" />
                   </ReactViewGroup>
-                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="1008" height="43" visibility="visible" alpha="1.0" focused="false" label="react-native-platform-components" x="37" y="3506" text="react-native-platform-components" />
+                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="996" height="39" visibility="visible" alpha="0.55" focused="false" label="ANDROID" x="47" y="1344" text="ANDROID" />
+                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="444" visibility="visible" alpha="1.0" focused="false" label="Material, spinnerTesting, Dialog Title, , Buttons, " x="37" y="1394">
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Material" x="64" y="1422" text="Material" />
+                    <PCSelectionMenuView class="com.platformcomponents.PCSelectionMenuView" width="663" height="63" visibility="visible" alpha="1.0" focused="false" x="353" y="1416" id="android-material-menu">
+                      <Spinner class="android.widget.Spinner" width="663" height="63" visibility="visible" alpha="1.0" focused="false" value="spinnerTesting" label="spinnerTesting" x="353" y="1416">
+                        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="537" height="57" visibility="visible" alpha="1.0" focused="false" label="System" x="353" y="1419" text="System" />
+                      </Spinner>
+                    </PCSelectionMenuView>
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="1500" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Dialog Title" x="64" y="1559" text="Dialog Title" />
+                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1522" id="android-dialog-title-switch" />
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Buttons" x="64" y="1727" text="Buttons" />
+                    <ReactSwitch class="com.facebook.react.views.switchview.ReactSwitch" width="664" height="126" visibility="visible" alpha="1.0" focused="false" x="353" y="1690" id="android-buttons-switch" />
+                  </ReactViewGroup>
+                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="996" height="39" visibility="visible" alpha="0.55" focused="false" label="PICKER" x="47" y="1864" text="PICKER" />
+                  <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1006" height="144" visibility="visible" alpha="1.0" focused="false" label="Picker, closed, Open" x="37" y="1914">
+                    <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="289" height="51" visibility="visible" alpha="0.65" focused="false" label="Picker" x="64" y="1949" text="Picker" />
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="508" height="78" visibility="visible" alpha="1.0" focused="false" label="closed" x="353" y="1936" id="picker-toggle-field">
+                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="467" height="47" visibility="visible" alpha="1.0" focused="false" label="closed" x="374" y="1951" text="closed" />
+                    </ReactViewGroup>
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="134" height="78" visibility="visible" alpha="1.0" focused="false" label="Open" x="882" y="1936" id="picker-toggle-button">
+                      <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="82" height="47" visibility="visible" alpha="0.8" focused="false" label="Open" x="908" y="1951" text="Open" />
+                    </ReactViewGroup>
+                    <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="978" height="1" visibility="visible" alpha="1.0" focused="false" x="64" y="2036" />
+                    <PCDatePickerView class="com.platformcomponents.PCDatePickerView" width="0" height="0" visibility="visible" alpha="1.0" focused="false" x="540" y="2048" id="date-picker" />
+                  </ReactViewGroup>
+                  <ReactTextView class="com.facebook.react.views.text.ReactTextView" width="1008" height="43" visibility="visible" alpha="1.0" focused="false" label="react-native-platform-components" x="37" y="2099" text="react-native-platform-components" />
                 </ReactViewGroup>
               </ReactScrollView>
               <ReactViewGroup class="com.facebook.react.views.view.ReactViewGroup" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" x="0" y="0">
                 <DebuggingOverlay class="com.facebook.react.views.debuggingoverlay.DebuggingOverlay" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" x="0" y="0" />
               </ReactViewGroup>
             </ReactSurfaceView>
-            <View class="android.view.View" width="1080" height="2424" visibility="visible" alpha="1.0" focused="false" x="0" y="0" />
           </ContentFrameLayout>
         </FitWindowsLinearLayout>
       </FrameLayout>
     </LinearLayout>
   </DecorView>
-  <PopupDecorView class="android.widget.PopupWindow$PopupDecorView" width="663" height="420" visibility="visible" alpha="1.0" focused="false" x="0" y="0">
-    <PopupBackgroundView class="android.widget.PopupWindow$PopupBackgroundView" width="663" height="420" visibility="visible" alpha="1.0" focused="false" x="0" y="0">
-      <DropDownListView class="android.widget.DropDownListView" width="663" height="378" visibility="visible" alpha="1.0" focused="true" x="0" y="21">
-        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="663" height="126" visibility="visible" alpha="1.0" focused="false" label="Date" x="0" y="21" text="Date" />
-        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="663" height="126" visibility="visible" alpha="1.0" focused="false" label="Time" x="0" y="147" text="Time" />
-        <MaterialTextView class="com.google.android.material.textview.MaterialTextView" width="663" height="126" visibility="visible" alpha="1.0" focused="false" label="Date &amp; Time" x="0" y="273" text="Date &amp; Time" />
-      </DropDownListView>
-    </PopupBackgroundView>
-  </PopupDecorView>
 </ViewHierarchy>

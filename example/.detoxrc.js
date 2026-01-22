@@ -1,7 +1,7 @@
 /** @type {Detox.DetoxConfig} */
 module.exports = {
   logger: {
-    level: 'trace',
+    level: 'info',
   },
   testRunner: {
     args: {

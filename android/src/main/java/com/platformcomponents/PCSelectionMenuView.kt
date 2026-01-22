@@ -48,7 +48,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   private var inlineSpinner: Spinner? = null
   private var inlineDropdownOverlay: View? = null
   private var inlineSpinnerSuppressCount = 0
-  private var inlineSpinnerUserInitiated = false
 
   // --- Headless UI (true picker) ---
   private var headlessMenu: PopupMenu? = null
@@ -181,7 +180,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     inlineText = null
     inlineSpinner = null
     inlineSpinnerSuppressCount = 0
-    inlineSpinnerUserInitiated = false
     headlessMenu = null
     headlessMenuShowing = false
     headlessDismissProgrammatic = false
@@ -257,41 +255,80 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       addView(til)
       inlineLayout = til
     } else {
-      // SYSTEM mode: Use default Spinner dropdown
-      val sp = Spinner(context).apply {
+      // SYSTEM mode: Use custom Spinner with dropdown mode to ensure callbacks fire
+      val sp = object : Spinner(context, null, android.R.attr.spinnerStyle, Spinner.MODE_DROPDOWN) {
+        override fun setSelection(position: Int, animate: Boolean) {
+          val oldPos = selectedItemPosition
+          super.setSelection(position, animate)
+
+          // Manually trigger onItemSelectedListener if selection changed
+          // This is needed because Spinner doesn't always trigger the callback when
+          // the selection changes via user interaction with the dropdown
+          if (position != oldPos && onItemSelectedListener != null) {
+            post {
+              onItemSelectedListener?.onItemSelected(
+                this,
+                selectedView,
+                position,
+                getItemIdAtPosition(position)
+              )
+            }
+          }
+        }
+
+        override fun setSelection(position: Int) {
+          val oldPos = selectedItemPosition
+          super.setSelection(position)
+
+          // Manually trigger onItemSelectedListener if selection changed
+          if (position != oldPos && onItemSelectedListener != null) {
+            post {
+              onItemSelectedListener?.onItemSelected(
+                this,
+                selectedView,
+                position,
+                getItemIdAtPosition(position)
+              )
+            }
+          }
+        }
+      }
+
+      // Set listener FIRST, before adapter
+      sp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(
+          parent: AdapterView<*>,
+          view: View?,
+          position: Int,
+          id: Long
+        ) {
+          // If suppress count > 0, this is a programmatic change (ignore it)
+          if (inlineSpinnerSuppressCount > 0) return
+
+          if (interactivity != "enabled") return
+
+          val opt = options.getOrNull(position) ?: return
+
+          // Only fire callback if selection actually changed
+          if (opt.data == selectedData) return
+
+          // Don't update selectedData here - let applySelectedData handle it
+          // This ensures refreshSelections() is called to update the Spinner's display
+          onSelect?.invoke(position, opt.label, opt.data)
+        }
+
+        override fun onNothingSelected(parent: AdapterView<*>) {
+          // No-op
+        }
+      }
+
+      sp.apply {
+        contentDescription = "spinnerTesting"
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
         visibility = View.VISIBLE
-        setOnTouchListener { _, event ->
-          when (event.action) {
-            android.view.MotionEvent.ACTION_DOWN -> inlineSpinnerUserInitiated = true
-            android.view.MotionEvent.ACTION_CANCEL -> inlineSpinnerUserInitiated = false
-          }
-          false
-        }
-        onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-          override fun onItemSelected(
-            parent: AdapterView<*>,
-            view: View?,
-            position: Int,
-            id: Long
-          ) {
-            val userInitiated = inlineSpinnerUserInitiated
-            inlineSpinnerUserInitiated = false
-            if (!userInitiated && inlineSpinnerSuppressCount > 0) return
-            if (interactivity != "enabled") return
-            val opt = options.getOrNull(position) ?: return
-            selectedData = opt.data
-            onSelect?.invoke(position, opt.label, opt.data)
-          }
-
-          override fun onNothingSelected(parent: AdapterView<*>) {
-            // No-op
-            inlineSpinnerUserInitiated = false
-          }
-        }
       }
 
       addView(sp)
@@ -372,10 +409,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     inlineSpinner?.let { sp ->
       if (options.isEmpty()) return
       val target = if (idx >= 0) idx else 0
-      if (sp.selectedItemPosition != target) {
-        suppressInlineSpinnerCallbacks(sp)
-        sp.setSelection(target, false)
-      }
+      // Always call setSelection to ensure the view is refreshed
+      // Even if the position hasn't changed, we need to update the displayed text
+      suppressInlineSpinnerCallbacks(sp)
+      sp.setSelection(target, false)
     }
   }
 
@@ -484,7 +521,6 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   private fun suppressInlineSpinnerCallbacks(sp: Spinner) {
-    inlineSpinnerUserInitiated = false
     inlineSpinnerSuppressCount += 1
     val posted = sp.post {
       inlineSpinnerSuppressCount = (inlineSpinnerSuppressCount - 1).coerceAtLeast(0)
