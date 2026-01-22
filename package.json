@@ -39,7 +39,7 @@
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "build": "tsc --noEmit",
-    "release": "release-it --only-version",
+    "release": "release-it",
     "test": "jest"
   },
   "keywords": [
