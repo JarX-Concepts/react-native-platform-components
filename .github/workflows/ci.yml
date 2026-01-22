@@ -118,6 +118,18 @@ jobs:
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
+      - name: Install Android emulator and system image
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-35" \
+            "system-images;android-35;google_apis;x86_64"
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+            -n Pixel_9_API_35 \
+            -k "system-images;android-35;google_apis;x86_64" \
+            -d "pixel_7"
+
       - name: Run Detox e2e tests (Android)
         run: |
           yarn workspace react-native-platform-components-example test:e2e:android
