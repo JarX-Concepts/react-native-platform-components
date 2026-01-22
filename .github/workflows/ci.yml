@@ -25,6 +25,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: Build files
+        run: yarn build
+
       - name: Lint files
         run: yarn lint
 
@@ -157,6 +160,12 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
+      - name: Install applesimutils
+        if: env.turbo_cache_hit != 1
+        run: |
+          brew tap wix/brew
+          brew install applesimutils
+
       - name: Install cocoapods
         if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
@@ -171,4 +180,6 @@ jobs:
 
       - name: Run Detox e2e tests (iOS)
         run: |
+          yarn workspace react-native-platform-components-example detox clean-framework-cache
+          yarn workspace react-native-platform-components-example detox build-framework-cache
           yarn workspace react-native-platform-components-example test:e2e:ios
