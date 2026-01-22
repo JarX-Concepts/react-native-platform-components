@@ -129,13 +129,13 @@ jobs:
 
       - name: Ensure Android AVD exists
         run: |
-          if ! $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | rg -q "Pixel_9_API_35"; then
+          if ! $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep -q "Pixel_9_API_35"; then
             echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
               -n Pixel_9_API_35 \
               -k "system-images;android-35;google_apis;x86_64" \
               -d "pixel_7"
           fi
-          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | rg "Pixel_9_API_35"
+          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_9_API_35"
 
       - name: Run Detox e2e tests (Android)
         run: |
