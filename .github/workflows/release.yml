@@ -54,6 +54,14 @@ jobs:
 
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             yarn release --ci --dry-run
+            echo "=== Dry run npm publish ==="
+            npm publish --provenance --access public --dry-run
           else
+            # release-it handles: version bump, changelog, git commit/tag/push, GitHub release
+            # npm publish is done separately below because release-it's subprocess doesn't inherit OIDC
             yarn release --ci
+
+            # Now publish to npm directly (this inherits the OIDC environment)
+            echo "=== Publishing to npm with OIDC ==="
+            npm publish --provenance --access public
           fi
