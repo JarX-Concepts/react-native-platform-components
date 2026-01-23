@@ -148,7 +148,8 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": false
+      "publish": true,
+      "publishArgs": ["--access", "public"]
     },
     "github": {
       "release": true
