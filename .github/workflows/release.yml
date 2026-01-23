@@ -7,13 +7,13 @@ on:
         description: Run release-it in dry-run mode
         default: false
 
-permissions:
-  contents: write
-  id-token: write
-
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -40,23 +40,6 @@ jobs:
           echo "NPM_CONFIG_USERCONFIG=$RUNNER_TEMP/npmrc" >> "$GITHUB_ENV"
           echo "NODE_AUTH_TOKEN=" >> "$GITHUB_ENV"
           echo "NPM_TOKEN=" >> "$GITHUB_ENV"
-
-      - name: Debug OIDC subject
-        run: |
-          TOKEN_URL="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm"
-          export RAW_TOKEN=$(curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$TOKEN_URL" | python -c "import json,sys;print(json.load(sys.stdin)['value'])")
-          python - <<'PY'
-import base64, json, os
-token = os.environ["RAW_TOKEN"]
-payload = token.split(".")[1]
-pad = "=" * (-len(payload) % 4)
-data = base64.urlsafe_b64decode(payload + pad)
-claims = json.loads(data)
-print("OIDC subject:", claims.get("sub"))
-print("OIDC repo:", claims.get("repository"))
-print("OIDC ref:", claims.get("ref"))
-print("OIDC workflow:", claims.get("workflow"))
-PY
 
       - name: Build package
         run: yarn prepare
