@@ -118,6 +118,11 @@ jobs:
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
+      - name: Install emulator runtime deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpulse0
+
       - name: Install Android emulator and system image
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
