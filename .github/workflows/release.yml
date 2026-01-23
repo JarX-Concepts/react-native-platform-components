@@ -31,23 +31,22 @@ jobs:
       - name: Build package
         run: yarn prepare
 
+      - name: Upgrade npm for OIDC trusted publishing
+        run: |
+          npm install -g npm@latest
+          echo "npm version: $(npm --version)"
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== npm version ==="
-          npm --version
-          echo "=== OIDC environment check ==="
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL is set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
-          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN is set: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
-
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             yarn release --ci --dry-run
-            npm publish --provenance --access public --dry-run
+            npm publish --access public --dry-run
           else
             # release-it handles: version bump, changelog, git commit/tag/push, GitHub release
             yarn release --ci
 
-            # Publish to npm with OIDC + provenance
-            npm publish --provenance --access public
+            # Publish to npm with OIDC trusted publishing
+            npm publish --access public
           fi
