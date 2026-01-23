@@ -84,9 +84,11 @@ module.exports = {
     'emulator.ci': {
       type: 'android.emulator',
       headless: true,
+      gpuMode: 'swiftshader_indirect',
       device: {
         avdName: 'Pixel_9_API_35',
       },
+      bootArgs: '-no-audio',
     },
   },
   configurations: {

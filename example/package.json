@@ -11,7 +11,7 @@
     "jest:e2e": "jest --config e2e/jest.config.js",
     "test:e2e:ios": "detox build --configuration ios.sim.release && detox test --configuration ios.sim.release",
     "test:e2e:android": "detox build --configuration android.emu.release && detox test --configuration android.emu.release",
-    "test:e2e:android:ci": "detox build --configuration android.emu.ci && detox test --configuration android.emu.ci"
+    "test:e2e:android:ci": "detox build --configuration android.emu.ci && detox test --configuration android.emu.ci --record-videos none"
   },
   "dependencies": {
     "react": "19.1.0",
