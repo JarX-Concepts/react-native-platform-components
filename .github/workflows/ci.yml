@@ -151,7 +151,7 @@ jobs:
           fi
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_9_API_35"
           echo "ANDROID_AVD_HOME=$HOME/.config/.android/avd" >> $GITHUB_ENV
-          echo "ANDROID_EMULATOR_EXTRA_ARGS=-no-snapshot -partition-size 2048" >> $GITHUB_ENV
+          echo "ANDROID_EMULATOR_EXTRA_ARGS=-no-window -no-snapshot -partition-size 2048 -gpu swiftshader_indirect" >> $GITHUB_ENV
 
       - name: Enable KVM group perms
         run: |
