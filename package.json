@@ -49,14 +49,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BearPeak-Technology-Group/react-native-platform-components.git"
+    "url": "git+https://github.com/JarX-Concepts/react-native-platform-components.git"
   },
   "author": "Andrew Tosh <andrew.tosh@jarxconcepts.com> (https://github.com/ajtosh77)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/BearPeak-Technology-Group/react-native-platform-components/issues"
+    "url": "https://github.com/JarX-Concepts/react-native-platform-components/issues"
   },
-  "homepage": "https://github.com/BearPeak-Technology-Group/react-native-platform-components#readme",
+  "homepage": "https://github.com/JarX-Concepts/react-native-platform-components#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
