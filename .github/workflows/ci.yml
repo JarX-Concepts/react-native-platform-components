@@ -138,7 +138,8 @@ jobs:
             echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
               -n Pixel_9_API_35 \
               -k "system-images;android-35;google_apis;x86_64" \
-              -d "pixel_7"
+              -d "pixel_7" \
+              -c 2048M
           fi
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_9_API_35"
           echo "ANDROID_AVD_HOME=$HOME/.config/.android/avd" >> $GITHUB_ENV
