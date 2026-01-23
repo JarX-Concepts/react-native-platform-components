@@ -148,16 +148,13 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true,
-      "skipChecks": true,
-      "publishArgs": [
-        "--provenance",
-        "--access",
-        "public"
-      ]
+      "publish": false
     },
     "github": {
       "release": true
+    },
+    "hooks": {
+      "after:bump": "npm publish --provenance --access public"
     },
     "plugins": {
       "@release-it/conventional-changelog": {
