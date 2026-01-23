@@ -34,34 +34,20 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
         run: |
-          # Clear any existing npm auth config to force OIDC
-          npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
-          unset NPM_CONFIG_USERCONFIG
-          unset NODE_AUTH_TOKEN
-          unset NPM_TOKEN
-
-          # Debug: show npm config and OIDC env vars
-          echo "=== npm config ==="
-          npm config list
+          echo "=== npm version ==="
+          npm --version
           echo "=== OIDC environment check ==="
           echo "ACTIONS_ID_TOKEN_REQUEST_URL is set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN is set: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
-          echo "=== npm whoami (expect failure) ==="
-          npm whoami 2>&1 || true
-          echo "=================="
 
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             yarn release --ci --dry-run
-            echo "=== Dry run npm publish ==="
             npm publish --provenance --access public --dry-run
           else
             # release-it handles: version bump, changelog, git commit/tag/push, GitHub release
-            # npm publish is done separately below because release-it's subprocess doesn't inherit OIDC
             yarn release --ci
 
-            # Now publish to npm directly (this inherits the OIDC environment)
-            echo "=== Publishing to npm with OIDC ==="
+            # Publish to npm with OIDC + provenance
             npm publish --provenance --access public
           fi
