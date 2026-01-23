@@ -123,25 +123,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpulse0
 
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /opt/ghc
+          df -h
+
       - name: Install Android emulator and system image
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
             "platform-tools" \
             "emulator" \
-            "platforms;android-33" \
-            "system-images;android-33;google_apis;x86_64"
+            "platforms;android-35" \
+            "system-images;android-35;google_apis;x86_64"
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd
 
       - name: Ensure Android AVD exists
         run: |
-          if ! $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep -q "Pixel_4_API_33"; then
+          if ! $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep -q "Pixel_9_API_35"; then
             echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-              -n Pixel_4_API_33 \
-              -k "system-images;android-33;google_apis;x86_64" \
-              -d "pixel_4" \
+              -n Pixel_9_API_35 \
+              -k "system-images;android-35;google_apis;x86_64" \
+              -d "pixel_7" \
               -c 2048M
           fi
-          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_4_API_33"
+          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_9_API_35"
           echo "ANDROID_AVD_HOME=$HOME/.config/.android/avd" >> $GITHUB_ENV
           echo "ANDROID_EMULATOR_EXTRA_ARGS=-no-snapshot -partition-size 2048" >> $GITHUB_ENV
 
