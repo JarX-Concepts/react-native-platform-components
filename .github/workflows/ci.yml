@@ -160,8 +160,10 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Run Detox e2e tests (Android)
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
-          yarn workspace react-native-platform-components-example test:e2e:android
+          yarn workspace react-native-platform-components-example test:e2e:android:ci
 
   build-ios:
     runs-on: macos-latest

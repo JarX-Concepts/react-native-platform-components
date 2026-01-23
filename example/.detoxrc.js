@@ -63,20 +63,27 @@ module.exports = {
     },
   },
   devices: {
-    simulator: {
+    'simulator': {
       type: 'ios.simulator',
       device: {
         type: 'iPhone 17 Pro Max',
       },
     },
-    attached: {
+    'attached': {
       type: 'android.attached',
       device: {
         adbName: '.*',
       },
     },
-    emulator: {
+    'emulator': {
       type: 'android.emulator',
+      device: {
+        avdName: 'Pixel_9_API_35',
+      },
+    },
+    'emulator.ci': {
+      type: 'android.emulator',
+      headless: true,
       device: {
         avdName: 'Pixel_9_API_35',
       },
@@ -106,6 +113,10 @@ module.exports = {
     'android.emu.release': {
       device: 'emulator',
       app: 'android.release',
+    },
+    'android.emu.ci': {
+      device: 'emulator.ci',
+      app: 'android.debug',
     },
   },
 };

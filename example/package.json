@@ -10,7 +10,8 @@
     "build:ios": "react-native build-ios --mode Debug",
     "jest:e2e": "jest --config e2e/jest.config.js",
     "test:e2e:ios": "detox build --configuration ios.sim.release && detox test --configuration ios.sim.release",
-    "test:e2e:android": "detox build --configuration android.emu.release && detox test --configuration android.emu.release"
+    "test:e2e:android": "detox build --configuration android.emu.release && detox test --configuration android.emu.release",
+    "test:e2e:android:ci": "detox build --configuration android.emu.ci && detox test --configuration android.emu.ci"
   },
   "dependencies": {
     "react": "19.1.0",

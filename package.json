@@ -40,7 +40,9 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "build": "tsc --noEmit",
     "release": "release-it",
-    "test": "jest"
+    "test": "jest",
+    "upgrade:check": "yarn dlx npm-check-updates",
+    "upgrade:apply": "yarn dlx npm-check-updates -u && rm -rf node_modules && rm -rf package-lock.json && yarn install"
   },
   "keywords": [
     "react-native",
