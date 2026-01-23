@@ -23,6 +23,12 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: Setup npm auth
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org/
+
       - name: Configure git author
         run: |
           git config user.name "github-actions[bot]"
@@ -35,6 +41,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+          NPM_CONFIG_ALWAYS_AUTH: true
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
         run: |
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             yarn release --ci --dry-run
