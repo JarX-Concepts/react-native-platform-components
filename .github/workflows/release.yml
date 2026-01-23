@@ -42,11 +42,19 @@ jobs:
           unset NODE_AUTH_TOKEN
           unset NPM_TOKEN
 
-          # Debug: show npm config
+          # Debug: show npm config and OIDC env vars
           echo "=== npm config ==="
           npm config list
+          echo "=== OIDC environment check ==="
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL is set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN is set: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
           echo "=== npm whoami (expect failure) ==="
           npm whoami 2>&1 || true
+          echo "=================="
+
+          # Test direct npm publish with verbose output (dry-run)
+          echo "=== Testing npm publish --dry-run ==="
+          npm publish --provenance --access public --dry-run 2>&1 || true
           echo "=================="
 
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
