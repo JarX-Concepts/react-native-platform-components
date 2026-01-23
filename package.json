@@ -147,7 +147,10 @@
     },
     "npm": {
       "publish": true,
-      "skipChecks": true
+      "skipChecks": true,
+      "publishArgs": [
+        "--provenance"
+      ]
     },
     "github": {
       "release": true
