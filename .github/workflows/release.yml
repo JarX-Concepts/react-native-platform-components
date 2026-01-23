@@ -39,14 +39,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-            yarn release --ci --dry-run
-            npm publish --access public --dry-run
-          else
-            # release-it handles: version bump, changelog, git commit/tag/push, GitHub release
-            yarn release --ci
-
-            # Publish to npm with OIDC trusted publishing
-            npm publish --access public
-          fi
+        run: yarn release --ci ${{ inputs.dry_run && '--dry-run' || '' }}
