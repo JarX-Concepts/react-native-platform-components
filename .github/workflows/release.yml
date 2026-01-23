@@ -7,13 +7,13 @@ on:
         description: Run release-it in dry-run mode
         default: false
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
