@@ -151,7 +151,9 @@
       "publish": true,
       "skipChecks": true,
       "publishArgs": [
-        "--provenance"
+        "--provenance",
+        "--access",
+        "public"
       ]
     },
     "github": {

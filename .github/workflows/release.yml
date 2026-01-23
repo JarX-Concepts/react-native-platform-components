@@ -52,11 +52,6 @@ jobs:
           npm whoami 2>&1 || true
           echo "=================="
 
-          # Test direct npm publish with verbose output (dry-run)
-          echo "=== Testing npm publish --dry-run ==="
-          npm publish --provenance --access public --dry-run 2>&1 || true
-          echo "=================="
-
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
             yarn release --ci --dry-run
           else
