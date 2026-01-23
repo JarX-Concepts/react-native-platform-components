@@ -116,7 +116,7 @@ module.exports = {
     },
     'android.emu.ci': {
       device: 'emulator.ci',
-      app: 'android.debug',
+      app: 'android.release',
     },
   },
 };
