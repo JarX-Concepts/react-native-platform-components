@@ -175,6 +175,26 @@ export function SelectionMenuDemo(): React.JSX.Element {
         {!inlineMode && (
           <>
             <Divider />
+            <SelectionMenu
+              testID="state-menu-headless"
+              options={STATE_OPTIONS}
+              selected={selected}
+              disabled={disabled}
+              placeholder="Select a state"
+              inlineMode={false}
+              visible={open}
+              android={Platform.OS === 'android' ? { material } : undefined}
+              onSelect={(data) => {
+                console.log('Selected:', data);
+                setSelected(data);
+                setOpen(false);
+              }}
+              onRequestClose={() => {
+                console.log('cancelled');
+                setOpen(false);
+              }}
+            />
+
             <Row
               label="Menu"
               right={
@@ -196,26 +216,6 @@ export function SelectionMenuDemo(): React.JSX.Element {
                 onPress={() => {
                   if (disabled) return;
                   setOpen((p) => !p);
-                }}
-              />
-
-              <SelectionMenu
-                testID="state-menu-headless"
-                options={STATE_OPTIONS}
-                selected={selected}
-                disabled={disabled}
-                placeholder="Select a state"
-                inlineMode={false}
-                visible={open}
-                android={Platform.OS === 'android' ? { material } : undefined}
-                onSelect={(data) => {
-                  console.log('Selected:', data);
-                  setSelected(data);
-                  setOpen(false);
-                }}
-                onRequestClose={() => {
-                  console.log('cancelled');
-                  setOpen(false);
                 }}
               />
             </Row>
