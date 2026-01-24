@@ -1,5 +1,5 @@
 // DatePickerDemo.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Switch, View } from 'react-native';
 import {
   DatePicker,
@@ -29,11 +29,21 @@ export function DatePickerDemo(): React.JSX.Element {
 
   // ----- Core value -----
   const [mode, setMode] = useState<'date' | 'time' | 'dateAndTime'>('date');
-  const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | null>(new Date(1933, 0, 1, 12, 0, 0));
 
   // ----- Min / Max -----
   const [minEnabled, setMinEnabled] = useState(false);
   const [maxEnabled, setMaxEnabled] = useState(false);
+
+  useEffect(() => {
+    // every 10 secondes change the date to something random
+    const interval = setInterval(() => {
+      const now = new Date();
+      const randomOffset = Math.floor(Math.random() * 1000000000); // up to ~11 days
+      setDate(new Date(now.getTime() + randomOffset));
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const minDate = useMemo(() => {
     if (!minEnabled) return null;

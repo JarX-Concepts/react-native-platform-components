@@ -59,8 +59,12 @@ export type DatePickerProps = {
   };
 };
 
-function dateToMsOrMinusOne(d: Date | null | undefined): number {
-  return d ? d.getTime() : -1;
+// Sentinel value for "no date". Using MIN_SAFE_INTEGER ensures we don't
+// conflict with valid negative timestamps (dates before 1970).
+const NO_DATE_SENTINEL = Number.MIN_SAFE_INTEGER;
+
+function dateToMsOrSentinel(d: Date | null | undefined): number {
+  return d ? d.getTime() : NO_DATE_SENTINEL;
 }
 
 function normalizeVisible(
@@ -113,9 +117,9 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     presentation,
     visible: normalizeVisible(presentation, visible) as any,
 
-    dateMs: dateToMsOrMinusOne(date) as any,
-    minDateMs: dateToMsOrMinusOne(minDate ?? null) as any,
-    maxDateMs: dateToMsOrMinusOne(maxDate ?? null) as any,
+    dateMs: dateToMsOrSentinel(date) as any,
+    minDateMs: dateToMsOrSentinel(minDate ?? null) as any,
+    maxDateMs: dateToMsOrSentinel(maxDate ?? null) as any,
 
     onConfirm: onConfirm ? handleConfirm : undefined,
     onClosed: onClosed ? handleClosed : undefined,
