@@ -186,6 +186,8 @@ Native selection menu with **inline** and **headless** modes.
 - **Headless mode** (default): Menu visibility controlled by `visible` prop. Use for custom trigger UI.
 - **Inline mode** (`inlineMode={true}`): Native picker UI rendered inline. Menu managed internally.
 
+> **Note:** On iOS, headless mode uses a custom popover to enable programmatic presentation. For the full native menu experience (system animations, scroll physics), use inline mode. This is an intentional trade-off: headless gives you control over the trigger UI, inline gives you the complete system menu behavior.
+
 ---
 
 ## DatePicker
@@ -235,6 +237,17 @@ Native date & time picker using **platform system pickers**.
 - **Codegen-safe** — string unions & sentinel values for type safety
 - **Predictable behavior** — no surprise re-renders or layout hacks
 - **Platform conventions** — respects native UX patterns
+
+---
+
+## Theming
+
+This library does not expose theming props. Components inherit their appearance from your app's native platform theme.
+
+- **iOS**: Components follow system appearance (light/dark mode) and use system-defined styles (e.g., `UIBlurEffect` for menu backgrounds). These are not customizable per-component.
+- **Android**: Components respect your app's Material Theme. Customize via your `styles.xml` or Material 3 theme configuration.
+
+This is intentional. The goal is native fidelity, not pixel-level customization. If you need custom styling beyond what the platform theme provides, this library may not be the right fit.
 
 ---
 
