@@ -117,20 +117,21 @@ using namespace facebook::react;
     _datePickerView.open = newOpen;
   }
 
-  // dateMs (sentinel -1)
+  // dateMs (sentinel is MIN_SAFE_INTEGER to allow negative timestamps for pre-1970 dates)
+  static const double kNoDateSentinel = -9007199254740991.0;
   if (oldViewProps.dateMs != newViewProps.dateMs) {
     _datePickerView.dateMs =
-        (newViewProps.dateMs >= 0) ? @(newViewProps.dateMs) : nil;
+        (newViewProps.dateMs > kNoDateSentinel) ? @(newViewProps.dateMs) : nil;
   }
 
-  // min/max (sentinel -1)
+  // min/max (same sentinel)
   if (oldViewProps.minDateMs != newViewProps.minDateMs) {
     _datePickerView.minDateMs =
-        (newViewProps.minDateMs >= 0) ? @(newViewProps.minDateMs) : nil;
+        (newViewProps.minDateMs > kNoDateSentinel) ? @(newViewProps.minDateMs) : nil;
   }
   if (oldViewProps.maxDateMs != newViewProps.maxDateMs) {
     _datePickerView.maxDateMs =
-        (newViewProps.maxDateMs >= 0) ? @(newViewProps.maxDateMs) : nil;
+        (newViewProps.maxDateMs > kNoDateSentinel) ? @(newViewProps.maxDateMs) : nil;
   }
 
   // locale

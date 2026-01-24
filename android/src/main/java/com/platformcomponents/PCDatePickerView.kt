@@ -319,20 +319,28 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
 
   private fun presentIfNeeded() {
     if (showingModal) return
-    val act = findFragmentActivity() ?: run {
-      Log.w(TAG, "presentIfNeeded: no FragmentActivity found")
-      onCancel?.invoke()
-      showingModal = false
-      return
-    }
-
-    Log.d(TAG, "presentIfNeeded mode=$mode material=$androidMaterialMode")
     showingModal = true
 
-    when (mode) {
-      "time" -> presentTime(act)
-      "dateAndTime" -> presentDateThenTime(act)
-      else -> presentDate(act)
+    // Defer presentation to the next frame to ensure all props from the current
+    // React Native batch are applied first. This guarantees dateMs reflects the
+    // latest value from React Native before we create the dialog.
+    post {
+      if (!showingModal) return@post
+
+      val act = findFragmentActivity() ?: run {
+        Log.w(TAG, "presentIfNeeded: no FragmentActivity found")
+        onCancel?.invoke()
+        showingModal = false
+        return@post
+      }
+
+      Log.d(TAG, "presentIfNeeded mode=$mode material=$androidMaterialMode")
+
+      when (mode) {
+        "time" -> presentTime(act)
+        "dateAndTime" -> presentDateThenTime(act)
+        else -> presentDate(act)
+      }
     }
   }
 

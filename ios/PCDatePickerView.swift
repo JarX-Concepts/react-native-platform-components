@@ -213,11 +213,15 @@ public final class PCDatePickerView: UIControl,
         }
         logger.debug("presentIfNeeded: presenting modal picker")
 
-        // Prevent “settle” events right as we present.
-        suppressNextChangesBriefly()
-
         // Ensure picker is not inline.
         detachInlinePickerIfNeeded()
+
+        // Sync the picker's date to the current prop value before presenting.
+        // This ensures React Native's date is always respected as the source of truth.
+        applyDateMs(animated: false)
+
+        // Prevent "settle" events right as we present.
+        suppressNextChangesBriefly()
 
         let vc = UIViewController()
         vc.view.backgroundColor = .clear

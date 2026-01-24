@@ -60,17 +60,19 @@ class PCDatePickerViewManager :
     view.applyTimeZoneName(value)
   }
 
-  // WithDefault<double,-1> comes through as primitive Double
+  // Sentinel is MIN_SAFE_INTEGER to allow negative timestamps for pre-1970 dates
+  private val noDateSentinel = -9007199254740991.0
+
   override fun setDateMs(view: PCDatePickerView, value: Double) {
-    view.applyDateMs(if (value >= 0.0) value.toLong() else null)
+    view.applyDateMs(if (value > noDateSentinel) value.toLong() else null)
   }
 
   override fun setMinDateMs(view: PCDatePickerView, value: Double) {
-    view.applyMinDateMs(if (value >= 0.0) value.toLong() else null)
+    view.applyMinDateMs(if (value > noDateSentinel) value.toLong() else null)
   }
 
   override fun setMaxDateMs(view: PCDatePickerView, value: Double) {
-    view.applyMaxDateMs(if (value >= 0.0) value.toLong() else null)
+    view.applyMaxDateMs(if (value > noDateSentinel) value.toLong() else null)
   }
 
   // --- platform objects ---
