@@ -7,7 +7,15 @@ import {
   type AndroidMaterialMode,
 } from 'react-native-platform-components';
 
-import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
+import {
+  ActionField,
+  Divider,
+  PillButton,
+  Row,
+  RowGroup,
+  Section,
+  ui,
+} from './DemoUI';
 
 const prettyISO = (date?: Date | null) => (date ? date.toISOString() : '—');
 
@@ -177,21 +185,30 @@ export function DatePickerDemo(): React.JSX.Element {
 
         <Divider />
 
-        <Row label="Min (−30d)">
-          <Switch
-            testID="min-switch"
-            value={minEnabled}
-            onValueChange={setMinEnabled}
-          />
-        </Row>
-
-        <Row label="Max (+30d)">
-          <Switch
-            testID="max-switch"
-            value={maxEnabled}
-            onValueChange={setMaxEnabled}
-          />
-        </Row>
+        <RowGroup
+          items={[
+            {
+              label: 'Min (−30d)',
+              children: (
+                <Switch
+                  testID="min-switch"
+                  value={minEnabled}
+                  onValueChange={setMinEnabled}
+                />
+              ),
+            },
+            {
+              label: 'Max (+30d)',
+              children: (
+                <Switch
+                  testID="max-switch"
+                  value={maxEnabled}
+                  onValueChange={setMaxEnabled}
+                />
+              ),
+            },
+          ]}
+        />
       </Section>
 
       {Platform.OS === 'ios' && (
@@ -256,21 +273,30 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Divider />
 
-          <Row label="Dialog Title">
-            <Switch
-              testID="android-dialog-title-switch"
-              value={androidTitleEnabled}
-              onValueChange={setAndroidTitleEnabled}
-            />
-          </Row>
-
-          <Row label="Buttons">
-            <Switch
-              testID="android-buttons-switch"
-              value={androidButtonsEnabled}
-              onValueChange={setAndroidButtonsEnabled}
-            />
-          </Row>
+          <RowGroup
+            items={[
+              {
+                label: 'Dialog Title',
+                children: (
+                  <Switch
+                    testID="android-dialog-title-switch"
+                    value={androidTitleEnabled}
+                    onValueChange={setAndroidTitleEnabled}
+                  />
+                ),
+              },
+              {
+                label: 'Buttons',
+                children: (
+                  <Switch
+                    testID="android-buttons-switch"
+                    value={androidButtonsEnabled}
+                    onValueChange={setAndroidButtonsEnabled}
+                  />
+                ),
+              },
+            ]}
+          />
         </Section>
       )}
 

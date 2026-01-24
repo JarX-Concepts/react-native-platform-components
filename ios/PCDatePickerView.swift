@@ -1,4 +1,7 @@
+import os.log
 import UIKit
+
+private let logger = Logger(subsystem: "com.platformcomponents", category: "DatePicker")
 
 @objcMembers
 public final class PCDatePickerView: UIControl,
@@ -131,7 +134,7 @@ public final class PCDatePickerView: UIControl,
         picker.setNeedsLayout()
         picker.layoutIfNeeded()
         let fitted = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        return CGSize(width: UIView.noIntrinsicMetric, height: max(44, fitted.height))
+        return CGSize(width: UIView.noIntrinsicMetric, height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
     /// ✅ Called by your measuring pipeline.
@@ -144,13 +147,13 @@ public final class PCDatePickerView: UIControl,
 
         let width =
             (constrainedSize.width.isFinite && constrainedSize.width > 1)
-            ? constrainedSize.width : 320
+            ? constrainedSize.width : PCConstants.fallbackWidth
         let fitted = picker.systemLayoutSizeFitting(
             CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
             withHorizontalFittingPriority: .required,
             verticalFittingPriority: .fittingSizeLevel
         )
-        return CGSize(width: constrainedSize.width, height: max(44, fitted.height))
+        return CGSize(width: constrainedSize.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
     /// Separate sizing for popover content.
@@ -204,7 +207,11 @@ public final class PCDatePickerView: UIControl,
 
     private func presentIfNeeded() {
         guard modalVC == nil else { return }
-        guard let top = topViewController() else { return }
+        guard let top = topViewController() else {
+            logger.warning("presentIfNeeded: no view controller found")
+            return
+        }
+        logger.debug("presentIfNeeded: presenting modal picker")
 
         // Prevent “settle” events right as we present.
         suppressNextChangesBriefly()
@@ -239,6 +246,7 @@ public final class PCDatePickerView: UIControl,
 
     private func dismissIfNeeded(emitCancel: Bool) {
         guard let vc = modalVC else { return }
+        logger.debug("dismissIfNeeded: dismissing modal, emitCancel=\(emitCancel)")
         modalVC = nil
         vc.dismiss(animated: true) { [weak self] in
             guard let self else { return }

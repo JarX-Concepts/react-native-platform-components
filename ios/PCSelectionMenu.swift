@@ -1,5 +1,8 @@
+import os.log
 import SwiftUI
 import UIKit
+
+private let logger = Logger(subsystem: "com.platformcomponents", category: "SelectionMenu")
 
 // MARK: - Option model (bridged from ObjC++ as dictionaries)
 
@@ -259,24 +262,31 @@ public final class PCSelectionMenuView: UIControl {
         let opts = parsedOptions
         guard !opts.isEmpty else { return }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        logger.debug("presentHeadlessMenuIfNeeded: scheduling presentation with \(opts.count) options")
+        DispatchQueue.main.asyncAfter(deadline: .now() + PCConstants.headlessPresentationDelay) {
             let menuVC = PCMenuViewController(
                 options: opts,
                 onSelect: { [weak self] idx in
                     guard let self else { return }
                     let opt = opts[idx]
+                    logger.debug("headless menu selected: index=\(idx), data=\(opt.data)")
                     self.selectedData = opt.data
                     self.onSelect?(idx, opt.label, opt.data)
                 },
                 onCancel: { [weak self] in
+                    logger.debug("headless menu cancelled")
                     self?.onRequestClose?()
                 }
             )
 
             menuVC.modalPresentationStyle = .popover
+            let popoverHeight = min(
+                CGFloat(opts.count) * PCConstants.popoverRowHeight + PCConstants.popoverVerticalPadding,
+                PCConstants.popoverMaxHeight
+            )
             menuVC.preferredContentSize = CGSize(
-                width: 250,
-                height: min(CGFloat(opts.count) * 44 + 16, 400)  // Account for top/bottom padding
+                width: PCConstants.popoverWidth,
+                height: popoverHeight
             )
 
             if let popover = menuVC.popoverPresentationController {
@@ -290,19 +300,18 @@ public final class PCSelectionMenuView: UIControl {
         }
     }
 
-    // MARK: - sizing
+    // MARK: - Sizing
 
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
         if anchorMode != "inline" { return CGSize(width: size.width, height: 1) }
 
-        let minH: CGFloat = 44
         guard let host = hostingController else {
-            return CGSize(width: size.width, height: minH)
+            return CGSize(width: size.width, height: PCConstants.minTouchTargetHeight)
         }
 
-        let w = (size.width > 1) ? size.width : 320
+        let w = (size.width > 1) ? size.width : PCConstants.fallbackWidth
         let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
-        return CGSize(width: size.width, height: max(minH, fitted.height))
+        return CGSize(width: size.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
     public override var intrinsicContentSize: CGSize {
@@ -310,7 +319,9 @@ public final class PCSelectionMenuView: UIControl {
             return CGSize(width: UIView.noIntrinsicMetric, height: 1)
         }
         let h = max(
-            44, sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
+            PCConstants.minTouchTargetHeight,
+            sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height
+        )
         return CGSize(width: UIView.noIntrinsicMetric, height: h)
     }
 }
@@ -348,10 +359,11 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tableView.backgroundColor = .clear
-        tableView.separatorStyle = .none  // Remove dividers to match inline
+        tableView.separatorStyle = .none
         tableView.isScrollEnabled = true
-        tableView.rowHeight = 44
-        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)  // Add top/bottom padding
+        tableView.rowHeight = PCConstants.popoverRowHeight
+        let verticalPad = PCConstants.popoverVerticalPadding / 2
+        tableView.contentInset = UIEdgeInsets(top: verticalPad, left: 0, bottom: verticalPad, right: 0)
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
         blurView.contentView.addSubview(tableView)
