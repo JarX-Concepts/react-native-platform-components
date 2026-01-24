@@ -51,7 +51,7 @@ export interface SelectionMenuProps extends ViewProps {
   ios?: {};
 
   android?: {
-    /** Material preference ("auto" | "m2" | "m3"). */
+    /** Material preference ('system' | 'm3'). */
     material?: AndroidMaterialMode;
   };
 
