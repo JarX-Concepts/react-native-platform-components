@@ -3,6 +3,21 @@
 [![npm version](https://img.shields.io/npm/v/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
 [![npm downloads](https://img.shields.io/npm/dm/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS DatePicker</strong></td>
+    <td align="center"><strong>Android DatePicker</strong></td>
+    <td align="center"><strong>iOS SelectionMenu</strong></td>
+    <td align="center"><strong>Android SelectionMenu</strong></td>
+  </tr>
+  <tr>
+    <td><video src="assets/ios-datepicker.mp4" autoplay muted loop playsinline></video></td>
+    <td><video src="assets/android-datepicker.mp4" autoplay muted loop playsinline></video></td>
+    <td><video src="assets/ios-selectionmenu.mp4" autoplay muted loop playsinline></video></td>
+    <td><video src="assets/android-selectionmenu.mp4" autoplay muted loop playsinline></video></td>
+  </tr>
+</table>
+
 > 🚧 In development — not ready for public use.
 
 High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.

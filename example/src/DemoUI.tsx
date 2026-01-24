@@ -9,7 +9,6 @@ export function Screen(props: {
 }) {
   return (
     <ScrollView style={ui.container}>
-      <Text style={ui.header}>{props.title}</Text>
       {props.children}
       <Text style={ui.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -161,7 +160,7 @@ export const ui = StyleSheet.create({
   },
   footer: {
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 8,
     marginBottom: 22,
     color: 'gray',
     fontSize: 12,
@@ -172,7 +171,7 @@ export const ui = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.4,
     opacity: 0.55,
-    marginBottom: 4,
+    marginBottom: 1,
     marginLeft: 4,
     textTransform: 'uppercase',
   },
@@ -186,7 +185,7 @@ export const ui = StyleSheet.create({
 
   row: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 40,
@@ -204,8 +203,8 @@ export const ui = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 4,
     padding: 4,
     borderRadius: 999,
     backgroundColor: 'white',
@@ -214,7 +213,7 @@ export const ui = StyleSheet.create({
   },
   tab: {
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 4,
     borderRadius: 999,
   },
   tabActive: { backgroundColor: '#F4F4F6' },
@@ -223,7 +222,7 @@ export const ui = StyleSheet.create({
   tabTextActive: { opacity: 0.95 },
 
   field: {
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#F4F4F6',
@@ -235,7 +234,7 @@ export const ui = StyleSheet.create({
 
   pill: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 999,
     backgroundColor: '#EFEFF3',
   },

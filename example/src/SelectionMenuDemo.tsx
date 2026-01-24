@@ -114,7 +114,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
             <Divider />
             <Row label="Material">
               <SelectionMenu
-                testID="material-menu"
+                testID="android-material-menu"
                 style={ui.fullFlex}
                 options={materialOptions as any}
                 selected={material}
