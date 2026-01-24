@@ -223,7 +223,7 @@ Native date & time picker using **platform system pickers**.
 | Prop | Type | Description |
 |------|------|-------------|
 | `firstDayOfWeek` | `number` | First day of week (1-7, Sunday=1) |
-| `material` | `'system' \| 'm3'` | Material Design style |
+| `material` | `'system' \| 'm3'` | Material Design style (modal only; embedded always uses system picker) |
 | `dialogTitle` | `string` | Custom dialog title |
 | `positiveButtonTitle` | `string` | Custom confirm button text |
 | `negativeButtonTitle` | `string` | Custom cancel button text |

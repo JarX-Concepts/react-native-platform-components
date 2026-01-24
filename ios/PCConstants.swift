@@ -16,8 +16,15 @@ enum PCConstants {
     /// Maximum popover height before scrolling
     static let popoverMaxHeight: CGFloat = 400
 
-    /// Row height in selection menu popover
-    static let popoverRowHeight: CGFloat = 44
+    /// Minimum row height in selection menu popover (used as baseline)
+    static let popoverRowHeightMin: CGFloat = 44
+
+    /// Dynamic row height that respects user's preferred content size
+    static var popoverRowHeight: CGFloat {
+        let bodyFont = UIFont.preferredFont(forTextStyle: .body)
+        // Row height = font line height + vertical padding (16pt total)
+        return max(popoverRowHeightMin, ceil(bodyFont.lineHeight) + 16)
+    }
 
     /// Vertical padding in selection menu popover (top + bottom)
     static let popoverVerticalPadding: CGFloat = 16

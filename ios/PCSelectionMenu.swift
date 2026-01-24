@@ -289,15 +289,16 @@ public final class PCSelectionMenuView: UIControl {
             let spacing: CGFloat = 8
 
             // Check if menu fits below the source view
+            let rowHeight = PCConstants.popoverRowHeight
             let wouldExtendBeyondBottom = sourceFrame.maxY + spacing + popoverHeight > screenBounds.maxY - 20
 
             let menuY: CGFloat
             if wouldExtendBeyondBottom {
-                // Position above the source view
+                // Position above the source view (no overlap offset)
                 menuY = sourceFrame.minY - spacing - popoverHeight
             } else {
-                // Position below the source view
-                menuY = sourceFrame.maxY + spacing
+                // Position below, but shift up by one row to overlap trigger (like system menu)
+                menuY = sourceFrame.maxY + spacing - rowHeight
             }
 
             // Center horizontally, but keep within screen bounds
@@ -364,7 +365,8 @@ private class PCGlassMenuCell: UITableViewCell {
         backgroundColor = .clear
         contentView.backgroundColor = .clear
         selectionStyle = .none
-        textLabel?.font = .systemFont(ofSize: 17)
+        textLabel?.font = .preferredFont(forTextStyle: .body)
+        textLabel?.adjustsFontForContentSizeCategory = true
     }
 }
 
