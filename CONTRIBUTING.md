@@ -1,132 +1,145 @@
 # Contributing
 
-Contributions are always welcome, no matter how large or small!
+Contributions are welcome! This library provides native UI components (DatePicker, SelectionMenu) for React Native using Fabric/Codegen architecture.
 
-We want this community to be friendly and respectful to each other. Please follow it in all your interactions with the project. Before contributing, please read the [code of conduct](./CODE_OF_CONDUCT.md).
+Before contributing, please read the [code of conduct](./CODE_OF_CONDUCT.md).
 
 ## Development workflow
 
-This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/features/workspaces). It contains the following packages:
+This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/features/workspaces):
 
-- The library package in the root directory.
-- An example app in the `example/` directory.
+- Library source in the root directory (`src/`, `ios/`, `android/`)
+- Example app in `example/`
 
-To get started with the project, make sure you have the correct version of [Node.js](https://nodejs.org/) installed. See the [`.nvmrc`](./.nvmrc) file for the version used in this project.
+### Prerequisites
 
-Run `yarn` in the root directory to install the required dependencies for each package:
+- Node.js (see [`.nvmrc`](./.nvmrc) for version)
+- Yarn 4.x (specified in `packageManager`)
+- Xcode (for iOS development)
+- Android Studio (for Android development)
+
+### Setup
 
 ```sh
 yarn
 ```
 
-> Since the project relies on Yarn workspaces, you cannot use [`npm`](https://github.com/npm/cli) for development without manually migrating.
+> This project uses Yarn workspaces. npm is not supported.
 
-The [example app](/example/) demonstrates usage of the library. You need to run it to test any changes you make.
+### Running the example app
 
-It is configured to use the local version of the library, so any changes you make to the library's source code will be reflected in the example app. Changes to the library's JavaScript code will be reflected in the example app without a rebuild, but native code changes will require a rebuild of the example app.
+The example app demonstrates the library's components and is used for development testing.
 
-If you want to use Android Studio or Xcode to edit the native code, you can open the `example/android` or `example/ios` directories respectively in those editors. To edit the Objective-C or Swift files, open `example/ios/PlatformComponentsExample.xcworkspace` in Xcode and find the source files at `Pods > Development Pods > react-native-platform-components`.
-
-To edit the Java or Kotlin files, open `example/android` in Android studio and find the source files at `react-native-platform-components` under `Android`.
-
-You can use various commands from the root directory to work with the project.
-
-To start the packager:
+Start the Metro bundler:
 
 ```sh
 yarn example start
 ```
 
-To run the example app on Android:
-
-```sh
-yarn example android
-```
-
-To run the example app on iOS:
+Run on iOS:
 
 ```sh
 yarn example ios
 ```
 
-To confirm that the app is running with the new architecture, you can check the Metro logs for a message like this:
+Run on Android:
 
 ```sh
+yarn example android
+```
+
+JavaScript changes reflect immediately. Native code changes require a rebuild.
+
+### Editing native code
+
+**iOS (Swift/Objective-C):**
+
+Open `example/ios/PlatformComponentsExample.xcworkspace` in Xcode. Find the library source files at:
+- `Pods > Development Pods > react-native-platform-components`
+
+Key files:
+- `ios/PCDatePickerView.swift` - DatePicker implementation
+- `ios/PCSelectionMenu.swift` - SelectionMenu implementation
+
+**Android (Kotlin):**
+
+Open `example/android` in Android Studio. Find the library source files under `react-native-platform-components`.
+
+Key files:
+- `android/src/main/java/com/platformcomponents/PCDatePickerView.kt`
+- `android/src/main/java/com/platformcomponents/PCSelectionMenuView.kt`
+
+### Verifying Fabric/New Architecture
+
+The example app runs with React Native's New Architecture. Confirm it's enabled by checking Metro logs for:
+
+```
 Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurrentRoot":true},"rootTag":1}
 ```
 
-Note the `"fabric":true` and `"concurrentRoot":true` properties.
+---
 
-Make sure your code passes TypeScript:
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `yarn` | Install dependencies |
+| `yarn typecheck` | Type-check with TypeScript |
+| `yarn lint` | Lint with ESLint |
+| `yarn lint --fix` | Fix linting errors |
+| `yarn test` | Run unit tests (Jest) |
+| `yarn example start` | Start Metro bundler |
+| `yarn example ios` | Run example on iOS |
+| `yarn example android` | Run example on Android |
+| `yarn clean` | Clean build artifacts |
+| `yarn release` | Publish a new version |
+
+### E2E testing (Detox)
+
+The example app includes Detox end-to-end tests.
 
 ```sh
-yarn typecheck
+# iOS
+yarn example test:e2e:ios
+
+# Android
+yarn example test:e2e:android
 ```
 
-To check for linting errors, run the following:
+---
 
-```sh
-yarn lint
-```
+## Commit message convention
 
-To fix formatting errors, run the following:
+We use [conventional commits](https://www.conventionalcommits.org/en):
 
-```sh
-yarn lint --fix
-```
+- `fix`: Bug fixes
+- `feat`: New features
+- `refactor`: Code refactoring
+- `docs`: Documentation changes
+- `test`: Adding or updating tests
+- `chore`: Tooling/config changes
 
-Remember to add tests for your change if possible. Run the unit tests by:
+Pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) verify commit message format.
 
-```sh
-yarn test
-```
+---
 
+## Pull requests
 
-### Commit message convention
+- Keep PRs focused on a single change
+- Ensure `yarn typecheck` and `yarn lint` pass
+- Add tests when possible
+- For API or architectural changes, open an issue first to discuss
 
-We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
+> **First time contributing?** See [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).
 
-- `fix`: bug fixes, e.g. fix crash due to deprecated method.
-- `feat`: new features, e.g. add new method to the module.
-- `refactor`: code refactor, e.g. migrate from class components to hooks.
-- `docs`: changes into documentation, e.g. add usage example for the module.
-- `test`: adding or updating tests, e.g. add integration tests using detox.
-- `chore`: tooling changes, e.g. change CI config.
+---
 
-Our pre-commit hooks verify that your commit message matches this format when committing.
+## Publishing
 
-
-### Publishing to npm
-
-We use [release-it](https://github.com/release-it/release-it) to make it easier to publish new versions. It handles common tasks like bumping version based on semver, creating tags and releases etc.
-
-To publish new versions, run the following:
+Releases are managed with [release-it](https://github.com/release-it/release-it):
 
 ```sh
 yarn release
 ```
 
-
-### Scripts
-
-The `package.json` file contains various scripts for common tasks:
-
-- `yarn`: setup project by installing dependencies.
-- `yarn typecheck`: type-check files with TypeScript.
-- `yarn lint`: lint files with [ESLint](https://eslint.org/).
-- `yarn test`: run unit tests with [Jest](https://jestjs.io/).
-- `yarn example start`: start the Metro server for the example app.
-- `yarn example android`: run the example app on Android.
-- `yarn example ios`: run the example app on iOS.
-
-### Sending a pull request
-
-> **Working on your first pull request?** You can learn how from this _free_ series: [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).
-
-When you're sending a pull request:
-
-- Prefer small pull requests focused on one change.
-- Verify that linters and tests are passing.
-- Review the documentation to make sure it looks good.
-- Follow the pull request template when opening a pull request.
-- For pull requests that change the API or implementation, discuss with maintainers first by opening an issue.
+This handles version bumping, tagging, npm publishing, and GitHub releases.
