@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A cross-platform toolkit of native UI components for React Native.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
