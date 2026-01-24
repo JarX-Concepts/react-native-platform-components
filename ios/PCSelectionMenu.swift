@@ -279,22 +279,41 @@ public final class PCSelectionMenuView: UIControl {
                 }
             )
 
-            menuVC.modalPresentationStyle = .popover
+            // Calculate menu position relative to source view
+            let sourceFrame = self.convert(self.bounds, to: vc.view)
+            let screenBounds = vc.view.bounds
             let popoverHeight = min(
                 CGFloat(opts.count) * PCConstants.popoverRowHeight + PCConstants.popoverVerticalPadding,
                 PCConstants.popoverMaxHeight
             )
-            menuVC.preferredContentSize = CGSize(
+            let spacing: CGFloat = 8
+
+            // Check if menu fits below the source view
+            let wouldExtendBeyondBottom = sourceFrame.maxY + spacing + popoverHeight > screenBounds.maxY - 20
+
+            let menuY: CGFloat
+            if wouldExtendBeyondBottom {
+                // Position above the source view
+                menuY = sourceFrame.minY - spacing - popoverHeight
+            } else {
+                // Position below the source view
+                menuY = sourceFrame.maxY + spacing
+            }
+
+            // Center horizontally, but keep within screen bounds
+            var menuX = sourceFrame.midX - PCConstants.popoverWidth / 2
+            menuX = max(16, min(menuX, screenBounds.maxX - PCConstants.popoverWidth - 16))
+
+            let menuFrame = CGRect(
+                x: menuX,
+                y: menuY,
                 width: PCConstants.popoverWidth,
                 height: popoverHeight
             )
 
-            if let popover = menuVC.popoverPresentationController {
-                popover.sourceView = self
-                popover.sourceRect = self.bounds
-                popover.permittedArrowDirections = []  // Remove arrow to match inline
-                popover.delegate = menuVC
-            }
+            menuVC.modalPresentationStyle = .overCurrentContext
+            menuVC.modalTransitionStyle = .crossDissolve
+            menuVC.menuFrame = menuFrame
 
             vc.present(menuVC, animated: true)
         }
@@ -326,13 +345,39 @@ public final class PCSelectionMenuView: UIControl {
     }
 }
 
+// MARK: - Glass Menu Cell
+
+private class PCGlassMenuCell: UITableViewCell {
+    static let reuseIdentifier = "PCGlassMenuCell"
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupCell()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupCell()
+    }
+
+    private func setupCell() {
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+        selectionStyle = .none
+        textLabel?.font = .systemFont(ofSize: 17)
+    }
+}
+
 // MARK: - Custom Menu View Controller (matches SwiftUI Menu appearance)
 
-private class PCMenuViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIPopoverPresentationControllerDelegate {
+private class PCMenuViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     private let options: [PCSelectionMenuOption]
     private let onSelect: (Int) -> Void
     private let onCancel: () -> Void
     private var tableView: UITableView!
+    private var menuContainer: UIView!
+
+    var menuFrame: CGRect = .zero
 
     init(options: [PCSelectionMenuOption], onSelect: @escaping (Int) -> Void, onCancel: @escaping () -> Void) {
         self.options = options
@@ -348,37 +393,56 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Add blur effect (liquid glass)
-        let blurEffect = UIBlurEffect(style: .systemMaterial)
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(blurView)
+        view.backgroundColor = .clear
 
-        tableView = UITableView(frame: .zero, style: .plain)
+        // Tap outside to dismiss
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBackgroundTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+
+        // Menu container positioned at menuFrame
+        menuContainer = UIView(frame: menuFrame)
+        menuContainer.backgroundColor = .clear
+        menuContainer.layer.cornerRadius = 12
+        menuContainer.clipsToBounds = true
+        view.addSubview(menuContainer)
+
+        // Use liquid glass on iOS 26+, fall back to system material blur on older versions
+        let effectView: UIVisualEffectView
+        if #available(iOS 26, *) {
+            var glassEffect = UIGlassEffect()
+            glassEffect.isInteractive = true
+            effectView = UIVisualEffectView(effect: glassEffect)
+        } else {
+            let blurEffect = UIBlurEffect(style: .systemMaterial)
+            effectView = UIVisualEffectView(effect: blurEffect)
+        }
+        effectView.frame = menuContainer.bounds
+        effectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        menuContainer.addSubview(effectView)
+
+        tableView = UITableView(frame: menuContainer.bounds, style: .plain)
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        tableView.register(PCGlassMenuCell.self, forCellReuseIdentifier: PCGlassMenuCell.reuseIdentifier)
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
         tableView.isScrollEnabled = true
         tableView.rowHeight = PCConstants.popoverRowHeight
+        tableView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         let verticalPad = PCConstants.popoverVerticalPadding / 2
         tableView.contentInset = UIEdgeInsets(top: verticalPad, left: 0, bottom: verticalPad, right: 0)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
 
-        blurView.contentView.addSubview(tableView)
+        effectView.contentView.addSubview(tableView)
+    }
 
-        NSLayoutConstraint.activate([
-            blurView.topAnchor.constraint(equalTo: view.topAnchor),
-            blurView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            blurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-
-            tableView.topAnchor.constraint(equalTo: blurView.contentView.topAnchor),
-            tableView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor),
-        ])
+    @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: view)
+        if !menuContainer.frame.contains(location) {
+            dismiss(animated: true) { [weak self] in
+                self?.onCancel()
+            }
+        }
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -386,11 +450,8 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: PCGlassMenuCell.reuseIdentifier, for: indexPath)
         cell.textLabel?.text = options[indexPath.row].label
-        cell.textLabel?.font = .systemFont(ofSize: 17)
-        cell.backgroundColor = .clear
-        cell.selectionStyle = .default
         return cell
     }
 
@@ -399,14 +460,6 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         dismiss(animated: true) { [weak self] in
             self?.onSelect(indexPath.row)
         }
-    }
-
-    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        onCancel()
-    }
-
-    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
-        return .none
     }
 }
 
