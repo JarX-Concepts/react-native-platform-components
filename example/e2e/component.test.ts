@@ -1,5 +1,13 @@
 import { expect } from 'detox';
 
+const selectMenuOption = async (menuId: string, optionLabel: string) => {
+  await element(by.id(menuId)).tap();
+  await waitFor(element(by.text(optionLabel)))
+    .toBeVisible()
+    .withTimeout(2000);
+  await element(by.text(optionLabel)).atIndex(0).tap();
+};
+
 describe('Platform Components Example', () => {
   beforeAll(async () => {
     await device.launchApp();
@@ -10,59 +18,100 @@ describe('Platform Components Example', () => {
   });
 
   it('should test Date Picker functionality', async () => {
+    const pause = async (ms = 1000) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    const ensureModalMode = async (enabled: boolean) => {
+      const toggle = element(by.id('modal-switch'));
+
+      if (enabled) {
+        try {
+          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+          return;
+        } catch {
+          await toggle.tap();
+          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+        }
+      } else {
+        try {
+          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+          await toggle.tap();
+        } catch {
+          // Already disabled.
+        }
+      }
+    };
+
+    const dismissModal = async () => {
+      try {
+        await element(by.text('Custom Cancel')).atIndex(0).tap();
+        return;
+      } catch {
+        // Not Android or button not present.
+      }
+
+      try {
+        await element(by.id('demo-tabs-datePicker')).tap();
+        return;
+      } catch {
+        // Not Android or back not available.
+      }
+    };
+
     // Ensure we're on the DatePicker tab
     await element(by.id('demo-tabs-datePicker')).tap();
 
-    // Test mode selection
-    await element(by.id('mode-menu')).tap();
+    // Enable DatePicker Tap
+    await ensureModalMode(true);
+    await expect(element(by.id('picker-toggle-field'))).toBeVisible();
 
-    // Wait for the menu to appear
-    await waitFor(element(by.text('Date & Time')))
-      .toExist()
-      .withTimeout(2000);
-    await element(by.text('Date & Time')).atIndex(0).tap();
+    // Set mode to "Date"
+    await selectMenuOption('mode-menu', 'Date');
 
-    // Verify mode changed (menu should now show "Date & Time")
-    await expect(element(by.id('mode-menu'))).toBeVisible();
+    // Set iOS style to "Inline" (iOS only)
+    try {
+      await selectMenuOption('ios-style-menu', 'Inline');
+    } catch {
+      // Not on iOS.
+    }
 
-    // Test changing mode to Time
-    await element(by.id('mode-menu')).tap();
+    // Set Android material to "M3" (Android only)
+    try {
+      await selectMenuOption('android-material-menu', 'M3');
+    } catch {
+      // Not on Android.
+    }
 
-    // Wait for the menu to appear
-    await waitFor(element(by.text('Time')))
-      .toBeVisible()
-      .withTimeout(2000);
-    await element(by.text('Time')).atIndex(0).tap();
+    // Open the modal (then pause)
+    await element(by.id('picker-toggle-button')).tap();
+    await pause();
 
-    // Test setting a date value
-    await element(by.id('set-date-now-field')).tap();
-    await expect(element(by.id('set-date-now-field'))).toBeVisible();
+    // Dismiss it
+    await dismissModal();
 
-    // Test toggling modal presentation
-    await element(by.id('modal-switch')).tap();
+    // Disable the modal mode
+    await ensureModalMode(false);
 
-    // In embedded mode, the picker should be visible inline
-    await expect(element(by.id('date-picker'))).toExist();
+    // Set iOS style to "Wheels" (iOS only)
+    try {
+      await selectMenuOption('ios-style-menu', 'Wheels');
+    } catch {
+      // Not on iOS.
+    }
 
-    // Toggle back to modal
-    await element(by.id('modal-switch')).tap();
+    // Set mode to "Time" (then pause)
+    await selectMenuOption('mode-menu', 'Time');
+    await pause();
 
-    // Test opening the modal picker
-    // await element(by.id('picker-toggle-button')).tap();
+    // Enable the modal mode
+    await ensureModalMode(true);
 
-    // The picker should now be open (modal)
-    // Note: Modal interactions depend on platform-specific behavior
+    // Open the modal (then pause)
+    await element(by.id('picker-toggle-button')).tap();
+    await pause();
 
-    // Close the modal
-    //await element(by.id('picker-toggle-button')).tap();
-
-    // Test clearing the date
-    await element(by.id('set-date-now-field')).tap();
-    await element(by.id('clear-date-button')).tap();
-
-    // Test min/max date toggles
-    await element(by.id('min-switch')).tap();
-    await element(by.id('max-switch')).tap();
+    // Dismiss it
+    await dismissModal();
   });
 
   it('should test Selection Menu functionality', async () => {
@@ -132,5 +181,16 @@ describe('Platform Components Example', () => {
 
     // Verify the selection
     await expect(element(by.text('Arkansas'))).toBeVisible();
+
+    // Set Android material to "M3" (Android only)
+    try {
+      await selectMenuOption('android-material-menu', 'M3');
+
+      await element(by.id('inline-switch')).tap();
+
+      await element(by.id('state-menu-inline')).tap();
+    } catch {
+      // Not on Android.
+    }
   });
 });

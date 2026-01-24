@@ -21,7 +21,7 @@ const prettyISO = (date?: Date | null) => (date ? date.toISOString() : '—');
 
 export function DatePickerDemo(): React.JSX.Element {
   // ----- Presentation -----
-  const [presentationModal, setPresentationModal] = useState(true);
+  const [presentationModal, setPresentationModal] = useState(false);
   const [open, setOpen] = useState(false);
 
   const presentation = presentationModal ? 'modal' : 'embedded';
@@ -54,7 +54,7 @@ export function DatePickerDemo(): React.JSX.Element {
   // ----- iOS options -----
   const [iosStyle, setIosStyle] = useState<
     'automatic' | 'compact' | 'inline' | 'wheels'
-  >('automatic');
+  >('inline');
 
   const [iosMinuteInterval, setIosMinuteInterval] = useState<
     'inherit' | '1' | '5' | '10' | '15'
@@ -300,7 +300,7 @@ export function DatePickerDemo(): React.JSX.Element {
         </Section>
       )}
 
-      <Section title="Picker">
+      <Section title="Date Picker">
         {presentationModal && (
           <>
             <Row
@@ -336,6 +336,9 @@ export function DatePickerDemo(): React.JSX.Element {
             minDate={minDate ?? undefined}
             maxDate={maxDate ?? undefined}
             mode={mode}
+            // TODO: figure out why we need this on Android to force remounting
+            //       when mode changes with embedded picker
+            key={Platform.OS === 'android' ? mode + presentation : undefined}
             ios={{
               preferredStyle: iosStyle,
               minuteInterval:

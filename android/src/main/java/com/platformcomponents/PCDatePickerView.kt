@@ -136,14 +136,16 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
     minDateMs = value
     // clamp if needed
     dateMs = clamp(dateMs ?: System.currentTimeMillis())
-    syncInlineFromState()
+    // Rebuild inline picker to apply new min date (avoids CalendarView bugs)
+    if (isInline()) rebuildUI() else syncInlineFromState()
   }
 
   fun applyMaxDateMs(value: Long?) {
     maxDateMs = value
     // clamp if needed
     dateMs = clamp(dateMs ?: System.currentTimeMillis())
-    syncInlineFromState()
+    // Rebuild inline picker to apply new max date (avoids CalendarView bugs)
+    if (isInline()) rebuildUI() else syncInlineFromState()
   }
 
   /**
@@ -205,8 +207,11 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        calendarViewShown = true
-        spinnersShown = false
+        // Use spinner mode to avoid CalendarView rendering bugs when scrolling months
+        calendarViewShown = false
+        spinnersShown = true
+        minDateMs?.let { minDate = it }
+        maxDateMs?.let { maxDate = it }
       }
       container.addView(dp)
       inlineDatePicker = dp
@@ -239,7 +244,14 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
     inlineContainer = container
 
     syncInlineFromState()
-    requestLayout()
+
+    // Force layout refresh - post to ensure React Native's layout system picks it up
+    post {
+      requestLayout()
+      invalidate()
+      // Also request layout from parent to notify React Native
+      (parent as? ViewGroup)?.requestLayout()
+    }
   }
 
   private fun syncInlineFromState() {
@@ -253,10 +265,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
     suppressInlineCallbacks = true
     try {
       inlineDatePicker?.let { dp ->
-        // Apply min/max bounds on the widget itself where possible
-        minDateMs?.let { dp.minDate = it }
-        maxDateMs?.let { dp.maxDate = it }
-
+        // Note: min/max dates are set during picker creation in rebuildUI()
+        // to avoid CalendarView rendering bugs from repeated updates
         val y = cal.get(Calendar.YEAR)
         val m = cal.get(Calendar.MONTH)
         val d = cal.get(Calendar.DAY_OF_MONTH)
