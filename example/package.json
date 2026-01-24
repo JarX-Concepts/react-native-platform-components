@@ -14,8 +14,8 @@
     "test:e2e:android:ci": "detox build --configuration android.emu.ci && detox test --configuration android.emu.ci --record-videos none"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-native": "0.81.1"
+    "react": "19.2.3",
+    "react-native": "0.83.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -24,10 +24,10 @@
     "@react-native-community/cli": "20.0.0",
     "@react-native-community/cli-platform-android": "20.0.0",
     "@react-native-community/cli-platform-ios": "20.0.0",
-    "@react-native/babel-preset": "0.81.1",
-    "@react-native/metro-config": "0.81.1",
-    "@react-native/typescript-config": "0.81.1",
-    "@types/react": "^19.1.0",
+    "@react-native/babel-preset": "0.83.1",
+    "@react-native/metro-config": "0.83.1",
+    "@react-native/typescript-config": "0.83.1",
+    "@types/react": "^19.2.3",
     "detox": "^20.46.3",
     "jest": "^30.2.0",
     "react-native-builder-bob": "^0.40.16",
