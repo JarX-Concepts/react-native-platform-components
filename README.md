@@ -1,43 +1,22 @@
 # react-native-platform-components
 
-> 🚧 In development — not ready for public use.
-
 High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.
 
-This library focuses on **true native behavior**, not JavaScript re-implementations — starting with:
+This library focuses on **true native behavior**, not JavaScript re-implementations — providing:
 
-- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS, web fallback)
-- **DatePicker** – native date & time pickers with modal and inline presentations
+- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
+- **DatePicker** – native date & time pickers with modal and embedded presentations
 
 The goal is to provide components that:
 
 - Feel **100% native** on each platform
-- Support modern platform design systems (Material 2 / Material 3 on Android, system pickers on iOS)
+- Support modern platform design systems (Material 3 on Android, system pickers on iOS)
 - Offer **headless** and **inline** modes for maximum layout control
 - Integrate cleanly with **React Native Codegen / Fabric**
-- Degrade gracefully on **Web**
 
 ---
 
-## 🎥 Demos
-
-### SelectionMenu
-Native Material / system selection menus with headless and inline modes.
-
-📹 **Demo video:**  
-👉 *(add SelectionMenu demo link here)*
-
----
-
-### DatePicker
-Native date & time pickers using platform system UI.
-
-📹 **Demo video:**  
-👉 *(add DatePicker demo link here)*
-
----
-
-## 📦 Installation
+## Installation
 
 ```sh
 npm install react-native-platform-components
@@ -53,22 +32,17 @@ pod install
 ```
 
 - Minimum iOS version: **iOS 13+**
-- Uses `UIDatePicker` and system selection menus
+- Uses `UIDatePicker` and SwiftUI Menu
 
 ### Android
 
-- Uses native Android Views
-- Supports **Material 2** and **Material 3**
+- Uses native Android Views with Material Design
+- Supports **Material 3** styling
 - No additional setup required beyond autolinking
-
-### Web
-
-- **SelectionMenu** is supported with a web-appropriate fallback
-- **DatePicker** currently targets native platforms only
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### SelectionMenu (Headless)
 
@@ -104,6 +78,33 @@ export function Example() {
 }
 ```
 
+### SelectionMenu (Inline)
+
+```tsx
+import { SelectionMenu } from 'react-native-platform-components';
+
+const options = [
+  { label: 'Apple', data: 'apple' },
+  { label: 'Banana', data: 'banana' },
+  { label: 'Orange', data: 'orange' },
+];
+
+export function Example() {
+  const [value, setValue] = React.useState<string | null>(null);
+
+  return (
+    <SelectionMenu
+      options={options}
+      selected={value}
+      inlineMode
+      placeholder="Select fruit"
+      onSelect={(data) => setValue(data)}
+      android={{ material: 'm3' }}
+    />
+  );
+}
+```
+
 ---
 
 ### DatePicker (Modal)
@@ -134,9 +135,28 @@ export function Example() {
 }
 ```
 
+### DatePicker (Embedded)
+
+```tsx
+import { DatePicker } from 'react-native-platform-components';
+
+export function Example() {
+  const [date, setDate] = React.useState<Date | null>(new Date());
+
+  return (
+    <DatePicker
+      date={date}
+      presentation="embedded"
+      mode="dateAndTime"
+      onConfirm={(d) => setDate(d)}
+    />
+  );
+}
+```
+
 ---
 
-## 🧩 Components
+## Components
 
 ## SelectionMenu
 
@@ -144,35 +164,22 @@ Native selection menu with **inline** and **headless** modes.
 
 ### Props
 
-```ts
-type SelectionMenuProps = {
-  style?: StyleProp<ViewStyle>;
+| Prop | Type | Description |
+|------|------|-------------|
+| `options` | `{ label: string; data: string }[]` | Array of options to display |
+| `selected` | `string \| null` | Currently selected option's `data` value |
+| `disabled` | `boolean` | Disables the menu |
+| `placeholder` | `string` | Placeholder text when no selection |
+| `inlineMode` | `boolean` | If true, renders native inline picker UI |
+| `visible` | `boolean` | Controls headless mode menu visibility |
+| `onSelect` | `(data, label, index) => void` | Called when user selects an option |
+| `onRequestClose` | `() => void` | Called when menu is dismissed without selection |
+| `android.material` | `'system' \| 'm3'` | Material Design style preference |
 
-  options: readonly {
-    label: string;
-    data: string;
-  }[];
+### Modes
 
-  selected: string | null;
-
-  disabled?: boolean;
-  placeholder?: string;
-
-  inlineMode?: boolean;
-  visible?: boolean;
-
-  presentation?: 'auto' | 'popover' | 'sheet';
-
-  onSelect?: (data: string, label: string, index: number) => void;
-  onRequestClose?: () => void;
-
-  ios?: {};
-
-  android?: {
-    material?: 'auto' | 'm2' | 'm3';
-  };
-};
-```
+- **Headless mode** (default): Menu visibility controlled by `visible` prop. Use for custom trigger UI.
+- **Inline mode** (`inlineMode={true}`): Native picker UI rendered inline. Menu managed internally.
 
 ---
 
@@ -182,54 +189,54 @@ Native date & time picker using **platform system pickers**.
 
 ### Props
 
-```ts
-type DatePickerProps = {
-  style?: StyleProp<ViewStyle>;
+| Prop | Type | Description |
+|------|------|-------------|
+| `date` | `Date \| null` | Controlled date value |
+| `minDate` | `Date \| null` | Minimum selectable date |
+| `maxDate` | `Date \| null` | Maximum selectable date |
+| `locale` | `string` | Locale identifier (e.g., `'en-US'`) |
+| `timeZoneName` | `string` | Time zone identifier |
+| `mode` | `'date' \| 'time' \| 'dateAndTime' \| 'countDownTimer'` | Picker mode |
+| `presentation` | `'modal' \| 'embedded'` | Presentation style |
+| `visible` | `boolean` | Controls modal visibility (modal mode only) |
+| `onConfirm` | `(date: Date) => void` | Called when user confirms selection |
+| `onClosed` | `() => void` | Called when modal is dismissed |
 
-  date: Date | null;
+### iOS Props (`ios`)
 
-  minDate?: Date | null;
-  maxDate?: Date | null;
+| Prop | Type | Description |
+|------|------|-------------|
+| `preferredStyle` | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style |
+| `countDownDurationSeconds` | `number` | Duration for countdown timer mode |
+| `minuteInterval` | `number` | Minute interval (1-30) |
+| `roundsToMinuteInterval` | `'inherit' \| 'round' \| 'noRound'` | Rounding behavior |
 
-  locale?: string;
-  timeZoneName?: string;
+### Android Props (`android`)
 
-  mode?: 'date' | 'time' | 'dateAndTime' | 'countDownTimer';
-  presentation?: 'modal' | 'inline';
-
-  visible?: boolean;
-
-  onConfirm?: (dateTime: Date) => void;
-  onClosed?: () => void;
-
-  ios?: {
-    preferredStyle?: 'automatic' | 'wheels' | 'inline' | 'compact';
-    countDownDurationSeconds?: number;
-    minuteInterval?: number;
-    roundsToMinuteInterval?: boolean;
-  };
-
-  android?: {
-    firstDayOfWeek?: number;
-    material?: 'auto' | 'm2' | 'm3';
-    dialogTitle?: string;
-    positiveButtonTitle?: string;
-    negativeButtonTitle?: string;
-  };
-};
-```
+| Prop | Type | Description |
+|------|------|-------------|
+| `firstDayOfWeek` | `number` | First day of week (1-7, Sunday=1) |
+| `material` | `'system' \| 'm3'` | Material Design style |
+| `dialogTitle` | `string` | Custom dialog title |
+| `positiveButtonTitle` | `string` | Custom confirm button text |
+| `negativeButtonTitle` | `string` | Custom cancel button text |
 
 ---
 
-## 🧠 Design Philosophy
+## Design Philosophy
 
 - **Native first** — no JS re-implementation of pickers
 - **Headless-friendly** — works with any custom UI
-- **Codegen-safe** — string unions & sentinel values
+- **Codegen-safe** — string unions & sentinel values for type safety
 - **Predictable behavior** — no surprise re-renders or layout hacks
+- **Platform conventions** — respects native UX patterns
 
 ---
 
-## 📄 License
+## Contributing
+
+See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+
+## License
 
 MIT

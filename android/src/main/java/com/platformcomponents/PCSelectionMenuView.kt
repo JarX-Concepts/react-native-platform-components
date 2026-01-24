@@ -59,7 +59,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   private val minInlineHeightPx: Int by lazy {
-    (56f * resources.displayMetrics.density).toInt() // M3 default touch target
+    (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
   }
 
   // Headless needs a non-zero anchor rect for dropdown

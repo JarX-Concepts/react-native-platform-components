@@ -46,6 +46,21 @@ export function Row(props: {
   );
 }
 
+export function RowGroup(props: {
+  items: Array<{ label: string; children: React.ReactNode }>;
+}) {
+  return (
+    <View style={ui.rowGroup}>
+      {props.items.map((item, idx) => (
+        <View key={idx} style={ui.rowGroupItem}>
+          <Text style={ui.rowGroupLabel}>{item.label}</Text>
+          <View style={ui.rowGroupMain}>{item.children}</View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function ChipTabs<T extends string>(props: {
   value: T;
   options: readonly { label: string; value: T }[];
@@ -123,7 +138,7 @@ export function ActionField(props: {
         numberOfLines={props.numberOfLines ?? 1}
         style={[ui.fieldText, showPlaceholder && ui.fieldPlaceholder]}
       >
-        {showPlaceholder ? props.placeholder ?? '—' : props.text}
+        {showPlaceholder ? (props.placeholder ?? '—') : props.text}
       </Text>
     </Pressable>
   );
@@ -237,4 +252,20 @@ export const ui = StyleSheet.create({
     width: 300,
     height: 450,
   },
+
+  rowGroup: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 40,
+    gap: 16,
+  },
+  rowGroupItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowGroupLabel: { width: 80, opacity: 0.65, fontSize: 14 },
+  rowGroupMain: { justifyContent: 'center' },
 });

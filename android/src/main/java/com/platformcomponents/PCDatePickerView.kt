@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.DialogInterface
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +27,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PCDatePickerView(context: Context) : FrameLayout(context) {
+
+  companion object {
+    private const val TAG = "PCDatePicker"
+  }
 
   // --- Public props (set by manager) ---
   private var mode: String = "date" // "date" | "time" | "dateAndTime"
@@ -80,6 +85,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       "date", "time", "dateAndTime" -> value
       else -> "date"
     }
+    Log.d(TAG, "applyMode mode=$mode")
     rebuildUI()
   }
 
@@ -94,6 +100,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       "open", "closed" -> value
       else -> "closed"
     }
+    Log.d(TAG, "applyVisible visible=$visible isInline=${isInline()}")
     if (isInline()) return
 
     if (visible == "open") presentIfNeeded() else dismissIfNeeded()
@@ -313,12 +320,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
   private fun presentIfNeeded() {
     if (showingModal) return
     val act = findFragmentActivity() ?: run {
-      // If we cannot present, treat as cancel
+      Log.w(TAG, "presentIfNeeded: no FragmentActivity found")
       onCancel?.invoke()
       showingModal = false
       return
     }
 
+    Log.d(TAG, "presentIfNeeded mode=$mode material=$androidMaterialMode")
     showingModal = true
 
     when (mode) {
@@ -641,9 +649,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
   // -----------------------------
 
   private fun onCancelOrClose() {
+    Log.d(TAG, "onCancelOrClose")
     showingModal = false
-    // JS typically sets visible="closed" in response to onCancel/onConfirm,
-    // but we defensively mark ourselves closed.
   }
 
   private fun clamp(valueMs: Long): Long {
