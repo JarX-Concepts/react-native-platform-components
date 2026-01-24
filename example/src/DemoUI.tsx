@@ -10,9 +10,6 @@ export function Screen(props: {
   return (
     <ScrollView style={ui.container}>
       <Text style={ui.header}>{props.title}</Text>
-      {props.subtitle ? (
-        <Text style={ui.subheader}>{props.subtitle}</Text>
-      ) : null}
       {props.children}
       <Text style={ui.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -147,8 +144,8 @@ export function ActionField(props: {
 export const ui = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 68,
-    paddingHorizontal: 14,
+    paddingTop: 54,
+    paddingHorizontal: 20,
     backgroundColor: '#ecf0f1',
   },
   header: {
@@ -159,7 +156,7 @@ export const ui = StyleSheet.create({
   subheader: {
     textAlign: 'center',
     marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 5,
     opacity: 0.55,
   },
   footer: {
@@ -207,7 +204,7 @@ export const ui = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 8,
     padding: 4,
     borderRadius: 999,
@@ -250,7 +247,7 @@ export const ui = StyleSheet.create({
 
   androidHardCodedDatePicker: {
     width: 300,
-    height: 450,
+    height: 390,
   },
 
   rowGroup: {

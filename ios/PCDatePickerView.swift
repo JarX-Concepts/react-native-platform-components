@@ -1,5 +1,5 @@
-import os.log
 import UIKit
+import os.log
 
 private let logger = Logger(subsystem: "com.platformcomponents", category: "DatePicker")
 
@@ -134,7 +134,9 @@ public final class PCDatePickerView: UIControl,
         picker.setNeedsLayout()
         picker.layoutIfNeeded()
         let fitted = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        return CGSize(width: UIView.noIntrinsicMetric, height: max(PCConstants.minTouchTargetHeight, fitted.height))
+        return CGSize(
+            width: UIView.noIntrinsicMetric,
+            height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
     /// ✅ Called by your measuring pipeline.
@@ -153,7 +155,9 @@ public final class PCDatePickerView: UIControl,
             withHorizontalFittingPriority: .required,
             verticalFittingPriority: .fittingSizeLevel
         )
-        return CGSize(width: constrainedSize.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
+        return CGSize(
+            width: constrainedSize.width,
+            height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
     /// Separate sizing for popover content.
@@ -230,8 +234,14 @@ public final class PCDatePickerView: UIControl,
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
 
+        // Position picker at top-leading (constraints required to avoid freeze with inline style)
+        NSLayoutConstraint.activate([
+            picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
+            picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+        ])
+
         let size = popoverContentSize()
-        vc.preferredContentSize = size 
+        vc.preferredContentSize = size
 
         // ✅ Anchored popover-style (not a full sheet)
         vc.modalPresentationStyle = .popover
@@ -240,7 +250,15 @@ public final class PCDatePickerView: UIControl,
         if let pop = vc.popoverPresentationController {
             pop.delegate = self
             pop.sourceView = self
-            pop.sourceRect = bounds
+            // Use a minimum height for sourceRect to help popover positioning
+            // (modal presentation views have zero intrinsic height)
+            let sourceRect = CGRect(
+                x: bounds.minX,
+                y: bounds.minY,
+                width: max(bounds.width, 44),
+                height: max(bounds.height, 44)
+            )
+            pop.sourceRect = sourceRect
             pop.permittedArrowDirections = [.up, .down]
         }
 
@@ -292,9 +310,14 @@ public final class PCDatePickerView: UIControl,
     // MARK: - Apply props (avoid firing valueChanged)
 
     private func applyDateMs(animated: Bool) {
-        guard let ms = dateMs?.doubleValue else { return }
         suppressNextChangesBriefly()
-        picker.setDate(Date(timeIntervalSince1970: ms / 1000.0), animated: animated)
+        if let ms = dateMs?.doubleValue {
+            picker.setDate(Date(timeIntervalSince1970: ms / 1000.0), animated: animated)
+        } else {
+            // When no date is provided, default to now to avoid layout issues
+            // (especially with inline style in modal presentation)
+            picker.setDate(Date(), animated: animated)
+        }
     }
 
     private func applyMinMax() {
