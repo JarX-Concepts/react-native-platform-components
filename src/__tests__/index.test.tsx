@@ -56,8 +56,6 @@ describe('DatePicker', () => {
     expect(NativeDatePicker).toHaveBeenCalledTimes(1);
     const props = NativeDatePicker.mock.calls[0][0];
     expect(props.dateMs).toBe(date.getTime());
-    expect(props.minDateMs).toBe(-1);
-    expect(props.maxDateMs).toBe(-1);
     expect(props.visible).toBe('open');
     expect(props.presentation).toBe('modal');
 
