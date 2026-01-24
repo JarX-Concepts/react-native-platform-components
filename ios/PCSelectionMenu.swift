@@ -41,6 +41,7 @@ private struct PCSelectionMenuInlinePickerView: View {
         } label: {
             HStack(spacing: 8) {
                 Text(model.displayTitle)
+                    .font(.body)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
