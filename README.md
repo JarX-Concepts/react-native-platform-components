@@ -5,38 +5,44 @@
 
 <table>
   <tr>
-    <td align="center"><strong>iOS DatePicker</strong></td>
-    <td align="center"><strong>Android DatePicker</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="400" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="400" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS SelectionMenu</strong></td>
-    <td align="center"><strong>Android SelectionMenu</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="400" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="400" /></td>
+    <td valign="top">
+      <table>
+        <tr>
+          <td align="center"><strong>iOS DatePicker</strong></td>
+          <td align="center"><strong>Android DatePicker</strong></td>
+        </tr>
+        <tr>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="240" /></td>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="240" /></td>
+        </tr>
+        <tr>
+          <td align="center"><strong>iOS SelectionMenu</strong></td>
+          <td align="center"><strong>Android SelectionMenu</strong></td>
+        </tr>
+        <tr>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="240" /></td>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="240" /></td>
+        </tr>
+      </table>
+    </td>
+    <td valign="top">
+      <blockquote>🚧 In development — not ready for public use.</blockquote>
+      <p>High-quality <strong>native UI components for React Native</strong>, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.</p>
+      <p>This library focuses on <strong>true native behavior</strong>, not JavaScript re-implementations — providing:</p>
+      <ul>
+        <li><strong>SelectionMenu</strong> – native selection menus (Material on Android, system menus on iOS)</li>
+        <li><strong>DatePicker</strong> – native date & time pickers with modal and embedded presentations</li>
+      </ul>
+      <p>The goal is to provide components that:</p>
+      <ul>
+        <li>Feel <strong>100% native</strong> on each platform</li>
+        <li>Support modern platform design systems (Material 3 on Android, system pickers on iOS)</li>
+        <li>Offer <strong>headless</strong> and <strong>inline</strong> modes for maximum layout control</li>
+        <li>Integrate cleanly with <strong>React Native Codegen / Fabric</strong></li>
+      </ul>
+    </td>
   </tr>
 </table>
-
-> 🚧 In development — not ready for public use.
-
-High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.
-
-This library focuses on **true native behavior**, not JavaScript re-implementations — providing:
-
-- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
-- **DatePicker** – native date & time pickers with modal and embedded presentations
-
-The goal is to provide components that:
-
-- Feel **100% native** on each platform
-- Support modern platform design systems (Material 3 on Android, system pickers on iOS)
-- Offer **headless** and **inline** modes for maximum layout control
-- Integrate cleanly with **React Native Codegen / Fabric**
 
 ---
 
