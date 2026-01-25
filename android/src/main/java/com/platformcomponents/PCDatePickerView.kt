@@ -405,9 +405,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       }
     }
 
+    // Wrap picker in a container with horizontal padding to prevent CalendarView
+    // from clipping against the dialog edges
+    val container = FrameLayout(act).apply {
+      val horizontalPadding = (8 * resources.displayMetrics.density).toInt()
+      setPadding(horizontalPadding, 0, horizontalPadding, 0)
+      addView(picker)
+    }
+
     val dlg = AlertDialog.Builder(act)
       .setTitle(androidDialogTitle ?: "")
-      .setView(picker)
+      .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
         val c = calendarFor(ts)
         c.set(Calendar.YEAR, picker.year)
@@ -512,9 +520,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       }
     }
 
+    // Wrap picker in a container with horizontal padding to prevent CalendarView
+    // from clipping against the dialog edges
+    val container = FrameLayout(act).apply {
+      val horizontalPadding = (8 * resources.displayMetrics.density).toInt()
+      setPadding(horizontalPadding, 0, horizontalPadding, 0)
+      addView(picker)
+    }
+
     val dlg = AlertDialog.Builder(act)
       .setTitle(androidDialogTitle ?: "")
-      .setView(picker)
+      .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "Next") { _, _ ->
         val c = calendarFor(ts)
         c.set(Calendar.YEAR, picker.year)
