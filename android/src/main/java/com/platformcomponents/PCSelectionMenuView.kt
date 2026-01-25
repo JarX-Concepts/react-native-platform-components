@@ -51,6 +51,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   private var headlessMenuShowing = false
   private var headlessDismissProgrammatic = false
   private var headlessDismissAfterSelect = false
+  private var headlessOpenToken = 0
 
   init {
     minimumHeight = 0
@@ -129,6 +130,13 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     if (anchorMode == newMode) return
     anchorMode = newMode
     Log.d(TAG, "applyAnchorMode anchorMode=$anchorMode")
+    if (anchorMode != "headless") {
+      headlessOpenToken += 1
+      if (headlessMenuShowing) {
+        headlessDismissProgrammatic = true
+        headlessMenu?.dismiss()
+      }
+    }
     rebuildUI()
   }
 
@@ -138,11 +146,13 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       else -> "closed"
     }
     Log.d(TAG, "applyVisible visible=$visible anchorMode=$anchorMode")
+    headlessOpenToken += 1
+    val token = headlessOpenToken
 
     if (anchorMode != "headless") return
 
     if (visible == "open") {
-      presentHeadlessIfNeeded()
+      presentHeadlessIfNeeded(token)
     } else {
       Log.d(TAG, "applyVisible close -> dismiss")
       if (headlessMenuShowing) {
@@ -162,6 +172,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   // ---- UI building ----
 
   private fun rebuildUI() {
+    if (headlessMenuShowing) {
+      headlessDismissProgrammatic = true
+      headlessMenu?.dismiss()
+    }
     inlineText?.dismissDropDown()
     detachInlineDropdownOverlay()
     inlineDropdownOverlay = null
@@ -465,7 +479,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   // ---- Headless open ----
 
-  private fun presentHeadlessIfNeeded() {
+  private fun presentHeadlessIfNeeded(token: Int) {
     val popup = headlessMenu ?: return
     if (interactivity != "enabled") {
       Log.d(TAG, "presentHeadlessIfNeeded interactivity=$interactivity -> requestClose")
@@ -473,6 +487,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       return
     }
     post {
+      if (token != headlessOpenToken) {
+        Log.d(TAG, "presentHeadlessIfNeeded stale token -> skip")
+        return@post
+      }
+      if (anchorMode != "headless" || visible != "open") {
+        Log.d(TAG, "presentHeadlessIfNeeded no longer open -> skip")
+        return@post
+      }
+      if (interactivity != "enabled") {
+        Log.d(TAG, "presentHeadlessIfNeeded disabled -> skip")
+        return@post
+      }
       if (!isAttachedToWindow) {
         Log.d(TAG, "presentHeadlessIfNeeded not attached -> requestClose")
         onRequestClose?.invoke()

@@ -9,16 +9,16 @@
     <td align="center"><strong>Android DatePicker</strong></td>
   </tr>
   <tr>
-    <td><video src="https://github.com/user-attachments/assets/a9fb6237-6078-496b-8a58-1f2fae4f1af5" height="400"></video></td>
-    <td><video src="https://github.com/user-attachments/assets/70e42d98-7ea6-40fe-90c5-c1efc2227f25" height="400"></video></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="400" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="400" /></td>
   </tr>
   <tr>
     <td align="center"><strong>iOS SelectionMenu</strong></td>
     <td align="center"><strong>Android SelectionMenu</strong></td>
   </tr>
   <tr>
-    <td><video src="https://github.com/user-attachments/assets/f1af8e91-4e98-4dbe-a2a6-57f91770678e" height="400"></video></td>
-    <td><video src="https://github.com/user-attachments/assets/dc61da04-45e5-43c3-b766-6048367775bb" height="400"></video></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="400" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="400" /></td>
   </tr>
 </table>
 

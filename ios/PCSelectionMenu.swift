@@ -98,6 +98,8 @@ public final class PCSelectionMenuView: UIControl {
     private let model = PCSelectionMenuModel()
     private var hostingController: UIHostingController<AnyView>?
     private var headlessMenuView: UIView?
+    private var headlessMenuVC: UIViewController?
+    private var headlessPresentationToken: Int = 0
 
     private var parsedOptions: [PCSelectionMenuOption] {
         options.compactMap { any in
@@ -132,12 +134,16 @@ public final class PCSelectionMenuView: UIControl {
         alpha = disabled ? 0.5 : 1.0
         isUserInteractionEnabled = !disabled
         accessibilityTraits = disabled ? [.notEnabled] : [.button]
+        if disabled {
+            dismissHeadlessIfNeeded()
+        }
     }
 
     // MARK: - Inline vs headless
 
     private func updateAnchorMode() {
         if anchorMode == "inline" {
+            dismissHeadlessIfNeeded()
             uninstallHeadlessIfNeeded()
             installInlineIfNeeded()
             sync()
@@ -248,15 +254,22 @@ public final class PCSelectionMenuView: UIControl {
 
     private func updatePresentation() {
         guard anchorMode != "inline" else { return }
-        guard interactivity != "disabled" else { return }
+        headlessPresentationToken += 1
 
-        if visible == "open" {
-            presentHeadlessMenuIfNeeded()
+        if visible == "open" && interactivity != "disabled" {
+            presentHeadlessMenuIfNeeded(token: headlessPresentationToken)
+        } else {
+            dismissHeadlessIfNeeded()
         }
-        // Note: dismissal is handled by the menu itself calling onRequestClose
     }
 
-    private func presentHeadlessMenuIfNeeded() {
+    private func dismissHeadlessIfNeeded() {
+        guard let vc = headlessMenuVC else { return }
+        headlessMenuVC = nil
+        vc.dismiss(animated: true)
+    }
+
+    private func presentHeadlessMenuIfNeeded(token: Int) {
         guard headlessMenuView != nil else { return }
         guard let vc = nearestViewController() else { return }
 
@@ -264,7 +277,15 @@ public final class PCSelectionMenuView: UIControl {
         guard !opts.isEmpty else { return }
 
         logger.debug("presentHeadlessMenuIfNeeded: scheduling presentation with \(opts.count) options")
-        DispatchQueue.main.asyncAfter(deadline: .now() + PCConstants.headlessPresentationDelay) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + PCConstants.headlessPresentationDelay) { [weak self] in
+            guard let self else { return }
+            guard self.headlessPresentationToken == token else { return }
+            guard self.visible == "open" else { return }
+            guard self.anchorMode != "inline" else { return }
+            guard self.interactivity != "disabled" else { return }
+            guard self.headlessMenuVC == nil else { return }
+            guard self.window != nil else { return }
+
             let menuVC = PCMenuViewController(
                 options: opts,
                 onSelect: { [weak self] idx in
@@ -277,6 +298,9 @@ public final class PCSelectionMenuView: UIControl {
                 onCancel: { [weak self] in
                     logger.debug("headless menu cancelled")
                     self?.onRequestClose?()
+                },
+                onDismiss: { [weak self] in
+                    self?.headlessMenuVC = nil
                 }
             )
 
@@ -317,6 +341,7 @@ public final class PCSelectionMenuView: UIControl {
             menuVC.modalTransitionStyle = .crossDissolve
             menuVC.menuFrame = menuFrame
 
+            self.headlessMenuVC = menuVC
             vc.present(menuVC, animated: true)
         }
     }
@@ -377,15 +402,22 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
     private let options: [PCSelectionMenuOption]
     private let onSelect: (Int) -> Void
     private let onCancel: () -> Void
+    private let onDismiss: () -> Void
     private var tableView: UITableView!
     private var menuContainer: UIView!
 
     var menuFrame: CGRect = .zero
 
-    init(options: [PCSelectionMenuOption], onSelect: @escaping (Int) -> Void, onCancel: @escaping () -> Void) {
+    init(
+        options: [PCSelectionMenuOption],
+        onSelect: @escaping (Int) -> Void,
+        onCancel: @escaping () -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
         self.options = options
         self.onSelect = onSelect
         self.onCancel = onCancel
+        self.onDismiss = onDismiss
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -439,6 +471,11 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         effectView.contentView.addSubview(tableView)
     }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        onDismiss()
+    }
+
     @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: view)
         if !menuContainer.frame.contains(location) {
@@ -465,4 +502,3 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         }
     }
 }
-

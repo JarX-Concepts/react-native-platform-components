@@ -1,5 +1,5 @@
 // DatePicker.tsx
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import type { NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 
@@ -64,7 +64,9 @@ export type DatePickerProps = {
 const NO_DATE_SENTINEL = Number.MIN_SAFE_INTEGER;
 
 function dateToMsOrSentinel(d: Date | null | undefined): number {
-  return d ? d.getTime() : NO_DATE_SENTINEL;
+  if (!d) return NO_DATE_SENTINEL;
+  const ms = d.getTime();
+  return Number.isFinite(ms) ? ms : NO_DATE_SENTINEL;
 }
 
 function normalizeVisible(
@@ -94,6 +96,8 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     testID,
   } = props;
 
+  const isModal = presentation === 'modal';
+
   const handleConfirm = useCallback(
     (e: NativeSyntheticEvent<DateChangeEvent>) => {
       onConfirm?.(new Date(e.nativeEvent.timestampMs));
@@ -105,24 +109,22 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     onClosed?.();
   }, [onClosed]);
 
-  const styles = useMemo(() => createStyles(), []);
-
   const nativeProps: NativeDatePickerProps = {
-    style: [styles.picker, style] as any,
+    style: [styles.picker, style],
 
     mode,
     locale,
     timeZoneName,
 
     presentation,
-    visible: normalizeVisible(presentation, visible) as any,
+    visible: normalizeVisible(presentation, visible),
 
-    dateMs: dateToMsOrSentinel(date) as any,
-    minDateMs: dateToMsOrSentinel(minDate ?? null) as any,
-    maxDateMs: dateToMsOrSentinel(maxDate ?? null) as any,
+    dateMs: dateToMsOrSentinel(date),
+    minDateMs: dateToMsOrSentinel(minDate),
+    maxDateMs: dateToMsOrSentinel(maxDate),
 
     onConfirm: onConfirm ? handleConfirm : undefined,
-    onClosed: onClosed ? handleClosed : undefined,
+    onClosed: isModal && onClosed ? handleClosed : undefined,
 
     ios: ios
       ? {
@@ -136,7 +138,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     android: android
       ? {
           firstDayOfWeek: android.firstDayOfWeek,
-          material: android.material as any,
+          material: android.material,
           dialogTitle: android.dialogTitle,
           positiveButtonTitle: android.positiveButtonTitle,
           negativeButtonTitle: android.negativeButtonTitle,
@@ -147,8 +149,6 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
   return <NativeDatePicker testID={testID} {...nativeProps} />;
 }
 
-function createStyles() {
-  return StyleSheet.create({
-    picker: {},
-  });
-}
+const styles = StyleSheet.create({
+  picker: {},
+});
