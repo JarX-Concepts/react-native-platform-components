@@ -47,7 +47,16 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "datepicker",
+    "date-picker",
+    "time-picker",
+    "picker",
+    "menu",
+    "selection-menu",
+    "dropdown",
+    "native",
+    "material-design"
   ],
   "repository": {
     "type": "git",
