@@ -68,17 +68,24 @@ describe('DatePicker', () => {
     });
   });
 
-  it('omits visible when not modal', () => {
+  it('omits visible and onClosed when not modal', () => {
+    const onClosed = jest.fn();
     let tree: ReturnType<typeof renderer.create>;
     act(() => {
       tree = renderer.create(
-        <DatePicker date={null} presentation="embedded" visible />
+        <DatePicker
+          date={null}
+          presentation="embedded"
+          visible
+          onClosed={onClosed}
+        />
       );
     });
 
     const props = NativeDatePicker.mock.calls[0][0];
     expect(props.presentation).toBe('embedded');
     expect(props.visible).toBeUndefined();
+    expect(props.onClosed).toBeUndefined();
     act(() => {
       tree.unmount();
     });

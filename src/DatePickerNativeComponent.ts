@@ -35,14 +35,15 @@ export type MacOSProps = Readonly<{}>;
 
 /**
  * Sentinel convention:
- * - `-1` means "no value / unbounded / unset".
+ * - `Number.MIN_SAFE_INTEGER` means "no value / unbounded / unset".
+ *   (Allows negative timestamps for pre-1970 dates.)
  */
 export type CommonProps = {
   mode?: string; // DatePickerMode
 
-  dateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
-  minDateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
-  maxDateMs?: CodegenTypes.WithDefault<TimestampMs, -1>;
+  dateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
+  minDateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
+  maxDateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
 
   locale?: string;
   timeZoneName?: string;
