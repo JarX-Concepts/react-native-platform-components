@@ -536,7 +536,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     menu.clear()
     val selectedIdx = options.indexOfFirst { it.data == selectedData }
     options.forEachIndexed { index, opt ->
-      val label = if (index == selectedIdx) "✓  ${opt.label}" else "    ${opt.label}"
+      val label = if (index == selectedIdx) "✓ ${opt.label}" else opt.label
       menu.add(0, index, index, label)
     }
   }
