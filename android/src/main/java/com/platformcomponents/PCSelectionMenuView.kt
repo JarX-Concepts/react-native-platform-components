@@ -417,6 +417,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       suppressInlineSpinnerCallbacks(sp)
       sp.setSelection(target, false)
     }
+
+    // Update headless menu checked state
+    refreshHeadlessMenu()
   }
 
   // ---- Inline dropdown overlay ----
@@ -528,10 +531,13 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   }
 
   private fun refreshHeadlessMenu() {
-    val menu = headlessMenu?.menu ?: return
+    val popup = headlessMenu ?: return
+    val menu = popup.menu
     menu.clear()
+    val selectedIdx = options.indexOfFirst { it.data == selectedData }
     options.forEachIndexed { index, opt ->
-      menu.add(0, index, index, opt.label)
+      val label = if (index == selectedIdx) "✓  ${opt.label}" else "    ${opt.label}"
+      menu.add(0, index, index, label)
     }
   }
 
