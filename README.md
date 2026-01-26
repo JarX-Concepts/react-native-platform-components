@@ -26,7 +26,6 @@
       </table>
     </td>
     <td valign="top">
-      <blockquote>🚧 In development — not ready for public use.</blockquote>
       <p>High-quality <strong>native UI components for React Native</strong>, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.</p>
       <p>This library focuses on <strong>true native behavior</strong>, not JavaScript re-implementations — providing:</p>
       <ul>
