@@ -153,11 +153,14 @@ export function Example() {
         date={date}
         visible={visible}
         presentation="modal"
+        mode="date"
         onConfirm={(d) => {
           setDate(d);
           setVisible(false);
         }}
         onClosed={() => setVisible(false)}
+        ios={{preferredStyle: 'inline'}}
+        android={{material: 'system'}}
       />
     </>
   );
@@ -176,8 +179,10 @@ export function Example() {
     <DatePicker
       date={date}
       presentation="embedded"
-      mode="dateAndTime"
+      mode="date"
       onConfirm={(d) => setDate(d)}
+      ios={{preferredStyle: 'inline'}}
+      android={{material: 'system'}}
     />
   );
 }
