@@ -188,7 +188,6 @@ export const ui = StyleSheet.create({
     paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 40,
   },
   label: { width: 110, opacity: 0.65, fontSize: 14 },
   rowMain: { flex: 1, justifyContent: 'center' },
@@ -245,8 +244,7 @@ export const ui = StyleSheet.create({
   datePickerContainer: { alignItems: 'center', paddingVertical: 4 },
 
   androidHardCodedDatePicker: {
-    width: 300,
-    height: 390,
+    alignItems: 'center',
   },
 
   rowGroup: {

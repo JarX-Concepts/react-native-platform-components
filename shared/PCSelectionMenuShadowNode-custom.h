@@ -2,9 +2,11 @@
 
 #include <react/renderer/components/view/ConcreteViewShadowNode.h>
 
-#import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
-#import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
-#import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
+// Only include what we need for the shadow node definition
+// Do NOT include ComponentDescriptors.h here to avoid circular dependency
+#include <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
+#include <react/renderer/components/PlatformComponentsViewSpec/Props.h>
+#include <react/renderer/components/PlatformComponentsViewSpec/States.h>
 
 namespace facebook::react {
 
@@ -16,6 +18,8 @@ extern const char PCSelectionMenuComponentName[];
  * Key behavior:
  * - Provides a non-zero default measured height (minRowHeight) so the view
  *   remains tappable when JS does not specify an explicit height.
+ * - Uses platform-specific heights: iOS uses 44pt, Android uses 56dp for
+ *   system Spinner or 72dp for M3 TextInputLayout.
  */
 class MeasuringPCSelectionMenuShadowNode final : public ConcreteViewShadowNode<
                                           PCSelectionMenuComponentName,
@@ -25,8 +29,15 @@ class MeasuringPCSelectionMenuShadowNode final : public ConcreteViewShadowNode<
  public:
   using ConcreteViewShadowNode::ConcreteViewShadowNode;
 
+  // iOS standard row height
   static constexpr float kMinRowHeight = 44.0f;
-                                            
+
+  // Android System Spinner height
+  static constexpr float kMinRowHeightAndroid = 56.0f;
+
+  // Android M3 TextInputLayout with floating label height
+  static constexpr float kMinRowHeightAndroidM3 = 72.0f;
+
   static ShadowNodeTraits BaseTraits() {
     auto traits = ConcreteViewShadowNode::BaseTraits();
     traits.set(ShadowNodeTraits::Trait::LeafYogaNode);

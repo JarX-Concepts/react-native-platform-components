@@ -9,13 +9,18 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.DatePicker
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TimePicker
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentActivity
+import com.facebook.react.bridge.WritableNativeMap
+import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -26,11 +31,17 @@ import java.util.TimeZone
 import kotlin.math.max
 import kotlin.math.min
 
-class PCDatePickerView(context: Context) : FrameLayout(context) {
+class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollViewHelper.HasStateWrapper {
 
   companion object {
     private const val TAG = "PCDatePicker"
   }
+
+  // --- State Wrapper for Fabric state updates ---
+  override var stateWrapper: StateWrapper? = null
+
+  private var lastReportedWidth: Float = 0f
+  private var lastReportedHeight: Float = 0f
 
   // --- Public props (set by manager) ---
   private var mode: String = "date" // "date" | "time" | "dateAndTime"
@@ -74,6 +85,46 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
       return
     }
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+  }
+
+  override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    super.onLayout(changed, left, top, right, bottom)
+    if (isInline()) {
+      updateFrameSizeState()
+    }
+  }
+
+  /**
+   * Update Fabric state with the measured frame size.
+   * This allows the shadow node to use actual measured dimensions for Yoga layout.
+   */
+  private fun updateFrameSizeState() {
+    val wrapper = stateWrapper ?: return
+
+    // Measure the inline container's preferred height
+    inlineContainer?.let { container ->
+      container.measure(
+        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+      )
+
+      val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
+      val heightDp = PixelUtil.toDIPFromPixel(container.measuredHeight.toFloat())
+
+      // Only update state if the size actually changed (avoid infinite loops)
+      if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
+        lastReportedWidth = widthDp
+        lastReportedHeight = heightDp
+
+        Log.d(TAG, "updateFrameSizeState: width=$widthDp, height=$heightDp")
+
+        val stateData = WritableNativeMap().apply {
+          putDouble("width", widthDp.toDouble())
+          putDouble("height", heightDp.toDouble())
+        }
+        wrapper.updateState(stateData)
+      }
+    }
   }
 
   // -----------------------------
@@ -198,6 +249,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context) {
         ViewGroup.LayoutParams.WRAP_CONTENT
       )
       orientation = LinearLayout.VERTICAL
+      gravity = Gravity.CENTER_HORIZONTAL
     }
 
     // date and/or time

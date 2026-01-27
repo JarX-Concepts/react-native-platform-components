@@ -27,16 +27,18 @@ def getExtOrIntegerDefault(name) {
 
 android {
   namespace "com.platformcomponents"
-
+  ndkVersion rootProject.ext.has("ndkVersion") ? rootProject.ext.get("ndkVersion") : "26.1.10909125"
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
 
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+
   }
 
   buildFeatures {
     buildConfig true
+    prefab true
   }
 
   buildTypes {
