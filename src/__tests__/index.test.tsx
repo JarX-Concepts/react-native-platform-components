@@ -97,14 +97,14 @@ describe('SelectionMenu', () => {
     NativeSelectionMenu.mockClear();
   });
 
-  it('normalizes selected and interactivity in inline mode', () => {
+  it('normalizes selected and interactivity in embedded mode', () => {
     let tree: ReturnType<typeof renderer.create>;
     act(() => {
       tree = renderer.create(
         <SelectionMenu
           options={[{ label: 'A', data: 'a' }]}
           selected={null}
-          inlineMode
+          presentation="embedded"
           disabled
           placeholder="Pick"
         />
@@ -121,13 +121,14 @@ describe('SelectionMenu', () => {
     });
   });
 
-  it('maps headless visibility and android material', () => {
+  it('maps modal visibility and android material', () => {
     let tree: ReturnType<typeof renderer.create>;
     act(() => {
       tree = renderer.create(
         <SelectionMenu
           options={[{ label: 'A', data: 'a' }]}
           selected="a"
+          presentation="modal"
           visible
           android={{ material: 'm3' }}
         />

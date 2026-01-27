@@ -102,6 +102,7 @@ example/ios/Pods/
 
 # artifacts
 example/artifacts
+dump.log
 
 # Metro / build caches
 .expo

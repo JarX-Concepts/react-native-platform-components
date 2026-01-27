@@ -1,8 +1,11 @@
 // SharedTypes.ts
 import type { CodegenTypes } from 'react-native';
 
-/** Shared “open/closed” control state. */
+/** Shared "open/closed" control state. */
 export type Visible = 'open' | 'closed';
+
+/** Shared presentation mode for pickers/menus. */
+export type Presentation = 'modal' | 'embedded';
 
 /** Shared Material preference (Android). */
 export type AndroidMaterialMode = 'system' | 'm3';

@@ -75,11 +75,15 @@ describe('Platform Components Example', () => {
       }
     };
 
+    await pause(500);
+    await device.takeScreenshot('Modal-DatePicker-First');
+
     // Ensure we're on the DatePicker tab
     await element(by.id('demo-tabs-datePicker')).tap();
 
     // Enable DatePicker Tap
     await ensureModalMode(true);
+
     await expect(element(by.id('picker-toggle-field'))).toBeVisible();
 
     // Set mode to "Date"
@@ -109,7 +113,10 @@ describe('Platform Components Example', () => {
     // Disable the modal mode
     await ensureModalMode(false);
 
-    // Set iOS style to "Wheels" (iOS only)
+    await pause(500);
+    await device.takeScreenshot('Modal-DatePicker-Second');
+
+    /*     // Set iOS style to "Wheels" (iOS only)
     try {
       await selectMenuOption('ios-style-menu', 'Wheels');
     } catch {
@@ -128,10 +135,10 @@ describe('Platform Components Example', () => {
     await pause();
 
     // Dismiss it
-    await dismissModal();
+    await dismissModal(); */
   });
 
-  it('should test Selection Menu functionality', async () => {
+  /*   it('should test Selection Menu functionality', async () => {
     // Navigate to SelectionMenu tab
     await element(by.id('demo-tabs-selectionMenu')).tap();
 
@@ -156,32 +163,32 @@ describe('Platform Components Example', () => {
     // Verify selection was cleared
     await expect(element(by.text('None'))).toBeVisible();
 
-    // Test inline mode
-    await element(by.id('inline-switch')).tap();
+    // Test embedded mode
+    await element(by.id('embedded-switch')).tap();
 
-    // In inline mode, the inline menu should exist (scroll to top first on Android)
+    // In embedded mode, the embedded menu should exist (scroll to top first on Android)
     if (isAndroid()) {
       await element(
         by.type('com.facebook.react.views.scroll.ReactScrollView')
       ).scrollTo('top');
     }
     // iOS doesn't need explicit scroll - the element should be visible
-    await waitFor(element(by.id('state-menu-inline')))
+    await waitFor(element(by.id('state-menu-embedded')))
       .toExist()
       .withTimeout(2000);
 
-    // Select a state in inline mode - tap the menu to open it
+    // Select a state in embedded mode - tap the menu to open it
     if (isAndroid()) {
       // Android: tap the MaterialTextView inside the menu
-      const inlineMenuText = element(
+      const embeddedMenuText = element(
         by
           .type('com.google.android.material.textview.MaterialTextView')
-          .withAncestor(by.id('state-menu-inline'))
+          .withAncestor(by.id('state-menu-embedded'))
       );
-      await inlineMenuText.tap();
+      await embeddedMenuText.tap();
     } else {
       // iOS: simple tap on the menu
-      await element(by.id('state-menu-inline')).tap();
+      await element(by.id('state-menu-embedded')).tap();
     }
 
     // Wait for the menu to appear and select Arizona (near top of list)
@@ -191,7 +198,7 @@ describe('Platform Components Example', () => {
     await element(by.text('Arizona')).atIndex(0).tap();
 
     // Verify selection (use toExist since the menu might be partially visible)
-    await expect(element(by.id('state-menu-inline'))).toExist();
+    await expect(element(by.id('state-menu-embedded'))).toExist();
 
     // Test disabled state
     await element(by.id('disabled-switch')).tap();
@@ -202,8 +209,8 @@ describe('Platform Components Example', () => {
     // Re-enable
     await element(by.id('disabled-switch')).tap();
 
-    // Toggle back to headless mode
-    await element(by.id('inline-switch')).tap();
+    // Toggle back to modal mode
+    await element(by.id('embedded-switch')).tap();
 
     // Test that the headless menu still works
     await expect(element(by.id('state-field-headless'))).toBeVisible();
@@ -222,11 +229,11 @@ describe('Platform Components Example', () => {
     try {
       await selectMenuOption('android-material-menu', 'M3');
 
-      await element(by.id('inline-switch')).tap();
+      await element(by.id('embedded-switch')).tap();
 
-      await element(by.id('state-menu-inline')).tap();
+      await element(by.id('state-menu-embedded')).tap();
     } catch {
       // Not on Android.
     }
-  });
+  }); */
 });

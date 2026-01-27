@@ -120,6 +120,41 @@ public final class PCDatePickerView: UIControl,
 
     // MARK: - Layout / Sizing
 
+    private var lastLayoutBounds: CGRect = .zero
+    private var needsStyleReset = false
+
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+
+        // For embedded presentation, manually center the picker after Auto Layout
+        // This ensures consistent centering regardless of UIDatePicker's internal state
+        if presentation == "embedded" && picker.superview === self && bounds.width > 0 {
+            let widthChanged = abs(bounds.width - lastLayoutBounds.width) > 1
+            if needsStyleReset || widthChanged {
+                if #available(iOS 13.4, *) {
+                    let currentStyle = picker.preferredDatePickerStyle
+                    picker.preferredDatePickerStyle = .automatic
+                    picker.preferredDatePickerStyle = currentStyle
+                }
+                picker.sizeToFit()
+                needsStyleReset = false
+            }
+            lastLayoutBounds = bounds
+
+            // After constraints do their thing, manually adjust picker position to center it
+            let pickerSize = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+            let xOffset = (bounds.width - pickerSize.width) / 2
+            if xOffset > 0 {
+                picker.frame = CGRect(
+                    x: xOffset,
+                    y: 0,
+                    width: pickerSize.width,
+                    height: bounds.height
+                )
+            }
+        }
+    }
+
     private func invalidateSize() {
         invalidateIntrinsicContentSize()
         setNeedsLayout()
@@ -191,6 +226,10 @@ public final class PCDatePickerView: UIControl,
 
         picker.removeFromSuperview()
         addSubview(picker)
+
+        // Mark that we need a style reset on next layout pass
+        // This ensures centering is recalculated after Yoga provides correct bounds
+        needsStyleReset = true
 
         inlineConstraints = [
             picker.topAnchor.constraint(equalTo: topAnchor),
