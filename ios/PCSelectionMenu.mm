@@ -9,6 +9,7 @@
 #import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
+#import <react/renderer/core/LayoutPrimitives.h>
 
 #if __has_include(<PlatformComponents/PlatformComponents-Swift.h>)
 #import <PlatformComponents/PlatformComponents-Swift.h>
@@ -17,6 +18,8 @@
 #endif
 
 #import "PCSelectionMenuComponentDescriptors-custom.h"
+#import "PCSelectionMenuShadowNode-custom.h"
+#import "PCSelectionMenuState-custom.h"
 
 using namespace facebook::react;
 
@@ -33,8 +36,15 @@ static inline bool OptionsEqual(
 }
 } // namespace
 
+@interface PCSelectionMenu ()
+
+- (void)updateMeasurements;
+
+@end
+
 @implementation PCSelectionMenu {
   PCSelectionMenuView *_view;
+  MeasuringPCSelectionMenuShadowNode::ConcreteState::Shared _state;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -167,6 +177,38 @@ static inline bool OptionsEqual(
   }
 
   [super updateProps:props oldProps:oldProps];
+
+  // Update measurements when props change that affect layout
+  [self updateMeasurements];
+}
+
+#pragma mark - State (Measuring)
+
+- (void)updateState:(const State::Shared &)state
+           oldState:(const State::Shared &)oldState {
+  _state = std::static_pointer_cast<
+      const MeasuringPCSelectionMenuShadowNode::ConcreteState>(state);
+
+  if (oldState == nullptr) {
+    // First time: compute initial size.
+    [self updateMeasurements];
+  }
+
+  [super updateState:state oldState:oldState];
+}
+
+- (void)updateMeasurements {
+  if (_state == nullptr)
+    return;
+
+  // Use the real width Yoga gave us
+  const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 320;
+
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
+
+  PCSelectionMenuStateFrameSize next;
+  next.frameSize = {(Float)size.width, (Float)size.height};
+  _state->updateState(std::move(next));
 }
 
 @end

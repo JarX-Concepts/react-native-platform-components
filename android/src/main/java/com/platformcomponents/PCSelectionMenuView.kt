@@ -12,16 +12,26 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Spinner
 import androidx.appcompat.widget.PopupMenu
+import com.facebook.react.bridge.WritableNativeMap
+import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.StateWrapper
+import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 
-class PCSelectionMenuView(context: Context) : FrameLayout(context) {
+class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollViewHelper.HasStateWrapper {
 
   data class Option(val label: String, val data: String)
 
   companion object {
     private const val TAG = "PCSelectionMenu"
   }
+
+  // --- State Wrapper for Fabric state updates ---
+  override var stateWrapper: StateWrapper? = null
+
+  private var lastReportedWidth: Float = 0f
+  private var lastReportedHeight: Float = 0f
 
   // --- Props ---
   var options: List<Option> = emptyList()
@@ -142,6 +152,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     // Layout children with the correct bounds
     super.onLayout(changed, left, top, right, actualBottom)
 
+    // Update Fabric state with measured dimensions
+    updateFrameSizeState()
+
     // If we resized, update our own bounds
     if (actualBottom != bottom) {
       // Use setFrame to update our bounds without triggering another layout pass
@@ -150,6 +163,42 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
           layout(left, top, right, actualBottom)
         }
       }
+    }
+  }
+
+  /**
+   * Update Fabric state with the measured frame size.
+   * This allows the shadow node to use actual measured dimensions for Yoga layout.
+   */
+  private fun updateFrameSizeState() {
+    if (anchorMode != "inline") return
+    val wrapper = stateWrapper ?: return
+
+    // Get the actual inline widget
+    val inlineWidget: View? = inlineLayout ?: inlineSpinner
+    if (inlineWidget == null) return
+
+    // Measure the widget with exact width and unspecified height
+    val widthSpec = MeasureSpec.makeMeasureSpec(width.coerceAtLeast(1), MeasureSpec.EXACTLY)
+    val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    inlineWidget.measure(widthSpec, heightSpec)
+
+    val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
+    val rawHeightPx = inlineWidget.measuredHeight
+    val rawHeightDp = PixelUtil.toDIPFromPixel(rawHeightPx.toFloat())
+
+    Log.d(TAG, "updateFrameSizeState: widget=${inlineWidget.javaClass.simpleName}, rawHeightPx=$rawHeightPx, rawHeightDp=$rawHeightDp, minimumHeight=$minimumHeight, density=${resources.displayMetrics.density}")
+
+    // Only update if changed
+    if (widthDp != lastReportedWidth || rawHeightDp != lastReportedHeight) {
+      lastReportedWidth = widthDp
+      lastReportedHeight = rawHeightDp
+
+      val stateData = WritableNativeMap().apply {
+        putDouble("width", widthDp.toDouble())
+        putDouble("height", rawHeightDp.toDouble())
+      }
+      wrapper.updateState(stateData)
     }
   }
 

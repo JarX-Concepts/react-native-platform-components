@@ -3,7 +3,9 @@ package com.platformcomponents
 import android.util.Log
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
+import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.UIManagerHelper
@@ -29,6 +31,18 @@ class PCSelectionMenuViewManager :
 
   override fun createViewInstance(reactContext: ThemedReactContext): PCSelectionMenuView {
     return PCSelectionMenuView(reactContext)
+  }
+
+  /**
+   * Pass the StateWrapper to the view so it can update Fabric state with measured dimensions.
+   */
+  override fun updateState(
+    view: PCSelectionMenuView,
+    props: ReactStylesDiffMap,
+    stateWrapper: StateWrapper
+  ): Any? {
+    view.stateWrapper = stateWrapper
+    return null
   }
 
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCSelectionMenuView) {

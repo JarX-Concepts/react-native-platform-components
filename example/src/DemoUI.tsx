@@ -252,7 +252,6 @@ export const ui = StyleSheet.create({
     paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 40,
     gap: 16,
   },
   rowGroupItem: {
