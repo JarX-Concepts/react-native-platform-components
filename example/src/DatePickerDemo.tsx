@@ -150,7 +150,7 @@ export function DatePickerDemo(): React.JSX.Element {
             style={ui.fullFlex}
             options={modeOptions as any}
             selected={mode}
-            inlineMode
+            presentation="embedded"
             placeholder="Mode"
             testID="mode-menu"
             onSelect={(data) => setMode(data as any)}
@@ -219,7 +219,7 @@ export function DatePickerDemo(): React.JSX.Element {
               style={ui.fullFlex}
               options={iosStyleOptions as any}
               selected={iosStyle}
-              inlineMode
+              presentation="embedded"
               placeholder="Style"
               onSelect={(data) => setIosStyle(data as any)}
             />
@@ -233,7 +233,7 @@ export function DatePickerDemo(): React.JSX.Element {
               style={ui.fullFlex}
               options={iosMinuteOptions as any}
               selected={iosMinuteInterval}
-              inlineMode
+              presentation="embedded"
               placeholder="Minute Interval"
               onSelect={(data) => setIosMinuteInterval(data as any)}
             />
@@ -247,7 +247,7 @@ export function DatePickerDemo(): React.JSX.Element {
               style={ui.fullFlex}
               options={iosRoundsOptions as any}
               selected={iosRounds}
-              inlineMode
+              presentation="embedded"
               placeholder="Rounds"
               onSelect={(data) => setIosRounds(data as any)}
             />
@@ -263,7 +263,7 @@ export function DatePickerDemo(): React.JSX.Element {
               style={ui.fullFlex}
               options={androidMaterialOptions as any}
               selected={androidMaterial}
-              inlineMode
+              presentation="embedded"
               placeholder="Material"
               onSelect={(data) =>
                 setAndroidMaterial(data as AndroidMaterialMode)

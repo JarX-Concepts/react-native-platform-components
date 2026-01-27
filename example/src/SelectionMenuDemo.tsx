@@ -67,7 +67,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>(null);
 
   const [disabled, setDisabled] = useState(false);
-  const [inlineMode, setInlineMode] = useState(false);
+  const [embedded, setEmbedded] = useState(false);
 
   const [material, setMaterial] = useState<AndroidMaterialMode>('system');
 
@@ -85,12 +85,12 @@ export function SelectionMenuDemo(): React.JSX.Element {
   return (
     <>
       <Section title="Controls">
-        <Row label="Inline">
+        <Row label="Embedded">
           <Switch
-            testID="inline-switch"
-            value={inlineMode}
+            testID="embedded-switch"
+            value={embedded}
             onValueChange={(v) => {
-              setInlineMode(v);
+              setEmbedded(v);
               if (v) setOpen(false);
             }}
           />
@@ -116,9 +116,9 @@ export function SelectionMenuDemo(): React.JSX.Element {
               <SelectionMenu
                 testID="android-material-menu"
                 style={ui.fullFlex}
-                options={materialOptions as any}
+                options={materialOptions}
                 selected={material}
-                inlineMode
+                presentation="embedded"
                 placeholder="Material"
                 onSelect={(data) => setMaterial(data as AndroidMaterialMode)}
               />
@@ -143,18 +143,18 @@ export function SelectionMenuDemo(): React.JSX.Element {
             />
           }
         >
-          {inlineMode ? (
-            // ✅ Inline anchor lives INSIDE the row → feels attached
+          {embedded ? (
+            // ✅ Embedded anchor lives INSIDE the row → feels attached
             <SelectionMenu
-              testID="state-menu-inline"
+              testID="state-menu-embedded"
               style={ui.fullFlex}
               options={STATE_OPTIONS}
               selected={selected}
               disabled={disabled}
               placeholder="Select a state"
-              inlineMode={true}
+              presentation="embedded"
               android={Platform.OS === 'android' ? { material } : undefined}
-              // headless-only props omitted on purpose
+              // modal-only props omitted on purpose
               onSelect={(data) => setSelected(data)}
             />
           ) : (
@@ -172,7 +172,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
           )}
         </Row>
 
-        {!inlineMode && (
+        {!embedded && (
           <>
             <Divider />
             <Row
@@ -200,12 +200,12 @@ export function SelectionMenuDemo(): React.JSX.Element {
               />
 
               <SelectionMenu
-                testID="state-menu-headless"
+                testID="state-menu-modal"
                 options={STATE_OPTIONS}
                 selected={selected}
                 disabled={disabled}
                 placeholder="Select a state"
-                inlineMode={false}
+                presentation="modal"
                 visible={open}
                 android={Platform.OS === 'android' ? { material } : undefined}
                 onSelect={(data) => {

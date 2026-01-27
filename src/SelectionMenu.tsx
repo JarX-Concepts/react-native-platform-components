@@ -7,7 +7,7 @@ import NativeSelectionMenu, {
   type SelectionMenuSelectEvent,
 } from './SelectionMenuNativeComponent';
 
-import type { AndroidMaterialMode } from './sharedTypes';
+import type { AndroidMaterialMode, Presentation } from './sharedTypes';
 
 export interface SelectionMenuProps extends ViewProps {
   /** Options are label + data (payload) */
@@ -23,13 +23,14 @@ export interface SelectionMenuProps extends ViewProps {
   placeholder?: string;
 
   /**
-   * If true, native renders its own inline anchor and manages open/close internally.
-   * If false (default), component is headless and controlled by `visible`.
+   * Presentation mode:
+   * - 'modal' (default): Headless mode, controlled by `visible` prop.
+   * - 'embedded': Native renders its own inline anchor and manages open/close internally.
    */
-  inlineMode?: boolean;
+  presentation?: Presentation;
 
   /**
-   * Headless mode only (inlineMode === false):
+   * Modal mode only (presentation === 'modal'):
    * controls whether the native menu UI is presented.
    */
   visible?: boolean;
@@ -64,11 +65,11 @@ function normalizeSelectedData(selected: string | null): string {
 }
 
 function normalizeNativeVisible(
-  inlineMode: boolean | undefined,
+  presentation: Presentation | undefined,
   visible: boolean | undefined
 ): 'open' | 'closed' | undefined {
-  // Inline mode ignores visible; keep it undefined so native isn't spammed.
-  if (inlineMode) return undefined;
+  // Embedded mode ignores visible; keep it undefined so native isn't spammed.
+  if (presentation === 'embedded') return undefined;
   return visible ? 'open' : 'closed';
 }
 
@@ -79,7 +80,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     selected,
     disabled,
     placeholder,
-    inlineMode,
+    presentation = 'modal',
     visible,
     onSelect,
     onRequestClose,
@@ -94,8 +95,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   );
 
   const nativeVisible = useMemo(
-    () => normalizeNativeVisible(inlineMode, visible),
-    [inlineMode, visible]
+    () => normalizeNativeVisible(presentation, visible),
+    [presentation, visible]
   );
 
   const handleSelect = useCallback(
@@ -123,7 +124,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       selectedData={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
       placeholder={placeholder}
-      anchorMode={inlineMode ? 'inline' : 'headless'}
+      anchorMode={presentation === 'embedded' ? 'inline' : 'headless'}
       visible={nativeVisible}
       onSelect={onSelect ? handleSelect : undefined}
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
