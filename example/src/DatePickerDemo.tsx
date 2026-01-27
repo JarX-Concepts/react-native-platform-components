@@ -324,11 +324,6 @@ export function DatePickerDemo(): React.JSX.Element {
 
         <View style={ui.datePickerContainer}>
           <DatePicker
-            style={
-              presentation === 'embedded' && Platform.OS === 'android'
-                ? ui.androidHardCodedDatePicker
-                : undefined
-            }
             testID="date-picker"
             presentation={presentation}
             visible={visible}

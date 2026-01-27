@@ -20,7 +20,20 @@ namespace facebook::react {
     Float measuredH = 0;
 
     if (inlineMode) {
-      measuredH = static_cast<Float>(kMinRowHeight); // 44
+#ifdef __ANDROID__
+      // Android heights differ by material mode:
+      // - M3 TextInputLayout with floating label: 72dp
+      // - System Spinner: 56dp
+      const std::string& material = props.android.material;
+      if (material == "m3") {
+        measuredH = static_cast<Float>(kMinRowHeightAndroidM3);
+      } else {
+        measuredH = static_cast<Float>(kMinRowHeightAndroid);
+      }
+#else
+      // iOS standard row height
+      measuredH = static_cast<Float>(kMinRowHeight);
+#endif
     } else {
       measuredH = 0;
     }

@@ -5,6 +5,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
@@ -56,12 +57,14 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
   init {
     minimumHeight = 0
     minimumWidth = 0
+    // Allow content to draw outside bounds if Yoga assigns less space than needed
+    clipChildren = false
+    clipToPadding = false
     rebuildUI()
   }
 
-  private val minInlineHeightPx: Int by lazy {
-    (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
-  }
+  // Track if we've requested a layout update after first measure
+  private var hasRequestedLayoutUpdate = false
 
   // Headless needs a non-zero anchor rect for dropdown
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -71,12 +74,82 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
       return
     }
 
-    // Inline: measure children, but never allow a collapsed height
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    // Inline mode: Always measure children with UNSPECIFIED height to get intrinsic size.
+    // This ensures TextInputLayout/Spinner can report their true desired height
+    // regardless of what constraints React Native passed.
+    val unconstrainedHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    super.onMeasure(widthMeasureSpec, unconstrainedHeightSpec)
 
-    val measuredH = measuredHeight
-    if (measuredH < minInlineHeightPx) {
-      setMeasuredDimension(measuredWidth, minInlineHeightPx)
+    // Get intrinsic height from children, enforce minimum (which varies by mode)
+    // minimumHeight is set in buildInline() based on the material mode
+    val intrinsicHeight = measuredHeight.coerceAtLeast(minimumHeight)
+
+    // For inline mode, always use intrinsic height to prevent clipping.
+    // React Native's Yoga doesn't know our content size, so it may pass
+    // constraints that would clip the content. We prioritize showing the
+    // full control over strictly respecting layout constraints.
+    setMeasuredDimension(measuredWidth, intrinsicHeight)
+  }
+
+  // Override requestLayout to handle React Native's layout timing.
+  // This ensures that after children are added/measured, we trigger
+  // a re-layout that React Native's Yoga can pick up.
+  override fun requestLayout() {
+    super.requestLayout()
+    // Post a measure/layout pass to ensure the view is properly sized
+    // after React Native's initial layout pass
+    if (!hasRequestedLayoutUpdate && anchorMode == "inline") {
+      hasRequestedLayoutUpdate = true
+      post(measureAndLayout)
+    }
+  }
+
+  private val measureAndLayout = Runnable {
+    if (!isAttachedToWindow || anchorMode != "inline") return@Runnable
+
+    // Re-measure to get correct intrinsic height
+    measure(
+      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    )
+    // Force layout with measured height - this overrides Yoga's assigned bounds
+    // to ensure the component isn't clipped
+    layout(left, top, right, top + measuredHeight)
+  }
+
+  override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+    if (anchorMode != "inline") {
+      super.onLayout(changed, left, top, right, bottom)
+      return
+    }
+
+    // For inline mode, we may need to override Yoga's assigned height.
+    // First, measure ourselves to get intrinsic height.
+    val widthSpec = MeasureSpec.makeMeasureSpec(right - left, MeasureSpec.EXACTLY)
+    val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    measure(widthSpec, heightSpec)
+
+    val intrinsicHeight = measuredHeight
+    val assignedHeight = bottom - top
+
+    // If Yoga gave us less height than we need, resize
+    val actualBottom = if (assignedHeight < intrinsicHeight) {
+      top + intrinsicHeight
+    } else {
+      bottom
+    }
+
+    // Layout children with the correct bounds
+    super.onLayout(changed, left, top, right, actualBottom)
+
+    // If we resized, update our own bounds
+    if (actualBottom != bottom) {
+      // Use setFrame to update our bounds without triggering another layout pass
+      post {
+        if (isAttachedToWindow && anchorMode == "inline") {
+          layout(left, top, right, actualBottom)
+        }
+      }
     }
   }
 
@@ -188,6 +261,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     headlessMenuShowing = false
     headlessDismissProgrammatic = false
     headlessDismissAfterSelect = false
+    hasRequestedLayoutUpdate = false
 
     // Headless should be invisible but anchorable.
     alpha = if (anchorMode == "headless") 0.01f else 1f
@@ -207,6 +281,14 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
 
   private fun buildInline() {
     val mode = parseMaterial(androidMaterial)
+
+    // Set minimum height based on mode - M3 TextInputLayout needs more space for floating label
+    val minHeightDp = if (mode == MaterialMode.M3) {
+      PCConstants.MIN_M3_TEXT_INPUT_HEIGHT_DP
+    } else {
+      PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP
+    }
+    minimumHeight = (minHeightDp * resources.displayMetrics.density).toInt()
 
     if (mode == MaterialMode.M3) {
       // M3 exposed dropdown menu - the standard Material 3 way
@@ -548,6 +630,34 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context) {
     }
     if (!posted) {
       inlineSpinnerSuppressCount = (inlineSpinnerSuppressCount - 1).coerceAtLeast(0)
+    }
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    // When attached, trigger a measure/layout pass to ensure correct sizing
+    if (anchorMode == "inline") {
+      // Use ViewTreeObserver to wait until after the first layout pass
+      viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+          viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+          if (!isAttachedToWindow || anchorMode != "inline") return
+
+          // Measure to get intrinsic height
+          measure(
+            MeasureSpec.makeMeasureSpec(width.coerceAtLeast(1), MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+          )
+
+          val intrinsicHeight = measuredHeight.coerceAtLeast(minimumHeight)
+
+          // If current height is too small, force layout with correct height
+          if (height < intrinsicHeight) {
+            layout(left, top, right, top + intrinsicHeight)
+          }
+        }
+      })
     }
   }
 

@@ -1,6 +1,6 @@
 // SelectionMenu.tsx
 import React, { useCallback, useMemo } from 'react';
-import { Platform, StyleSheet, type ViewProps } from 'react-native';
+import { type ViewProps } from 'react-native';
 
 import NativeSelectionMenu, {
   type SelectionMenuOption,
@@ -116,15 +116,9 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     return { material: android.material };
   }, [android]);
 
-  const isAndroidM3Inline =
-    android?.material &&
-    inlineMode &&
-    android.material === 'm3' &&
-    Platform.OS === 'android';
-
   return (
     <NativeSelectionMenu
-      style={[style, isAndroidM3Inline && styles.androidInline]}
+      style={style}
       options={options}
       selectedData={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
@@ -139,7 +133,3 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  androidInline: { minHeight: 60 },
-});

@@ -1,7 +1,9 @@
 package com.platformcomponents
 
+import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.SimpleViewManager
+import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.UIManagerHelper
@@ -23,6 +25,18 @@ class PCDatePickerViewManager :
 
   override fun createViewInstance(reactContext: ThemedReactContext): PCDatePickerView {
     return PCDatePickerView(reactContext)
+  }
+
+  /**
+   * Pass the StateWrapper to the view so it can update Fabric state with measured dimensions.
+   */
+  override fun updateState(
+    view: PCDatePickerView,
+    props: ReactStylesDiffMap,
+    stateWrapper: StateWrapper
+  ): Any? {
+    view.stateWrapper = stateWrapper
+    return null
   }
 
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCDatePickerView) {
