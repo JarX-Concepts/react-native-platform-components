@@ -333,7 +333,7 @@ export function DatePickerDemo(): React.JSX.Element {
             mode={mode}
             // TODO: figure out why we need this on Android to force remounting
             //       when mode changes with embedded picker
-            key={Platform.OS === 'android' ? mode + presentation : undefined}
+            key={mode + presentation}
             ios={{
               preferredStyle: iosStyle,
               minuteInterval:
