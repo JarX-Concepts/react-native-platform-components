@@ -75,15 +75,11 @@ describe('Platform Components Example', () => {
       }
     };
 
-    await pause(500);
-    await device.takeScreenshot('Modal-DatePicker-First');
-
     // Ensure we're on the DatePicker tab
     await element(by.id('demo-tabs-datePicker')).tap();
 
     // Enable DatePicker Tap
     await ensureModalMode(true);
-
     await expect(element(by.id('picker-toggle-field'))).toBeVisible();
 
     // Set mode to "Date"
@@ -113,10 +109,7 @@ describe('Platform Components Example', () => {
     // Disable the modal mode
     await ensureModalMode(false);
 
-    await pause(500);
-    await device.takeScreenshot('Modal-DatePicker-Second');
-
-    /*     // Set iOS style to "Wheels" (iOS only)
+    // Set iOS style to "Wheels" (iOS only)
     try {
       await selectMenuOption('ios-style-menu', 'Wheels');
     } catch {
@@ -135,10 +128,10 @@ describe('Platform Components Example', () => {
     await pause();
 
     // Dismiss it
-    await dismissModal(); */
+    await dismissModal();
   });
 
-  /*   it('should test Selection Menu functionality', async () => {
+  it('should test Selection Menu functionality', async () => {
     // Navigate to SelectionMenu tab
     await element(by.id('demo-tabs-selectionMenu')).tap();
 
@@ -235,5 +228,5 @@ describe('Platform Components Example', () => {
     } catch {
       // Not on Android.
     }
-  }); */
+  });
 });
