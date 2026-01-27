@@ -60,7 +60,7 @@ jobs:
       - name: Build package
         run: yarn prepare
 
-  build-android:
+  test-android:
     runs-on: ubuntu-latest
 
     env:
@@ -165,7 +165,7 @@ jobs:
         run: |
           yarn workspace react-native-platform-components-example test:e2e:android:ci
 
-  build-ios:
+  test-ios:
     runs-on: macos-latest
 
     env:
