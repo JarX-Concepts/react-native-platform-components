@@ -6,37 +6,38 @@
 // Do NOT include ComponentDescriptors.h here to avoid circular dependency
 #include <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #include <react/renderer/components/PlatformComponentsViewSpec/Props.h>
-#include <react/renderer/components/PlatformComponentsViewSpec/States.h>
+
+#include "PCSelectionMenuState-custom.h"
 
 namespace facebook::react {
 
 extern const char PCSelectionMenuComponentName[];
 
 /**
- * ShadowNode for SelectionMenu.
+ * Custom ShadowNode for SelectionMenu that supports Yoga measurement.
  *
  * Key behavior:
- * - Provides a non-zero default measured height (minRowHeight) so the view
- *   remains tappable when JS does not specify an explicit height.
- * - Uses platform-specific heights: iOS uses 44pt, Android uses 56dp for
- *   system Spinner or 72dp for M3 TextInputLayout.
+ * - Native side measures the actual picker and updates state with frameSize
+ * - measureContent() returns the size from state for proper Yoga layout
+ * - Falls back to platform-specific defaults if state hasn't been set yet
  */
 class MeasuringPCSelectionMenuShadowNode final : public ConcreteViewShadowNode<
                                           PCSelectionMenuComponentName,
                                           PCSelectionMenuProps,
                                           PCSelectionMenuEventEmitter,
-                                          PCSelectionMenuState> {
+                                          PCSelectionMenuStateFrameSize> {
  public:
   using ConcreteViewShadowNode::ConcreteViewShadowNode;
 
+  // Fallback heights used when native hasn't reported measurements yet
   // iOS standard row height
-  static constexpr float kMinRowHeight = 44.0f;
+  static constexpr float kFallbackHeightIOS = 44.0f;
 
   // Android System Spinner height
-  static constexpr float kMinRowHeightAndroid = 56.0f;
+  static constexpr float kFallbackHeightAndroid = 56.0f;
 
   // Android M3 TextInputLayout with floating label height
-  static constexpr float kMinRowHeightAndroidM3 = 72.0f;
+  static constexpr float kFallbackHeightAndroidM3 = 72.0f;
 
   static ShadowNodeTraits BaseTraits() {
     auto traits = ConcreteViewShadowNode::BaseTraits();
@@ -47,7 +48,8 @@ class MeasuringPCSelectionMenuShadowNode final : public ConcreteViewShadowNode<
 
   /**
    * Called by Yoga when it needs the intrinsic size of the component.
-   * We ensure a sensible minimum height so the view doesn't measure to 0.
+   * Returns the size provided by native through state, with fallback to
+   * platform-specific defaults if state hasn't been set.
    */
   Size measureContent(
       const LayoutContext& layoutContext,

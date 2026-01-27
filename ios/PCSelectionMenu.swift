@@ -370,6 +370,23 @@ public final class PCSelectionMenuView: UIControl {
         )
         return CGSize(width: UIView.noIntrinsicMetric, height: h)
     }
+
+    /// Called by the measuring pipeline to get the size for Yoga layout.
+    /// Headless mode returns zero so Yoga reserves nothing.
+    @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
+        guard anchorMode == "inline" else { return .zero }
+
+        guard let host = hostingController else {
+            return CGSize(width: constrainedSize.width, height: PCConstants.minTouchTargetHeight)
+        }
+
+        host.view.setNeedsLayout()
+        host.view.layoutIfNeeded()
+
+        let w = constrainedSize.width > 1 ? constrainedSize.width : PCConstants.fallbackWidth
+        let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
+        return CGSize(width: constrainedSize.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
+    }
 }
 
 // MARK: - Glass Menu Cell
