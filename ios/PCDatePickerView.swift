@@ -11,6 +11,7 @@ public final class PCDatePickerView: UIControl,
     // MARK: - UI
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
+    private var inlineConstraints: [NSLayoutConstraint] = []
 
     // Suppress “programmatic” valueChanged events (apply props / initial present settle).
     private var suppressChangeEvents = false
@@ -184,19 +185,35 @@ public final class PCDatePickerView: UIControl,
     private func attachInlinePickerIfNeeded() {
         guard picker.superview !== self else { return }
 
+        // Deactivate any previous inline constraints
+        NSLayoutConstraint.deactivate(inlineConstraints)
+        inlineConstraints.removeAll()
+
         picker.removeFromSuperview()
         addSubview(picker)
 
-        NSLayoutConstraint.activate([
+        inlineConstraints = [
             picker.topAnchor.constraint(equalTo: topAnchor),
             picker.bottomAnchor.constraint(equalTo: bottomAnchor),
             picker.leadingAnchor.constraint(equalTo: leadingAnchor),
             picker.trailingAnchor.constraint(equalTo: trailingAnchor),
-        ])
+        ]
+        NSLayoutConstraint.activate(inlineConstraints)
+
+        // Force picker to recalculate its internal layout after being moved between view hierarchies.
+        // Re-applying the style resets internal layout state that can become stale after modal use.
+        if #available(iOS 13.4, *) {
+            let currentStyle = picker.preferredDatePickerStyle
+            picker.preferredDatePickerStyle = .automatic
+            picker.preferredDatePickerStyle = currentStyle
+        }
+        picker.sizeToFit()
     }
 
     private func detachInlinePickerIfNeeded() {
         if picker.superview === self {
+            NSLayoutConstraint.deactivate(inlineConstraints)
+            inlineConstraints.removeAll()
             picker.removeFromSuperview()
         }
     }
