@@ -257,8 +257,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-expo-
 
-      - name: Build Expo plugin
-        run: yarn build:plugin
+      - name: Build library
+        run: yarn prepare
 
       - name: Run Expo prebuild
         run: |
@@ -289,8 +289,8 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Build Expo plugin
-        run: yarn build:plugin
+      - name: Build library
+        run: yarn prepare
 
       - name: Run Expo prebuild
         run: |
@@ -308,5 +308,5 @@ jobs:
             -scheme PlatformComponentsExpoExample \
             -configuration Release \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO

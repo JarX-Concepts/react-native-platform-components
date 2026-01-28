@@ -72,7 +72,8 @@
     "context-menu",
     "dropdown",
     "native",
-    "material-design"
+    "material-design",
+    "expo"
   ],
   "repository": {
     "type": "git",
