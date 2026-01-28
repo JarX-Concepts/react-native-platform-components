@@ -8,6 +8,7 @@
 # VSCode
 .vscode/
 jsconfig.json
+.claude/
 
 # Xcode
 #

@@ -55,6 +55,7 @@
     "picker",
     "menu",
     "selection-menu",
+    "context-menu",
     "dropdown",
     "native",
     "material-design"
@@ -136,7 +137,8 @@
     "ios": {
       "componentProvider": {
         "PCSelectionMenu": "PCSelectionMenu",
-        "PCDatePicker": "PCDatePicker"
+        "PCDatePicker": "PCDatePicker",
+        "PCContextMenu": "PCContextMenu"
       }
     }
   },

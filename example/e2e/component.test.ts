@@ -229,4 +229,130 @@ describe('Platform Components Example', () => {
       // Not on Android.
     }
   });
+
+  it('should test Context Menu functionality', async () => {
+    const pause = async (ms = 1000) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Navigate to ContextMenu tab
+    await element(by.id('demo-tabs-contextMenu')).tap();
+
+    // Verify we're on the ContextMenu screen
+    await expect(element(by.text('Long-press me'))).toBeVisible();
+
+    // Test basic context menu with long-press
+    await element(by.id('context-menu-basic')).longPress();
+
+    // Wait for menu to appear and verify actions are visible
+    await waitFor(element(by.text('Copy')))
+      .toBeVisible()
+      .withTimeout(2000);
+    await expect(element(by.text('Paste'))).toBeVisible();
+    await expect(element(by.text('Share'))).toBeVisible();
+
+    // Select an action
+    await element(by.text('Copy')).atIndex(0).tap();
+
+    // Verify the action was recorded
+    await waitFor(element(by.text('Copy (copy)')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // Test context menu with submenu
+    await element(by.id('context-menu-submenu')).longPress();
+
+    // Wait for menu to appear
+    await waitFor(element(by.text('Edit')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // On iOS, tap Edit to see submenu; on Android submenus work differently
+    if (!isAndroid()) {
+      await element(by.text('Edit')).tap();
+      await waitFor(element(by.text('Cut')))
+        .toBeVisible()
+        .withTimeout(2000);
+      await element(by.text('Cut')).tap();
+    } else {
+      // On Android, just select the Share action instead
+      await element(by.text('Share')).atIndex(0).tap();
+    }
+    await pause(500);
+
+    // Test destructive actions
+    await element(by.id('context-menu-destructive')).longPress();
+
+    await waitFor(element(by.text('Delete Forever')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // Dismiss the menu by tapping outside or selecting an action
+    await element(by.text('Archive')).atIndex(0).tap();
+
+    // Verify the action was recorded
+    await waitFor(element(by.text('Archive (archive)')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // Test tap mode
+    await element(by.id('context-menu-tap')).tap();
+
+    // Wait for menu to appear
+    await waitFor(element(by.text('Copy')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // Select an action
+    await element(by.text('Paste')).atIndex(0).tap();
+
+    // Verify the action was recorded
+    await waitFor(element(by.text('Paste (paste)')))
+      .toBeVisible()
+      .withTimeout(2000);
+
+    // Test Android-only programmatic mode
+    if (isAndroid()) {
+      await element(by.id('programmatic-toggle-button')).tap();
+
+      // Wait for menu to appear
+      await waitFor(element(by.text('Copy')))
+        .toBeVisible()
+        .withTimeout(2000);
+
+      // Select an action
+      await element(by.text('Share')).atIndex(0).tap();
+
+      // Verify the action was recorded
+      await waitFor(element(by.text('Share (share)')))
+        .toBeVisible()
+        .withTimeout(2000);
+    }
+
+    // Test disabled state
+    await element(by.id('disabled-switch')).tap();
+    await pause(300);
+
+    // Long-press should not open menu when disabled
+    // (We can't easily verify the menu doesn't open, but we ensure no crash)
+    await element(by.id('context-menu-basic')).longPress();
+    await pause(500);
+
+    // Re-enable
+    await element(by.id('disabled-switch')).tap();
+
+    // Test iOS preview toggle (iOS only)
+    if (!isAndroid()) {
+      await element(by.id('preview-switch')).tap();
+
+      // Long-press with preview enabled
+      await element(by.id('context-menu-basic')).longPress();
+
+      await waitFor(element(by.text('Copy')))
+        .toBeVisible()
+        .withTimeout(2000);
+
+      // Dismiss
+      await element(by.text('Share')).atIndex(0).tap();
+    }
+  });
 });

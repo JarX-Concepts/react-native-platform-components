@@ -1,10 +1,11 @@
 // App.tsx
 import React, { useState } from 'react';
+import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { ChipTabs, Screen } from './DemoUI';
 
-type DemoKey = 'datePicker' | 'selectionMenu';
+type DemoKey = 'datePicker' | 'selectionMenu' | 'contextMenu';
 
 export default function App(): React.ReactElement {
   const [demo, setDemo] = useState<DemoKey>('datePicker');
@@ -18,11 +19,13 @@ export default function App(): React.ReactElement {
         options={[
           { label: 'DatePicker', value: 'datePicker' },
           { label: 'SelectionMenu', value: 'selectionMenu' },
+          { label: 'ContextMenu', value: 'contextMenu' },
         ]}
       />
 
       {demo === 'datePicker' && <DatePickerDemo />}
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
+      {demo === 'contextMenu' && <ContextMenuDemo />}
     </Screen>
   );
 }
