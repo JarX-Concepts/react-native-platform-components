@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Platform Components Expo Example",
+    "slug": "platform-components-expo-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.platformcomponents.expoexample"
+    },
+    "android": {
+      "package": "com.platformcomponents.expoexample"
+    },
+    "plugins": [
+      "expo-dev-client",
+      ["react-native-platform-components/app.plugin", {}]
+    ]
+  }
+}
