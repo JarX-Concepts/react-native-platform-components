@@ -78,6 +78,64 @@ pod install
 - Supports **Material 3** styling
 - No additional setup required beyond autolinking
 
+### Expo (Managed Workflow)
+
+> **Note:** This library is **not supported in Expo Go**. It requires native code and must be used with [Expo Dev Client](https://docs.expo.dev/develop/development-builds/introduction/) or EAS Build.
+
+```sh
+npx expo install react-native-platform-components
+npx expo prebuild
+npx expo run:ios
+# or
+npx expo run:android
+```
+
+The library includes an Expo config plugin that handles all native configuration automatically. No manual native setup is required.
+
+**EAS Build:**
+
+```sh
+eas build --platform ios
+eas build --platform android
+```
+
+**Config Plugin:**
+
+Add to your `app.json`:
+```json
+{
+  "expo": {
+    "plugins": [
+      ["react-native-platform-components/app.plugin", {}]
+    ]
+  }
+}
+```
+
+For a complete working example, see the [`example-expo/`](./example-expo) directory.
+
+---
+
+## React Native New Architecture
+
+This library is built for the **React Native New Architecture** (Fabric + TurboModules).
+
+| Feature | Status |
+|---------|--------|
+| Fabric (New Renderer) | Supported |
+| Codegen | Used for type-safe native bindings |
+| TurboModules | N/A (view components only) |
+| Old Architecture | Not supported |
+
+**Tested with:**
+- React Native 0.81+ (bare and Expo)
+- Expo SDK 54+
+
+**Requirements:**
+- New Architecture must be enabled in your app
+- For bare React Native: set `newArchEnabled=true` in `gradle.properties` (Android) and use the `RCT_NEW_ARCH_ENABLED` flag (iOS)
+- For Expo: set `"newArchEnabled": true` in `app.json`
+
 ---
 
 ## Quick Start

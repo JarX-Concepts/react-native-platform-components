@@ -92,7 +92,7 @@ const ACTIONS_WITH_STATE: ContextMenuAction[] = [
 export function ContextMenuDemo(): React.JSX.Element {
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [disabled, setDisabled] = useState(false);
-  const [enablePreview, setEnablePreview] = useState(false);
+  const [enablePreview, setEnablePreview] = useState(true);
 
   // Modal mode state
   const [modalOpen, setModalOpen] = useState(false);

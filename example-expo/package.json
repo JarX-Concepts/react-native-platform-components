@@ -1,0 +1,27 @@
+{
+  "name": "react-native-platform-components-example-expo",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild",
+    "prebuild:clean": "expo prebuild --clean"
+  },
+  "dependencies": {
+    "babel-preset-expo": "^54.0.10",
+    "expo": "~54.0.0",
+    "expo-dev-client": "~6.0.0",
+    "expo-status-bar": "~2.2.0",
+    "react": "19.1.0",
+    "react-native": "0.81.2",
+    "react-native-platform-components": "*"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@types/react": "~19.1.0",
+    "typescript": "~5.8.3"
+  }
+}

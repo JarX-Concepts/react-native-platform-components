@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - PlatformComponents (0.5.4):
+  - PlatformComponents (0.6.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2733,7 +2733,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 7cbb64ddd1b674c9e68d6dedce1c7adebaa8400e
-  PlatformComponents: e1ad545201be37651af74526e9b8d044fa7b55be
+  PlatformComponents: dfa565637a0af9f5791e8433c82516f69366fe6c
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
   RCTRequired: 7be34aabb0b77c3cefe644528df0fa0afad4e4d0
