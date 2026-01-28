@@ -13,6 +13,7 @@ class PlatformComponentsViewPackage : ReactPackage {
       return listOf(
           PCSelectionMenuViewManager(),
           PCDatePickerViewManager(),
+          PCContextMenuViewManager(),
       )
   }
 
