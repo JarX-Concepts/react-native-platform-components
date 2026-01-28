@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A cross-platform toolkit of native UI components for React Native.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
