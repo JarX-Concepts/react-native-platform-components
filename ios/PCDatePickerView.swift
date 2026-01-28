@@ -283,31 +283,45 @@ public final class PCDatePickerView: UIControl,
         // Prevent "settle" events right as we present.
         suppressNextChangesBriefly()
 
-        let vc = UIViewController()
-        vc.view.backgroundColor = .clear
-        vc.view.isOpaque = false
+        // Check if using inline style (full calendar) - needs larger popover size
+        var isInlineStyle = false
+        if #available(iOS 13.4, *) {
+            isInlineStyle = picker.preferredDatePickerStyle == .inline
+        }
 
+        let vc = UIViewController()
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
 
-        // Position picker at top-leading (constraints required to avoid freeze with inline style)
-        NSLayoutConstraint.activate([
-            picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
-            picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
-        ])
+        // For inline style, use system background and constrain all edges
+        // For other styles, use clear background and only top/leading constraints
+        if isInlineStyle {
+            vc.view.backgroundColor = .systemBackground
+            vc.view.isOpaque = true
+            NSLayoutConstraint.activate([
+                picker.topAnchor.constraint(equalTo: vc.view.topAnchor, constant: 8),
+                picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 8),
+                picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -8),
+                picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor, constant: -8),
+            ])
+        } else {
+            vc.view.backgroundColor = .clear
+            vc.view.isOpaque = false
+            NSLayoutConstraint.activate([
+                picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
+                picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+            ])
+        }
 
         let size = popoverContentSize()
         vc.preferredContentSize = size
 
-        // ✅ Anchored popover-style (not a full sheet)
         vc.modalPresentationStyle = .popover
         vc.presentationController?.delegate = self
 
         if let pop = vc.popoverPresentationController {
             pop.delegate = self
             pop.sourceView = self
-            // Use a minimum height for sourceRect to help popover positioning
-            // (modal presentation views have zero intrinsic height)
             let sourceRect = CGRect(
                 x: bounds.minX,
                 y: bounds.minY,

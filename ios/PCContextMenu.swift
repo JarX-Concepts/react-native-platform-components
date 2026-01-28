@@ -114,6 +114,8 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         }
     }
 
+
+
     private func updateEnabled() {
         let disabled = (interactivity == "disabled")
         alpha = disabled ? 0.5 : 1.0
@@ -146,10 +148,14 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
 
     private func installContextMenuInteraction() {
         guard contextMenuInteraction == nil else { return }
+
+        // Install interaction on self so that long-press on our view triggers the menu.
+        // We use UITargetedPreview in the delegate methods to show the parent view
+        // (which contains the React content) as the preview.
         let interaction = UIContextMenuInteraction(delegate: self)
         addInteraction(interaction)
         contextMenuInteraction = interaction
-        logger.debug("Installed UIContextMenuInteraction")
+        logger.debug("Installed UIContextMenuInteraction on PCContextMenuView")
     }
 
     private func removeContextMenuInteraction() {
@@ -167,14 +173,12 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
             return
         }
 
-        let button = UIButton(type: .custom)
+        let button = UIButton(type: .system)
         button.backgroundColor = .clear
         button.showsMenuAsPrimaryAction = true
         button.translatesAutoresizingMaskIntoConstraints = false
-
-        // Add context menu interaction to track menu lifecycle
-        let interaction = UIContextMenuInteraction(delegate: self)
-        button.addInteraction(interaction)
+        // Make button invisible but still tappable
+        button.tintColor = .clear
 
         addSubview(button)
         NSLayoutConstraint.activate([
@@ -218,30 +222,69 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         let actions = parsedActions.filter { !$0.hidden }
         guard !actions.isEmpty else { return nil }
 
-        logger.debug("contextMenuInteraction: creating configuration with \(actions.count) actions")
+        let actionCountStr = String(actions.count)
+        logger.debug("contextMenuInteraction: creating configuration with \(actionCountStr) actions")
 
+        // Use nil previewProvider - we'll use UITargetedPreview via delegate instead
         return UIContextMenuConfiguration(
             identifier: nil,
-            previewProvider: enablePreview == "true" ? { [weak self] in
-                // Return a preview controller showing the content
-                guard let self else { return nil }
-                let preview = UIViewController()
-                preview.view.backgroundColor = .clear
-
-                // Snapshot the current view for preview
-                let snapshot = self.snapshotView(afterScreenUpdates: false)
-                if let snap = snapshot {
-                    snap.frame = CGRect(origin: .zero, size: self.bounds.size)
-                    preview.view.addSubview(snap)
-                    preview.preferredContentSize = self.bounds.size
-                }
-                return preview
-            } : nil,
+            previewProvider: nil,
             actionProvider: { [weak self] suggestedActions in
                 guard let self else { return nil }
                 return self.buildMenu(from: actions, title: self.menuTitle)
             }
         )
+    }
+
+    /// Get the parent component view (PCContextMenu) which contains all React content
+    private func getParentComponentView() -> UIView? {
+        return superview
+    }
+
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        previewForHighlightingMenuWithConfiguration configuration: UIContextMenuConfiguration
+    ) -> UITargetedPreview? {
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = .clear
+
+        // Check if preview is enabled via the enablePreview prop
+        if enablePreview == "true" {
+            // Target the parent view (PCContextMenu) which contains the React content
+            guard let parentView = getParentComponentView() else {
+                logger.debug("previewForHighlighting: no parent found")
+                return nil
+            }
+            let parentType = String(describing: type(of: parentView))
+            logger.debug("previewForHighlighting: targeting parent \(parentType)")
+            parameters.visiblePath = UIBezierPath(roundedRect: parentView.bounds, cornerRadius: 8)
+            return UITargetedPreview(view: parentView, parameters: parameters)
+        } else {
+            // When preview is disabled, target self with zero-size path
+            // This prevents iOS from manipulating the parent view and causing white flashes
+            logger.debug("previewForHighlighting: preview disabled, targeting self with zero path")
+            parameters.visiblePath = UIBezierPath(rect: .zero)
+            return UITargetedPreview(view: self, parameters: parameters)
+        }
+    }
+
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        previewForDismissingMenuWithConfiguration configuration: UIContextMenuConfiguration
+    ) -> UITargetedPreview? {
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = .clear
+
+        if enablePreview == "true" {
+            guard let parentView = getParentComponentView() else {
+                return nil
+            }
+            parameters.visiblePath = UIBezierPath(roundedRect: parentView.bounds, cornerRadius: 8)
+            return UITargetedPreview(view: parentView, parameters: parameters)
+        } else {
+            parameters.visiblePath = UIBezierPath(rect: .zero)
+            return UITargetedPreview(view: self, parameters: parameters)
+        }
     }
 
     public func contextMenuInteraction(
