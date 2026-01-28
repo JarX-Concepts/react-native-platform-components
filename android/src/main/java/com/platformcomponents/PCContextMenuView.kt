@@ -9,12 +9,12 @@ import android.view.Menu
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import android.widget.FrameLayout
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import com.facebook.react.views.view.ReactViewGroup
 
-class PCContextMenuView(context: Context) : FrameLayout(context) {
+class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
   data class Action(
     val id: String,
