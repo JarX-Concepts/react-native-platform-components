@@ -341,12 +341,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
     if (mode == MaterialMode.M3) {
       // M3 exposed dropdown menu - the standard Material 3 way
+      // Must set box background mode BEFORE setting endIconMode to avoid IllegalStateException
       val til = TextInputLayout(context).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
+        // Set box background mode first - required for END_ICON_DROPDOWN_MENU
+        boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         hint = placeholder
+        // Now safe to set the dropdown icon
         endIconMode = TextInputLayout.END_ICON_DROPDOWN_MENU
       }
 
