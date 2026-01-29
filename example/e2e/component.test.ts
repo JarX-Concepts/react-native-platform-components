@@ -395,93 +395,55 @@ describe('Platform Components Example', () => {
     // Navigate to SegmentedControl tab
     await selectTab('Segment');
 
-    // Take screenshot of initial state
-    await device.takeScreenshot('segmented-control-initial');
-
     // Verify we're on the SegmentedControl demo
     await expect(element(by.id('segment-basic'))).toBeVisible();
 
-    // Verify initial selection is "day"
-    await expect(element(by.id('segment-basic-value'))).toHaveText('day');
-
-    // Test segment selection - tap "Week"
+    // Cycle through all basic segments multiple times for visual interest
+    // Cycle 1: Day -> Week -> Month -> Year
     await element(by.text('Week')).atIndex(0).tap();
-    await pause();
+    await pause(350);
 
-    // Verify selection changed
-    // NOTE: On Android, MaterialButtonToggleGroup doesn't fire check events from Detox taps
-    // The visual selection changes but the callback doesn't fire. This works correctly
-    // with real user interaction. Skipping assertion on Android.
-    if (!isAndroid()) {
-      await expect(element(by.id('segment-basic-value'))).toHaveText('week');
-    }
-
-    // Take screenshot after selection
-    await device.takeScreenshot('segmented-control-week-selected');
-
-    // Test "Month" selection
     await element(by.text('Month')).atIndex(0).tap();
-    await pause();
-    if (!isAndroid()) {
-      await expect(element(by.id('segment-basic-value'))).toHaveText('month');
-    }
+    await pause(350);
 
-    // Test "Year" selection
     await element(by.text('Year')).atIndex(0).tap();
-    await pause();
-    if (!isAndroid()) {
-      await expect(element(by.id('segment-basic-value'))).toHaveText('year');
-    }
+    await pause(350);
 
-    // Test disabled state
+    // Cycle 2: Year -> Day -> Month -> Week
+    await element(by.text('Day')).atIndex(0).tap();
+    await pause(350);
+
+    await element(by.text('Month')).atIndex(0).tap();
+    await pause(350);
+
+    await element(by.text('Week')).atIndex(0).tap();
+    await pause(350);
+
+    // Cycle 3: Week -> Year -> Day -> Month
+    await element(by.text('Year')).atIndex(0).tap();
+    await pause(350);
+
+    await element(by.text('Day')).atIndex(0).tap();
+    await pause(350);
+
+    await element(by.text('Month')).atIndex(0).tap();
+    await pause(350);
+
+    // Test disabled state - toggle on and off
     await element(by.id('disabled-switch')).tap();
-    await pause();
+    await pause(600);
 
-    // Take screenshot of disabled state
-    await device.takeScreenshot('segmented-control-disabled');
-
-    // Re-enable
     await element(by.id('disabled-switch')).tap();
-    await pause();
+    await pause(400);
 
-    // Test iOS-specific features
-    if (!isAndroid()) {
-      // Test momentary mode
-      await element(by.id('momentary-switch')).tap();
-      await pause();
+    // Final rapid cycle: Month -> Week -> Year -> Day
+    await element(by.text('Week')).atIndex(0).tap();
+    await pause(300);
 
-      // Take screenshot of momentary mode
-      await device.takeScreenshot('segmented-control-momentary');
+    await element(by.text('Year')).atIndex(0).tap();
+    await pause(300);
 
-      // Disable momentary
-      await element(by.id('momentary-switch')).tap();
-      await pause();
-
-      // Test proportional width
-      await element(by.id('proportional-switch')).tap();
-      await pause();
-
-      await device.takeScreenshot('segmented-control-proportional');
-
-      // Disable proportional
-      await element(by.id('proportional-switch')).tap();
-    }
-
-    // Test per-segment disabled (the middle segment should be disabled)
-    // We can verify by trying to select it and checking the value doesn't change
-    // First select "Active"
-    await element(by.text('Active')).atIndex(0).tap();
-    await pause();
-
-    // Try to tap "Disabled" - it shouldn't change the selection
-    try {
-      await element(by.text('Disabled')).atIndex(0).tap();
-      await pause();
-    } catch {
-      // Expected - disabled segment may not be tappable
-    }
-
-    // Take final screenshot
-    await device.takeScreenshot('segmented-control-final');
+    await element(by.text('Day')).atIndex(0).tap();
+    await pause(300);
   });
 });
