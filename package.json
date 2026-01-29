@@ -157,7 +157,8 @@
       "componentProvider": {
         "PCSelectionMenu": "PCSelectionMenu",
         "PCDatePicker": "PCDatePicker",
-        "PCContextMenu": "PCContextMenu"
+        "PCContextMenu": "PCContextMenu",
+        "PCSegmentedControl": "PCSegmentedControl"
       }
     }
   },

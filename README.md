@@ -31,6 +31,14 @@
           <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="350" /></td>
           <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="350" /></td>
         </tr>
+        <tr>
+          <td align="center"><strong>iOS SegmentedControl</strong></td>
+          <td align="center"><strong>Android SegmentedControl</strong></td>
+        </tr>
+        <tr>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="350" /></td>
+          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="350" /></td>
+        </tr>
       </table>
     </td>
     <td valign="top">
@@ -40,6 +48,7 @@
         <li><strong>DatePicker</strong> – native date & time pickers with modal and embedded presentations</li>
         <li><strong>ContextMenu</strong> – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)</li>
         <li><strong>SelectionMenu</strong> – native selection menus (Material on Android, system menus on iOS)</li>
+        <li><strong>SegmentedControl</strong> – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)</li>
       </ul>
       <p>The goal is to provide components that:</p>
       <ul>
@@ -325,6 +334,65 @@ export function Example() {
 
 ---
 
+### SegmentedControl
+
+```tsx
+import { SegmentedControl } from 'react-native-platform-components';
+
+const segments = [
+  { label: 'Day', value: 'day' },
+  { label: 'Week', value: 'week' },
+  { label: 'Month', value: 'month' },
+];
+
+export function Example() {
+  const [selected, setSelected] = React.useState('day');
+
+  return (
+    <SegmentedControl
+      segments={segments}
+      selectedValue={selected}
+      onSelect={(value) => setSelected(value)}
+    />
+  );
+}
+```
+
+### SegmentedControl (With Icons)
+
+```tsx
+import { SegmentedControl } from 'react-native-platform-components';
+import { Platform } from 'react-native';
+
+const segments = [
+  {
+    label: 'List',
+    value: 'list',
+    icon: Platform.OS === 'ios' ? 'list.bullet' : 'list_bullet',
+  },
+  {
+    label: 'Grid',
+    value: 'grid',
+    icon: Platform.OS === 'ios' ? 'square.grid.2x2' : 'grid_view',
+  },
+];
+
+export function Example() {
+  const [selected, setSelected] = React.useState('list');
+
+  return (
+    <SegmentedControl
+      segments={segments}
+      selectedValue={selected}
+      onSelect={(value) => setSelected(value)}
+      ios={{ apportionsSegmentWidthsByContent: true }}
+    />
+  );
+}
+```
+
+---
+
 ## Components
 
 ## DatePicker
@@ -447,6 +515,50 @@ Native selection menu with **modal** and **embedded** modes.
 - **Embedded mode** (`presentation="embedded"`): Native picker UI rendered inline. Menu managed internally.
 
 > **Note:** On iOS, modal mode uses a custom popover to enable programmatic presentation. For the full native menu experience (system animations, scroll physics), use embedded mode. This is an intentional trade-off: modal gives you control over the trigger UI, embedded gives you the complete system menu behavior.
+
+---
+
+## SegmentedControl
+
+Native segmented control using **UISegmentedControl** on iOS and **MaterialButtonToggleGroup** on Android.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `segments` | `SegmentedControlSegment[]` | Array of segments to display |
+| `selectedValue` | `string \| null` | Currently selected segment's `value` |
+| `disabled` | `boolean` | Disables the entire control |
+| `onSelect` | `(value: string, index: number) => void` | Called when user selects a segment |
+
+### SegmentedControlSegment
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `string` | Display text for the segment |
+| `value` | `string` | Unique value returned in callbacks |
+| `disabled` | `boolean` | Disables this specific segment |
+| `icon` | `string` | Icon name (SF Symbol on iOS, drawable on Android) |
+
+### iOS Props (`ios`)
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `momentary` | `boolean` | If true, segments don't show selected state |
+| `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content |
+| `selectedSegmentTintColor` | `string` | Tint color for selected segment (hex string) |
+
+### Android Props (`android`)
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `selectionRequired` | `boolean` | If true, one segment must always be selected |
+
+### Icon Support
+
+Icons work the same as ContextMenu:
+- **iOS**: Use SF Symbol names (e.g., `'list.bullet'`, `'square.grid.2x2'`)
+- **Android**: Use drawable resource names (e.g., `'list_bullet'`, `'grid_view'`)
 
 ---
 
