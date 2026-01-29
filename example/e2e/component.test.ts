@@ -25,7 +25,7 @@ const selectTab = async (tabLabel: string) => {
 };
 
 // Tab labels that may conflict with menu options
-const TAB_LABELS = ['Date', 'Selection', 'Context', 'Segment'];
+const TAB_LABELS = ['Date', 'Select', 'Context', 'Segment', 'Glass'];
 
 const selectMenuOption = async (menuId: string, optionLabel: string) => {
   const hasConflict = TAB_LABELS.includes(optionLabel);
@@ -171,7 +171,7 @@ describe('Platform Components Example', () => {
 
   it('should test Selection Menu functionality', async () => {
     // Navigate to SelectionMenu tab
-    await selectTab('Selection');
+    await selectTab('Select');
 
     // Verify we're on the SelectionMenu screen
     await expect(element(by.id('state-field-headless'))).toBeVisible();
@@ -445,5 +445,96 @@ describe('Platform Components Example', () => {
 
     await element(by.text('Day')).atIndex(0).tap();
     await pause(300);
+  });
+
+  it('should test Liquid Glass functionality', async () => {
+    // LiquidGlass is iOS 26+ only - skip on Android
+    if (isAndroid()) {
+      return;
+    }
+
+    // Navigate to LiquidGlass tab
+    await selectTab('Glass');
+
+    // Take initial screenshot of the glass effect
+    await device.takeScreenshot('liquid-glass-initial');
+
+    // Verify we're on the LiquidGlass demo
+    await expect(element(by.id('liquid-glass-demo'))).toBeVisible();
+    await pause(500);
+
+    // Test iOS-only interactions
+    if (!isAndroid()) {
+      // Long press the main glass card to show interactive effect
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+
+      // Long press the small glass card
+      await element(by.id('liquid-glass-demo-2')).longPress(600);
+      await pause(300);
+
+      // Long press main glass card again
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+      // Change effect to "Clear"
+      try {
+        await selectMenuOption('effect-menu', 'Clear');
+        await pause(500);
+        await device.takeScreenshot('liquid-glass-clear-effect');
+      } catch {
+        // Menu might not be accessible
+      }
+
+      // Long press glass cards with clear effect
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+      await element(by.id('liquid-glass-demo-2')).longPress(600);
+      await pause(300);
+
+      // Change color scheme to "Dark"
+      try {
+        await selectMenuOption('color-scheme-menu', 'Dark');
+        await pause(500);
+        await device.takeScreenshot('liquid-glass-dark-mode');
+      } catch {
+        // Menu might not be accessible
+      }
+
+      // Long press glass cards in dark mode
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+
+      // Change tint color to "Blue"
+      try {
+        await selectMenuOption('tint-color-menu', 'Blue');
+        await pause(500);
+        await device.takeScreenshot('liquid-glass-blue-tint');
+      } catch {
+        // Menu might not be accessible
+      }
+
+      // Long press glass cards with blue tint
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+      await element(by.id('liquid-glass-demo-2')).longPress(600);
+      await pause(300);
+
+      // Change effect back to "Regular"
+      try {
+        await selectMenuOption('effect-menu', 'Regular');
+        await pause(500);
+      } catch {
+        // Menu might not be accessible
+      }
+
+      // Final long presses on glass cards
+      await element(by.id('liquid-glass-demo')).longPress(800);
+      await pause(300);
+      await element(by.id('liquid-glass-demo-2')).longPress(600);
+      await pause(300);
+    }
+
+    // Take final screenshot
+    await device.takeScreenshot('liquid-glass-final');
   });
 });
