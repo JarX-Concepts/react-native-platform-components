@@ -3,63 +3,58 @@
 [![npm version](https://img.shields.io/npm/v/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
 [![npm downloads](https://img.shields.io/npm/dm/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
 
+High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.
+
+This library focuses on **true native behavior**, not JavaScript re-implementations.
+
 <table>
   <tr>
-    <td valign="top">
-      <table>
-        <tr>
-          <td align="center"><strong>iOS DatePicker</strong></td>
-          <td align="center"><strong>Android DatePicker</strong></td>
-        </tr>
-        <tr>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="350" /></td>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="350" /></td>
-        </tr>
-        <tr>
-          <td align="center"><strong>iOS ContextMenu</strong></td>
-          <td align="center"><strong>Android ContextMenu</strong></td>
-        </tr>
-        <tr>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="350" /></td>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="350" /></td>
-        </tr>
-        <tr>
-          <td align="center"><strong>iOS SelectionMenu</strong></td>
-          <td align="center"><strong>Android SelectionMenu</strong></td>
-        </tr>
-        <tr>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="350" /></td>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="350" /></td>
-        </tr>
-        <tr>
-          <td align="center"><strong>iOS SegmentedControl</strong></td>
-          <td align="center"><strong>Android SegmentedControl</strong></td>
-        </tr>
-        <tr>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="350" /></td>
-          <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="350" /></td>
-        </tr>
-      </table>
-    </td>
-    <td valign="top">
-      <p>High-quality <strong>native UI components for React Native</strong>, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.</p>
-      <p>This library focuses on <strong>true native behavior</strong>, not JavaScript re-implementations — providing:</p>
-      <ul>
-        <li><strong>DatePicker</strong> – native date & time pickers with modal and embedded presentations</li>
-        <li><strong>ContextMenu</strong> – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)</li>
-        <li><strong>SelectionMenu</strong> – native selection menus (Material on Android, system menus on iOS)</li>
-        <li><strong>SegmentedControl</strong> – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)</li>
-      </ul>
-      <p>The goal is to provide components that:</p>
-      <ul>
-        <li>Feel <strong>100% native</strong> on each platform</li>
-        <li>Support modern platform design systems (Material 3 on Android, system pickers on iOS)</li>
-        <li>Offer <strong>headless</strong> and <strong>inline</strong> modes for maximum layout control</li>
-        <li>Integrate cleanly with <strong>React Native Codegen / Fabric</strong></li>
-      </ul>
-    </td>
+    <td align="center"><strong>iOS DatePicker</strong></td>
+    <td align="center"><strong>Android DatePicker</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="350" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="350" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>iOS ContextMenu</strong></td>
+    <td align="center"><strong>Android ContextMenu</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="350" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="350" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>iOS SelectionMenu</strong></td>
+    <td align="center"><strong>Android SelectionMenu</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="350" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="350" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>iOS SegmentedControl</strong></td>
+    <td align="center"><strong>Android SegmentedControl</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="350" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="350" /></td>
   </tr>
 </table>
+
+### Components
+
+- **DatePicker** – native date & time pickers with modal and embedded presentations
+- **ContextMenu** – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)
+- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
+- **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)
+
+### Goals
+
+- Feel **100% native** on each platform
+- Support modern platform design systems (Material 3 on Android, system pickers on iOS)
+- Offer **headless** and **inline** modes for maximum layout control
+- Integrate cleanly with **React Native Codegen / Fabric**
 
 ---
 
