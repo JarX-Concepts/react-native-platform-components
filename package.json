@@ -73,7 +73,12 @@
     "dropdown",
     "native",
     "material-design",
-    "expo"
+    "expo",
+    "segmented-control",
+    "segmentedcontrol",
+    "tabs",
+    "segmented-buttons",
+    "segmentedbuttons"
   ],
   "repository": {
     "type": "git",
