@@ -1,7 +1,7 @@
 {
   "name": "react-native-platform-components",
   "version": "0.6.1",
-  "description": "A cross-platform toolkit of native UI components for React Native.",
+  "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/commonjs/src/index.d.ts",
