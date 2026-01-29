@@ -14,6 +14,7 @@ class PlatformComponentsViewPackage : ReactPackage {
           PCSelectionMenuViewManager(),
           PCDatePickerViewManager(),
           PCContextMenuViewManager(),
+          PCSegmentedControlViewManager(),
       )
   }
 

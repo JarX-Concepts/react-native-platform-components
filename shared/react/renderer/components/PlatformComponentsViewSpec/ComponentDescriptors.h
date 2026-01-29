@@ -7,3 +7,4 @@
 // Include our custom component descriptors which use measuring shadow nodes
 #include "PCSelectionMenuComponentDescriptors-custom.h"
 #include "PCDatePickerComponentDescriptors-custom.h"
+#include "PCSegmentedControlComponentDescriptors-custom.h"
