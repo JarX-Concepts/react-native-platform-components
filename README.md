@@ -13,32 +13,32 @@ This library focuses on **true native behavior**, not JavaScript re-implementati
     <td align="center"><strong>Android DatePicker</strong></td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="450" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="450" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" height="550" /></td>
   </tr>
   <tr>
     <td align="center"><strong>iOS ContextMenu</strong></td>
     <td align="center"><strong>Android ContextMenu</strong></td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="450" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="450" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="550" /></td>
   </tr>
   <tr>
     <td align="center"><strong>iOS SelectionMenu</strong></td>
     <td align="center"><strong>Android SelectionMenu</strong></td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="450" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="450" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="550" /></td>
   </tr>
   <tr>
     <td align="center"><strong>iOS SegmentedControl</strong></td>
     <td align="center"><strong>Android SegmentedControl</strong></td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="450" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="450" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="550" /></td>
   </tr>
 </table>
 
