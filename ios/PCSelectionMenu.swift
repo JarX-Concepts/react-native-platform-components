@@ -462,7 +462,7 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         // Use liquid glass on iOS 26+, fall back to system material blur on older versions
         let effectView: UIVisualEffectView
         if #available(iOS 26, *) {
-            var glassEffect = UIGlassEffect()
+            let glassEffect = UIGlassEffect()
             glassEffect.isInteractive = true
             effectView = UIVisualEffectView(effect: glassEffect)
         } else {

@@ -37,25 +37,26 @@ fi
 echo "iOS artifacts: $IOS_ARTIFACTS"
 echo "Android artifacts: $ANDROID_ARTIFACTS"
 
-# Locate the 8 video files
+# Locate the 9 video files (LiquidGlass is iOS-only)
 IOS_DATEPICKER="$IOS_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
 IOS_SELECTIONMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
 IOS_CONTEXTMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
 IOS_SEGMENTEDCONTROL="$IOS_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
+IOS_LIQUIDGLASS="$IOS_ARTIFACTS/✓ Platform Components Example should test Liquid Glass functionality/test.mp4"
 ANDROID_DATEPICKER="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
 ANDROID_SELECTIONMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
 ANDROID_CONTEXTMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
 ANDROID_SEGMENTEDCONTROL="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
 
-# Verify all files exist
-for f in "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL"; do
+# Verify all files exist (LiquidGlass is iOS-only, no Android video)
+for f in "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_LIQUIDGLASS" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL"; do
     if [ ! -f "$f" ]; then
         echo "Error: Video file not found: $f"
         exit 1
     fi
 done
 
-echo "All 8 videos found!"
+echo "All 9 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -91,13 +92,13 @@ convert_to_gif() {
     echo "  Done: $output ($size)"
 }
 
-# Convert all 8 videos to GIFs
-# iOS Selection Menu and Android Selection Menu need first 3 seconds trimmed
-# Context Menu and Segmented Control tests also start with navigation, so trim first 3 seconds
+# Convert all 9 videos to GIFs (LiquidGlass is iOS-only)
+# Tests that navigate from DatePicker need first 3 seconds trimmed
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
 convert_to_gif "$IOS_SELECTIONMENU" "$ASSETS_DIR/ios-selectionmenu.gif" "3"
 convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "3"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "3"
+convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "3"
 convert_to_gif "$ANDROID_DATEPICKER" "$ASSETS_DIR/android-datepicker.gif" ""
 convert_to_gif "$ANDROID_SELECTIONMENU" "$ASSETS_DIR/android-selectionmenu.gif" "3"
 convert_to_gif "$ANDROID_CONTEXTMENU" "$ASSETS_DIR/android-contextmenu.gif" "3"

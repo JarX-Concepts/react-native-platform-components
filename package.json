@@ -1,7 +1,7 @@
 {
   "name": "react-native-platform-components",
   "version": "0.7.0",
-  "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl.",
+  "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, LiquidGlass.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/commonjs/src/index.d.ts",
@@ -78,7 +78,9 @@
     "segmentedcontrol",
     "tabs",
     "segmented-buttons",
-    "segmentedbuttons"
+    "segmentedbuttons",
+    "liquid-glass",
+    "liquidglass"
   ],
   "repository": {
     "type": "git",
@@ -163,7 +165,8 @@
         "PCSelectionMenu": "PCSelectionMenu",
         "PCDatePicker": "PCDatePicker",
         "PCContextMenu": "PCContextMenu",
-        "PCSegmentedControl": "PCSegmentedControl"
+        "PCSegmentedControl": "PCSegmentedControl",
+        "PCLiquidGlass": "PCLiquidGlass"
       }
     }
   },
