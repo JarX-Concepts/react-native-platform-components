@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
