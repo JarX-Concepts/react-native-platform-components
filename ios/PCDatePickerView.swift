@@ -283,30 +283,33 @@ public final class PCDatePickerView: UIControl,
         // Prevent "settle" events right as we present.
         suppressNextChangesBriefly()
 
-        // Check if using inline style (full calendar) - needs larger popover size
-        var isInlineStyle = false
-        if #available(iOS 13.4, *) {
-            isInlineStyle = picker.preferredDatePickerStyle == .inline
-        }
-
         let vc = UIViewController()
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
 
-        // For inline style, use system background and constrain all edges
-        // For other styles, use clear background and only top/leading constraints
-        if isInlineStyle {
+        let useInlineFallback: Bool
+        if #available(iOS 26.0, *) {
+            useInlineFallback = false
+        } else {
+            useInlineFallback = true
+        }
+
+        if useInlineFallback {
+            // Pre–Liquid Glass fallback
             vc.view.backgroundColor = .systemBackground
             vc.view.isOpaque = true
+
             NSLayoutConstraint.activate([
-                picker.topAnchor.constraint(equalTo: vc.view.topAnchor, constant: 8),
-                picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 8),
-                picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -8),
-                picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor, constant: -8),
+                picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
+                picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+                picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+                picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor),
             ])
         } else {
+            // Liquid Glass path
             vc.view.backgroundColor = .clear
             vc.view.isOpaque = false
+
             NSLayoutConstraint.activate([
                 picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
                 picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
