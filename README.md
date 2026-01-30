@@ -775,17 +775,6 @@ This is intentional. The goal is native fidelity, not pixel-level customization.
 
 > **Tip:** Use Google's [Material Theme Builder](https://m3.material.io/theme-builder) to generate a complete color scheme.
 
-**3. Ensure `MainActivity` extends `AppCompatActivity`:**
-
-```kotlin
-// MainActivity.kt
-import androidx.appcompat.app.AppCompatActivity
-
-class MainActivity : AppCompatActivity() {
-    // ...
-}
-```
-
 ### Common Crash Scenarios
 
 #### Crash: `Cannot find theme attribute materialButtonOutlinedStyle`
