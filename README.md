@@ -704,7 +704,7 @@ This is intentional. The goal is native fidelity, not pixel-level customization.
 
 ## Android Theme Configuration
 
-> **⚠️ Your app will hard crash if you skip this section.** Android components require specific theme configuration. Components will crash immediately on mount if the required theme attributes are missing.
+> **⚠️ Your app may hard crash if you skip this section.** Android components require specific theme configuration. Components can crash immediately on mount if the required theme attributes are missing.
 
 ### Theme Requirements by Component
 
