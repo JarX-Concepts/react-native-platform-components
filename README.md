@@ -7,6 +7,8 @@ High-quality **native UI components for React Native**, implemented with platfor
 
 This library focuses on **true native behavior**, not JavaScript re-implementations.
 
+**Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
+
 <table>
   <tr>
     <td align="center"><strong>iOS DatePicker</strong></td>
@@ -115,12 +117,11 @@ eas build --platform android
 **Config Plugin:**
 
 Add to your `app.json`:
+
 ```json
 {
   "expo": {
-    "plugins": [
-      ["react-native-platform-components/app.plugin", {}]
-    ]
+    "plugins": [["react-native-platform-components/app.plugin", {}]]
   }
 }
 ```
@@ -133,18 +134,20 @@ For a complete working example, see the [`example-expo/`](./example-expo) direct
 
 This library is built for the **React Native New Architecture** (Fabric + TurboModules).
 
-| Feature | Status |
-|---------|--------|
-| Fabric (New Renderer) | Supported |
-| Codegen | Used for type-safe native bindings |
-| TurboModules | N/A (view components only) |
-| Old Architecture | Not supported |
+| Feature               | Status                             |
+| --------------------- | ---------------------------------- |
+| Fabric (New Renderer) | Supported                          |
+| Codegen               | Used for type-safe native bindings |
+| TurboModules          | N/A (view components only)         |
+| Old Architecture      | Not supported                      |
 
 **Tested with:**
+
 - React Native 0.81+ (bare and Expo)
 - Expo SDK 54+
 
 **Requirements:**
+
 - New Architecture must be enabled in your app
 - For bare React Native: set `newArchEnabled=true` in `gradle.properties` (Android) and use the `RCT_NEW_ARCH_ENABLED` flag (iOS)
 - For Expo: set `"newArchEnabled": true` in `app.json`
@@ -176,8 +179,8 @@ export function Example() {
           setVisible(false);
         }}
         onClosed={() => setVisible(false)}
-        ios={{preferredStyle: 'inline'}}
-        android={{material: 'system'}}
+        ios={{ preferredStyle: 'inline' }}
+        android={{ material: 'system' }}
       />
     </>
   );
@@ -198,8 +201,8 @@ export function Example() {
       presentation="embedded"
       mode="date"
       onConfirm={(d) => setDate(d)}
-      ios={{preferredStyle: 'inline'}}
-      android={{material: 'system'}}
+      ios={{ preferredStyle: 'inline' }}
+      android={{ material: 'system' }}
     />
   );
 }
@@ -239,7 +242,9 @@ export function Example() {
       ]}
       onPressAction={(id, title) => setLastAction(title)}
     >
-      <View style={{ padding: 20, backgroundColor: '#E8F4FD', borderRadius: 8 }}>
+      <View
+        style={{ padding: 20, backgroundColor: '#E8F4FD', borderRadius: 8 }}
+      >
         <Text>Long-press me</Text>
       </View>
     </ContextMenu>
@@ -400,18 +405,30 @@ export function Example() {
 ### LiquidGlass
 
 ```tsx
-import { LiquidGlass, isLiquidGlassSupported } from 'react-native-platform-components';
+import {
+  LiquidGlass,
+  isLiquidGlassSupported,
+} from 'react-native-platform-components';
 import { View, Text, Image } from 'react-native';
 
 export function Example() {
   return (
     <View style={{ flex: 1 }}>
       {/* Background content */}
-      <Image source={{ uri: 'https://example.com/photo.jpg' }} style={{ flex: 1 }} />
+      <Image
+        source={{ uri: 'https://example.com/photo.jpg' }}
+        style={{ flex: 1 }}
+      />
 
       {/* Glass effect overlay */}
       <LiquidGlass
-        style={{ position: 'absolute', top: 50, left: 20, right: 20, padding: 20 }}
+        style={{
+          position: 'absolute',
+          top: 50,
+          left: 20,
+          right: 20,
+          padding: 20,
+        }}
         cornerRadius={20}
         ios={{
           effect: 'regular',
@@ -441,37 +458,37 @@ Native date & time picker using **platform system pickers**.
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `date` | `Date \| null` | Controlled date value |
-| `minDate` | `Date \| null` | Minimum selectable date |
-| `maxDate` | `Date \| null` | Maximum selectable date |
-| `locale` | `string` | Locale identifier (e.g., `'en-US'`) |
-| `timeZoneName` | `string` | Time zone identifier |
-| `mode` | `'date' \| 'time' \| 'dateAndTime' \| 'countDownTimer'` | Picker mode |
-| `presentation` | `'modal' \| 'embedded'` | Presentation style |
-| `visible` | `boolean` | Controls modal visibility (modal mode only) |
-| `onConfirm` | `(date: Date) => void` | Called when user confirms selection |
-| `onClosed` | `() => void` | Called when modal is dismissed |
+| Prop           | Type                                                    | Description                                 |
+| -------------- | ------------------------------------------------------- | ------------------------------------------- |
+| `date`         | `Date \| null`                                          | Controlled date value                       |
+| `minDate`      | `Date \| null`                                          | Minimum selectable date                     |
+| `maxDate`      | `Date \| null`                                          | Maximum selectable date                     |
+| `locale`       | `string`                                                | Locale identifier (e.g., `'en-US'`)         |
+| `timeZoneName` | `string`                                                | Time zone identifier                        |
+| `mode`         | `'date' \| 'time' \| 'dateAndTime' \| 'countDownTimer'` | Picker mode                                 |
+| `presentation` | `'modal' \| 'embedded'`                                 | Presentation style                          |
+| `visible`      | `boolean`                                               | Controls modal visibility (modal mode only) |
+| `onConfirm`    | `(date: Date) => void`                                  | Called when user confirms selection         |
+| `onClosed`     | `() => void`                                            | Called when modal is dismissed              |
 
 ### iOS Props (`ios`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `preferredStyle` | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style |
-| `countDownDurationSeconds` | `number` | Duration for countdown timer mode |
-| `minuteInterval` | `number` | Minute interval (1-30) |
-| `roundsToMinuteInterval` | `'inherit' \| 'round' \| 'noRound'` | Rounding behavior |
+| Prop                       | Type                                               | Description                       |
+| -------------------------- | -------------------------------------------------- | --------------------------------- |
+| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style             |
+| `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode |
+| `minuteInterval`           | `number`                                           | Minute interval (1-30)            |
+| `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                 |
 
 ### Android Props (`android`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `firstDayOfWeek` | `number` | First day of week (1-7, Sunday=1) |
-| `material` | `'system' \| 'm3'` | Material Design style (modal only; embedded always uses system picker) |
-| `dialogTitle` | `string` | Custom dialog title |
-| `positiveButtonTitle` | `string` | Custom confirm button text |
-| `negativeButtonTitle` | `string` | Custom cancel button text |
+| Prop                  | Type               | Description                                                            |
+| --------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `firstDayOfWeek`      | `number`           | First day of week (1-7, Sunday=1)                                      |
+| `material`            | `'system' \| 'm3'` | Material Design style (modal only; embedded always uses system picker) |
+| `dialogTitle`         | `string`           | Custom dialog title                                                    |
+| `positiveButtonTitle` | `string`           | Custom confirm button text                                             |
+| `negativeButtonTitle` | `string`           | Custom cancel button text                                              |
 
 ---
 
@@ -481,42 +498,42 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `title` | `string` | Menu title (shown as header on iOS) |
-| `actions` | `ContextMenuAction[]` | Array of menu actions |
-| `disabled` | `boolean` | Disables the menu |
-| `trigger` | `'longPress' \| 'tap'` | How the menu opens (default: `'longPress'`) |
-| `onPressAction` | `(actionId, actionTitle) => void` | Called when user selects an action |
-| `onMenuOpen` | `() => void` | Called when menu opens |
-| `onMenuClose` | `() => void` | Called when menu closes |
-| `children` | `ReactNode` | Content to wrap (required) |
+| Prop            | Type                              | Description                                 |
+| --------------- | --------------------------------- | ------------------------------------------- |
+| `title`         | `string`                          | Menu title (shown as header on iOS)         |
+| `actions`       | `ContextMenuAction[]`             | Array of menu actions                       |
+| `disabled`      | `boolean`                         | Disables the menu                           |
+| `trigger`       | `'longPress' \| 'tap'`            | How the menu opens (default: `'longPress'`) |
+| `onPressAction` | `(actionId, actionTitle) => void` | Called when user selects an action          |
+| `onMenuOpen`    | `() => void`                      | Called when menu opens                      |
+| `onMenuClose`   | `() => void`                      | Called when menu closes                     |
+| `children`      | `ReactNode`                       | Content to wrap (required)                  |
 
 ### ContextMenuAction
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `string` | Unique identifier returned in callbacks |
-| `title` | `string` | Display text |
-| `subtitle` | `string` | Secondary text (iOS only) |
-| `image` | `string` | Icon name (SF Symbol on iOS, drawable on Android) |
-| `imageColor` | `string` | Tint color for the icon (hex string) |
-| `attributes` | `{ destructive?, disabled?, hidden? }` | Action attributes |
-| `state` | `'off' \| 'on' \| 'mixed'` | Checkmark state |
-| `subactions` | `ContextMenuAction[]` | Nested actions for submenu |
+| Property     | Type                                   | Description                                       |
+| ------------ | -------------------------------------- | ------------------------------------------------- |
+| `id`         | `string`                               | Unique identifier returned in callbacks           |
+| `title`      | `string`                               | Display text                                      |
+| `subtitle`   | `string`                               | Secondary text (iOS only)                         |
+| `image`      | `string`                               | Icon name (SF Symbol on iOS, drawable on Android) |
+| `imageColor` | `string`                               | Tint color for the icon (hex string)              |
+| `attributes` | `{ destructive?, disabled?, hidden? }` | Action attributes                                 |
+| `state`      | `'off' \| 'on' \| 'mixed'`             | Checkmark state                                   |
+| `subactions` | `ContextMenuAction[]`                  | Nested actions for submenu                        |
 
 ### iOS Props (`ios`)
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop            | Type      | Description                       |
+| --------------- | --------- | --------------------------------- |
 | `enablePreview` | `boolean` | Enable preview when long-pressing |
 
 ### Android Props (`android`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `anchorPosition` | `'left' \| 'right'` | Anchor position for the popup menu |
-| `visible` | `boolean` | Programmatic visibility control (Android only) |
+| Prop             | Type                | Description                                    |
+| ---------------- | ------------------- | ---------------------------------------------- |
+| `anchorPosition` | `'left' \| 'right'` | Anchor position for the popup menu             |
+| `visible`        | `boolean`           | Programmatic visibility control (Android only) |
 
 ### Trigger Modes
 
@@ -537,17 +554,17 @@ Native selection menu with **modal** and **embedded** modes.
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `options` | `{ label: string; data: string }[]` | Array of options to display |
-| `selected` | `string \| null` | Currently selected option's `data` value |
-| `disabled` | `boolean` | Disables the menu |
-| `placeholder` | `string` | Placeholder text when no selection |
-| `presentation` | `'modal' \| 'embedded'` | Presentation mode (default: `'modal'`) |
-| `visible` | `boolean` | Controls modal mode menu visibility |
-| `onSelect` | `(data, label, index) => void` | Called when user selects an option |
-| `onRequestClose` | `() => void` | Called when menu is dismissed without selection |
-| `android.material` | `'system' \| 'm3'` | Material Design style preference |
+| Prop               | Type                                | Description                                     |
+| ------------------ | ----------------------------------- | ----------------------------------------------- |
+| `options`          | `{ label: string; data: string }[]` | Array of options to display                     |
+| `selected`         | `string \| null`                    | Currently selected option's `data` value        |
+| `disabled`         | `boolean`                           | Disables the menu                               |
+| `placeholder`      | `string`                            | Placeholder text when no selection              |
+| `presentation`     | `'modal' \| 'embedded'`             | Presentation mode (default: `'modal'`)          |
+| `visible`          | `boolean`                           | Controls modal mode menu visibility             |
+| `onSelect`         | `(data, label, index) => void`      | Called when user selects an option              |
+| `onRequestClose`   | `() => void`                        | Called when menu is dismissed without selection |
+| `android.material` | `'system' \| 'm3'`                  | Material Design style preference                |
 
 ### Modes
 
@@ -564,39 +581,40 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `segments` | `SegmentedControlSegment[]` | Array of segments to display |
-| `selectedValue` | `string \| null` | Currently selected segment's `value` |
-| `disabled` | `boolean` | Disables the entire control |
-| `onSelect` | `(value: string, index: number) => void` | Called when user selects a segment |
+| Prop            | Type                                     | Description                          |
+| --------------- | ---------------------------------------- | ------------------------------------ |
+| `segments`      | `SegmentedControlSegment[]`              | Array of segments to display         |
+| `selectedValue` | `string \| null`                         | Currently selected segment's `value` |
+| `disabled`      | `boolean`                                | Disables the entire control          |
+| `onSelect`      | `(value: string, index: number) => void` | Called when user selects a segment   |
 
 ### SegmentedControlSegment
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `label` | `string` | Display text for the segment |
-| `value` | `string` | Unique value returned in callbacks |
-| `disabled` | `boolean` | Disables this specific segment |
-| `icon` | `string` | Icon name (SF Symbol on iOS, drawable on Android) |
+| Property   | Type      | Description                                       |
+| ---------- | --------- | ------------------------------------------------- |
+| `label`    | `string`  | Display text for the segment                      |
+| `value`    | `string`  | Unique value returned in callbacks                |
+| `disabled` | `boolean` | Disables this specific segment                    |
+| `icon`     | `string`  | Icon name (SF Symbol on iOS, drawable on Android) |
 
 ### iOS Props (`ios`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `momentary` | `boolean` | If true, segments don't show selected state |
+| Prop                               | Type      | Description                                         |
+| ---------------------------------- | --------- | --------------------------------------------------- |
+| `momentary`                        | `boolean` | If true, segments don't show selected state         |
 | `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content |
-| `selectedSegmentTintColor` | `string` | Tint color for selected segment (hex string) |
+| `selectedSegmentTintColor`         | `string`  | Tint color for selected segment (hex string)        |
 
 ### Android Props (`android`)
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop                | Type      | Description                                  |
+| ------------------- | --------- | -------------------------------------------- |
 | `selectionRequired` | `boolean` | If true, one segment must always be selected |
 
 ### Icon Support
 
 Icons work the same as ContextMenu:
+
 - **iOS**: Use SF Symbol names (e.g., `'list.bullet'`, `'square.grid.2x2'`)
 - **Android**: Use drawable resource names (e.g., `'list_bullet'`, `'grid_view'`)
 
@@ -610,32 +628,32 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 
 ### Props
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `cornerRadius` | `number` | Corner radius for the glass effect (default: `0`) |
-| `children` | `ReactNode` | Content to render inside the glass container |
+| Prop           | Type        | Description                                       |
+| -------------- | ----------- | ------------------------------------------------- |
+| `cornerRadius` | `number`    | Corner radius for the glass effect (default: `0`) |
+| `children`     | `ReactNode` | Content to render inside the glass container      |
 
 ### iOS Props (`ios`)
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `effect` | `'clear' \| 'regular' \| 'none'` | Glass effect intensity (default: `'regular'`) |
-| `interactive` | `boolean` | Enable touch interaction feedback (default: `false`) |
-| `tintColor` | `string` | Overlay tint color (hex string) |
-| `colorScheme` | `'light' \| 'dark' \| 'system'` | Appearance mode (default: `'system'`) |
-| `shadowRadius` | `number` | Shadow/glow radius (default: `20`) |
-| `isHighlighted` | `boolean` | Manual highlight state control |
+| Prop            | Type                             | Description                                          |
+| --------------- | -------------------------------- | ---------------------------------------------------- |
+| `effect`        | `'clear' \| 'regular' \| 'none'` | Glass effect intensity (default: `'regular'`)        |
+| `interactive`   | `boolean`                        | Enable touch interaction feedback (default: `false`) |
+| `tintColor`     | `string`                         | Overlay tint color (hex string)                      |
+| `colorScheme`   | `'light' \| 'dark' \| 'system'`  | Appearance mode (default: `'system'`)                |
+| `shadowRadius`  | `number`                         | Shadow/glow radius (default: `20`)                   |
+| `isHighlighted` | `boolean`                        | Manual highlight state control                       |
 
 ### Android Props (`android`)
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop                      | Type     | Description                                    |
+| ------------------------- | -------- | ---------------------------------------------- |
 | `fallbackBackgroundColor` | `string` | Background color when glass effect unavailable |
 
 ### Constants
 
-| Export | Type | Description |
-|--------|------|-------------|
+| Export                   | Type      | Description                          |
+| ------------------------ | --------- | ------------------------------------ |
 | `isLiquidGlassSupported` | `boolean` | `true` on iOS 26+, `false` otherwise |
 
 ### Effect Modes
@@ -646,13 +664,13 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 
 ### Platform Behavior
 
-| Platform | iOS 26+ | iOS < 26 | Android |
-|----------|---------|----------|---------|
-| Glass Effect | Full glass morphism | No effect | No effect |
-| Corner Radius | Applied | Applied | Applied |
-| Tint Color | Supported | Ignored | Ignored |
-| Interactive | Supported | Ignored | Ignored |
-| Fallback BG | N/A | Transparent | Configurable |
+| Platform      | iOS 26+             | iOS < 26    | Android      |
+| ------------- | ------------------- | ----------- | ------------ |
+| Glass Effect  | Full glass morphism | No effect   | No effect    |
+| Corner Radius | Applied             | Applied     | Applied      |
+| Tint Color    | Supported           | Ignored     | Ignored      |
+| Interactive   | Supported           | Ignored     | Ignored      |
+| Fallback BG   | N/A                 | Transparent | Configurable |
 
 ### Usage Tips
 
@@ -694,11 +712,11 @@ Use [SF Symbols](https://developer.apple.com/sf-symbols/) names. These are built
 
 ```tsx
 // Common SF Symbols
-image: 'doc.on.doc'        // Copy
-image: 'square.and.arrow.up' // Share
-image: 'trash'             // Delete
-image: 'pencil'            // Edit
-image: 'checkmark.circle'  // Checkmark
+image: 'doc.on.doc'; // Copy
+image: 'square.and.arrow.up'; // Share
+image: 'trash'; // Delete
+image: 'pencil'; // Edit
+image: 'checkmark.circle'; // Checkmark
 ```
 
 Browse available symbols using Apple's SF Symbols app or [sfsymbols.com](https://sfsymbols.com).
@@ -709,9 +727,9 @@ Use drawable resource names from your app's `res/drawable` directory. You must a
 
 ```tsx
 // Reference drawable by name (without extension)
-image: 'content_copy'  // res/drawable/content_copy.xml
-image: 'share'         // res/drawable/share.xml
-image: 'delete'        // res/drawable/delete.xml
+image: 'content_copy'; // res/drawable/content_copy.xml
+image: 'share'; // res/drawable/share.xml
+image: 'delete'; // res/drawable/delete.xml
 ```
 
 **Adding drawable resources:**
@@ -767,8 +785,18 @@ const actions = [
 
 See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
 
-**Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
-
 ## License
 
 MIT
+
+---
+
+## Author
+
+**Andrew Tosh** — Santa Barbara, California
+
+Full-stack developer with deep experience across entertainment and defense industries, specializing in simulation, visualization, and cross-platform mobile development. Technical focus areas include React Native, Rust, GPU optimization, real-time 3D visualization, and game engine technologies.
+
+**Available for contract work** — Always interested in connecting with new clients for mobile development, visualization systems, and related projects.
+
+[LinkedIn](https://www.linkedin.com/in/atosh/) · [JarX Concepts](https://github.com/JarX-Concepts)
