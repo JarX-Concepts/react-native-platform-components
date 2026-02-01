@@ -4,10 +4,20 @@
   "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, LiquidGlass.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
+  "browser": "./lib/module/index.web.js",
+  "react-native": "./lib/module/index.js",
   "types": "./lib/typescript/commonjs/src/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.tsx",
+      "browser": {
+        "types": "./lib/typescript/module/src/index.web.d.ts",
+        "default": "./lib/module/index.web.js"
+      },
+      "react-native": {
+        "types": "./lib/typescript/module/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
       "import": {
         "types": "./lib/typescript/module/src/index.d.ts",
         "default": "./lib/module/index.js"
