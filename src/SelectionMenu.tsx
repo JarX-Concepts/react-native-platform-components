@@ -7,6 +7,8 @@ import NativeSelectionMenu, {
   type SelectionMenuSelectEvent,
 } from './SelectionMenuNativeComponent';
 
+export type { SelectionMenuOption };
+
 import type { AndroidMaterialMode, Presentation } from './sharedTypes';
 
 export interface SelectionMenuProps extends ViewProps {
