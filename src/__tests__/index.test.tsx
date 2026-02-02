@@ -205,8 +205,6 @@ describe('LiquidGlass', () => {
             interactive: true,
             tintColor: '#FF0000',
             colorScheme: 'dark',
-            shadowRadius: 25,
-            isHighlighted: false,
           }}
         />
       );

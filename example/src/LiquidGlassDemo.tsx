@@ -38,7 +38,6 @@ export function LiquidGlassDemo(): React.JSX.Element {
     useState<LiquidGlassColorScheme>('system');
   const [tintColor, setTintColor] = useState('');
   const [cornerRadius, setCornerRadius] = useState(20);
-  const [shadowRadius, setShadowRadius] = useState(20);
 
   const effectOptions = useMemo(() => EFFECT_OPTIONS, []);
   const colorSchemeOptions = useMemo(() => COLOR_SCHEME_OPTIONS, []);
@@ -51,16 +50,6 @@ export function LiquidGlassDemo(): React.JSX.Element {
       { label: '20', data: '20' },
       { label: '30', data: '30' },
       { label: '50', data: '50' },
-    ],
-    []
-  );
-
-  const shadowRadiusOptions = useMemo(
-    () => [
-      { label: '0', data: '0' },
-      { label: '10', data: '10' },
-      { label: '20', data: '20' },
-      { label: '40', data: '40' },
     ],
     []
   );
@@ -93,7 +82,6 @@ export function LiquidGlassDemo(): React.JSX.Element {
               interactive,
               colorScheme,
               tintColor: tintColor || undefined,
-              shadowRadius,
             }}
             android={{
               fallbackBackgroundColor: '#FFFFFF80',
@@ -121,7 +109,6 @@ export function LiquidGlassDemo(): React.JSX.Element {
               interactive,
               colorScheme,
               tintColor: tintColor || undefined,
-              shadowRadius: shadowRadius / 2,
             }}
             android={{
               fallbackBackgroundColor: '#FFFFFF60',
@@ -185,20 +172,6 @@ export function LiquidGlassDemo(): React.JSX.Element {
               presentation="embedded"
               placeholder={tintColorLabel}
               onSelect={(data) => setTintColor(data)}
-            />
-          </Row>
-
-          <Divider />
-
-          <Row label="Shadow Radius">
-            <SelectionMenu
-              testID="shadow-radius-menu"
-              style={ui.fullFlex}
-              options={shadowRadiusOptions}
-              selected={String(shadowRadius)}
-              presentation="embedded"
-              placeholder="Shadow"
-              onSelect={(data) => setShadowRadius(Number(data))}
             />
           </Row>
         </Section>

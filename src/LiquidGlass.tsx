@@ -70,20 +70,6 @@ export interface LiquidGlassProps extends ViewProps {
      * @default 'system'
      */
     colorScheme?: LiquidGlassColorScheme;
-
-    /**
-     * Shadow radius for the glass effect glow.
-     * Higher values create a more diffuse shadow.
-     * @default 20
-     */
-    shadowRadius?: number;
-
-    /**
-     * @deprecated Use `interactive` instead for native touch-based highlighting.
-     * This prop is a no-op on iOS 26+ where UIGlassEffect handles touch feedback.
-     * @default false
-     */
-    isHighlighted?: boolean;
   };
 
   /**
@@ -133,8 +119,6 @@ export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
       interactive: ios.interactive ? 'true' : 'false',
       tintColor: ios.tintColor,
       colorScheme: ios.colorScheme,
-      shadowRadius: ios.shadowRadius,
-      isHighlighted: ios.isHighlighted ? 'true' : 'false',
     };
   }, [ios]);
 

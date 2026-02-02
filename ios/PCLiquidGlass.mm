@@ -61,6 +61,7 @@ using namespace facebook::react;
   [childComponentView removeFromSuperview];
 }
 
+
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &newProps =
@@ -113,16 +114,6 @@ using namespace facebook::react;
       _view.colorScheme = @"system";
     }
     needsSetup = YES;
-  }
-
-  // shadowRadius -> glassShadowRadius
-  if (!prevProps || newIos.shadowRadius != oldIos.shadowRadius) {
-    _view.glassShadowRadius = newIos.shadowRadius;
-  }
-
-  // isHighlighted
-  if (!prevProps || newIos.isHighlighted != oldIos.isHighlighted) {
-    _view.isHighlighted = (newIos.isHighlighted == "true");
   }
 
   // Apply glass effect if any glass-related props changed

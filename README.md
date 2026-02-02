@@ -641,8 +641,6 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 | `interactive`   | `boolean`                        | Enable touch interaction feedback (default: `false`) |
 | `tintColor`     | `string`                         | Overlay tint color (hex string)                      |
 | `colorScheme`   | `'light' \| 'dark' \| 'system'`  | Appearance mode (default: `'system'`)                |
-| `shadowRadius`  | `number`                         | Shadow/glow radius (default: `20`)                   |
-| `isHighlighted` | `boolean`                        | Manual highlight state control                       |
 
 ### Android Props (`android`)
 
@@ -699,6 +697,35 @@ This library does not expose theming props. Components inherit their appearance 
 - **Android**: Components respect your app's Material Theme. Customize via your `styles.xml` or Material 3 theme configuration.
 
 This is intentional. The goal is native fidelity, not pixel-level customization. If you need custom styling beyond what the platform theme provides, this library may not be the right fit.
+
+---
+
+## Color Formats
+
+All color props in this library support the same formats as React Native's `backgroundColor`:
+
+| Format | Example | Description |
+| --- | --- | --- |
+| Hex | `#RGB`, `#RRGGBB`, `#RRGGBBAA` | Standard hex colors |
+| RGB | `rgb(255, 0, 0)` | RGB values (0-255) |
+| RGBA | `rgba(255, 0, 0, 0.5)` | RGB with alpha (0-1) |
+| HSL | `hsl(0, 100%, 50%)` | Hue (0-360), saturation, lightness |
+| HSLA | `hsla(0, 100%, 50%, 0.5)` | HSL with alpha (0-1) |
+| Named | `red`, `steelblue`, `transparent` | CSS named colors |
+
+**Props that accept colors:**
+
+- `ContextMenu`: `imageColor` (icon tint)
+- `SegmentedControl`: `ios.selectedSegmentTintColor`
+- `LiquidGlass`: `ios.tintColor`, `android.fallbackBackgroundColor`
+
+```tsx
+// All of these are equivalent
+<ContextMenu actions={[{ id: '1', title: 'Red', imageColor: '#FF0000' }]} />
+<ContextMenu actions={[{ id: '1', title: 'Red', imageColor: 'rgb(255, 0, 0)' }]} />
+<ContextMenu actions={[{ id: '1', title: 'Red', imageColor: 'hsl(0, 100%, 50%)' }]} />
+<ContextMenu actions={[{ id: '1', title: 'Red', imageColor: 'red' }]} />
+```
 
 ---
 
