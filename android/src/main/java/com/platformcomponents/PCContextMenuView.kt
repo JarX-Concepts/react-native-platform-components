@@ -390,22 +390,11 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   private fun tintDrawable(drawable: Drawable, colorString: String?): Drawable {
     if (colorString.isNullOrEmpty()) return drawable
 
-    val color = parseColor(colorString) ?: return drawable
+    val color = ColorParser.parse(colorString) ?: return drawable
 
     val wrappedDrawable = DrawableCompat.wrap(drawable.mutate())
     DrawableCompat.setTint(wrappedDrawable, color)
     return wrappedDrawable
-  }
-
-  private fun parseColor(colorString: String): Int? {
-    return try {
-      // Support hex colors like "#FF0000" or "FF0000"
-      val hex = if (colorString.startsWith("#")) colorString else "#$colorString"
-      Color.parseColor(hex)
-    } catch (e: Exception) {
-      Log.d(TAG, "Failed to parse color: $colorString")
-      null
-    }
   }
 
   override fun onDetachedFromWindow() {

@@ -3,7 +3,6 @@ package com.platformcomponents
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.view.View
 import android.widget.FrameLayout
 
 /**
@@ -38,7 +37,7 @@ class PCLiquidGlassView(context: Context) : FrameLayout(context) {
     }
 
     private fun updateBackground() {
-        val bgColor = fallbackBackgroundColor?.let { parseColor(it) }
+        val bgColor = fallbackBackgroundColor?.let { ColorParser.parse(it) }
 
         if (cornerRadius > 0 || bgColor != null) {
             val drawable = GradientDrawable().apply {
@@ -52,26 +51,6 @@ class PCLiquidGlassView(context: Context) : FrameLayout(context) {
         } else {
             background = null
             clipToOutline = false
-        }
-    }
-
-    private fun parseColor(colorString: String): Int? {
-        return try {
-            var sanitized = colorString.trim()
-            if (!sanitized.startsWith("#")) {
-                sanitized = "#$sanitized"
-            }
-
-            // Handle #RRGGBBAA format (web/CSS style) by converting to #AARRGGBB (Android style)
-            if (sanitized.length == 9) {
-                val rrggbb = sanitized.substring(1, 7)
-                val aa = sanitized.substring(7, 9)
-                sanitized = "#$aa$rrggbb"
-            }
-
-            Color.parseColor(sanitized)
-        } catch (e: Exception) {
-            null
         }
     }
 

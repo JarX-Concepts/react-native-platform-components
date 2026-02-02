@@ -46,17 +46,6 @@ export type LiquidGlassIOSProps = Readonly<{
    * @default 'system'
    */
   colorScheme?: string; // LiquidGlassColorScheme
-
-  /**
-   * Shadow radius for the glass effect.
-   * @default 20
-   */
-  shadowRadius?: CodegenTypes.Float;
-
-  /**
-   * Whether the view is highlighted (pressed state).
-   */
-  isHighlighted?: string; // 'true' | 'false'
 }>;
 
 /**
