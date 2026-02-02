@@ -21,7 +21,7 @@ export type {
  * Use this to conditionally render fallback UI on unsupported devices.
  */
 export const isLiquidGlassSupported: boolean =
-  Platform.OS === 'ios' && Number(Platform.Version) >= 26;
+  Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 26;
 
 export interface LiquidGlassProps extends ViewProps {
   /**
