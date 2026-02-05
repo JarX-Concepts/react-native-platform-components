@@ -332,7 +332,7 @@ public final class PCDatePickerView: UIControl,
                 height: max(bounds.height, 44)
             )
             pop.sourceRect = sourceRect
-            pop.permittedArrowDirections = [.up, .down]
+            pop.permittedArrowDirections = []
         }
 
         modalVC = vc
