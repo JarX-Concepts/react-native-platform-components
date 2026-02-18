@@ -29,7 +29,8 @@ using namespace facebook::react;
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     _view = [[PCLiquidGlassView alloc] initWithEffect:nil];
-    self.contentView = _view;
+    _view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self addSubview:_view];
 
     // Set up press callback
     __weak __typeof(self) weakSelf = self;
