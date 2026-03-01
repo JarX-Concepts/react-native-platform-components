@@ -101,6 +101,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
       <Section title="Controls">
         <Row label="Disabled">
           <Switch
+            style={ui.alignEnd}
             testID="disabled-switch"
             value={disabled}
             onValueChange={setDisabled}
@@ -112,6 +113,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
             <Divider />
             <Row label="Momentary">
               <Switch
+                style={ui.alignEnd}
                 testID="momentary-switch"
                 value={momentary}
                 onValueChange={setMomentary}
@@ -120,6 +122,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
             <Divider />
             <Row label="Proportional">
               <Switch
+                style={ui.alignEnd}
                 testID="proportional-switch"
                 value={proportional}
                 onValueChange={setProportional}

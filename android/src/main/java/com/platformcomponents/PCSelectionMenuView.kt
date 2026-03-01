@@ -178,16 +178,23 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val inlineWidget: View? = inlineLayout ?: inlineSpinner
     if (inlineWidget == null) return
 
-    // Measure the widget with exact width and unspecified height
-    val widthSpec = MeasureSpec.makeMeasureSpec(width.coerceAtLeast(1), MeasureSpec.EXACTLY)
+    val density = resources.displayMetrics.density
+
+    // Use AT_MOST with a large upper bound rather than UNSPECIFIED.
+    // TextInputLayout (and other composite views) can return incorrect
+    // intrinsic widths with UNSPECIFIED because their children don't
+    // handle that mode reliably. AT_MOST mirrors normal layout behavior.
+    val maxPx = (10000 * density).toInt()
+    val widthSpec = MeasureSpec.makeMeasureSpec(maxPx, MeasureSpec.AT_MOST)
     val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     inlineWidget.measure(widthSpec, heightSpec)
+    val intrinsicWidthPx = inlineWidget.measuredWidth
+    val intrinsicHeightPx = inlineWidget.measuredHeight
 
-    val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
-    val rawHeightPx = inlineWidget.measuredHeight
-    val rawHeightDp = PixelUtil.toDIPFromPixel(rawHeightPx.toFloat())
+    val widthDp = PixelUtil.toDIPFromPixel(intrinsicWidthPx.toFloat())
+    val rawHeightDp = PixelUtil.toDIPFromPixel(intrinsicHeightPx.toFloat())
 
-    Log.d(TAG, "updateFrameSizeState: widget=${inlineWidget.javaClass.simpleName}, rawHeightPx=$rawHeightPx, rawHeightDp=$rawHeightDp, minimumHeight=$minimumHeight, density=${resources.displayMetrics.density}")
+    Log.d(TAG, "updateFrameSizeState: widget=${inlineWidget.javaClass.simpleName}, intrinsicWidthPx=$intrinsicWidthPx, widthDp=$widthDp, intrinsicHeightPx=$intrinsicHeightPx, rawHeightDp=$rawHeightDp, minimumHeight=$minimumHeight, density=$density")
 
     // Only update if changed
     if (widthDp != lastReportedWidth || rawHeightDp != lastReportedHeight) {
@@ -242,6 +249,11 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     placeholder = value
     inlineLayout?.hint = placeholder
     // Spinner doesn't support placeholder
+
+    // Re-measure after placeholder change
+    if (anchorMode == "inline") {
+      post { updateFrameSizeState() }
+    }
   }
 
   fun applyAnchorMode(value: String?) {
@@ -311,6 +323,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     headlessDismissProgrammatic = false
     headlessDismissAfterSelect = false
     hasRequestedLayoutUpdate = false
+    lastReportedWidth = 0f
+    lastReportedHeight = 0f
 
     // Headless should be invisible but anchorable.
     alpha = if (anchorMode == "headless") 0.01f else 1f
@@ -344,7 +358,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       // Must set box background mode BEFORE setting endIconMode to avoid IllegalStateException
       val til = TextInputLayout(context).apply {
         layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
         // Set box background mode first - required for END_ICON_DROPDOWN_MENU
@@ -463,7 +477,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
       sp.apply {
         layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
         )
         visibility = View.VISIBLE
@@ -529,6 +543,11 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     }
 
     refreshHeadlessMenu()
+
+    // Re-measure after adapter change so Fabric state reflects new content width
+    if (anchorMode == "inline") {
+      post { updateFrameSizeState() }
+    }
   }
 
   private fun refreshSelections() {
@@ -555,6 +574,11 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
     // Update headless menu checked state
     refreshHeadlessMenu()
+
+    // Re-measure after selection change so Fabric state reflects new text width
+    if (anchorMode == "inline") {
+      post { updateFrameSizeState() }
+    }
   }
 
   // ---- Inline dropdown overlay ----

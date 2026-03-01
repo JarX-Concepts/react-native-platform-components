@@ -87,6 +87,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
       <Section title="Controls">
         <Row label="Embedded">
           <Switch
+            style={ui.alignEnd}
             testID="embedded-switch"
             value={embedded}
             onValueChange={(v) => {
@@ -100,6 +101,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
 
         <Row label="Disabled">
           <Switch
+            style={ui.alignEnd}
             testID="disabled-switch"
             value={disabled}
             onValueChange={(v) => {
@@ -115,7 +117,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
             <Row label="Material">
               <SelectionMenu
                 testID="android-material-menu"
-                style={ui.fullFlex}
+                style={ui.alignEnd}
                 options={materialOptions}
                 selected={material}
                 presentation="embedded"
@@ -147,7 +149,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
             // ✅ Embedded anchor lives INSIDE the row → feels attached
             <SelectionMenu
               testID="state-menu-embedded"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={STATE_OPTIONS}
               selected={selected}
               disabled={disabled}

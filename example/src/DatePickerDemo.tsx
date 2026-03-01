@@ -134,6 +134,7 @@ export function DatePickerDemo(): React.JSX.Element {
       <Section title="Basics">
         <Row label="Modal">
           <Switch
+            style={ui.alignEnd}
             testID="modal-switch"
             value={presentationModal}
             onValueChange={(v) => {
@@ -147,7 +148,7 @@ export function DatePickerDemo(): React.JSX.Element {
 
         <Row label="Mode">
           <SelectionMenu
-            style={ui.fullFlex}
+            style={ui.alignEnd}
             options={modeOptions as any}
             selected={mode}
             presentation="embedded"
@@ -191,6 +192,7 @@ export function DatePickerDemo(): React.JSX.Element {
               label: 'Min (−30d)',
               children: (
                 <Switch
+                  style={ui.alignEnd}
                   testID="min-switch"
                   value={minEnabled}
                   onValueChange={setMinEnabled}
@@ -201,6 +203,7 @@ export function DatePickerDemo(): React.JSX.Element {
               label: 'Max (+30d)',
               children: (
                 <Switch
+                  style={ui.alignEnd}
                   testID="max-switch"
                   value={maxEnabled}
                   onValueChange={setMaxEnabled}
@@ -216,7 +219,7 @@ export function DatePickerDemo(): React.JSX.Element {
           <Row label="Style">
             <SelectionMenu
               testID="ios-style-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={iosStyleOptions as any}
               selected={iosStyle}
               presentation="embedded"
@@ -230,7 +233,7 @@ export function DatePickerDemo(): React.JSX.Element {
           <Row label="Minute">
             <SelectionMenu
               testID="ios-minute-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={iosMinuteOptions as any}
               selected={iosMinuteInterval}
               presentation="embedded"
@@ -244,7 +247,7 @@ export function DatePickerDemo(): React.JSX.Element {
           <Row label="Rounds">
             <SelectionMenu
               testID="ios-rounds-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={iosRoundsOptions as any}
               selected={iosRounds}
               presentation="embedded"
@@ -260,7 +263,7 @@ export function DatePickerDemo(): React.JSX.Element {
           <Row label="Material">
             <SelectionMenu
               testID="android-material-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={androidMaterialOptions as any}
               selected={androidMaterial}
               presentation="embedded"
@@ -279,6 +282,7 @@ export function DatePickerDemo(): React.JSX.Element {
                 label: 'Dialog Title',
                 children: (
                   <Switch
+                    style={ui.alignEnd}
                     testID="android-dialog-title-switch"
                     value={androidTitleEnabled}
                     onValueChange={setAndroidTitleEnabled}
@@ -289,6 +293,7 @@ export function DatePickerDemo(): React.JSX.Element {
                 label: 'Buttons',
                 children: (
                   <Switch
+                    style={ui.alignEnd}
                     testID="android-buttons-switch"
                     value={androidButtonsEnabled}
                     onValueChange={setAndroidButtonsEnabled}

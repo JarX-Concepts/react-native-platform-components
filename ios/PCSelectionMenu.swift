@@ -43,15 +43,12 @@ private struct PCSelectionMenuInlinePickerView: View {
                 Text(model.displayTitle)
                     .font(.body)
                     .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Spacer(minLength: 0)
 
                 Image(systemName: "chevron.up.chevron.down")
                     .imageScale(.small)
                     .opacity(0.7)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize()
             .contentShape(Rectangle())
             .padding(.vertical, 10)
         }
@@ -352,23 +349,26 @@ public final class PCSelectionMenuView: UIControl {
         if anchorMode != "inline" { return CGSize(width: size.width, height: 1) }
 
         guard let host = hostingController else {
-            return CGSize(width: size.width, height: PCConstants.minTouchTargetHeight)
+            return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
         }
 
-        let w = (size.width > 1) ? size.width : PCConstants.fallbackWidth
-        let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
-        return CGSize(width: size.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
+        let maxW = (size.width > 1) ? size.width : CGFloat.greatestFiniteMagnitude
+        let fitted = host.sizeThatFits(in: CGSize(width: maxW, height: .greatestFiniteMagnitude))
+        return CGSize(
+            width: min(fitted.width, maxW),
+            height: max(PCConstants.minTouchTargetHeight, fitted.height)
+        )
     }
 
     public override var intrinsicContentSize: CGSize {
         if anchorMode != "inline" {
             return CGSize(width: UIView.noIntrinsicMetric, height: 1)
         }
-        let h = max(
-            PCConstants.minTouchTargetHeight,
-            sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height
+        let fitted = sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude))
+        return CGSize(
+            width: fitted.width,
+            height: max(PCConstants.minTouchTargetHeight, fitted.height)
         )
-        return CGSize(width: UIView.noIntrinsicMetric, height: h)
     }
 
     /// Called by the measuring pipeline to get the size for Yoga layout.
@@ -377,15 +377,18 @@ public final class PCSelectionMenuView: UIControl {
         guard anchorMode == "inline" else { return .zero }
 
         guard let host = hostingController else {
-            return CGSize(width: constrainedSize.width, height: PCConstants.minTouchTargetHeight)
+            return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
         }
 
         host.view.setNeedsLayout()
         host.view.layoutIfNeeded()
 
-        let w = constrainedSize.width > 1 ? constrainedSize.width : PCConstants.fallbackWidth
-        let fitted = host.sizeThatFits(in: CGSize(width: w, height: .greatestFiniteMagnitude))
-        return CGSize(width: constrainedSize.width, height: max(PCConstants.minTouchTargetHeight, fitted.height))
+        let maxW = constrainedSize.width > 1 ? constrainedSize.width : CGFloat.greatestFiniteMagnitude
+        let fitted = host.sizeThatFits(in: CGSize(width: maxW, height: .greatestFiniteMagnitude))
+        return CGSize(
+            width: min(fitted.width, maxW),
+            height: max(PCConstants.minTouchTargetHeight, fitted.height)
+        )
     }
 }
 
