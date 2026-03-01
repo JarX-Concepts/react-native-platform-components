@@ -6,7 +6,7 @@ const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Helper to select a tab from the native SegmentedControl
-const selectTab = async (tabLabel: string) => {
+export const selectTab = async (tabLabel: string) => {
   if (isAndroid()) {
     // On Android, scroll to top first to ensure tabs are visible
     await element(
@@ -27,7 +27,7 @@ const selectTab = async (tabLabel: string) => {
 // Tab labels that may conflict with menu options
 const TAB_LABELS = ['Date', 'Select', 'Context', 'Segment', 'Glass'];
 
-const selectMenuOption = async (menuId: string, optionLabel: string) => {
+export const selectMenuOption = async (menuId: string, optionLabel: string) => {
   const hasConflict = TAB_LABELS.includes(optionLabel);
 
   if (isAndroid()) {
@@ -61,6 +61,27 @@ const selectMenuOption = async (menuId: string, optionLabel: string) => {
   }
 };
 
+export const ensureModalMode = async (enabled: boolean) => {
+  const toggle = element(by.id('modal-switch'));
+
+  if (enabled) {
+    try {
+      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+      return;
+    } catch {
+      await toggle.tap();
+      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+    }
+  } else {
+    try {
+      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
+      await toggle.tap();
+    } catch {
+      // Already disabled.
+    }
+  }
+};
+
 describe('Platform Components Example', () => {
   beforeAll(async () => {
     await device.launchApp();
@@ -75,27 +96,6 @@ describe('Platform Components Example', () => {
   });
 
   it('should test Date Picker functionality', async () => {
-    const ensureModalMode = async (enabled: boolean) => {
-      const toggle = element(by.id('modal-switch'));
-
-      if (enabled) {
-        try {
-          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-          return;
-        } catch {
-          await toggle.tap();
-          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-        }
-      } else {
-        try {
-          await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-          await toggle.tap();
-        } catch {
-          // Already disabled.
-        }
-      }
-    };
-
     const dismissModal = async () => {
       try {
         await element(by.text('Custom Cancel')).atIndex(0).tap();
