@@ -9,9 +9,9 @@
     "build:android": "react-native build-android --extra-params \"--no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a\"",
     "build:ios": "react-native build-ios --mode Debug",
     "jest:e2e": "jest --config e2e/jest.config.js",
-    "test:e2e:ios": "rm -rf artifacts && detox build --configuration ios.sim.release && detox test --configuration ios.sim.release",
-    "test:e2e:android": "rm -rf artifacts && detox build --configuration android.emu.release && detox test --configuration android.emu.release",
-    "test:e2e:android:ci": "rm -rf artifacts && detox build --configuration android.emu.ci && detox test --configuration android.emu.ci --record-videos none"
+    "test:e2e:ios": "detox build --configuration ios.sim.release && detox test --configuration ios.sim.release",
+    "test:e2e:android": "detox build --configuration android.emu.release && detox test --configuration android.emu.release",
+    "test:e2e:android:ci": "detox build --configuration android.emu.ci && detox test --configuration android.emu.ci --record-videos none"
   },
   "dependencies": {
     "react": "19.2.3",

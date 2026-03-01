@@ -24,12 +24,7 @@ export const selectTab = async (tabLabel: string) => {
   }
 };
 
-// Tab labels that may conflict with menu options
-const TAB_LABELS = ['Date', 'Select', 'Context', 'Segment', 'Glass'];
-
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
-  const hasConflict = TAB_LABELS.includes(optionLabel);
-
   if (isAndroid()) {
     // Android: Tap the MaterialTextView inside the Spinner to open dropdown
     const spinnerText = element(
@@ -43,20 +38,16 @@ export const selectMenuOption = async (menuId: string, optionLabel: string) => {
     // Android dropdown covers the tabs, so always use index 0
     await element(by.text(optionLabel)).atIndex(0).tap();
   } else {
-    // iOS: Tap the menu to open it
+    // iOS: Tap the menu to open it (UIButton pull-down menu)
     await element(by.id(menuId)).tap();
-    // Wait for menu to appear - if there's no conflict, wait for the text
-    // If there's a conflict, just wait a fixed time since the tab text is always visible
-    if (hasConflict) {
-      await pause(500);
-    } else {
-      await waitFor(element(by.text(optionLabel)))
-        .toBeVisible()
-        .withTimeout(2000);
-    }
-    // Tap the option - use index 1 if it conflicts with a tab label (tab is index 0)
-    await element(by.text(optionLabel))
-      .atIndex(hasConflict ? 1 : 0)
+    await pause(500);
+    // Menu options are presented inside a system context menu overlay.
+    // Scope the search to _UIContextMenuContainerView so we don't accidentally
+    // hit the button's own title label or tab labels behind the overlay.
+    await element(
+      by.text(optionLabel).withAncestor(by.type('_UIContextMenuContainerView'))
+    )
+      .atIndex(0)
       .tap();
   }
 };
