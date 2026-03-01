@@ -1,5 +1,4 @@
 import os.log
-import SwiftUI
 import UIKit
 
 private let logger = Logger(subsystem: "com.platformcomponents", category: "SelectionMenu")
@@ -9,51 +8,6 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Sele
 struct PCSelectionMenuOption {
     let label: String
     let data: String
-}
-
-final class PCSelectionMenuModel: ObservableObject {
-    @Published var options: [PCSelectionMenuOption] = []
-    @Published var selectedData: String = ""  // sentinel = no selection
-    @Published var placeholder: String = "Select"
-    @Published var interactivity: String = "enabled"  // "enabled" | "disabled"
-
-    var isDisabled: Bool { interactivity == "disabled" }
-
-    var displayTitle: String {
-        if let opt = options.first(where: { $0.data == selectedData }), !selectedData.isEmpty {
-            return opt.label
-        }
-        return placeholder
-    }
-
-    var hasOptions: Bool { !options.isEmpty }
-}
-
-private struct PCSelectionMenuInlinePickerView: View {
-    @ObservedObject var model: PCSelectionMenuModel
-    let onSelectIndex: (Int) -> Void
-
-    var body: some View {
-        Menu {
-            ForEach(Array(model.options.enumerated()), id: \.offset) { i, opt in
-                Button(opt.label) { onSelectIndex(i) }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Text(model.displayTitle)
-                    .font(.body)
-                    .lineLimit(1)
-
-                Image(systemName: "chevron.up.chevron.down")
-                    .imageScale(.small)
-                    .opacity(0.7)
-            }
-            .fixedSize()
-            .contentShape(Rectangle())
-            .padding(.vertical, 10)
-        }
-        .disabled(model.isDisabled || !model.hasOptions)
-    }
 }
 
 @objcMembers
@@ -90,10 +44,12 @@ public final class PCSelectionMenuView: UIControl {
     public var onSelect: ((Int, String, String) -> Void)?  // (index,label,data)
     public var onRequestClose: (() -> Void)?
 
-    // MARK: - Internal
+    // MARK: - Internal (inline UIKit views)
 
-    private let model = PCSelectionMenuModel()
-    private var hostingController: UIHostingController<AnyView>?
+    private var menuButton: UIButton?
+
+    // MARK: - Internal (headless)
+
     private var headlessMenuView: UIView?
     private var headlessMenuVC: UIViewController?
     private var headlessPresentationToken: Int = 0
@@ -105,6 +61,14 @@ public final class PCSelectionMenuView: UIControl {
             let data = (dict["data"] as? String) ?? ""
             return PCSelectionMenuOption(label: label, data: data)
         }
+    }
+
+    private var displayTitle: String {
+        let opts = parsedOptions
+        if !selectedData.isEmpty, let opt = opts.first(where: { $0.data == selectedData }) {
+            return opt.label
+        }
+        return placeholder ?? "Select"
     }
 
     // MARK: - Init
@@ -152,44 +116,74 @@ public final class PCSelectionMenuView: UIControl {
     }
 
     private func sync() {
-        model.options = parsedOptions
-        model.selectedData = selectedData
-        model.placeholder = placeholder ?? "Select"
-        model.interactivity = interactivity
+        // Update the button title
+        menuButton?.setTitle(displayTitle, for: .normal)
 
-        hostingController?.rootView = makeRootView()
+        // Rebuild the UIMenu with current options
+        if anchorMode == "inline" {
+            rebuildMenu()
+        }
 
         invalidateIntrinsicContentSize()
         setNeedsLayout()
     }
 
-    private func makeRootView() -> AnyView {
-        return AnyView(PCSelectionMenuInlinePickerView(
-            model: model,
-            onSelectIndex: { [weak self] idx in
-                guard let self else { return }
-                let opts = self.parsedOptions
-                guard idx >= 0, idx < opts.count else { return }
-                let opt = opts[idx]
-                self.selectedData = opt.data
-                self.onSelect?(idx, opt.label, opt.data)
-            }
-        ))
-    }
+    // MARK: - Inline (UIKit-based)
 
     private func installInlineIfNeeded() {
-        guard hostingController == nil else { return }
-        installHostingController()
+        guard menuButton == nil else { return }
+
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = .tintColor
+        config.image = UIImage(systemName: "chevron.up.chevron.down")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(scale: .small)
+        config.imagePlacement = .trailing
+        config.imagePadding = 8
+        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0)
+
+        let button = UIButton(configuration: config)
+        button.showsMenuAsPrimaryAction = true
+        button.changesSelectionAsPrimaryAction = false
+
+        addSubview(button)
+        menuButton = button
+
+        rebuildMenu()
+        setNeedsLayout()
     }
 
     private func uninstallInlineIfNeeded() {
-        guard let host = hostingController else { return }
-        hostingController = nil
-
-        host.willMove(toParent: nil)
-        host.view.removeFromSuperview()
-        host.removeFromParent()
+        guard let button = menuButton else { return }
+        button.removeFromSuperview()
+        menuButton = nil
     }
+
+    private func rebuildMenu() {
+        let opts = parsedOptions
+        let disabled = (interactivity == "disabled") || opts.isEmpty
+        let actions = opts.enumerated().map { (idx, opt) in
+            UIAction(title: opt.label) { [weak self] _ in
+                guard let self else { return }
+                self.selectedData = opt.data
+                self.onSelect?(idx, opt.label, opt.data)
+            }
+        }
+        menuButton?.menu = disabled ? nil : UIMenu(children: actions)
+    }
+
+    override public func layoutSubviews() {
+        super.layoutSubviews()
+        guard let button = menuButton else { return }
+        let fitted = button.intrinsicContentSize
+        button.frame = CGRect(
+            x: 0,
+            y: (bounds.height - fitted.height) / 2,
+            width: fitted.width,
+            height: fitted.height
+        )
+    }
+
+    // MARK: - Headless
 
     private func installHeadlessIfNeeded() {
         guard headlessMenuView == nil else { return }
@@ -215,27 +209,6 @@ public final class PCSelectionMenuView: UIControl {
         guard let view = headlessMenuView else { return }
         headlessMenuView = nil
         view.removeFromSuperview()
-    }
-
-    private func installHostingController() {
-        let host = UIHostingController(rootView: makeRootView())
-        host.view.translatesAutoresizingMaskIntoConstraints = false
-        host.view.backgroundColor = .clear
-
-        addSubview(host.view)
-        NSLayoutConstraint.activate([
-            host.view.topAnchor.constraint(equalTo: topAnchor),
-            host.view.bottomAnchor.constraint(equalTo: bottomAnchor),
-            host.view.leadingAnchor.constraint(equalTo: leadingAnchor),
-            host.view.trailingAnchor.constraint(equalTo: trailingAnchor),
-        ])
-
-        if let parent = nearestViewController() {
-            parent.addChild(host)
-            host.didMove(toParent: parent)
-        }
-
-        hostingController = host
     }
 
     private func nearestViewController() -> UIViewController? {
@@ -348,14 +321,13 @@ public final class PCSelectionMenuView: UIControl {
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
         if anchorMode != "inline" { return CGSize(width: size.width, height: 1) }
 
-        guard let host = hostingController else {
+        guard let button = menuButton else {
             return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
         }
 
-        let maxW = (size.width > 1) ? size.width : CGFloat.greatestFiniteMagnitude
-        let fitted = host.sizeThatFits(in: CGSize(width: maxW, height: .greatestFiniteMagnitude))
+        let fitted = button.intrinsicContentSize
         return CGSize(
-            width: min(fitted.width, maxW),
+            width: fitted.width,
             height: max(PCConstants.minTouchTargetHeight, fitted.height)
         )
     }
@@ -376,17 +348,13 @@ public final class PCSelectionMenuView: UIControl {
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
         guard anchorMode == "inline" else { return .zero }
 
-        guard let host = hostingController else {
+        guard let button = menuButton else {
             return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
         }
 
-        host.view.setNeedsLayout()
-        host.view.layoutIfNeeded()
-
-        let maxW = constrainedSize.width > 1 ? constrainedSize.width : CGFloat.greatestFiniteMagnitude
-        let fitted = host.sizeThatFits(in: CGSize(width: maxW, height: .greatestFiniteMagnitude))
+        let fitted = button.intrinsicContentSize
         return CGSize(
-            width: min(fitted.width, maxW),
+            width: fitted.width,
             height: max(PCConstants.minTouchTargetHeight, fitted.height)
         )
     }

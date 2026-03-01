@@ -63,6 +63,11 @@ static inline bool OptionsEqual(
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      // The Swift view has already updated its content (selectedData + sync()).
+      // Trigger measurement now so Yoga gets the new size before the React
+      // round-trip, preventing a frame of clipped text.
+      [strongSelf updateMeasurements];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCSelectionMenuEventEmitter>(
               strongSelf->_eventEmitter);
@@ -201,10 +206,9 @@ static inline bool OptionsEqual(
   if (_state == nullptr)
     return;
 
-  // Use the real width Yoga gave us
-  const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 320;
-
-  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
+  // Measure unconstrained so the view reports its true intrinsic size.
+  // Yoga's measureContent() will clamp to parent layout constraints.
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(CGFLOAT_MAX, 0)];
 
   PCSelectionMenuStateFrameSize next;
   next.frameSize = {(Float)size.width, (Float)size.height};
