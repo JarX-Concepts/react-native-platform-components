@@ -241,6 +241,7 @@ export const ui = StyleSheet.create({
   pillDisabled: { opacity: 0.45 },
   pillText: { fontSize: 13, opacity: 0.8 },
   fullFlex: { flex: 1 },
+  alignEnd: { alignSelf: 'flex-end' as const },
   valueText: { fontSize: 14, color: '#333' },
   datePickerContainer: { alignItems: 'center', paddingVertical: 4 },
 

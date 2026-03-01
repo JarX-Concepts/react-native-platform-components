@@ -1,6 +1,6 @@
 // SelectionMenu.tsx
 import React, { useCallback, useMemo } from 'react';
-import { type ViewProps } from 'react-native';
+import { Platform, type ViewProps } from 'react-native';
 
 import NativeSelectionMenu, {
   type SelectionMenuOption,
@@ -119,8 +119,16 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     return { material: android.material };
   }, [android]);
 
+  // On Android, force a fresh native view when structural props change so the
+  // widget gets a clean measurement cycle (TextInputLayout caches aggressively).
+  const remountKey =
+    Platform.OS === 'android'
+      ? `${presentation}-${android?.material ?? 'system'}`
+      : undefined;
+
   return (
     <NativeSelectionMenu
+      key={remountKey}
       style={style}
       options={options}
       selectedData={selectedData}

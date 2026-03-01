@@ -5,7 +5,7 @@ import {
   ContextMenu,
   type ContextMenuAction,
 } from 'react-native-platform-components';
-import { ActionField, Divider, PillButton, Row, Section } from './DemoUI';
+import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
 
 const BASIC_ACTIONS: ContextMenuAction[] = [
   {
@@ -107,6 +107,7 @@ export function ContextMenuDemo(): React.JSX.Element {
       <Section title="Controls">
         <Row label="Disabled">
           <Switch
+            style={ui.alignEnd}
             testID="disabled-switch"
             value={disabled}
             onValueChange={(v) => {
@@ -121,6 +122,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             <Divider />
             <Row label="Preview">
               <Switch
+                style={ui.alignEnd}
                 testID="preview-switch"
                 value={enablePreview}
                 onValueChange={setEnablePreview}

@@ -126,7 +126,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
           <Row label="Effect">
             <SelectionMenu
               testID="effect-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={effectOptions}
               selected={effect}
               presentation="embedded"
@@ -139,6 +139,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
 
           <Row label="Interactive">
             <Switch
+              style={ui.alignEnd}
               testID="interactive-switch"
               value={interactive}
               onValueChange={setInteractive}
@@ -150,7 +151,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
           <Row label="Color Scheme">
             <SelectionMenu
               testID="color-scheme-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={colorSchemeOptions}
               selected={colorScheme}
               presentation="embedded"
@@ -166,7 +167,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
           <Row label="Tint Color">
             <SelectionMenu
               testID="tint-color-menu"
-              style={ui.fullFlex}
+              style={ui.alignEnd}
               options={tintColorOptions}
               selected={tintColor}
               presentation="embedded"
@@ -181,7 +182,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
         <Row label="Corner Radius">
           <SelectionMenu
             testID="corner-radius-menu"
-            style={ui.fullFlex}
+            style={ui.alignEnd}
             options={cornerRadiusOptions}
             selected={String(cornerRadius)}
             presentation="embedded"
