@@ -37,7 +37,7 @@ export type DatePickerProps = {
    */
   visible?: boolean;
 
-  onConfirm?: (dateTime: Date) => void;
+  onConfirm?: (dateTime: Date, confirmed: boolean) => void;
   onClosed?: () => void;
 
   /** Test identifier */
@@ -100,7 +100,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
 
   const handleConfirm = useCallback(
     (e: NativeSyntheticEvent<DateChangeEvent>) => {
-      onConfirm?.(new Date(e.nativeEvent.timestampMs));
+      onConfirm?.(new Date(e.nativeEvent.timestampMs), e.nativeEvent.confirmed);
     },
     [onConfirm]
   );

@@ -141,12 +141,14 @@ class PCDatePickerViewManager :
 
   private class ConfirmEvent(
     surfaceId: Int,
-    private val ts: Double
+    private val ts: Double,
+    private val confirmed: Boolean = true
   ) : Event<ConfirmEvent>(surfaceId) {
     override fun getEventName(): String = "topConfirm"
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
       val payload = com.facebook.react.bridge.Arguments.createMap().apply {
         putDouble("timestampMs", ts)
+        putBoolean("confirmed", confirmed)
       }
       rctEventEmitter.receiveEvent(viewTag, eventName, payload)
     }

@@ -71,9 +71,11 @@ describe('DatePicker', () => {
     expect(props.presentation).toBe('modal');
 
     act(() => {
-      props.onConfirm({ nativeEvent: { timestampMs: 1577836800000 } });
+      props.onConfirm({
+        nativeEvent: { timestampMs: 1577836800000, confirmed: true },
+      });
     });
-    expect(onConfirm).toHaveBeenCalledWith(new Date(1577836800000));
+    expect(onConfirm).toHaveBeenCalledWith(new Date(1577836800000), true);
     act(() => {
       tree.unmount();
     });

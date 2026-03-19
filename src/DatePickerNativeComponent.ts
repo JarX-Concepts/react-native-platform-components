@@ -6,6 +6,7 @@ export type TimestampMs = CodegenTypes.Double;
 
 export type DateChangeEvent = {
   timestampMs: CodegenTypes.Double;
+  confirmed: boolean;
 };
 
 export type DatePickerMode = 'date' | 'time' | 'dateAndTime' | 'countDownTimer';

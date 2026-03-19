@@ -354,10 +354,11 @@ export function DatePickerDemo(): React.JSX.Element {
               negativeButtonTitle: negativeTitle,
             }}
             onClosed={() => setOpen(false)}
-            onConfirm={(newDate: Date) => {
+            onConfirm={(newDate: Date, confirmed: boolean) => {
               setDate(newDate);
-              // optionally close modal here:
-              // setOpen(false);
+              if (confirmed) {
+                setOpen(false);
+              }
             }}
           />
         </View>
