@@ -174,9 +174,9 @@ export function Example() {
         visible={visible}
         presentation="modal"
         mode="date"
-        onConfirm={(d) => {
+        onConfirm={(d, confirmed) => {
           setDate(d);
-          setVisible(false);
+          if (confirmed) setVisible(false);
         }}
         onClosed={() => setVisible(false)}
         ios={{ preferredStyle: 'inline' }}
@@ -200,7 +200,7 @@ export function Example() {
       date={date}
       presentation="embedded"
       mode="date"
-      onConfirm={(d) => setDate(d)}
+      onConfirm={(d, confirmed) => setDate(d)}
       ios={{ preferredStyle: 'inline' }}
       android={{ material: 'system' }}
     />
@@ -458,18 +458,18 @@ Native date & time picker using **platform system pickers**.
 
 ### Props
 
-| Prop           | Type                                                    | Description                                 |
-| -------------- | ------------------------------------------------------- | ------------------------------------------- |
-| `date`         | `Date \| null`                                          | Controlled date value                       |
-| `minDate`      | `Date \| null`                                          | Minimum selectable date                     |
-| `maxDate`      | `Date \| null`                                          | Maximum selectable date                     |
-| `locale`       | `string`                                                | Locale identifier (e.g., `'en-US'`)         |
-| `timeZoneName` | `string`                                                | Time zone identifier                        |
-| `mode`         | `'date' \| 'time' \| 'dateAndTime' \| 'countDownTimer'` | Picker mode                                 |
-| `presentation` | `'modal' \| 'embedded'`                                 | Presentation style                          |
-| `visible`      | `boolean`                                               | Controls modal visibility (modal mode only) |
-| `onConfirm`    | `(date: Date) => void`                                  | Called when user confirms selection         |
-| `onClosed`     | `() => void`                                            | Called when modal is dismissed              |
+| Prop           | Type                                                    | Description                                                                        |
+| -------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `date`         | `Date \| null`                                          | Controlled date value                                                              |
+| `minDate`      | `Date \| null`                                          | Minimum selectable date                                                            |
+| `maxDate`      | `Date \| null`                                          | Maximum selectable date                                                            |
+| `locale`       | `string`                                                | Locale identifier (e.g., `'en-US'`)                                                |
+| `timeZoneName` | `string`                                                | Time zone identifier                                                               |
+| `mode`         | `'date' \| 'time' \| 'dateAndTime' \| 'countDownTimer'` | Picker mode                                                                        |
+| `presentation` | `'modal' \| 'embedded'`                                 | Presentation style                                                                 |
+| `visible`      | `boolean`                                               | Controls modal visibility (modal mode only)                                        |
+| `onConfirm`    | `(date: Date, confirmed: boolean) => void`              | Called on date change; `confirmed` is `true` for deliberate selections (see below) |
+| `onClosed`     | `() => void`                                            | Called when modal is dismissed                                                     |
 
 ### iOS Props (`ios`)
 
@@ -489,6 +489,33 @@ Native date & time picker using **platform system pickers**.
 | `dialogTitle`         | `string`           | Custom dialog title                                                    |
 | `positiveButtonTitle` | `string`           | Custom confirm button text                                             |
 | `negativeButtonTitle` | `string`           | Custom cancel button text                                              |
+
+### The `confirmed` Flag
+
+`onConfirm` fires on every date/time change, but the second argument (`confirmed`) lets you distinguish between browsing and deliberate selections:
+
+| Platform / Mode      | Every change                             | Deliberate selection                                   |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| **iOS modal**        | `confirmed: false` (scrolling the wheel) | `confirmed: true` (tapping the already-selected value) |
+| **iOS embedded**     | `confirmed: true`                        | —                                                      |
+| **Android modal**    | —                                        | `confirmed: true` (pressing OK)                        |
+| **Android embedded** | `confirmed: true`                        | —                                                      |
+
+A common pattern is to close the modal only on a confirmed selection:
+
+```tsx
+<DatePicker
+  date={date}
+  visible={visible}
+  presentation="modal"
+  mode="time"
+  onConfirm={(d, confirmed) => {
+    setDate(d);
+    if (confirmed) setVisible(false);
+  }}
+  onClosed={() => setVisible(false)}
+/>
+```
 
 ---
 
@@ -635,12 +662,12 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 
 ### iOS Props (`ios`)
 
-| Prop            | Type                             | Description                                          |
-| --------------- | -------------------------------- | ---------------------------------------------------- |
-| `effect`        | `'clear' \| 'regular' \| 'none'` | Glass effect intensity (default: `'regular'`)        |
-| `interactive`   | `boolean`                        | Enable touch interaction feedback (default: `false`) |
-| `tintColor`     | `string`                         | Overlay tint color (hex string)                      |
-| `colorScheme`   | `'light' \| 'dark' \| 'system'`  | Appearance mode (default: `'system'`)                |
+| Prop          | Type                             | Description                                          |
+| ------------- | -------------------------------- | ---------------------------------------------------- |
+| `effect`      | `'clear' \| 'regular' \| 'none'` | Glass effect intensity (default: `'regular'`)        |
+| `interactive` | `boolean`                        | Enable touch interaction feedback (default: `false`) |
+| `tintColor`   | `string`                         | Overlay tint color (hex string)                      |
+| `colorScheme` | `'light' \| 'dark' \| 'system'`  | Appearance mode (default: `'system'`)                |
 
 ### Android Props (`android`)
 
@@ -704,14 +731,14 @@ This is intentional. The goal is native fidelity, not pixel-level customization.
 
 All color props in this library support the same formats as React Native's `backgroundColor`:
 
-| Format | Example | Description |
-| --- | --- | --- |
-| Hex | `#RGB`, `#RRGGBB`, `#RRGGBBAA` | Standard hex colors |
-| RGB | `rgb(255, 0, 0)` | RGB values (0-255) |
-| RGBA | `rgba(255, 0, 0, 0.5)` | RGB with alpha (0-1) |
-| HSL | `hsl(0, 100%, 50%)` | Hue (0-360), saturation, lightness |
-| HSLA | `hsla(0, 100%, 50%, 0.5)` | HSL with alpha (0-1) |
-| Named | `red`, `steelblue`, `transparent` | CSS named colors |
+| Format | Example                           | Description                        |
+| ------ | --------------------------------- | ---------------------------------- |
+| Hex    | `#RGB`, `#RRGGBB`, `#RRGGBBAA`    | Standard hex colors                |
+| RGB    | `rgb(255, 0, 0)`                  | RGB values (0-255)                 |
+| RGBA   | `rgba(255, 0, 0, 0.5)`            | RGB with alpha (0-1)               |
+| HSL    | `hsl(0, 100%, 50%)`               | Hue (0-360), saturation, lightness |
+| HSLA   | `hsla(0, 100%, 50%, 0.5)`         | HSL with alpha (0-1)               |
+| Named  | `red`, `steelblue`, `transparent` | CSS named colors                   |
 
 **Props that accept colors:**
 

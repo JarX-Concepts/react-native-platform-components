@@ -6,25 +6,28 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Date
 @objcMembers
 public final class PCDatePickerView: UIControl,
     UIPopoverPresentationControllerDelegate,
-    UIAdaptivePresentationControllerDelegate
+    UIAdaptivePresentationControllerDelegate,
+    UIGestureRecognizerDelegate
 {
     // MARK: - UI
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
     private var inlineConstraints: [NSLayoutConstraint] = []
+    private var confirmWorkItem: DispatchWorkItem?
+    private var tapGesture: UITapGestureRecognizer?
 
-    // Suppress “programmatic” valueChanged events (apply props / initial present settle).
+    // Suppress "programmatic" valueChanged events (apply props / initial present settle).
     private var suppressChangeEvents = false
     private func suppressNextChangesBriefly() {
         suppressChangeEvents = true
-        // Clear on next runloop tick (usually enough to skip the “settle” event).
+        // Clear on next runloop tick (usually enough to skip the "settle" event).
         DispatchQueue.main.async { [weak self] in
             self?.suppressChangeEvents = false
         }
     }
 
     // MARK: - Events (wired from ObjC++)
-    public var onChangeHandler: ((NSNumber) -> Void)?
+    public var onChangeHandler: ((NSNumber, Bool) -> Void)?
     public var onCancelHandler: (() -> Void)?
 
     // MARK: - Props
@@ -283,6 +286,14 @@ public final class PCDatePickerView: UIControl,
         // Prevent "settle" events right as we present.
         suppressNextChangesBriefly()
 
+        // Set up tap-to-confirm gesture for modal mode
+        confirmWorkItem?.cancel()
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handlePickerTap))
+        tap.cancelsTouchesInView = false
+        tap.delegate = self
+        picker.addGestureRecognizer(tap)
+        tapGesture = tap
+
         let vc = UIViewController()
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
@@ -343,6 +354,11 @@ public final class PCDatePickerView: UIControl,
         guard let vc = modalVC else { return }
         logger.debug("dismissIfNeeded: dismissing modal, emitCancel=\(emitCancel)")
         modalVC = nil
+        confirmWorkItem?.cancel()
+        if let tap = tapGesture {
+            picker.removeGestureRecognizer(tap)
+            tapGesture = nil
+        }
         vc.dismiss(animated: true) { [weak self] in
             guard let self else { return }
             if emitCancel { self.onCancelHandler?() }
@@ -360,6 +376,11 @@ public final class PCDatePickerView: UIControl,
     public func presentationControllerDidDismiss(_ presentationController: UIPresentationController)
     {
         modalVC = nil
+        confirmWorkItem?.cancel()
+        if let tap = tapGesture {
+            picker.removeGestureRecognizer(tap)
+            tapGesture = nil
+        }
         onCancelHandler?()
     }
 
@@ -367,17 +388,50 @@ public final class PCDatePickerView: UIControl,
         _ popoverPresentationController: UIPopoverPresentationController
     ) {
         modalVC = nil
+        confirmWorkItem?.cancel()
+        if let tap = tapGesture {
+            picker.removeGestureRecognizer(tap)
+            tapGesture = nil
+        }
         onCancelHandler?()
+    }
+
+    // MARK: - Gesture delegate
+
+    public func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        return gestureRecognizer === tapGesture
     }
 
     // MARK: - Value changes
 
     @objc private func handleValueChanged() {
-        // Skip “programmatic/settle” changes
+        // Skip "programmatic/settle" changes
         if suppressChangeEvents { return }
 
         let ms = picker.date.timeIntervalSince1970 * 1000.0
-        onChangeHandler?(NSNumber(value: ms))
+        let isModal = presentation == "modal" && modalVC != nil
+        onChangeHandler?(NSNumber(value: ms), !isModal)
+    }
+
+    @objc private func handlePickerTap() {
+        guard presentation == "modal", modalVC != nil else { return }
+
+        confirmWorkItem?.cancel()
+
+        let dateAtTap = picker.date
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self, self.modalVC != nil else { return }
+            // If picker date is still the same, the tap was on the selected row → confirm
+            if self.picker.date == dateAtTap {
+                let ms = dateAtTap.timeIntervalSince1970 * 1000.0
+                self.onChangeHandler?(NSNumber(value: ms), true)
+            }
+        }
+        confirmWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: workItem)
     }
 
     // MARK: - Apply props (avoid firing valueChanged)
