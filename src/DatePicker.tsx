@@ -48,6 +48,14 @@ export type DatePickerProps = {
     countDownDurationSeconds?: NativeIOSProps['countDownDurationSeconds'];
     minuteInterval?: NativeIOSProps['minuteInterval'];
     roundsToMinuteInterval?: IOSRoundsToMinuteInterval;
+    /**
+     * Modal only. Show a Cancel/Done toolbar below the picker. Defaults to
+     * true. When false, `onConfirm` never fires with `confirmed: true` —
+     * the caller is expected to drive dismissal themselves by flipping
+     * `visible` off (and can read the current date from the stream of
+     * `confirmed: false` events).
+     */
+    showConfirmToolbar?: boolean;
   };
 
   android?: {
@@ -132,6 +140,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
           countDownDurationSeconds: ios.countDownDurationSeconds,
           minuteInterval: ios.minuteInterval,
           roundsToMinuteInterval: ios.roundsToMinuteInterval,
+          confirmToolbar: ios.showConfirmToolbar === false ? 'hide' : 'show',
         }
       : undefined,
 

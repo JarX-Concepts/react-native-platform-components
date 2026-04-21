@@ -191,6 +191,14 @@ using namespace facebook::react;
     }
   }
 
+  // Expecting: "show" | "hide"
+  if (oldIos.confirmToolbar != newIos.confirmToolbar) {
+    _datePickerView.confirmToolbarMode =
+        (!newIos.confirmToolbar.empty())
+            ? [NSString stringWithUTF8String:newIos.confirmToolbar.c_str()]
+            : @"show";
+  }
+
   if (needsToUpdateMeasurements) {
     [self updateMeasurements];
   }

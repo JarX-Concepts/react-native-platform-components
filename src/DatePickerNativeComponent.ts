@@ -14,12 +14,14 @@ export type DatePickerPresentation = 'modal' | 'embedded';
 
 export type IOSDatePickerStyle = 'automatic' | 'compact' | 'inline' | 'wheels';
 export type IOSRoundsToMinuteInterval = 'inherit' | 'round' | 'noRound';
+export type IOSConfirmToolbar = 'show' | 'hide';
 
 export type IOSProps = {
   preferredStyle?: string; // IOSDatePickerStyle
   countDownDurationSeconds?: CodegenTypes.Double;
   minuteInterval?: CodegenTypes.Int32;
   roundsToMinuteInterval?: string; // IOSRoundsToMinuteInterval
+  confirmToolbar?: string; // IOSConfirmToolbar
 };
 
 export type AndroidProps = {
