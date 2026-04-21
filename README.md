@@ -473,12 +473,13 @@ Native date & time picker using **platform system pickers**.
 
 ### iOS Props (`ios`)
 
-| Prop                       | Type                                               | Description                       |
-| -------------------------- | -------------------------------------------------- | --------------------------------- |
-| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style             |
-| `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode |
-| `minuteInterval`           | `number`                                           | Minute interval (1-30)            |
-| `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                 |
+| Prop                       | Type                                               | Description                                                              |
+| -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style                                                    |
+| `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode                                        |
+| `minuteInterval`           | `number`                                           | Minute interval (1-30)                                                   |
+| `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                                                        |
+| `showConfirmToolbar`       | `boolean`                                          | Modal only. Show Cancel/Done toolbar below the picker. Defaults to `true`. See below. |
 
 ### Android Props (`android`)
 
@@ -494,12 +495,14 @@ Native date & time picker using **platform system pickers**.
 
 `onConfirm` fires on every date/time change, but the second argument (`confirmed`) lets you distinguish between browsing and deliberate selections:
 
-| Platform / Mode      | Every change                             | Deliberate selection                                   |
-| -------------------- | ---------------------------------------- | ------------------------------------------------------ |
-| **iOS modal**        | `confirmed: false` (scrolling the wheel) | `confirmed: true` (tapping the already-selected value) |
-| **iOS embedded**     | `confirmed: true`                        | —                                                      |
-| **Android modal**    | —                                        | `confirmed: true` (pressing OK)                        |
-| **Android embedded** | `confirmed: true`                        | —                                                      |
+| Platform / Mode      | Every change                              | Deliberate selection                  |
+| -------------------- | ----------------------------------------- | ------------------------------------- |
+| **iOS modal**        | `confirmed: false` (user still adjusting) | `confirmed: true` (tapping **Done**)  |
+| **iOS embedded**     | `confirmed: true`                         | —                                     |
+| **Android modal**    | —                                         | `confirmed: true` (pressing OK)       |
+| **Android embedded** | `confirmed: true`                         | —                                     |
+
+On iOS in modal presentation, the picker is shown in a popover with a Cancel/Done toolbar below it. Tapping **Done** emits `confirmed: true`; tapping **Cancel** or outside the popover calls `onClosed`. Set `ios.showConfirmToolbar: false` to hide the toolbar — in that mode `confirmed: true` never fires, and your app is expected to drive dismissal by flipping `visible` off (reading the current date from the stream of `confirmed: false` events). This only makes UX sense paired with `ios.preferredStyle: 'inline'`.
 
 A common pattern is to close the modal only on a confirmed selection:
 

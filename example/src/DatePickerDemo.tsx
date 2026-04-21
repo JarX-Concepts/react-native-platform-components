@@ -64,6 +64,8 @@ export function DatePickerDemo(): React.JSX.Element {
     'inherit'
   );
 
+  const [iosConfirmToolbar, setIosConfirmToolbar] = useState(true);
+
   // ----- Android options -----
   const [androidMaterial, setAndroidMaterial] =
     useState<AndroidMaterialMode>('system');
@@ -255,6 +257,17 @@ export function DatePickerDemo(): React.JSX.Element {
               onSelect={(data) => setIosRounds(data as any)}
             />
           </Row>
+
+          <Divider />
+
+          <Row label="Confirm Toolbar">
+            <Switch
+              style={ui.alignEnd}
+              testID="ios-confirm-toolbar-switch"
+              value={iosConfirmToolbar}
+              onValueChange={setIosConfirmToolbar}
+            />
+          </Row>
         </Section>
       )}
 
@@ -346,6 +359,7 @@ export function DatePickerDemo(): React.JSX.Element {
                   ? undefined
                   : Number(iosMinuteInterval),
               roundsToMinuteInterval: iosRounds,
+              showConfirmToolbar: iosConfirmToolbar,
             }}
             android={{
               material: androidMaterial,

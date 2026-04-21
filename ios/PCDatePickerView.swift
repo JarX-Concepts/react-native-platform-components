@@ -6,15 +6,19 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Date
 @objcMembers
 public final class PCDatePickerView: UIControl,
     UIPopoverPresentationControllerDelegate,
-    UIAdaptivePresentationControllerDelegate,
-    UIGestureRecognizerDelegate
+    UIAdaptivePresentationControllerDelegate
 {
     // MARK: - UI
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
     private var inlineConstraints: [NSLayoutConstraint] = []
-    private var confirmWorkItem: DispatchWorkItem?
-    private var tapGesture: UITapGestureRecognizer?
+
+    private var modalToolbarHeight: CGFloat {
+        // iOS 26 renders bar button items as oversized Liquid Glass pills;
+        // they overflow a standard 44pt toolbar and clip against the popover.
+        if #available(iOS 26.0, *) { return 60 }
+        return 44
+    }
 
     // Suppress "programmatic" valueChanged events (apply props / initial present settle).
     private var suppressChangeEvents = false
@@ -87,6 +91,11 @@ public final class PCDatePickerView: UIControl,
     public var roundsToMinuteIntervalMode: String = "inherit" {
         didSet { if oldValue != roundsToMinuteIntervalMode { applyRoundsMode() } }
     }
+
+    /// "show" | "hide" — modal only. When "hide", the popover has no
+    /// Cancel/Done bar and the caller is responsible for driving dismissal
+    /// via the `visible` prop; valueChanged still emits confirmed=false.
+    public var confirmToolbarMode: String = "show"
 
     // MARK: - Init
 
@@ -199,13 +208,15 @@ public final class PCDatePickerView: UIControl,
             height: max(PCConstants.minTouchTargetHeight, fitted.height))
     }
 
-    /// Separate sizing for popover content.
+    /// Separate sizing for popover content. Accounts for the Cancel/Done
+    /// toolbar that sits below the picker in modal presentation.
     private func popoverContentSize() -> CGSize {
         picker.setNeedsLayout()
         picker.layoutIfNeeded()
 
         let fitted = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        return fitted
+        let extra = confirmToolbarMode == "hide" ? 0 : modalToolbarHeight
+        return CGSize(width: fitted.width, height: fitted.height + extra)
     }
 
     // MARK: - Presentation
@@ -286,17 +297,28 @@ public final class PCDatePickerView: UIControl,
         // Prevent "settle" events right as we present.
         suppressNextChangesBriefly()
 
-        // Set up tap-to-confirm gesture for modal mode
-        confirmWorkItem?.cancel()
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handlePickerTap))
-        tap.cancelsTouchesInView = false
-        tap.delegate = self
-        picker.addGestureRecognizer(tap)
-        tapGesture = tap
-
         let vc = UIViewController()
         picker.translatesAutoresizingMaskIntoConstraints = false
         vc.view.addSubview(picker)
+
+        // Cancel / Done toolbar below the picker — right-justified so both
+        // actions sit in the trailing corner, clear of the calendar header.
+        // Skipped entirely when confirmToolbarMode == "hide".
+        let toolbar: UIToolbar? = confirmToolbarMode == "hide" ? nil : {
+            let t = UIToolbar()
+            t.translatesAutoresizingMaskIntoConstraints = false
+            let flex = UIBarButtonItem(
+                barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+            let cancelItem = UIBarButtonItem(
+                barButtonSystemItem: .cancel,
+                target: self, action: #selector(handleCancelTap))
+            let doneItem = UIBarButtonItem(
+                barButtonSystemItem: .done,
+                target: self, action: #selector(handleDoneTap))
+            t.items = [flex, cancelItem, doneItem]
+            vc.view.addSubview(t)
+            return t
+        }()
 
         let useInlineFallback: Bool
         if #available(iOS 26.0, *) {
@@ -310,21 +332,42 @@ public final class PCDatePickerView: UIControl,
             vc.view.backgroundColor = .systemBackground
             vc.view.isOpaque = true
 
-            NSLayoutConstraint.activate([
+            var constraints: [NSLayoutConstraint] = [
                 picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
                 picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
                 picker.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
-                picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor),
-            ])
+            ]
+            if let toolbar {
+                constraints += [
+                    toolbar.topAnchor.constraint(equalTo: picker.bottomAnchor),
+                    toolbar.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+                    toolbar.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+                    toolbar.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor),
+                    toolbar.heightAnchor.constraint(equalToConstant: modalToolbarHeight),
+                ]
+            } else {
+                constraints.append(
+                    picker.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor))
+            }
+            NSLayoutConstraint.activate(constraints)
         } else {
             // Liquid Glass path
             vc.view.backgroundColor = .clear
             vc.view.isOpaque = false
 
-            NSLayoutConstraint.activate([
+            var constraints: [NSLayoutConstraint] = [
                 picker.topAnchor.constraint(equalTo: vc.view.topAnchor),
                 picker.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
-            ])
+            ]
+            if let toolbar {
+                constraints += [
+                    toolbar.topAnchor.constraint(equalTo: picker.bottomAnchor),
+                    toolbar.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+                    toolbar.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+                    toolbar.heightAnchor.constraint(equalToConstant: modalToolbarHeight),
+                ]
+            }
+            NSLayoutConstraint.activate(constraints)
         }
 
         let size = popoverContentSize()
@@ -354,11 +397,6 @@ public final class PCDatePickerView: UIControl,
         guard let vc = modalVC else { return }
         logger.debug("dismissIfNeeded: dismissing modal, emitCancel=\(emitCancel)")
         modalVC = nil
-        confirmWorkItem?.cancel()
-        if let tap = tapGesture {
-            picker.removeGestureRecognizer(tap)
-            tapGesture = nil
-        }
         vc.dismiss(animated: true) { [weak self] in
             guard let self else { return }
             if emitCancel { self.onCancelHandler?() }
@@ -376,11 +414,6 @@ public final class PCDatePickerView: UIControl,
     public func presentationControllerDidDismiss(_ presentationController: UIPresentationController)
     {
         modalVC = nil
-        confirmWorkItem?.cancel()
-        if let tap = tapGesture {
-            picker.removeGestureRecognizer(tap)
-            tapGesture = nil
-        }
         onCancelHandler?()
     }
 
@@ -388,21 +421,7 @@ public final class PCDatePickerView: UIControl,
         _ popoverPresentationController: UIPopoverPresentationController
     ) {
         modalVC = nil
-        confirmWorkItem?.cancel()
-        if let tap = tapGesture {
-            picker.removeGestureRecognizer(tap)
-            tapGesture = nil
-        }
         onCancelHandler?()
-    }
-
-    // MARK: - Gesture delegate
-
-    public func gestureRecognizer(
-        _ gestureRecognizer: UIGestureRecognizer,
-        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        return gestureRecognizer === tapGesture
     }
 
     // MARK: - Value changes
@@ -412,26 +431,22 @@ public final class PCDatePickerView: UIControl,
         if suppressChangeEvents { return }
 
         let ms = picker.date.timeIntervalSince1970 * 1000.0
+        // In modal mode, valueChanged is "user is still adjusting" —
+        // confirmation only happens when the user taps Done. Embedded
+        // presentation always confirms (there's no Done button to gate on).
         let isModal = presentation == "modal" && modalVC != nil
         onChangeHandler?(NSNumber(value: ms), !isModal)
     }
 
-    @objc private func handlePickerTap() {
+    @objc private func handleDoneTap() {
         guard presentation == "modal", modalVC != nil else { return }
+        let ms = picker.date.timeIntervalSince1970 * 1000.0
+        onChangeHandler?(NSNumber(value: ms), true)
+        dismissIfNeeded(emitCancel: false)
+    }
 
-        confirmWorkItem?.cancel()
-
-        let dateAtTap = picker.date
-        let workItem = DispatchWorkItem { [weak self] in
-            guard let self, self.modalVC != nil else { return }
-            // If picker date is still the same, the tap was on the selected row → confirm
-            if self.picker.date == dateAtTap {
-                let ms = dateAtTap.timeIntervalSince1970 * 1000.0
-                self.onChangeHandler?(NSNumber(value: ms), true)
-            }
-        }
-        confirmWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: workItem)
+    @objc private func handleCancelTap() {
+        dismissIfNeeded(emitCancel: true)
     }
 
     // MARK: - Apply props (avoid firing valueChanged)
