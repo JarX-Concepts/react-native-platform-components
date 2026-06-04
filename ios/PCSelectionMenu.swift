@@ -277,33 +277,53 @@ public final class PCSelectionMenuView: UIControl {
             // Calculate menu position relative to source view
             let sourceFrame = self.convert(self.bounds, to: vc.view)
             let screenBounds = vc.view.bounds
-            let popoverHeight = min(
-                CGFloat(opts.count) * PCConstants.popoverRowHeight + PCConstants.popoverVerticalPadding,
-                PCConstants.popoverMaxHeight
-            )
             let spacing: CGFloat = 8
 
+            // Adaptive width (wider at accessibility sizes), clamped to the screen.
+            let category = self.traitCollection.preferredContentSizeCategory
+            let menuWidth = min(
+                PCConstants.popoverWidth(forCategory: category),
+                screenBounds.width - 32
+            )
+
+            // Measure the real (possibly multi-line) content height so the
+            // container fits its rows instead of clipping or leaving gaps.
+            let contentHeight = opts.reduce(PCConstants.popoverVerticalPadding) { partial, opt in
+                partial + PCConstants.popoverRowHeight(forLabel: opt.label, width: menuWidth)
+            }
+            // Allow taller menus at accessibility sizes; otherwise keep them compact.
+            let maxHeight = category.isAccessibilityCategory
+                ? max(PCConstants.popoverMaxHeight, screenBounds.height - 120)
+                : PCConstants.popoverMaxHeight
+            let popoverHeight = min(contentHeight, maxHeight)
+
             // Check if menu fits below the source view
-            let rowHeight = PCConstants.popoverRowHeight
+            let firstRowHeight = PCConstants.popoverRowHeight(forLabel: opts[0].label, width: menuWidth)
             let wouldExtendBeyondBottom = sourceFrame.maxY + spacing + popoverHeight > screenBounds.maxY - 20
 
-            let menuY: CGFloat
+            var menuY: CGFloat
             if wouldExtendBeyondBottom {
                 // Position above the source view (no overlap offset)
                 menuY = sourceFrame.minY - spacing - popoverHeight
             } else {
                 // Position below, but shift up by one row to overlap trigger (like system menu)
-                menuY = sourceFrame.maxY + spacing - rowHeight
+                menuY = sourceFrame.maxY + spacing - firstRowHeight
             }
 
+            // Keep the menu fully on screen vertically (tall menus at large
+            // Dynamic Type sizes can otherwise run off the top or bottom).
+            let topMargin = vc.view.safeAreaInsets.top + spacing
+            let bottomLimit = screenBounds.maxY - vc.view.safeAreaInsets.bottom - spacing - popoverHeight
+            menuY = min(max(menuY, topMargin), max(topMargin, bottomLimit))
+
             // Center horizontally, but keep within screen bounds
-            var menuX = sourceFrame.midX - PCConstants.popoverWidth / 2
-            menuX = max(16, min(menuX, screenBounds.maxX - PCConstants.popoverWidth - 16))
+            var menuX = sourceFrame.midX - menuWidth / 2
+            menuX = max(16, min(menuX, screenBounds.maxX - menuWidth - 16))
 
             let menuFrame = CGRect(
                 x: menuX,
                 y: menuY,
-                width: PCConstants.popoverWidth,
+                width: menuWidth,
                 height: popoverHeight
             )
 
@@ -365,6 +385,11 @@ public final class PCSelectionMenuView: UIControl {
 private class PCGlassMenuCell: UITableViewCell {
     static let reuseIdentifier = "PCGlassMenuCell"
 
+    /// Custom multi-line label. We avoid the legacy `textLabel` because it
+    /// defaults to a single line and does not drive self-sizing reliably, which
+    /// caused rows to overlap at large Dynamic Type sizes.
+    let menuLabel = UILabel()
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupCell()
@@ -379,8 +404,26 @@ private class PCGlassMenuCell: UITableViewCell {
         backgroundColor = .clear
         contentView.backgroundColor = .clear
         selectionStyle = .none
-        textLabel?.font = .preferredFont(forTextStyle: .body)
-        textLabel?.adjustsFontForContentSizeCategory = true
+
+        menuLabel.font = .preferredFont(forTextStyle: .body)
+        menuLabel.adjustsFontForContentSizeCategory = true
+        menuLabel.numberOfLines = 0
+        menuLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(menuLabel)
+
+        let v = PCConstants.popoverRowVerticalPadding / 2
+        let h = PCConstants.popoverRowHorizontalInset
+        // Center the label and let it grow the row vertically. The min-height
+        // constraint guarantees the 44pt touch target for short labels, while
+        // the >= top / <= bottom pair lets tall (wrapped) labels expand the row.
+        NSLayoutConstraint.activate([
+            menuLabel.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: v),
+            menuLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -v),
+            menuLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            menuLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: h),
+            menuLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -h),
+            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: PCConstants.popoverRowHeightMin),
+        ])
     }
 }
 
@@ -451,7 +494,10 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
         tableView.isScrollEnabled = true
-        tableView.rowHeight = PCConstants.popoverRowHeight
+        // Self-sizing rows so labels that wrap at large Dynamic Type sizes get
+        // the height they need instead of overlapping a fixed-height row.
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = PCConstants.popoverRowHeight
         tableView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         let verticalPad = PCConstants.popoverVerticalPadding / 2
         tableView.contentInset = UIEdgeInsets(top: verticalPad, left: 0, bottom: verticalPad, right: 0)
@@ -479,7 +525,7 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: PCGlassMenuCell.reuseIdentifier, for: indexPath)
-        cell.textLabel?.text = options[indexPath.row].label
+        (cell as? PCGlassMenuCell)?.menuLabel.text = options[indexPath.row].label
         return cell
     }
 
