@@ -11,17 +11,17 @@
     "prebuild:clean": "expo prebuild --clean"
   },
   "dependencies": {
-    "babel-preset-expo": "^54.0.10",
-    "expo": "~54.0.0",
-    "expo-dev-client": "~6.0.0",
-    "expo-status-bar": "~2.2.0",
-    "react": "19.1.0",
-    "react-native": "0.81.2",
+    "babel-preset-expo": "^56.0.14",
+    "expo": "~56.0.8",
+    "expo-dev-client": "~56.0.18",
+    "expo-status-bar": "~56.0.4",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
     "react-native-platform-components": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
-    "@types/react": "~19.1.0",
+    "@types/react": "~19.2.2",
     "typescript": "~5.8.3"
   }
 }
