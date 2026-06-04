@@ -19,11 +19,47 @@ enum PCConstants {
     /// Minimum row height in selection menu popover (used as baseline)
     static let popoverRowHeightMin: CGFloat = 44
 
-    /// Dynamic row height that respects user's preferred content size
+    /// Horizontal inset applied to each side of a menu row's label
+    static let popoverRowHorizontalInset: CGFloat = 16
+
+    /// Vertical padding added to each menu row's text (top + bottom combined)
+    static let popoverRowVerticalPadding: CGFloat = 16
+
+    /// Estimated single-line row height that respects the user's preferred
+    /// content size. Used only as a table-view estimate; actual rows self-size.
     static var popoverRowHeight: CGFloat {
         let bodyFont = UIFont.preferredFont(forTextStyle: .body)
-        // Row height = font line height + vertical padding (16pt total)
-        return max(popoverRowHeightMin, ceil(bodyFont.lineHeight) + 16)
+        return max(popoverRowHeightMin, ceil(bodyFont.lineHeight) + popoverRowVerticalPadding)
+    }
+
+    /// Measured height of a single menu row for the given label and content
+    /// width, accounting for multi-line wrapping at the current Dynamic Type
+    /// size. Mirrors the Auto Layout sizing of `PCGlassMenuCell` so the popover
+    /// container can be sized to fit its content.
+    static func popoverRowHeight(forLabel label: String, width: CGFloat) -> CGFloat {
+        let bodyFont = UIFont.preferredFont(forTextStyle: .body)
+        let textWidth = max(1, width - popoverRowHorizontalInset * 2)
+        let bounding = (label as NSString).boundingRect(
+            with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [.font: bodyFont],
+            context: nil
+        )
+        return max(popoverRowHeightMin, ceil(bounding.height) + popoverRowVerticalPadding)
+    }
+
+    /// Adaptive popover width. Widens for accessibility content size categories
+    /// so long labels wrap less aggressively (mirrors system menu behavior).
+    /// The caller is responsible for clamping to the available screen width.
+    static func popoverWidth(forCategory category: UIContentSizeCategory) -> CGFloat {
+        guard category.isAccessibilityCategory else { return popoverWidth }
+        switch category {
+        case .accessibilityMedium: return 300
+        case .accessibilityLarge: return 320
+        case .accessibilityExtraLarge: return 340
+        case .accessibilityExtraExtraLarge: return 360
+        default: return 380 // accessibilityExtraExtraExtraLarge and beyond
+        }
     }
 
     /// Vertical padding in selection menu popover (top + bottom)
