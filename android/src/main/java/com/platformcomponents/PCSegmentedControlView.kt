@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.TextUtils
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
@@ -34,9 +35,11 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
   var segments: List<Segment> = emptyList()
   var selectedValue: String = "" // sentinel for none
   var interactivity: String = "enabled" // "enabled" | "disabled"
-  var selectionRequired: Boolean = false
+  // Matches iOS, where a UISegmentedControl selection cannot be cleared by tapping.
+  var selectionRequired: Boolean = true
 
   // --- Events ---
+  /** index -1 with an empty value means the selection was cleared. */
   var onSelect: ((index: Int, value: String) -> Unit)? = null
 
   // --- UI ---
@@ -105,12 +108,13 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
 
-        // Reduce horizontal padding in compact mode to fit more content
-        if (useCompactMode) {
-          val compactPadding = (8 * resources.displayMetrics.density).toInt()
-          setPaddingRelative(compactPadding, paddingTop, compactPadding, paddingBottom)
-          iconPadding = (4 * resources.displayMetrics.density).toInt()
-        }
+        // Material 3 segmented buttons use 12dp horizontal padding and an 8dp
+        // icon gap (the outlined button style defaults to 24dp); tighten
+        // further when there are many segments or long labels.
+        val density = resources.displayMetrics.density
+        val horizontalPadding = ((if (useCompactMode) 8 else 12) * density).toInt()
+        setPaddingRelative(horizontalPadding, paddingTop, horizontalPadding, paddingBottom)
+        iconPadding = ((if (useCompactMode) 4 else 8) * density).toInt()
 
         // Set icon if available
         if (segment.icon.isNotEmpty()) {
@@ -121,22 +125,26 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
             setIconResource(resId)
           }
         }
-
-        // Handle click to trigger selection (needed for Detox taps)
-        setOnClickListener {
-          if (!suppressCallbacks && isEnabled) {
-            group.check(id)
-          }
-        }
       }
 
       buttonIdToSegment[button.id] = segment
-      group.addView(button)
+      // Share the width equally (like UISegmentedControl) so trailing segments
+      // never overflow the control; long labels ellipsize instead.
+      group.addView(button, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
     }
 
-    group.addOnButtonCheckedListener { _, checkedId, isChecked ->
+    group.addOnButtonCheckedListener { toggleGroup, checkedId, isChecked ->
       if (suppressCallbacks) return@addOnButtonCheckedListener
-      if (!isChecked) return@addOnButtonCheckedListener
+
+      if (!isChecked) {
+        // In single-selection mode switching from A to B reports A as unchecked
+        // before B is reported as checked; by then the group already knows B is
+        // checked. Only a tap that leaves nothing checked is a real deselection.
+        if (toggleGroup.checkedButtonId == View.NO_ID) {
+          onSelect?.invoke(-1, "")
+        }
+        return@addOnButtonCheckedListener
+      }
 
       val segment = buttonIdToSegment[checkedId] ?: return@addOnButtonCheckedListener
       val index = segments.indexOf(segment)

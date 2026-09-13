@@ -31,13 +31,14 @@ const PARTIAL_DISABLED_SEGMENTS = [
 ];
 
 export function SegmentedControlDemo(): React.JSX.Element {
-  const [selected, setSelected] = useState<string>('day');
+  const [selected, setSelected] = useState<string | null>('day');
   const [iconSelected, setIconSelected] = useState<string>('list');
   const [partialSelected, setPartialSelected] = useState<string>('active');
 
   const [disabled, setDisabled] = useState(false);
   const [momentary, setMomentary] = useState(false);
   const [proportional, setProportional] = useState(false);
+  const [selectionRequired, setSelectionRequired] = useState(true);
 
   return (
     <>
@@ -50,16 +51,18 @@ export function SegmentedControlDemo(): React.JSX.Element {
             selectedValue={selected}
             disabled={disabled}
             onSelect={(value) => setSelected(value)}
+            onDeselect={() => setSelected(null)}
             ios={{
               momentary,
               apportionsSegmentWidthsByContent: proportional,
             }}
+            android={{ selectionRequired }}
           />
         </Row>
         <Divider />
         <Row label="Selected">
           <Text testID="segment-basic-value" style={ui.valueText}>
-            {selected}
+            {selected ?? '(none)'}
           </Text>
         </Row>
       </Section>
@@ -107,6 +110,20 @@ export function SegmentedControlDemo(): React.JSX.Element {
             onValueChange={setDisabled}
           />
         </Row>
+
+        {Platform.OS === 'android' && (
+          <>
+            <Divider />
+            <Row label="Selection required">
+              <Switch
+                style={ui.alignEnd}
+                testID="selection-required-switch"
+                value={selectionRequired}
+                onValueChange={setSelectionRequired}
+              />
+            </Row>
+          </>
+        )}
 
         {Platform.OS === 'ios' && (
           <>

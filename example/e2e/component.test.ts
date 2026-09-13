@@ -436,6 +436,28 @@ describe('Platform Components Example', () => {
 
     await element(by.text('Day')).atIndex(0).tap();
     await pause(300);
+
+    if (isAndroid()) {
+      // Allow clearing the selection, then tap the selected segment to clear it
+      await element(by.id('selection-required-switch')).tap();
+      await pause(400);
+
+      await element(by.text('Day')).atIndex(0).tap();
+      await pause(400);
+      await expect(element(by.id('segment-basic-value'))).toHaveText('(none)');
+
+      await element(by.text('Week')).atIndex(0).tap();
+      await pause(400);
+      await expect(element(by.id('segment-basic-value'))).toHaveText('week');
+
+      // Restore the default (selection required) and confirm a tap no longer clears
+      await element(by.id('selection-required-switch')).tap();
+      await pause(400);
+
+      await element(by.text('Week')).atIndex(0).tap();
+      await pause(400);
+      await expect(element(by.id('segment-basic-value'))).toHaveText('week');
+    }
   });
 
   it('should test Liquid Glass functionality', async () => {

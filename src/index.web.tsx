@@ -123,6 +123,7 @@ export interface SegmentedControlProps extends ViewProps {
   selectedValue: string | null;
   disabled?: boolean;
   onSelect?: (value: string, index: number) => void;
+  onDeselect?: () => void;
   ios?: Record<string, unknown>;
   android?: Record<string, unknown>;
 }

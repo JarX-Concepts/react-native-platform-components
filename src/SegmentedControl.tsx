@@ -48,6 +48,13 @@ export interface SegmentedControlProps extends ViewProps {
    */
   onSelect?: (value: string, index: number) => void;
 
+  /**
+   * Called when the user clears the selection by tapping the selected segment.
+   * Only possible on Android with `android.selectionRequired` set to `false`;
+   * iOS never clears a selection from a tap.
+   */
+  onDeselect?: () => void;
+
   /** Whether the entire control is disabled */
   disabled?: boolean;
 
@@ -78,8 +85,9 @@ export interface SegmentedControlProps extends ViewProps {
    */
   android?: {
     /**
-     * Whether one segment must always be selected.
-     * Default: false
+     * Whether one segment must always be selected. When `false`, tapping the
+     * selected segment clears the selection and calls `onDeselect`.
+     * Default: true (matches iOS, which cannot clear a selection by tapping)
      */
     selectionRequired?: boolean;
   };
@@ -101,6 +109,7 @@ export function SegmentedControl(
     selectedValue,
     disabled,
     onSelect,
+    onDeselect,
     ios,
     android,
     ...viewProps
@@ -124,9 +133,14 @@ export function SegmentedControl(
   const handleSelect = useCallback(
     (e: { nativeEvent: SegmentedControlSelectEvent }) => {
       const { index, value } = e.nativeEvent;
+      // Native reports a cleared selection as index -1 with an empty value.
+      if (index < 0) {
+        onDeselect?.();
+        return;
+      }
       onSelect?.(value, index);
     },
-    [onSelect]
+    [onSelect, onDeselect]
   );
 
   // Normalize iOS props to native string format
@@ -145,7 +159,7 @@ export function SegmentedControl(
   const nativeAndroid = useMemo(() => {
     if (!android) return undefined;
     return {
-      selectionRequired: android.selectionRequired ? 'true' : 'false',
+      selectionRequired: android.selectionRequired === false ? 'false' : 'true',
     };
   }, [android]);
 
@@ -163,7 +177,7 @@ export function SegmentedControl(
       segments={nativeSegments}
       selectedValue={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
-      onSelect={onSelect ? handleSelect : undefined}
+      onSelect={onSelect || onDeselect ? handleSelect : undefined}
       ios={nativeIos}
       android={nativeAndroid}
       {...viewProps}
