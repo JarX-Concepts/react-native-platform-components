@@ -169,7 +169,7 @@ jobs:
     runs-on: macos-latest
 
     env:
-      XCODE_VERSION: 26.2
+      XCODE_VERSION: 26.6
       TURBO_CACHE_DIR: .turbo/ios
       RCT_USE_RN_DEP: 1
       RCT_USE_PREBUILT_RNCORE: 1
@@ -207,6 +207,7 @@ jobs:
         if: env.turbo_cache_hit != 1
         run: |
           brew tap wix/brew
+          brew trust --tap wix/brew
           brew install applesimutils
 
       - name: Install cocoapods
@@ -275,7 +276,7 @@ jobs:
     runs-on: macos-latest
 
     env:
-      XCODE_VERSION: 26.2
+      XCODE_VERSION: 26.6
 
     steps:
       - name: Checkout
