@@ -33,7 +33,9 @@ jobs:
 
       - name: Upgrade npm for OIDC trusted publishing
         run: |
-          npm install -g npm@latest
+          # Pinned to 11.x: trusted publishing needs npm >= 11.5.1, and npm 12
+          # requires a newer Node than .nvmrc pins.
+          npm install -g npm@^11.5.1
           echo "npm version: $(npm --version)"
 
       - name: Release
