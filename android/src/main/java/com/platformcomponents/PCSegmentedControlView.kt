@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.TextUtils
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
@@ -107,12 +108,13 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
 
-        // Reduce horizontal padding in compact mode to fit more content
-        if (useCompactMode) {
-          val compactPadding = (8 * resources.displayMetrics.density).toInt()
-          setPaddingRelative(compactPadding, paddingTop, compactPadding, paddingBottom)
-          iconPadding = (4 * resources.displayMetrics.density).toInt()
-        }
+        // Material 3 segmented buttons use 12dp horizontal padding and an 8dp
+        // icon gap (the outlined button style defaults to 24dp); tighten
+        // further when there are many segments or long labels.
+        val density = resources.displayMetrics.density
+        val horizontalPadding = ((if (useCompactMode) 8 else 12) * density).toInt()
+        setPaddingRelative(horizontalPadding, paddingTop, horizontalPadding, paddingBottom)
+        iconPadding = ((if (useCompactMode) 4 else 8) * density).toInt()
 
         // Set icon if available
         if (segment.icon.isNotEmpty()) {
@@ -126,7 +128,9 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
       }
 
       buttonIdToSegment[button.id] = segment
-      group.addView(button)
+      // Share the width equally (like UISegmentedControl) so trailing segments
+      // never overflow the control; long labels ellipsize instead.
+      group.addView(button, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
     }
 
     group.addOnButtonCheckedListener { toggleGroup, checkedId, isChecked ->
