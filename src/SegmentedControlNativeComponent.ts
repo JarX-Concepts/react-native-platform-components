@@ -1,5 +1,10 @@
 // SegmentedControlNativeComponent.ts
-import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
+import type {
+  CodegenTypes,
+  ColorValue,
+  HostComponent,
+  ViewProps,
+} from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
 /**
@@ -39,6 +44,16 @@ export type SegmentedControlInteractivity = 'enabled' | 'disabled';
 export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
 
 /**
+ * Label font. Empty strings / 0 mean "platform default".
+ */
+export type LabelStyleProps = Readonly<{
+  fontFamily?: string;
+  fontSize?: CodegenTypes.Double;
+  fontWeight?: string; // 'normal' | 'bold' | '100'..'900'
+  fontStyle?: string; // 'normal' | 'italic'
+}>;
+
+/**
  * iOS-specific configuration.
  */
 export type IOSProps = Readonly<{
@@ -47,9 +62,6 @@ export type IOSProps = Readonly<{
 
   /** Whether segment widths are proportional to content */
   apportionsSegmentWidthsByContent?: string; // 'true' | 'false'
-
-  /** Selected segment tint color (hex string) */
-  selectedSegmentTintColor?: string;
 }>;
 
 /**
@@ -81,6 +93,24 @@ export interface SegmentedControlProps extends ViewProps {
    * How segment labels and icons combine.
    */
   labelVisibility?: string; // SegmentedControlLabelVisibility
+
+  /** Background of the selected segment. */
+  selectedSegmentColor?: ColorValue;
+
+  /** Text / icon color of the selected segment. */
+  activeTintColor?: ColorValue;
+
+  /** Text / icon color of unselected segments. */
+  inactiveTintColor?: ColorValue;
+
+  /** Android: ripple color when pressing a segment. */
+  androidRippleColor?: ColorValue;
+
+  /** Android: outline color of the segments. */
+  androidStrokeColor?: ColorValue;
+
+  /** Label font. */
+  labelStyle?: LabelStyleProps;
 
   /**
    * Fired when the user selects a segment.

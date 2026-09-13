@@ -131,11 +131,22 @@ export interface SegmentedControlSegmentProps {
   accessibilityLabel?: string;
 }
 
+export interface SegmentedControlLabelStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string | number;
+  fontStyle?: 'normal' | 'italic';
+}
+
 export interface SegmentedControlProps extends ViewProps {
   segments: readonly SegmentedControlSegmentProps[];
   selectedValue: string | null;
   disabled?: boolean;
   labelVisibility?: SegmentedControlLabelVisibility;
+  selectedSegmentColor?: string;
+  activeTintColor?: string;
+  inactiveTintColor?: string;
+  labelStyle?: SegmentedControlLabelStyle;
   onSelect?: (value: string, index: number) => void;
   onDeselect?: () => void;
   ios?: Record<string, unknown>;

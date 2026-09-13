@@ -5,6 +5,7 @@
 #import <React/RCTComponentViewFactory.h>
 #import <React/RCTConversions.h>
 #import <React/RCTFabricComponentsPlugins.h>
+#import <React/RCTFont.h>
 
 #import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
@@ -44,6 +45,32 @@ static inline bool SegmentsEqual(
 
 static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback) {
   return s.empty() ? fallback : [NSString stringWithUTF8String:s.c_str()];
+}
+
+static inline bool LabelStyleEqual(
+    const facebook::react::PCSegmentedControlLabelStyleStruct &a,
+    const facebook::react::PCSegmentedControlLabelStyleStruct &b) {
+  return a.fontFamily == b.fontFamily && a.fontSize == b.fontSize &&
+         a.fontWeight == b.fontWeight && a.fontStyle == b.fontStyle;
+}
+
+/// Builds the label font from RN-style font props, or nil when every field is
+/// unset so the control keeps the system font.
+static UIFont *FontFromLabelStyle(
+    const facebook::react::PCSegmentedControlLabelStyleStruct &style) {
+  if (style.fontFamily.empty() && style.fontSize <= 0 &&
+      style.fontWeight.empty() && style.fontStyle.empty()) {
+    return nil;
+  }
+  // UISegmentedControl titles default to 13pt; start there so a lone
+  // fontWeight or fontStyle doesn't change the size.
+  return [RCTFont updateFont:[UIFont systemFontOfSize:13]
+                  withFamily:NSStringFromStd(style.fontFamily, nil)
+                        size:style.fontSize > 0 ? @(style.fontSize) : nil
+                      weight:NSStringFromStd(style.fontWeight, nil)
+                       style:NSStringFromStd(style.fontStyle, nil)
+                     variant:nil
+             scaleMultiplier:1.0];
 }
 } // namespace
 
@@ -161,13 +188,22 @@ static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback
     _view.apportionsSegmentWidthsByContent = (newIos.apportionsSegmentWidthsByContent == "true");
   }
 
-  if (!prevProps || newIos.selectedSegmentTintColor != oldIos.selectedSegmentTintColor) {
-    if (!newIos.selectedSegmentTintColor.empty()) {
-      _view.selectedSegmentTintColor =
-          [NSString stringWithUTF8String:newIos.selectedSegmentTintColor.c_str()];
-    } else {
-      _view.selectedSegmentTintColor = nil;
-    }
+  // Colors arrive as SharedColor (already processed by React Native)
+  if (!prevProps || newProps.selectedSegmentColor != prevProps->selectedSegmentColor) {
+    _view.selectedSegmentColor = RCTUIColorFromSharedColor(newProps.selectedSegmentColor);
+  }
+
+  if (!prevProps || newProps.activeTintColor != prevProps->activeTintColor) {
+    _view.activeTintColor = RCTUIColorFromSharedColor(newProps.activeTintColor);
+  }
+
+  if (!prevProps || newProps.inactiveTintColor != prevProps->inactiveTintColor) {
+    _view.inactiveTintColor = RCTUIColorFromSharedColor(newProps.inactiveTintColor);
+  }
+
+  // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
+  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
+    _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
   }
 
   [super updateProps:props oldProps:oldProps];
