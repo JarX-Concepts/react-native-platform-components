@@ -131,3 +131,98 @@ describe('SegmentedControl', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('SegmentedControl icons', () => {
+  const { Image, Platform } = require('react-native');
+  const resolveAssetSource = jest.fn();
+
+  beforeEach(() => {
+    NativeSegmentedControl.mockClear();
+    resolveAssetSource.mockReset();
+    Image.resolveAssetSource = resolveAssetSource;
+  });
+
+  function nativeIcon(icon: unknown) {
+    const tree = render(
+      <SegmentedControl
+        segments={[{ label: 'A', value: 'a', icon: icon as never }]}
+        selectedValue="a"
+      />
+    );
+    const segment = lastNativeProps().segments[0];
+    act(() => tree.unmount());
+    return segment;
+  }
+
+  it('treats a bare string as an SF Symbol on iOS', () => {
+    expect(nativeIcon('list.bullet')).toMatchObject({
+      iconType: 'sfSymbol',
+      iconName: 'list.bullet',
+      iconUri: '',
+    });
+  });
+
+  it('treats a bare string as a drawable on Android', () => {
+    const restore = jest.replaceProperty(Platform, 'OS', 'android');
+    expect(nativeIcon('list_bullet')).toMatchObject({
+      iconType: 'drawable',
+      iconName: 'list_bullet',
+    });
+    restore.restore();
+  });
+
+  it('drops sources that do not apply to the platform', () => {
+    expect(nativeIcon({ type: 'drawable', name: 'grid_view' })).toMatchObject({
+      iconType: '',
+      iconName: '',
+    });
+  });
+
+  it('picks the per-platform source', () => {
+    expect(
+      nativeIcon({
+        ios: { type: 'sfSymbol', name: 'square.grid.2x2' },
+        android: { type: 'drawable', name: 'grid_view' },
+      })
+    ).toMatchObject({ iconType: 'sfSymbol', iconName: 'square.grid.2x2' });
+  });
+
+  it('resolves image sources to a uri and scale', () => {
+    resolveAssetSource.mockReturnValue({
+      uri: 'file:///bundle/assets/bell@2x.png',
+      scale: 2,
+      width: 18,
+      height: 18,
+    });
+    expect(
+      nativeIcon({ type: 'image', source: 42, tinted: false })
+    ).toMatchObject({
+      iconType: 'image',
+      iconUri: 'file:///bundle/assets/bell@2x.png',
+      iconScale: 2,
+      iconTinted: 'false',
+    });
+    expect(resolveAssetSource).toHaveBeenCalledWith(42);
+  });
+
+  it('defaults images to tinted and scale 1', () => {
+    resolveAssetSource.mockReturnValue({ uri: 'https://x/icon.png' });
+    expect(
+      nativeIcon({ type: 'image', source: { uri: 'https://x/icon.png' } })
+    ).toMatchObject({ iconType: 'image', iconScale: 1, iconTinted: 'true' });
+  });
+
+  it('passes labelVisibility and accessibility labels through', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={[{ label: 'A', value: 'a', accessibilityLabel: 'Alpha' }]}
+        selectedValue="a"
+        labelVisibility="unlabeled"
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.labelVisibility).toBe('unlabeled');
+    expect(props.segments[0].accessibilityLabel).toBe('Alpha');
+    act(() => tree.unmount());
+  });
+});

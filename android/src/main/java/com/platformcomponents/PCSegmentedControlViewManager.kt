@@ -52,20 +52,40 @@ class PCSegmentedControlViewManager :
     }
   }
 
-  // segments: array of {label, value, disabled, icon}
+  private fun ReadableMap.stringOr(key: String, fallback: String): String =
+    if (hasKey(key) && !isNull(key)) getString(key) ?: fallback else fallback
+
+  private fun ReadableMap.doubleOr(key: String, fallback: Double): Double =
+    if (hasKey(key) && !isNull(key)) getDouble(key) else fallback
+
+  // segments: array of {label, value, disabled, iconType, iconName, iconUri,
+  //                     iconScale, iconTinted, accessibilityLabel}
   override fun setSegments(view: PCSegmentedControlView, value: ReadableArray?) {
     val out = ArrayList<PCSegmentedControlView.Segment>()
     if (value != null) {
       for (i in 0 until value.size()) {
         val m = value.getMap(i) ?: continue
-        val label = if (m.hasKey("label") && !m.isNull("label")) m.getString("label") ?: "" else ""
-        val segValue = if (m.hasKey("value") && !m.isNull("value")) m.getString("value") ?: "" else ""
-        val disabled = m.hasKey("disabled") && !m.isNull("disabled") && m.getString("disabled") == "disabled"
-        val icon = if (m.hasKey("icon") && !m.isNull("icon")) m.getString("icon") ?: "" else ""
-        out.add(PCSegmentedControlView.Segment(label = label, value = segValue, disabled = disabled, icon = icon))
+        val scale = m.doubleOr("iconScale", 1.0)
+        out.add(
+          PCSegmentedControlView.Segment(
+            label = m.stringOr("label", ""),
+            value = m.stringOr("value", ""),
+            disabled = m.stringOr("disabled", "enabled") == "disabled",
+            iconType = m.stringOr("iconType", ""),
+            iconName = m.stringOr("iconName", ""),
+            iconUri = m.stringOr("iconUri", ""),
+            iconScale = if (scale > 0) scale.toFloat() else 1f,
+            iconTinted = m.stringOr("iconTinted", "true") != "false",
+            accessibilityLabel = m.stringOr("accessibilityLabel", "")
+          )
+        )
       }
     }
     view.applySegments(out)
+  }
+
+  override fun setLabelVisibility(view: PCSegmentedControlView, value: String?) {
+    view.applyLabelVisibility(value)
   }
 
   override fun setSelectedValue(view: PCSegmentedControlView, value: String?) {

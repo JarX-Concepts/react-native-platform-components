@@ -371,18 +371,22 @@ export function Example() {
 
 ```tsx
 import { SegmentedControl } from 'react-native-platform-components';
-import { Platform } from 'react-native';
 
 const segments = [
   {
     label: 'List',
     value: 'list',
-    icon: Platform.OS === 'ios' ? 'list.bullet' : 'list_bullet',
+    // Native symbol on each platform, no Platform.OS branching
+    icon: {
+      ios: { type: 'sfSymbol', name: 'list.bullet' },
+      android: { type: 'drawable', name: 'list_bullet' },
+    },
   },
   {
-    label: 'Grid',
-    value: 'grid',
-    icon: Platform.OS === 'ios' ? 'square.grid.2x2' : 'grid_view',
+    label: 'Alerts',
+    value: 'alerts',
+    // One image asset shared by both platforms, tinted like a template
+    icon: { type: 'image', source: require('./bell.png') },
   },
 ];
 
@@ -394,6 +398,8 @@ export function Example() {
       segments={segments}
       selectedValue={selected}
       onSelect={(value) => setSelected(value)}
+      // 'auto' | 'labeled' | 'unlabeled'
+      labelVisibility="auto"
       ios={{ apportionsSegmentWidthsByContent: true }}
     />
   );
@@ -611,22 +617,24 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Props
 
-| Prop            | Type                                     | Description                          |
-| --------------- | ---------------------------------------- | ------------------------------------ |
-| `segments`      | `SegmentedControlSegment[]`              | Array of segments to display         |
-| `selectedValue` | `string \| null`                         | Currently selected segment's `value` |
-| `disabled`      | `boolean`                                | Disables the entire control          |
-| `onSelect`      | `(value: string, index: number) => void` | Called when user selects a segment   |
-| `onDeselect`    | `() => void`                             | Called when the user clears the selection by tapping the selected segment (Android only, requires `android.selectionRequired: false`) |
+| Prop              | Type                                     | Description                                                                                                                                                |
+| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `segments`        | `SegmentedControlSegment[]`              | Array of segments to display                                                                                                                               |
+| `selectedValue`   | `string \| null`                         | Currently selected segment's `value`                                                                                                                       |
+| `disabled`        | `boolean`                                | Disables the entire control                                                                                                                                |
+| `labelVisibility` | `'auto' \| 'labeled' \| 'unlabeled'`     | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                                                 |
+| `onSelect`        | `(value: string, index: number) => void` | Called when user selects a segment                                                                                                                         |
+| `onDeselect`      | `() => void`                             | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false`                        |
 
 ### SegmentedControlSegment
 
-| Property   | Type      | Description                                       |
-| ---------- | --------- | ------------------------------------------------- |
-| `label`    | `string`  | Display text for the segment                      |
-| `value`    | `string`  | Unique value returned in callbacks                |
-| `disabled` | `boolean` | Disables this specific segment                    |
-| `icon`     | `string`  | Icon name (SF Symbol on iOS, drawable on Android) |
+| Property             | Type                   | Description                                                                                                       |
+| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `label`              | `string`               | Display text for the segment                                                                                      |
+| `value`              | `string`               | Unique value returned in callbacks                                                                                |
+| `disabled`           | `boolean`              | Disables this specific segment                                                                                    |
+| `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](#icon-support-1)                                                                |
+| `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title |
 
 ### iOS Props (`ios`)
 
@@ -644,10 +652,40 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Icon Support
 
-Icons work the same as ContextMenu:
+`icon` accepts a single source, or an `{ ios, android }` pair so you never branch on `Platform.OS`:
 
-- **iOS**: Use SF Symbol names (e.g., `'list.bullet'`, `'square.grid.2x2'`)
-- **Android**: Use drawable resource names (e.g., `'list_bullet'`, `'grid_view'`)
+| Shape                                       | iOS                                 | Android                                       |
+| ------------------------------------------- | ----------------------------------- | --------------------------------------------- |
+| `'name'` (string)                           | SF Symbol name                      | Drawable resource name                        |
+| `{ type: 'sfSymbol', name }`                | SF Symbol                           | Ignored (segment shows its label)             |
+| `{ type: 'drawable', name }`                | Ignored (segment shows its label)   | Drawable from `res/drawable`                  |
+| `{ type: 'image', source, tinted? }`        | Image asset or `{ uri }`            | Image asset or `{ uri }`                      |
+| `{ ios: <source>, android: <source> }`      | Uses `ios`                          | Uses `android`                                |
+
+```tsx
+// A bundled asset works everywhere and is tinted like a template.
+icon: { type: 'image', source: require('./icons/bell.png') }
+
+// Keep the original colors of a full-color image.
+icon: { type: 'image', source: require('./icons/logo.png'), tinted: false }
+
+// Remote images load asynchronously; pass `scale` for @2x/@3x artwork.
+icon: { type: 'image', source: { uri: 'https://example.com/icon@2x.png', scale: 2 } }
+```
+
+Image icons render at their point size, so ship `@2x` / `@3x` variants sized around 18–22 points. Local assets load synchronously in release builds; in development they stream from Metro and the segment shows its label until the image arrives.
+
+### Label visibility
+
+`UISegmentedControl` shows either a title or an image per segment, while Material buttons can show both. `labelVisibility` makes the outcome predictable:
+
+| Value                 | iOS                                        | Android                    |
+| --------------------- | ------------------------------------------ | -------------------------- |
+| `'auto'` (default)    | Icon when the segment has one, else label  | Icon and label             |
+| `'labeled'`           | Label only (icon is not shown)             | Icon and label             |
+| `'unlabeled'`         | Icon when the segment has one, else label  | Icon only, else label      |
+
+Screen readers announce the label (or `accessibilityLabel`) in every mode on both platforms.
 
 ---
 
@@ -898,7 +936,7 @@ Then run `npx expo prebuild` to apply the configuration.
 
 ## Icons
 
-ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform.
+ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl accepts the same names, plus image assets and per-platform pairs; see [SegmentedControl Icon Support](#icon-support-1).
 
 ### iOS
 

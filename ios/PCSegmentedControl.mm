@@ -32,9 +32,18 @@ static inline bool SegmentsEqual(
     if (a[i].label != b[i].label) return false;
     if (a[i].value != b[i].value) return false;
     if (a[i].disabled != b[i].disabled) return false;
-    if (a[i].icon != b[i].icon) return false;
+    if (a[i].iconType != b[i].iconType) return false;
+    if (a[i].iconName != b[i].iconName) return false;
+    if (a[i].iconUri != b[i].iconUri) return false;
+    if (a[i].iconScale != b[i].iconScale) return false;
+    if (a[i].iconTinted != b[i].iconTinted) return false;
+    if (a[i].accessibilityLabel != b[i].accessibilityLabel) return false;
   }
   return true;
+}
+
+static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback) {
+  return s.empty() ? fallback : [NSString stringWithUTF8String:s.c_str()];
 }
 } // namespace
 
@@ -77,6 +86,12 @@ static inline bool SegmentsEqual(
 
       eventEmitter->onSelect(payload);
     };
+
+    _view.onNeedsRemeasure = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+      [strongSelf updateMeasurements];
+    };
   }
   return self;
 }
@@ -88,30 +103,29 @@ static inline bool SegmentsEqual(
   const auto prevProps =
       std::static_pointer_cast<const PCSegmentedControlProps>(oldProps);
 
-  // segments: [{label, value, disabled, icon}]
+  // segments: [{label, value, disabled, iconType, iconName, iconUri, iconScale,
+  //             iconTinted, accessibilityLabel}]
   if (!prevProps || !SegmentsEqual(newProps.segments, prevProps->segments)) {
     NSMutableArray *arr = [NSMutableArray new];
     for (const auto &seg : newProps.segments) {
-      NSString *label = seg.label.empty()
-                            ? @""
-                            : [NSString stringWithUTF8String:seg.label.c_str()];
-      NSString *value = seg.value.empty()
-                            ? @""
-                            : [NSString stringWithUTF8String:seg.value.c_str()];
-      NSString *disabled = seg.disabled.empty()
-                               ? @"enabled"
-                               : [NSString stringWithUTF8String:seg.disabled.c_str()];
-      NSString *icon = seg.icon.empty()
-                           ? @""
-                           : [NSString stringWithUTF8String:seg.icon.c_str()];
       [arr addObject:@{
-        @"label": label,
-        @"value": value,
-        @"disabled": disabled,
-        @"icon": icon
+        @"label": NSStringFromStd(seg.label, @""),
+        @"value": NSStringFromStd(seg.value, @""),
+        @"disabled": NSStringFromStd(seg.disabled, @"enabled"),
+        @"iconType": NSStringFromStd(seg.iconType, @""),
+        @"iconName": NSStringFromStd(seg.iconName, @""),
+        @"iconUri": NSStringFromStd(seg.iconUri, @""),
+        @"iconScale": @(seg.iconScale),
+        @"iconTinted": NSStringFromStd(seg.iconTinted, @"true"),
+        @"accessibilityLabel": NSStringFromStd(seg.accessibilityLabel, @""),
       }];
     }
     _view.segments = arr;
+  }
+
+  // labelVisibility: "auto" | "labeled" | "unlabeled"
+  if (!prevProps || newProps.labelVisibility != prevProps->labelVisibility) {
+    _view.labelVisibility = NSStringFromStd(newProps.labelVisibility, @"auto");
   }
 
   // selectedValue (default "")

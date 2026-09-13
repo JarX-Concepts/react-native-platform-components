@@ -111,17 +111,31 @@ export const ContextMenu = ({
 // SegmentedControl
 // ============================================================================
 
+export type SegmentedControlIconSource =
+  | string
+  | { type: 'sfSymbol'; name: string }
+  | { type: 'drawable'; name: string }
+  | { type: 'image'; source: unknown; tinted?: boolean };
+
+export type SegmentedControlIcon =
+  | SegmentedControlIconSource
+  | { ios?: SegmentedControlIconSource; android?: SegmentedControlIconSource };
+
+export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
+
 export interface SegmentedControlSegmentProps {
   label: string;
   value: string;
   disabled?: boolean;
-  icon?: string;
+  icon?: SegmentedControlIcon;
+  accessibilityLabel?: string;
 }
 
 export interface SegmentedControlProps extends ViewProps {
   segments: readonly SegmentedControlSegmentProps[];
   selectedValue: string | null;
   disabled?: boolean;
+  labelVisibility?: SegmentedControlLabelVisibility;
   onSelect?: (value: string, index: number) => void;
   onDeselect?: () => void;
   ios?: Record<string, unknown>;

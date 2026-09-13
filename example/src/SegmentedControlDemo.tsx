@@ -1,7 +1,11 @@
 // SegmentedControlDemo.tsx
 import React, { useState } from 'react';
 import { Platform, Switch, Text } from 'react-native';
-import { SegmentedControl } from 'react-native-platform-components';
+import {
+  SegmentedControl,
+  type SegmentedControlLabelVisibility,
+  type SegmentedControlSegmentProps,
+} from 'react-native-platform-components';
 import { Divider, Row, Section, ui } from './DemoUI';
 
 const TIME_SEGMENTS = [
@@ -11,18 +15,40 @@ const TIME_SEGMENTS = [
   { label: 'Year', value: 'year' },
 ];
 
-// Platform-specific icon names: SF Symbols on iOS, drawable names on Android
-const VIEW_SEGMENTS =
-  Platform.OS === 'ios'
-    ? [
-        { label: 'List', value: 'list', icon: 'list.bullet' },
-        { label: 'Grid', value: 'grid', icon: 'square.grid.2x2' },
-        { label: 'Gallery', value: 'gallery', icon: 'photo.on.rectangle' },
-      ]
-    : [
-        { label: 'List', value: 'list', icon: 'list_bullet' },
-        { label: 'Grid', value: 'grid', icon: 'grid_view' },
-      ];
+// Icons no longer need a Platform.OS branch: give each platform its native
+// symbol, or share one image asset that is tinted on both.
+const VIEW_SEGMENTS: SegmentedControlSegmentProps[] = [
+  {
+    label: 'List',
+    value: 'list',
+    icon: {
+      ios: { type: 'sfSymbol', name: 'list.bullet' },
+      android: { type: 'drawable', name: 'list_bullet' },
+    },
+  },
+  {
+    label: 'Grid',
+    value: 'grid',
+    icon: {
+      ios: { type: 'sfSymbol', name: 'square.grid.2x2' },
+      android: { type: 'drawable', name: 'grid_view' },
+    },
+  },
+  {
+    label: 'Alerts',
+    value: 'alerts',
+    icon: { type: 'image', source: require('./assets/bell.png') },
+  },
+];
+
+const LABEL_VISIBILITY_OPTIONS: {
+  label: string;
+  value: SegmentedControlLabelVisibility;
+}[] = [
+  { label: 'Auto', value: 'auto' },
+  { label: 'Labeled', value: 'labeled' },
+  { label: 'Icon only', value: 'unlabeled' },
+];
 
 const PARTIAL_DISABLED_SEGMENTS = [
   { label: 'Active', value: 'active' },
@@ -33,6 +59,8 @@ const PARTIAL_DISABLED_SEGMENTS = [
 export function SegmentedControlDemo(): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>('day');
   const [iconSelected, setIconSelected] = useState<string>('list');
+  const [labelVisibility, setLabelVisibility] =
+    useState<SegmentedControlLabelVisibility>('auto');
   const [partialSelected, setPartialSelected] = useState<string>('active');
 
   const [disabled, setDisabled] = useState(false);
@@ -75,13 +103,28 @@ export function SegmentedControlDemo(): React.JSX.Element {
             segments={VIEW_SEGMENTS}
             selectedValue={iconSelected}
             disabled={disabled}
+            labelVisibility={labelVisibility}
             onSelect={(value) => setIconSelected(value)}
             ios={{ apportionsSegmentWidthsByContent: true }}
           />
         </Row>
         <Divider />
+        <Row label="Labels">
+          <SegmentedControl
+            testID="label-visibility"
+            style={ui.fullFlex}
+            segments={LABEL_VISIBILITY_OPTIONS}
+            selectedValue={labelVisibility}
+            onSelect={(value) =>
+              setLabelVisibility(value as SegmentedControlLabelVisibility)
+            }
+          />
+        </Row>
+        <Divider />
         <Row label="Selected">
-          <Text style={ui.valueText}>{iconSelected}</Text>
+          <Text testID="segment-icons-value" style={ui.valueText}>
+            {iconSelected}
+          </Text>
         </Row>
       </Section>
 

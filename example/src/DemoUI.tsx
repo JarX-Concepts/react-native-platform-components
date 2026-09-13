@@ -8,7 +8,7 @@ export function Screen(props: {
   children: React.ReactNode;
 }) {
   return (
-    <ScrollView style={ui.container}>
+    <ScrollView testID="demo-scroll" style={ui.container}>
       {props.children}
       <Text style={ui.footer}>react-native-platform-components</Text>
     </ScrollView>

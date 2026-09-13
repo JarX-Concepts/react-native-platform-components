@@ -4,12 +4,21 @@ import { codegenNativeComponent } from 'react-native';
 
 /**
  * A single segment in the control.
+ *
+ * Icons are pre-resolved on the JS side so native only deals with flat
+ * strings: `iconType` selects the source, `iconName` carries an SF Symbol or
+ * drawable name, and `iconUri` / `iconScale` carry a resolved image asset.
  */
 export type SegmentedControlSegment = Readonly<{
   label: string;
   value: string;
   disabled: string; // 'enabled' | 'disabled'
-  icon: string; // SF Symbol (iOS) or drawable name (Android), empty = none
+  iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
+  iconName: string; // SF Symbol (iOS) or drawable resource name (Android)
+  iconUri: string; // Resolved image URI when iconType === 'image'
+  iconScale: CodegenTypes.Double; // Resolved image scale when iconType === 'image'
+  iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
+  accessibilityLabel: string; // Screen-reader label, empty = use label
 }>;
 
 /**
@@ -25,6 +34,9 @@ export type SegmentedControlSelectEvent = Readonly<{
 
 /** Interactivity state (no booleans). */
 export type SegmentedControlInteractivity = 'enabled' | 'disabled';
+
+/** How labels and icons combine (no booleans). */
+export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
 
 /**
  * iOS-specific configuration.
@@ -64,6 +76,11 @@ export interface SegmentedControlProps extends ViewProps {
    * Enabled / disabled state.
    */
   interactivity?: string; // SegmentedControlInteractivity
+
+  /**
+   * How segment labels and icons combine.
+   */
+  labelVisibility?: string; // SegmentedControlLabelVisibility
 
   /**
    * Fired when the user selects a segment.
