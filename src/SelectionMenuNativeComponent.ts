@@ -1,5 +1,5 @@
 // SelectionMenuNativeComponent.ts
-import type { CodegenTypes, ViewProps } from 'react-native';
+import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
 /**
@@ -94,4 +94,6 @@ export interface SelectionMenuProps extends ViewProps {
   android?: AndroidProps;
 }
 
-export default codegenNativeComponent<SelectionMenuProps>('PCSelectionMenu');
+export default codegenNativeComponent<SelectionMenuProps>(
+  'PCSelectionMenu'
+) as HostComponent<SelectionMenuProps>;

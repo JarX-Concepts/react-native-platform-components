@@ -1,5 +1,5 @@
 // DatePickerNativeComponent.ts
-import type { CodegenTypes, ViewProps } from 'react-native';
+import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
 export type TimestampMs = CodegenTypes.Double;
@@ -69,4 +69,6 @@ export interface NativeProps extends ViewProps, CommonProps {
   onClosed?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
 }
 
-export default codegenNativeComponent<NativeProps>('PCDatePicker');
+export default codegenNativeComponent<NativeProps>(
+  'PCDatePicker'
+) as HostComponent<NativeProps>;
