@@ -7,7 +7,7 @@ const monorepoRoot = path.resolve(projectRoot, '..');
 const config = getDefaultConfig(projectRoot);
 
 // Watch only the library source directories - NOT the root node_modules
-// The root has React 19.2.3 but example-expo has React 19.1.0
+// Root and example-expo must resolve a single React/React Native copy
 config.watchFolders = [
   path.resolve(monorepoRoot, 'src'),
   path.resolve(monorepoRoot, 'lib'),
