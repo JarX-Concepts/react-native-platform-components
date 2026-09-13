@@ -14,3 +14,5 @@ gem 'bigdecimal'
 gem 'logger'
 gem 'benchmark'
 gem 'mutex_m'
+# kconv, required by CFPropertyList (a CocoaPods dependency), now lives in nkf.
+gem 'nkf'
