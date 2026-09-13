@@ -25,6 +25,7 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
+    "types": ["jest", "node"],
     "verbatimModuleSyntax": true
   },
   "exclude": ["example", "example-expo", "plugin", "lib"]

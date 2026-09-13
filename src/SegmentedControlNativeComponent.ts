@@ -1,5 +1,5 @@
 // SegmentedControlNativeComponent.ts
-import type { CodegenTypes, ViewProps } from 'react-native';
+import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 
 /**
@@ -76,4 +76,4 @@ export interface SegmentedControlProps extends ViewProps {
 
 export default codegenNativeComponent<SegmentedControlProps>(
   'PCSegmentedControl'
-);
+) as HostComponent<SegmentedControlProps>;
