@@ -16,10 +16,10 @@ export type SegmentedControlSegment = Readonly<{
  * Event emitted when the user selects a segment.
  */
 export type SegmentedControlSelectEvent = Readonly<{
-  /** Selected segment index */
+  /** Selected segment index. -1 means the selection was cleared. */
   index: CodegenTypes.Int32;
 
-  /** Selected segment value */
+  /** Selected segment value. Empty when the selection was cleared. */
   value: string;
 }>;
 

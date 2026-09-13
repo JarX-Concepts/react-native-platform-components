@@ -34,9 +34,11 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
   var segments: List<Segment> = emptyList()
   var selectedValue: String = "" // sentinel for none
   var interactivity: String = "enabled" // "enabled" | "disabled"
-  var selectionRequired: Boolean = false
+  // Matches iOS, where a UISegmentedControl selection cannot be cleared by tapping.
+  var selectionRequired: Boolean = true
 
   // --- Events ---
+  /** index -1 with an empty value means the selection was cleared. */
   var onSelect: ((index: Int, value: String) -> Unit)? = null
 
   // --- UI ---
@@ -121,22 +123,24 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
             setIconResource(resId)
           }
         }
-
-        // Handle click to trigger selection (needed for Detox taps)
-        setOnClickListener {
-          if (!suppressCallbacks && isEnabled) {
-            group.check(id)
-          }
-        }
       }
 
       buttonIdToSegment[button.id] = segment
       group.addView(button)
     }
 
-    group.addOnButtonCheckedListener { _, checkedId, isChecked ->
+    group.addOnButtonCheckedListener { toggleGroup, checkedId, isChecked ->
       if (suppressCallbacks) return@addOnButtonCheckedListener
-      if (!isChecked) return@addOnButtonCheckedListener
+
+      if (!isChecked) {
+        // In single-selection mode switching from A to B reports A as unchecked
+        // before B is reported as checked; by then the group already knows B is
+        // checked. Only a tap that leaves nothing checked is a real deselection.
+        if (toggleGroup.checkedButtonId == View.NO_ID) {
+          onSelect?.invoke(-1, "")
+        }
+        return@addOnButtonCheckedListener
+      }
 
       val segment = buttonIdToSegment[checkedId] ?: return@addOnButtonCheckedListener
       val index = segments.indexOf(segment)

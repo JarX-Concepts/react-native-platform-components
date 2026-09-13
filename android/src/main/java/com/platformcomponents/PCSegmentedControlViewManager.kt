@@ -78,8 +78,14 @@ class PCSegmentedControlViewManager :
   }
 
   override fun setAndroid(view: PCSegmentedControlView, value: ReadableMap?) {
-    val selectionRequired = value != null && value.hasKey("selectionRequired") &&
-      !value.isNull("selectionRequired") && value.getString("selectionRequired") == "true"
+    // Spec sentinel: "true" | "false"; missing means the default (required).
+    val selectionRequired = if (
+      value != null && value.hasKey("selectionRequired") && !value.isNull("selectionRequired")
+    ) {
+      value.getString("selectionRequired") != "false"
+    } else {
+      true
+    }
     view.applyAndroidProps(selectionRequired)
   }
 

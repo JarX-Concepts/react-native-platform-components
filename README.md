@@ -617,6 +617,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `selectedValue` | `string \| null`                         | Currently selected segment's `value` |
 | `disabled`      | `boolean`                                | Disables the entire control          |
 | `onSelect`      | `(value: string, index: number) => void` | Called when user selects a segment   |
+| `onDeselect`    | `() => void`                             | Called when the user clears the selection by tapping the selected segment (Android only, requires `android.selectionRequired: false`) |
 
 ### SegmentedControlSegment
 
@@ -637,9 +638,9 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Android Props (`android`)
 
-| Prop                | Type      | Description                                  |
-| ------------------- | --------- | -------------------------------------------- |
-| `selectionRequired` | `boolean` | If true, one segment must always be selected |
+| Prop                | Type      | Description                                                                                                                                  |
+| ------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `selectionRequired` | `boolean` | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
 
 ### Icon Support
 
