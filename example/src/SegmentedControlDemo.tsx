@@ -50,6 +50,21 @@ const LABEL_VISIBILITY_OPTIONS: {
   { label: 'Icon only', value: 'unlabeled' },
 ];
 
+const PRIORITY_SEGMENTS = [
+  { label: 'Low', value: 'low' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'High', value: 'high' },
+];
+
+// Colors accept anything React Native does (hex, rgba, named, PlatformColor).
+const CUSTOM_STYLE = {
+  selectedSegmentColor: '#FF6B35',
+  activeTintColor: 'white',
+  inactiveTintColor: '#8E8E93',
+  labelStyle: { fontWeight: '700' as const, fontSize: 14 },
+  android: { rippleColor: 'rgba(255, 107, 53, 0.25)', strokeColor: '#FF6B35' },
+};
+
 const PARTIAL_DISABLED_SEGMENTS = [
   { label: 'Active', value: 'active' },
   { label: 'Disabled', value: 'disabled', disabled: true },
@@ -66,6 +81,8 @@ export function SegmentedControlDemo(): React.JSX.Element {
   const [iconSelected, setIconSelected] = useState<string>('list');
   const [labelVisibility, setLabelVisibility] =
     useState<SegmentedControlLabelVisibility>('auto');
+  const [prioritySelected, setPrioritySelected] = useState<string>('medium');
+  const [styled, setStyled] = useState(true);
   const [partialSelected, setPartialSelected] = useState<string>('active');
 
   const [disabled, setDisabled] = useState(false);
@@ -127,6 +144,28 @@ export function SegmentedControlDemo(): React.JSX.Element {
           <Text testID="segment-icons-value" style={ui.valueText}>
             {iconSelected}
           </Text>
+        </Row>
+      </Section>
+
+      <Section title="Styling">
+        <ControlRow>
+          <SegmentedControl
+            testID="segment-styled"
+            segments={PRIORITY_SEGMENTS}
+            selectedValue={prioritySelected}
+            disabled={disabled}
+            onSelect={(value) => setPrioritySelected(value)}
+            {...(styled ? CUSTOM_STYLE : {})}
+          />
+        </ControlRow>
+        <Divider />
+        <Row label="Custom style">
+          <Switch
+            style={ui.alignEnd}
+            testID="styled-switch"
+            value={styled}
+            onValueChange={setStyled}
+          />
         </Row>
       </Section>
 

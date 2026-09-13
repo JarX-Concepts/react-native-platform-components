@@ -226,3 +226,81 @@ describe('SegmentedControl icons', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('SegmentedControl styling', () => {
+  beforeEach(() => {
+    NativeSegmentedControl.mockClear();
+  });
+
+  it('passes colors through and flattens android colors', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={SEGMENTS}
+        selectedValue="day"
+        selectedSegmentColor="#FF6B35"
+        activeTintColor="white"
+        inactiveTintColor="rgba(0, 0, 0, 0.5)"
+        android={{ rippleColor: 'red', strokeColor: 'blue' }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.selectedSegmentColor).toBe('#FF6B35');
+    expect(props.activeTintColor).toBe('white');
+    expect(props.inactiveTintColor).toBe('rgba(0, 0, 0, 0.5)');
+    expect(props.androidRippleColor).toBe('red');
+    expect(props.androidStrokeColor).toBe('blue');
+    expect(props.android).toEqual({ selectionRequired: 'true' });
+    act(() => tree.unmount());
+  });
+
+  it('maps the deprecated ios.selectedSegmentTintColor on iOS', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={SEGMENTS}
+        selectedValue="day"
+        ios={{ selectedSegmentTintColor: '#123456' }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.selectedSegmentColor).toBe('#123456');
+    expect(props.ios).toEqual({
+      momentary: 'false',
+      apportionsSegmentWidthsByContent: 'false',
+    });
+
+    act(() => {
+      tree.update(
+        <SegmentedControl
+          segments={SEGMENTS}
+          selectedValue="day"
+          selectedSegmentColor="#abcdef"
+          ios={{ selectedSegmentTintColor: '#123456' }}
+        />
+      );
+    });
+    expect(lastNativeProps().selectedSegmentColor).toBe('#abcdef');
+    act(() => tree.unmount());
+  });
+
+  it('normalizes labelStyle with platform-default sentinels', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={SEGMENTS}
+        selectedValue="day"
+        labelStyle={{ fontWeight: 700, fontStyle: 'italic' }}
+      />
+    );
+    expect(lastNativeProps().labelStyle).toEqual({
+      fontFamily: '',
+      fontSize: 0,
+      fontWeight: '700',
+      fontStyle: 'italic',
+    });
+
+    act(() => {
+      tree.update(<SegmentedControl segments={SEGMENTS} selectedValue="day" />);
+    });
+    expect(lastNativeProps().labelStyle).toBeUndefined();
+    act(() => tree.unmount());
+  });
+});

@@ -623,6 +623,10 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `selectedValue`   | `string \| null`                         | Currently selected segment's `value`                                                                                                                       |
 | `disabled`        | `boolean`                                | Disables the entire control                                                                                                                                |
 | `labelVisibility` | `'auto' \| 'labeled' \| 'unlabeled'`     | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                                                 |
+| `selectedSegmentColor` | `ColorValue`                        | Background of the selected segment                                                                                                                         |
+| `activeTintColor` | `ColorValue`                             | Text and icon color of the selected segment                                                                                                                |
+| `inactiveTintColor` | `ColorValue`                           | Text and icon color of unselected segments                                                                                                                 |
+| `labelStyle`      | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                              |
 | `onSelect`        | `(value: string, index: number) => void` | Called when user selects a segment                                                                                                                         |
 | `onDeselect`      | `() => void`                             | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false`                        |
 
@@ -638,17 +642,19 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### iOS Props (`ios`)
 
-| Prop                               | Type      | Description                                         |
-| ---------------------------------- | --------- | --------------------------------------------------- |
-| `momentary`                        | `boolean` | If true, segments don't show selected state         |
-| `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content |
-| `selectedSegmentTintColor`         | `string`  | Tint color for selected segment (hex string)        |
+| Prop                               | Type      | Description                                                                 |
+| ---------------------------------- | --------- | --------------------------------------------------------------------------- |
+| `momentary`                        | `boolean` | If true, segments don't show selected state                                 |
+| `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content                         |
+| `selectedSegmentTintColor`         | `string`  | **Deprecated.** Use `selectedSegmentColor`, which works on both platforms. |
 
 ### Android Props (`android`)
 
-| Prop                | Type      | Description                                                                                                                                  |
-| ------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `selectionRequired` | `boolean` | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
+| Prop                | Type         | Description                                                                                                                                  |
+| ------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `selectionRequired` | `boolean`    | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
+| `rippleColor`       | `ColorValue` | Ripple shown while pressing a segment                                                                                                        |
+| `strokeColor`       | `ColorValue` | Outline color of the segments                                                                                                                |
 
 ### Icon Support
 
@@ -686,6 +692,34 @@ Image icons render at their point size, so ship `@2x` / `@3x` variants sized aro
 | `'unlabeled'`         | Icon when the segment has one, else label  | Icon only, else label      |
 
 Screen readers announce the label (or `accessibilityLabel`) in every mode on both platforms.
+
+### Styling
+
+Colors take any React Native `ColorValue` (hex, `rgba()`, named colors, `PlatformColor`, `DynamicColorIOS`). Fonts follow the `Text` style conventions, and each field falls back to the platform default.
+
+```tsx
+<SegmentedControl
+  segments={segments}
+  selectedValue={selected}
+  onSelect={setSelected}
+  selectedSegmentColor="#FF6B35"
+  activeTintColor="white"
+  inactiveTintColor="#8E8E93"
+  labelStyle={{ fontWeight: '700', fontSize: 14 }}
+  android={{ rippleColor: 'rgba(255, 107, 53, 0.25)', strokeColor: '#FF6B35' }}
+/>
+```
+
+| Prop                   | iOS                                          | Android                                      |
+| ---------------------- | -------------------------------------------- | -------------------------------------------- |
+| `selectedSegmentColor` | `selectedSegmentTintColor` (the pill)        | Checked button background                    |
+| `activeTintColor`      | Selected title / template image color        | Checked button text and icon tint            |
+| `inactiveTintColor`    | Normal title / template image color          | Unchecked button text and icon tint          |
+| `labelStyle`           | Title font (default: 13pt system)            | Button typeface and size (default: theme)    |
+| `android.rippleColor`  | —                                            | Press ripple                                 |
+| `android.strokeColor`  | —                                            | Button outline                               |
+
+Images with `tinted: false` keep their own colors and ignore the tint props.
 
 ---
 
@@ -785,7 +819,7 @@ All color props in this library support the same formats as React Native's `back
 **Props that accept colors:**
 
 - `ContextMenu`: `imageColor` (icon tint)
-- `SegmentedControl`: `ios.selectedSegmentTintColor`
+- `SegmentedControl`: `selectedSegmentColor`, `activeTintColor`, `inactiveTintColor`, `android.rippleColor`, `android.strokeColor` (these also accept `PlatformColor` / `DynamicColorIOS`)
 - `LiquidGlass`: `ios.tintColor`, `android.fallbackBackgroundColor`
 
 ```tsx

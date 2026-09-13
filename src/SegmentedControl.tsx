@@ -4,9 +4,11 @@ import {
   Image,
   Platform,
   StyleSheet,
+  type ColorValue,
   type ImageRequireSource,
   type ImageURISource,
   type StyleProp,
+  type TextStyle,
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
@@ -65,6 +67,16 @@ export type SegmentedControlIcon =
  */
 export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
 
+/**
+ * Font for segment labels. Each field falls back to the platform default.
+ */
+export interface SegmentedControlLabelStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: TextStyle['fontWeight'];
+  fontStyle?: 'normal' | 'italic';
+}
+
 export interface SegmentedControlSegmentProps {
   /** Display label for the segment */
   label: string;
@@ -120,6 +132,21 @@ export interface SegmentedControlProps extends ViewProps {
   labelVisibility?: SegmentedControlLabelVisibility;
 
   /**
+   * Background color of the selected segment.
+   * iOS: `selectedSegmentTintColor`. Android: checked button background.
+   */
+  selectedSegmentColor?: ColorValue;
+
+  /** Text and icon color of the selected segment. */
+  activeTintColor?: ColorValue;
+
+  /** Text and icon color of unselected segments. */
+  inactiveTintColor?: ColorValue;
+
+  /** Font for segment labels. See {@link SegmentedControlLabelStyle}. */
+  labelStyle?: SegmentedControlLabelStyle;
+
+  /**
    * iOS-specific configuration
    */
   ios?: {
@@ -136,7 +163,7 @@ export interface SegmentedControlProps extends ViewProps {
     apportionsSegmentWidthsByContent?: boolean;
 
     /**
-     * Selected segment tint color (hex string, e.g., "#007AFF")
+     * @deprecated Use `selectedSegmentColor`, which works on both platforms.
      */
     selectedSegmentTintColor?: string;
   };
@@ -151,6 +178,12 @@ export interface SegmentedControlProps extends ViewProps {
      * Default: true (matches iOS, which cannot clear a selection by tapping)
      */
     selectionRequired?: boolean;
+
+    /** Ripple color shown while pressing a segment. */
+    rippleColor?: ColorValue;
+
+    /** Outline color of the segments. */
+    strokeColor?: ColorValue;
   };
 
   /** Test identifier */
@@ -236,6 +269,10 @@ export function SegmentedControl(
     selectedValue,
     disabled,
     labelVisibility,
+    selectedSegmentColor,
+    activeTintColor,
+    inactiveTintColor,
+    labelStyle,
     onSelect,
     onDeselect,
     ios,
@@ -280,9 +317,27 @@ export function SegmentedControl(
       apportionsSegmentWidthsByContent: ios.apportionsSegmentWidthsByContent
         ? 'true'
         : 'false',
-      selectedSegmentTintColor: ios.selectedSegmentTintColor ?? '',
     };
   }, [ios]);
+
+  // Deprecated iOS-only tint falls back to the cross-platform prop
+  const nativeSelectedSegmentColor =
+    selectedSegmentColor ??
+    (Platform.OS === 'ios' ? ios?.selectedSegmentTintColor : undefined);
+
+  // Normalize the label font; empty / 0 means platform default
+  const nativeLabelStyle = useMemo(() => {
+    if (!labelStyle) return undefined;
+    return {
+      fontFamily: labelStyle.fontFamily ?? '',
+      fontSize: labelStyle.fontSize ?? 0,
+      fontWeight:
+        labelStyle.fontWeight === undefined
+          ? ''
+          : String(labelStyle.fontWeight),
+      fontStyle: labelStyle.fontStyle ?? '',
+    };
+  }, [labelStyle]);
 
   // Normalize Android props
   const nativeAndroid = useMemo(() => {
@@ -307,6 +362,12 @@ export function SegmentedControl(
       selectedValue={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
       labelVisibility={labelVisibility ?? 'auto'}
+      selectedSegmentColor={nativeSelectedSegmentColor}
+      activeTintColor={activeTintColor}
+      inactiveTintColor={inactiveTintColor}
+      androidRippleColor={android?.rippleColor}
+      androidStrokeColor={android?.strokeColor}
+      labelStyle={nativeLabelStyle}
       onSelect={onSelect || onDeselect ? handleSelect : undefined}
       ios={nativeIos}
       android={nativeAndroid}

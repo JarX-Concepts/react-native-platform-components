@@ -88,6 +88,37 @@ class PCSegmentedControlViewManager :
     view.applyLabelVisibility(value)
   }
 
+  // Colors arrive already processed by React Native (ARGB ints)
+  override fun setSelectedSegmentColor(view: PCSegmentedControlView, value: Int?) {
+    view.applySelectedSegmentColor(value)
+  }
+
+  override fun setActiveTintColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyActiveTintColor(value)
+  }
+
+  override fun setInactiveTintColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyInactiveTintColor(value)
+  }
+
+  override fun setAndroidRippleColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyRippleColor(value)
+  }
+
+  override fun setAndroidStrokeColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyStrokeColor(value)
+  }
+
+  // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
+  override fun setLabelStyle(view: PCSegmentedControlView, value: ReadableMap?) {
+    view.applyLabelStyle(
+      fontFamily = value?.stringOr("fontFamily", "") ?: "",
+      fontSize = value?.doubleOr("fontSize", 0.0)?.toFloat() ?: 0f,
+      fontWeight = value?.stringOr("fontWeight", "") ?: "",
+      fontStyle = value?.stringOr("fontStyle", "") ?: ""
+    )
+  }
+
   override fun setSelectedValue(view: PCSegmentedControlView, value: String?) {
     // Spec sentinel: empty string means "no selection"
     view.applySelectedValue(value ?: "")

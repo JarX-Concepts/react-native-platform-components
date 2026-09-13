@@ -1,8 +1,11 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.text.TextUtils
+import android.util.TypedValue
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -11,6 +14,7 @@ import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.facebook.react.views.text.ReactTypefaceUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 
@@ -51,6 +55,17 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
   var labelVisibility: String = "auto" // "auto" | "labeled" | "unlabeled"
   // Matches iOS, where a UISegmentedControl selection cannot be cleared by tapping.
   var selectionRequired: Boolean = true
+
+  // --- Styling (null / empty = Material theme default) ---
+  var selectedSegmentColor: Int? = null
+  var activeTintColor: Int? = null
+  var inactiveTintColor: Int? = null
+  var rippleColor: Int? = null
+  var strokeColor: Int? = null
+  var labelFontFamily: String = ""
+  var labelFontSize: Float = 0f
+  var labelFontWeight: String = ""
+  var labelFontStyle: String = ""
 
   // --- Events ---
   /** index -1 with an empty value means the selection was cleared. */
@@ -107,6 +122,47 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     }
   }
 
+  fun applySelectedSegmentColor(color: Int?) {
+    if (selectedSegmentColor == color) return
+    selectedSegmentColor = color
+    rebuildUI()
+  }
+
+  fun applyActiveTintColor(color: Int?) {
+    if (activeTintColor == color) return
+    activeTintColor = color
+    rebuildUI()
+  }
+
+  fun applyInactiveTintColor(color: Int?) {
+    if (inactiveTintColor == color) return
+    inactiveTintColor = color
+    rebuildUI()
+  }
+
+  fun applyRippleColor(color: Int?) {
+    if (rippleColor == color) return
+    rippleColor = color
+    rebuildUI()
+  }
+
+  fun applyStrokeColor(color: Int?) {
+    if (strokeColor == color) return
+    strokeColor = color
+    rebuildUI()
+  }
+
+  fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
+    if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
+      labelFontWeight == fontWeight && labelFontStyle == fontStyle
+    ) return
+    labelFontFamily = fontFamily
+    labelFontSize = fontSize
+    labelFontWeight = fontWeight
+    labelFontStyle = fontStyle
+    rebuildUI()
+  }
+
   // ---- UI Building ----
 
   private fun rebuildUI() {
@@ -157,6 +213,7 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
         }
 
         applyIcon(this, segment, generation)
+        styleButton(this, segment)
       }
 
       buttonIdToSegment[button.id] = segment
@@ -220,6 +277,56 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
           }
         }
       }
+    }
+  }
+
+  /**
+   * Applies the color and font props on top of the Material theme defaults.
+   * Buttons are rebuilt whenever a style prop changes, so the theme values
+   * read here are always the untouched defaults.
+   */
+  private fun styleButton(button: MaterialButton, segment: Segment) {
+    val checkedState = intArrayOf(android.R.attr.state_checked)
+    val disabledState = intArrayOf(-android.R.attr.state_enabled)
+
+    if (activeTintColor != null || inactiveTintColor != null) {
+      val theme = button.textColors
+      val disabled = theme.getColorForState(disabledState, theme.defaultColor)
+      val checked = activeTintColor ?: theme.getColorForState(checkedState, theme.defaultColor)
+      val normal = inactiveTintColor ?: theme.defaultColor
+      val tint = ColorStateList(
+        arrayOf(disabledState, checkedState, intArrayOf()),
+        intArrayOf(disabled, checked, normal)
+      )
+      button.setTextColor(tint)
+      if (segment.iconTinted) {
+        button.iconTint = tint
+      }
+    }
+
+    selectedSegmentColor?.let { color ->
+      val theme = button.backgroundTintList
+      val normal = theme?.defaultColor ?: Color.TRANSPARENT
+      button.backgroundTintList = ColorStateList(
+        arrayOf(checkedState, intArrayOf()),
+        intArrayOf(color, normal)
+      )
+    }
+
+    rippleColor?.let { button.rippleColor = ColorStateList.valueOf(it) }
+    strokeColor?.let { button.strokeColor = ColorStateList.valueOf(it) }
+
+    if (labelFontSize > 0) {
+      button.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelFontSize)
+    }
+    if (labelFontFamily.isNotEmpty() || labelFontWeight.isNotEmpty() || labelFontStyle.isNotEmpty()) {
+      button.typeface = ReactTypefaceUtils.applyStyles(
+        button.typeface,
+        ReactTypefaceUtils.parseFontStyle(labelFontStyle.ifEmpty { null }),
+        ReactTypefaceUtils.parseFontWeight(labelFontWeight.ifEmpty { null }),
+        labelFontFamily.ifEmpty { null },
+        context.assets
+      )
     }
   }
 

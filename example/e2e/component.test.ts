@@ -460,6 +460,23 @@ describe('Platform Components Example', () => {
     await element(by.text('Auto')).atIndex(0).tap();
     await pause(600);
 
+    // Styling: custom colors and font, then back to the platform defaults
+    await scrollToId('segment-styled');
+    await element(by.text('High')).atIndex(0).tap();
+    await pause(400);
+
+    await element(by.text('Low')).atIndex(0).tap();
+    await pause(400);
+
+    await element(by.id('styled-switch')).tap();
+    await pause(500);
+
+    await element(by.text('Medium')).atIndex(0).tap();
+    await pause(400);
+
+    await element(by.id('styled-switch')).tap();
+    await pause(500);
+
     // Test disabled state - toggle on and off
     await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
