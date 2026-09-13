@@ -3,7 +3,7 @@ PODS:
   - hermes-engine (250829098.0.17):
     - hermes-engine/Pre-built (= 250829098.0.17)
   - hermes-engine/Pre-built (250829098.0.17)
-  - PlatformComponents (0.8.9):
+  - PlatformComponents (0.8.10):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2084,7 +2084,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FBLazyVector: 2138c6c2ab66c31bf5754dc18097fbc498a49c7f
   hermes-engine: 63c5db7d529c36335fada6582fd293ae2a105d77
-  PlatformComponents: 1917a73843db41ca84d750a2bf5508aa1a78988f
+  PlatformComponents: f9772bea463e20592c4f697f39f71b919394ece7
   RCTDeprecation: 96f68ebf33f8762466b01d57d6e873c4f30efb07
   RCTRequired: 166eed8ad6d8440e73e56d09a9090366609823d2
   RCTSwiftUI: e818198d11928a78c2b2afe281d072171dab617f
@@ -2161,4 +2161,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: d2630e44564156bf734bd2fad1ca6e31405bdc20
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

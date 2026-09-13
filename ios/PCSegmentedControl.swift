@@ -6,15 +6,31 @@ struct PCSegmentedControlSegment {
     let label: String
     let value: String
     let disabled: Bool
-    let icon: String
+    /// "", "sfSymbol", "drawable" (ignored on iOS) or "image"
+    let iconType: String
+    let iconName: String
+    let iconUri: String
+    let iconScale: CGFloat
+    let iconTinted: Bool
+    let accessibilityLabel: String
+
+    var hasIcon: Bool { iconType == "sfSymbol" || iconType == "image" }
+
+    /// What VoiceOver announces for the segment.
+    var spokenLabel: String { accessibilityLabel.isEmpty ? label : accessibilityLabel }
 }
 
 @objcMembers
 public final class PCSegmentedControlView: UIControl {
     // MARK: - Props (set from ObjC++)
 
-    /// ObjC++ sets this as an array of dictionaries: [{label, value, disabled, icon}]
+    /// ObjC++ sets this as an array of dictionaries; see `rebuildControl` for keys.
     public var segments: [Any] = [] { didSet { rebuildControl() } }
+
+    /// "auto" | "labeled" | "unlabeled"
+    public var labelVisibility: String = "auto" {
+        didSet { if oldValue != labelVisibility { rebuildControl() } }
+    }
 
     /// Controlled selection by value. "" = no selection.
     public var selectedValue: String = "" { didSet { updateSelection() } }
@@ -37,10 +53,17 @@ public final class PCSegmentedControlView: UIControl {
 
     public var onSelect: ((Int, String) -> Void)?  // (index, value)
 
+    /// Called when content changed after layout (an icon finished loading),
+    /// so the Fabric measurement can be refreshed.
+    public var onNeedsRemeasure: (() -> Void)?
+
     // MARK: - Internal
 
     private let control = UISegmentedControl()
     private var parsedSegments: [PCSegmentedControlSegment] = []
+
+    /// Bumped on every rebuild so late image loads can't touch a stale control.
+    private var rebuildGeneration = 0
 
     // MARK: - Init
 
@@ -82,25 +105,27 @@ public final class PCSegmentedControlView: UIControl {
     private func rebuildControl() {
         parsedSegments = segments.compactMap { any in
             guard let dict = any as? [String: Any] else { return nil }
-            let label = (dict["label"] as? String) ?? ""
-            let value = (dict["value"] as? String) ?? ""
-            let disabled = (dict["disabled"] as? String) == "disabled"
-            let icon = (dict["icon"] as? String) ?? ""
+            let scale = (dict["iconScale"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 1
             return PCSegmentedControlSegment(
-                label: label,
-                value: value,
-                disabled: disabled,
-                icon: icon
+                label: (dict["label"] as? String) ?? "",
+                value: (dict["value"] as? String) ?? "",
+                disabled: (dict["disabled"] as? String) == "disabled",
+                iconType: (dict["iconType"] as? String) ?? "",
+                iconName: (dict["iconName"] as? String) ?? "",
+                iconUri: (dict["iconUri"] as? String) ?? "",
+                iconScale: scale > 0 ? scale : 1,
+                iconTinted: (dict["iconTinted"] as? String) != "false",
+                accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? ""
             )
         }
 
+        rebuildGeneration += 1
+        let generation = rebuildGeneration
         control.removeAllSegments()
 
         for (index, segment) in parsedSegments.enumerated() {
-            // Try to use SF Symbol icon if available
-            if !segment.icon.isEmpty,
-               let sfImage = UIImage(systemName: segment.icon) {
-                control.insertSegment(with: sfImage, at: index, animated: false)
+            if let image = iconImage(for: segment, generation: generation) {
+                control.insertSegment(with: image, at: index, animated: false)
             } else {
                 control.insertSegment(withTitle: segment.label, at: index, animated: false)
             }
@@ -111,6 +136,45 @@ public final class PCSegmentedControlView: UIControl {
 
         updateSelection()
         invalidateIntrinsicContentSize()
+    }
+
+    /// Resolves the image shown for a segment, or nil when the segment shows
+    /// its title. UISegmentedControl shows either a title or an image, so
+    /// "labeled" always wins and "auto" / "unlabeled" prefer the icon.
+    ///
+    /// Images that are still loading return nil; the segment starts with its
+    /// title and switches to the image once it arrives.
+    private func iconImage(for segment: PCSegmentedControlSegment, generation: Int) -> UIImage? {
+        guard segment.hasIcon, labelVisibility != "labeled" else { return nil }
+
+        switch segment.iconType {
+        case "sfSymbol":
+            return UIImage(systemName: segment.iconName).map { decorate($0, for: segment) }
+
+        case "image":
+            let cached = PCImageLoader.shared.image(uri: segment.iconUri, scale: segment.iconScale) { [weak self] image in
+                guard let self, let image,
+                      self.rebuildGeneration == generation,
+                      let index = self.parsedSegments.firstIndex(where: { $0.value == segment.value }),
+                      index < self.control.numberOfSegments else { return }
+                self.control.setImage(self.decorate(image, for: segment), forSegmentAt: index)
+                self.invalidateIntrinsicContentSize()
+                self.onNeedsRemeasure?()
+            }
+            return cached.map { decorate($0, for: segment) }
+
+        default:
+            return nil
+        }
+    }
+
+    /// Applies the rendering mode and the VoiceOver label. Rendering-mode
+    /// variants are fresh instances, so the label never leaks onto shared
+    /// system images.
+    private func decorate(_ image: UIImage, for segment: PCSegmentedControlSegment) -> UIImage {
+        let rendered = image.withRenderingMode(segment.iconTinted ? .alwaysTemplate : .alwaysOriginal)
+        rendered.accessibilityLabel = segment.spokenLabel
+        return rendered
     }
 
     private func updateSelection() {

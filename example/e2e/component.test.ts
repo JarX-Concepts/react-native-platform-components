@@ -5,6 +5,28 @@ const isAndroid = () => device.getPlatform() === 'android';
 const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+// Scroll the demo screen until an element is visible
+const scrollToId = async (testID: string) => {
+  await waitFor(element(by.id(testID)))
+    .toBeVisible()
+    .whileElement(by.id('demo-scroll'))
+    .scroll(200, 'down');
+};
+
+// Tap a segment by its spoken label, which works for text and icon segments.
+const tapSegment = async (label: string) => {
+  if (isAndroid()) {
+    // MaterialButton content description
+    await element(by.label(label)).atIndex(0).tap();
+  } else {
+    // A UISegment forwards hit-tests to its UISegmentedControl, which Detox
+    // rejects as "not hittable"; its inner label / image view passes.
+    await element(by.type('UIView').withAncestor(by.label(label)))
+      .atIndex(0)
+      .tap();
+  }
+};
+
 // Helper to select a tab from the native SegmentedControl
 export const selectTab = async (tabLabel: string) => {
   if (isAndroid()) {
@@ -389,7 +411,7 @@ describe('Platform Components Example', () => {
     // Verify we're on the SegmentedControl demo
     await expect(element(by.id('segment-basic'))).toBeVisible();
 
-    // Cycle through all basic segments multiple times for visual interest
+    // Cycle through the basic segments
     // Cycle 1: Day -> Week -> Month -> Year
     await element(by.text('Week')).atIndex(0).tap();
     await pause(350);
@@ -410,53 +432,74 @@ describe('Platform Components Example', () => {
     await element(by.text('Week')).atIndex(0).tap();
     await pause(350);
 
-    // Cycle 3: Week -> Year -> Day -> Month
-    await element(by.text('Year')).atIndex(0).tap();
-    await pause(350);
+    // Icons: the same segments render SF Symbols, drawables, and a shared PNG
+    await scrollToId('segment-icons');
+    await tapSegment('Grid');
+    await pause(400);
+    await expect(element(by.id('segment-icons-value'))).toHaveText('grid');
 
-    await element(by.text('Day')).atIndex(0).tap();
-    await pause(350);
+    await tapSegment('Alerts');
+    await pause(400);
+    await expect(element(by.id('segment-icons-value'))).toHaveText('alerts');
 
-    await element(by.text('Month')).atIndex(0).tap();
-    await pause(350);
+    // Label visibility: labels only, icons only, then platform default
+    await element(by.text('Labeled')).atIndex(0).tap();
+    await pause(600);
+
+    await tapSegment('List');
+    await pause(400);
+    await expect(element(by.id('segment-icons-value'))).toHaveText('list');
+
+    await element(by.text('Icon only')).atIndex(0).tap();
+    await pause(600);
+
+    await tapSegment('Grid');
+    await pause(400);
+    await expect(element(by.id('segment-icons-value'))).toHaveText('grid');
+
+    await element(by.text('Auto')).atIndex(0).tap();
+    await pause(600);
 
     // Test disabled state - toggle on and off
+    await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
 
     await element(by.id('disabled-switch')).tap();
     await pause(400);
 
-    // Final rapid cycle: Month -> Week -> Year -> Day
-    await element(by.text('Week')).atIndex(0).tap();
-    await pause(300);
-
-    await element(by.text('Year')).atIndex(0).tap();
-    await pause(300);
-
-    await element(by.text('Day')).atIndex(0).tap();
-    await pause(300);
-
     if (isAndroid()) {
       // Allow clearing the selection, then tap the selected segment to clear it
+      await scrollToId('selection-required-switch');
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await element(by.text('Day')).atIndex(0).tap();
+      await scrollToId('segment-basic');
+      await element(by.text('Week')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('(none)');
 
-      await element(by.text('Week')).atIndex(0).tap();
+      await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
-      await expect(element(by.id('segment-basic-value'))).toHaveText('week');
+      await expect(element(by.id('segment-basic-value'))).toHaveText('day');
 
       // Restore the default (selection required) and confirm a tap no longer clears
+      await scrollToId('selection-required-switch');
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await element(by.text('Week')).atIndex(0).tap();
+      await scrollToId('segment-basic');
+      await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
-      await expect(element(by.id('segment-basic-value'))).toHaveText('week');
+      await expect(element(by.id('segment-basic-value'))).toHaveText('day');
+    } else {
+      // Final cycle: Week -> Year -> Day
+      await scrollToId('segment-basic');
+      await element(by.text('Year')).atIndex(0).tap();
+      await pause(300);
+
+      await element(by.text('Day')).atIndex(0).tap();
+      await pause(300);
     }
   });
 
