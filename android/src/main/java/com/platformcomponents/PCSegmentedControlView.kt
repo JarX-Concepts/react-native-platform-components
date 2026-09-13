@@ -252,6 +252,35 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     }
   }
 
+  // ---- Layout ----
+
+  private var manualLayoutPending = false
+
+  /**
+   * React Native's root view ignores requestLayout after the initial pass, so
+   * a native view that changes its own subtree later (rebuilding segments for
+   * a prop change, an icon finishing loading) has to measure and lay itself
+   * out. Coalesced to one pass per frame.
+   */
+  override fun requestLayout() {
+    super.requestLayout()
+    if (!manualLayoutPending) {
+      manualLayoutPending = true
+      post { runManualLayout() }
+    }
+  }
+
+  private fun runManualLayout() {
+    manualLayoutPending = false
+    // Nothing to do until Yoga has placed us; the regular pass covers that.
+    if (width == 0 || height == 0) return
+    measure(
+      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+    )
+    layout(left, top, right, bottom)
+  }
+
   // ---- Measurement ----
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

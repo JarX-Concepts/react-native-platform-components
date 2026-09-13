@@ -13,10 +13,18 @@ const scrollToId = async (testID: string) => {
     .scroll(200, 'down');
 };
 
-// Tap a segment by its spoken label. Text segments match by label on both
-// platforms; icon-only segments (iOS) only expose an accessibility label.
-const tapSegment = async (label: string, index = 0) => {
-  await element(by.label(label)).atIndex(index).tap();
+// Tap a segment by its spoken label, which works for text and icon segments.
+const tapSegment = async (label: string) => {
+  if (isAndroid()) {
+    // MaterialButton content description
+    await element(by.label(label)).atIndex(0).tap();
+  } else {
+    // A UISegment forwards hit-tests to its UISegmentedControl, which Detox
+    // rejects as "not hittable"; its inner label / image view passes.
+    await element(by.type('UIView').withAncestor(by.label(label)))
+      .atIndex(0)
+      .tap();
+  }
 };
 
 // Helper to select a tab from the native SegmentedControl
@@ -462,6 +470,7 @@ describe('Platform Components Example', () => {
 
     if (isAndroid()) {
       // Allow clearing the selection, then tap the selected segment to clear it
+      await scrollToId('selection-required-switch');
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 

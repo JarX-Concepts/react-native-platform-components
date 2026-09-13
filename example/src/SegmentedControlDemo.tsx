@@ -1,6 +1,6 @@
 // SegmentedControlDemo.tsx
 import React, { useState } from 'react';
-import { Platform, Switch, Text } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   SegmentedControl,
   type SegmentedControlLabelVisibility,
@@ -56,6 +56,11 @@ const PARTIAL_DISABLED_SEGMENTS = [
   { label: 'Also Active', value: 'also-active' },
 ];
 
+// A full-width row so four segments fit comfortably on a phone.
+function ControlRow(props: { children: React.ReactNode }) {
+  return <View style={styles.controlRow}>{props.children}</View>;
+}
+
 export function SegmentedControlDemo(): React.JSX.Element {
   const [selected, setSelected] = useState<string | null>('day');
   const [iconSelected, setIconSelected] = useState<string>('list');
@@ -71,10 +76,9 @@ export function SegmentedControlDemo(): React.JSX.Element {
   return (
     <>
       <Section title="Basic">
-        <Row label="Time Period">
+        <ControlRow>
           <SegmentedControl
             testID="segment-basic"
-            style={ui.fullFlex}
             segments={TIME_SEGMENTS}
             selectedValue={selected}
             disabled={disabled}
@@ -86,7 +90,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
             }}
             android={{ selectionRequired }}
           />
-        </Row>
+        </ControlRow>
         <Divider />
         <Row label="Selected">
           <Text testID="segment-basic-value" style={ui.valueText}>
@@ -96,10 +100,9 @@ export function SegmentedControlDemo(): React.JSX.Element {
       </Section>
 
       <Section title="With Icons">
-        <Row label="View Mode">
+        <ControlRow>
           <SegmentedControl
             testID="segment-icons"
-            style={ui.fullFlex}
             segments={VIEW_SEGMENTS}
             selectedValue={iconSelected}
             disabled={disabled}
@@ -107,19 +110,18 @@ export function SegmentedControlDemo(): React.JSX.Element {
             onSelect={(value) => setIconSelected(value)}
             ios={{ apportionsSegmentWidthsByContent: true }}
           />
-        </Row>
+        </ControlRow>
         <Divider />
-        <Row label="Labels">
+        <ControlRow>
           <SegmentedControl
             testID="label-visibility"
-            style={ui.fullFlex}
             segments={LABEL_VISIBILITY_OPTIONS}
             selectedValue={labelVisibility}
             onSelect={(value) =>
               setLabelVisibility(value as SegmentedControlLabelVisibility)
             }
           />
-        </Row>
+        </ControlRow>
         <Divider />
         <Row label="Selected">
           <Text testID="segment-icons-value" style={ui.valueText}>
@@ -129,15 +131,14 @@ export function SegmentedControlDemo(): React.JSX.Element {
       </Section>
 
       <Section title="Per-Segment Disabled">
-        <Row label="Status">
+        <ControlRow>
           <SegmentedControl
             testID="segment-partial-disabled"
-            style={ui.fullFlex}
             segments={PARTIAL_DISABLED_SEGMENTS}
             selectedValue={partialSelected}
             onSelect={(value) => setPartialSelected(value)}
           />
-        </Row>
+        </ControlRow>
         <Divider />
         <Row label="Selected">
           <Text style={ui.valueText}>{partialSelected}</Text>
@@ -194,3 +195,10 @@ export function SegmentedControlDemo(): React.JSX.Element {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  controlRow: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+});
