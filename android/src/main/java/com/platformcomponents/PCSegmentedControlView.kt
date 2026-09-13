@@ -15,6 +15,8 @@ import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.facebook.react.views.text.ReactTypefaceUtils
+import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 
@@ -30,12 +32,17 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     val iconUri: String,
     val iconScale: Float,
     val iconTinted: Boolean,
+    val badge: String,
     val accessibilityLabel: String
   ) {
     val hasIcon: Boolean get() = iconType == "drawable" || iconType == "image"
 
-    /** What TalkBack announces for the segment. */
-    val spokenLabel: String get() = accessibilityLabel.ifEmpty { label }
+    /** What TalkBack announces for the segment, badge included. */
+    val spokenLabel: String
+      get() {
+        val base = accessibilityLabel.ifEmpty { label }
+        return if (badge.isEmpty()) base else "$base, $badge"
+      }
   }
 
   companion object {
@@ -66,6 +73,8 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
   var labelFontSize: Float = 0f
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
+  var badgeBackgroundColor: Int? = null
+  var badgeTextColor: Int? = null
 
   // --- Events ---
   /** index -1 with an empty value means the selection was cleared. */
@@ -81,6 +90,9 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
 
   init {
     minimumHeight = (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
+    // Badges overhang the button corner
+    clipChildren = false
+    clipToPadding = false
     rebuildUI()
   }
 
@@ -152,6 +164,13 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     rebuildUI()
   }
 
+  fun applyBadgeColors(background: Int?, text: Int?) {
+    if (badgeBackgroundColor == background && badgeTextColor == text) return
+    badgeBackgroundColor = background
+    badgeTextColor = text
+    rebuildUI()
+  }
+
   fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
     if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
       labelFontWeight == fontWeight && labelFontStyle == fontStyle
@@ -175,6 +194,8 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
       layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
       isSingleSelection = true
       isSelectionRequired = selectionRequired
+      clipChildren = false
+      clipToPadding = false
     }
 
     // Calculate if we need compact mode (many segments or long labels)
@@ -220,6 +241,7 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
       // Share the width equally (like UISegmentedControl) so trailing segments
       // never overflow the control; long labels ellipsize instead.
       group.addView(button, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+      attachBadge(button, segment)
     }
 
     group.addOnButtonCheckedListener { toggleGroup, checkedId, isChecked ->
@@ -277,6 +299,37 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
           }
         }
       }
+    }
+  }
+
+  /**
+   * Draws a Material badge over the button's top-end corner. The badge lives
+   * in the button's overlay, so it needs the button's final bounds: attach
+   * after the first layout and follow later size changes.
+   */
+  private fun attachBadge(button: MaterialButton, segment: Segment) {
+    if (segment.badge.isEmpty()) return
+
+    val inset = (2 * resources.displayMetrics.density).toInt()
+    val badge = BadgeDrawable.create(context).apply {
+      text = segment.badge
+      badgeGravity = BadgeDrawable.TOP_END
+      badgeBackgroundColor?.let { backgroundColor = it }
+      badgeTextColor?.let { setBadgeTextColor(it) }
+    }
+
+    var attached = false
+    button.addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+      if (!attached) {
+        attached = true
+        BadgeUtils.attachBadgeDrawable(badge, view)
+        // The badge's size is only known once it has an anchor. Offset it by
+        // half its size so it sits fully inside the button corner; a badge
+        // that overhangs the last segment would be clipped by the control.
+        badge.horizontalOffset = badge.intrinsicWidth / 2 + inset
+        badge.verticalOffset = badge.intrinsicHeight / 2 + inset
+      }
+      badge.updateBadgeCoordinates(view)
     }
   }
 

@@ -460,6 +460,25 @@ describe('Platform Components Example', () => {
     await element(by.text('Auto')).atIndex(0).tap();
     await pause(600);
 
+    // Badges: bump the unread count, switch mailboxes, then clear it
+    await scrollToId('segment-badges');
+    await element(by.id('badge-increment')).tap();
+    await pause(400);
+    await element(by.id('badge-increment')).tap();
+    await pause(400);
+
+    await element(by.text('Sent')).atIndex(0).tap();
+    await pause(400);
+
+    await element(by.text('Drafts')).atIndex(0).tap();
+    await pause(400);
+
+    await element(by.id('badge-clear')).tap();
+    await pause(500);
+
+    await element(by.text('Inbox')).atIndex(0).tap();
+    await pause(400);
+
     // Styling: custom colors and font, then back to the platform defaults
     await scrollToId('segment-styled');
     await element(by.text('High')).atIndex(0).tap();

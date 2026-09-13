@@ -12,12 +12,43 @@ struct PCSegmentedControlSegment {
     let iconUri: String
     let iconScale: CGFloat
     let iconTinted: Bool
+    let badge: String
     let accessibilityLabel: String
 
     var hasIcon: Bool { iconType == "sfSymbol" || iconType == "image" }
 
-    /// What VoiceOver announces for the segment.
-    var spokenLabel: String { accessibilityLabel.isEmpty ? label : accessibilityLabel }
+    /// What VoiceOver announces for the segment, badge included.
+    var spokenLabel: String {
+        let base = accessibilityLabel.isEmpty ? label : accessibilityLabel
+        return badge.isEmpty ? base : "\(base), \(badge)"
+    }
+}
+
+/// A capsule badge drawn over a segment's top-right corner.
+private final class PCBadgeLabel: UILabel {
+    static let height: CGFloat = 16
+    static let horizontalPadding: CGFloat = 5
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        font = .systemFont(ofSize: 11, weight: .semibold)
+        textAlignment = .center
+        layer.cornerRadius = Self.height / 2
+        clipsToBounds = true
+        isUserInteractionEnabled = false
+        // The segment announces the badge; don't expose it twice
+        isAccessibilityElement = false
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override var intrinsicContentSize: CGSize {
+        let base = super.intrinsicContentSize
+        return CGSize(
+            width: max(Self.height, base.width + Self.horizontalPadding * 2),
+            height: Self.height
+        )
+    }
 }
 
 @objcMembers
@@ -65,6 +96,12 @@ public final class PCSegmentedControlView: UIControl {
         }
     }
 
+    /// Badge background; nil = system red
+    public var badgeBackgroundColor: UIColor? { didSet { updateBadgeColors() } }
+
+    /// Badge text color; nil = white
+    public var badgeTextColor: UIColor? { didSet { updateBadgeColors() } }
+
     // MARK: - Events back to ObjC++
 
     public var onSelect: ((Int, String) -> Void)?  // (index, value)
@@ -81,6 +118,9 @@ public final class PCSegmentedControlView: UIControl {
     /// Bumped on every rebuild so late image loads can't touch a stale control.
     private var rebuildGeneration = 0
 
+    /// Badge label per segment index (only segments with a badge have one).
+    private var badgeLabels: [Int: PCBadgeLabel] = [:]
+
     // MARK: - Init
 
     public override init(frame: CGRect) {
@@ -94,6 +134,9 @@ public final class PCSegmentedControlView: UIControl {
     }
 
     private func setup() {
+        // Badges overhang the top edge slightly
+        clipsToBounds = false
+
         control.translatesAutoresizingMaskIntoConstraints = false
         addSubview(control)
 
@@ -131,6 +174,7 @@ public final class PCSegmentedControlView: UIControl {
                 iconUri: (dict["iconUri"] as? String) ?? "",
                 iconScale: scale > 0 ? scale : 1,
                 iconTinted: (dict["iconTinted"] as? String) != "false",
+                badge: (dict["badge"] as? String) ?? "",
                 accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? ""
             )
         }
@@ -150,8 +194,81 @@ public final class PCSegmentedControlView: UIControl {
             control.setEnabled(!segment.disabled, forSegmentAt: index)
         }
 
+        rebuildBadges()
         updateSelection()
         invalidateIntrinsicContentSize()
+    }
+
+    // MARK: - Badges
+
+    private func rebuildBadges() {
+        badgeLabels.values.forEach { $0.removeFromSuperview() }
+        badgeLabels = [:]
+
+        for (index, segment) in parsedSegments.enumerated() where !segment.badge.isEmpty {
+            let label = PCBadgeLabel()
+            label.text = segment.badge
+            addSubview(label)
+            badgeLabels[index] = label
+        }
+
+        updateBadgeColors()
+        setNeedsLayout()
+    }
+
+    private func updateBadgeColors() {
+        for label in badgeLabels.values {
+            label.backgroundColor = badgeBackgroundColor ?? .systemRed
+            label.textColor = badgeTextColor ?? .white
+        }
+    }
+
+    /// Frames of the individual segments in the control's coordinate space.
+    /// UISegmentedControl lays each segment out as its own subview, so their
+    /// frames honor proportional widths; if the hierarchy ever looks different
+    /// fall back to equal division.
+    private func segmentFrames() -> [CGRect] {
+        let count = control.numberOfSegments
+        guard count > 0 else { return [] }
+
+        let segmentViews = control.subviews
+            .filter { NSStringFromClass(type(of: $0)) == "UISegment" }
+            .sorted { $0.frame.minX < $1.frame.minX }
+        if segmentViews.count == count {
+            return segmentViews.map { $0.frame }
+        }
+
+        let width = control.bounds.width / CGFloat(count)
+        return (0..<count).map {
+            CGRect(x: CGFloat($0) * width, y: 0, width: width, height: control.bounds.height)
+        }
+    }
+
+    private func layoutBadges() {
+        guard !badgeLabels.isEmpty else { return }
+        control.layoutIfNeeded()
+        let frames = segmentFrames()
+
+        for (index, label) in badgeLabels {
+            guard index < frames.count else {
+                label.isHidden = true
+                continue
+            }
+            label.isHidden = false
+            let segment = convert(frames[index], from: control)
+            let size = label.intrinsicContentSize
+            label.frame = CGRect(
+                x: segment.maxX - size.width - 2,
+                y: segment.minY - size.height / 4,
+                width: size.width,
+                height: size.height
+            )
+        }
+    }
+
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        layoutBadges()
     }
 
     /// Resolves the image shown for a segment, or nil when the segment shows

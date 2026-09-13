@@ -77,6 +77,14 @@ export interface SegmentedControlLabelStyle {
   fontStyle?: 'normal' | 'italic';
 }
 
+/**
+ * Badge colors. Both default to the platform look (red with white text).
+ */
+export interface SegmentedControlBadgeStyle {
+  backgroundColor?: ColorValue;
+  color?: ColorValue;
+}
+
 export interface SegmentedControlSegmentProps {
   /** Display label for the segment */
   label: string;
@@ -89,6 +97,12 @@ export interface SegmentedControlSegmentProps {
 
   /** Optional icon. See {@link SegmentedControlIcon}. */
   icon?: SegmentedControlIcon;
+
+  /**
+   * Badge shown at the segment's top-right corner, e.g. an unread count.
+   * Numbers are shown as-is; use `undefined` to hide the badge.
+   */
+  badge?: string | number;
 
   /**
    * Screen-reader label. Defaults to `label`.
@@ -145,6 +159,9 @@ export interface SegmentedControlProps extends ViewProps {
 
   /** Font for segment labels. See {@link SegmentedControlLabelStyle}. */
   labelStyle?: SegmentedControlLabelStyle;
+
+  /** Colors for segment badges. See {@link SegmentedControlBadgeStyle}. */
+  badgeStyle?: SegmentedControlBadgeStyle;
 
   /**
    * iOS-specific configuration
@@ -273,6 +290,7 @@ export function SegmentedControl(
     activeTintColor,
     inactiveTintColor,
     labelStyle,
+    badgeStyle,
     onSelect,
     onDeselect,
     ios,
@@ -286,6 +304,8 @@ export function SegmentedControl(
       label: seg.label,
       value: seg.value,
       disabled: seg.disabled ? 'disabled' : 'enabled',
+      badge:
+        seg.badge === undefined || seg.badge === null ? '' : String(seg.badge),
       accessibilityLabel: seg.accessibilityLabel ?? '',
       ...resolveSegmentIcon(seg.icon),
     }));
@@ -368,6 +388,8 @@ export function SegmentedControl(
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
+      badgeBackgroundColor={badgeStyle?.backgroundColor}
+      badgeTextColor={badgeStyle?.color}
       onSelect={onSelect || onDeselect ? handleSelect : undefined}
       ios={nativeIos}
       android={nativeAndroid}

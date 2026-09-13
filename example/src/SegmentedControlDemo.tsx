@@ -1,12 +1,12 @@
 // SegmentedControlDemo.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   SegmentedControl,
   type SegmentedControlLabelVisibility,
   type SegmentedControlSegmentProps,
 } from 'react-native-platform-components';
-import { Divider, Row, Section, ui } from './DemoUI';
+import { Divider, PillButton, Row, Section, ui } from './DemoUI';
 
 const TIME_SEGMENTS = [
   { label: 'Day', value: 'day' },
@@ -81,6 +81,21 @@ export function SegmentedControlDemo(): React.JSX.Element {
   const [iconSelected, setIconSelected] = useState<string>('list');
   const [labelVisibility, setLabelVisibility] =
     useState<SegmentedControlLabelVisibility>('auto');
+  const [mailbox, setMailbox] = useState<string>('inbox');
+  const [unread, setUnread] = useState(3);
+  const mailboxSegments = useMemo(
+    (): SegmentedControlSegmentProps[] => [
+      // Numbers show as-is; undefined hides the badge
+      {
+        label: 'Inbox',
+        value: 'inbox',
+        badge: unread > 0 ? unread : undefined,
+      },
+      { label: 'Sent', value: 'sent' },
+      { label: 'Drafts', value: 'drafts', badge: 'new' },
+    ],
+    [unread]
+  );
   const [prioritySelected, setPrioritySelected] = useState<string>('medium');
   const [styled, setStyled] = useState(true);
   const [partialSelected, setPartialSelected] = useState<string>('active');
@@ -144,6 +159,34 @@ export function SegmentedControlDemo(): React.JSX.Element {
           <Text testID="segment-icons-value" style={ui.valueText}>
             {iconSelected}
           </Text>
+        </Row>
+      </Section>
+
+      <Section title="Badges">
+        <ControlRow>
+          <SegmentedControl
+            testID="segment-badges"
+            segments={mailboxSegments}
+            selectedValue={mailbox}
+            disabled={disabled}
+            onSelect={(value) => setMailbox(value)}
+          />
+        </ControlRow>
+        <Divider />
+        <Row label="Unread">
+          <View style={styles.buttonRow}>
+            <PillButton
+              testID="badge-increment"
+              label="+1"
+              onPress={() => setUnread((n) => n + 1)}
+            />
+            <PillButton
+              testID="badge-clear"
+              label="Clear"
+              onPress={() => setUnread(0)}
+            />
+            <Text style={ui.valueText}>{unread}</Text>
+          </View>
         </Row>
       </Section>
 
@@ -239,5 +282,10 @@ const styles = StyleSheet.create({
   controlRow: {
     paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

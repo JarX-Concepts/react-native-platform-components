@@ -76,6 +76,7 @@ class PCSegmentedControlViewManager :
             iconUri = m.stringOr("iconUri", ""),
             iconScale = if (scale > 0) scale.toFloat() else 1f,
             iconTinted = m.stringOr("iconTinted", "true") != "false",
+            badge = m.stringOr("badge", ""),
             accessibilityLabel = m.stringOr("accessibilityLabel", "")
           )
         )
@@ -107,6 +108,14 @@ class PCSegmentedControlViewManager :
 
   override fun setAndroidStrokeColor(view: PCSegmentedControlView, value: Int?) {
     view.applyStrokeColor(value)
+  }
+
+  override fun setBadgeBackgroundColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyBadgeColors(value, view.badgeTextColor)
+  }
+
+  override fun setBadgeTextColor(view: PCSegmentedControlView, value: Int?) {
+    view.applyBadgeColors(view.badgeBackgroundColor, value)
   }
 
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
