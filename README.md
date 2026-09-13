@@ -627,6 +627,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `activeTintColor` | `ColorValue`                             | Text and icon color of the selected segment                                                                                                                |
 | `inactiveTintColor` | `ColorValue`                           | Text and icon color of unselected segments                                                                                                                 |
 | `labelStyle`      | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                              |
+| `badgeStyle`      | `{ backgroundColor?, color? }`           | Colors for segment badges. See [Badges](#badges)                                                                                                            |
 | `onSelect`        | `(value: string, index: number) => void` | Called when user selects a segment                                                                                                                         |
 | `onDeselect`      | `() => void`                             | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false`                        |
 
@@ -638,6 +639,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `value`              | `string`               | Unique value returned in callbacks                                                                                |
 | `disabled`           | `boolean`              | Disables this specific segment                                                                                    |
 | `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](#icon-support-1)                                                                |
+| `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                              |
 | `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title |
 
 ### iOS Props (`ios`)
@@ -720,6 +722,27 @@ Colors take any React Native `ColorValue` (hex, `rgba()`, named colors, `Platfor
 | `android.strokeColor`  | —                                            | Button outline                               |
 
 Images with `tinted: false` keep their own colors and ignore the tint props.
+
+### Badges
+
+Give a segment a `badge` to show a count or short status at its top-right corner. Numbers render as-is, so format them yourself (`'99+'`); `undefined` hides the badge.
+
+```tsx
+<SegmentedControl
+  segments={[
+    { label: 'Inbox', value: 'inbox', badge: unreadCount || undefined },
+    { label: 'Sent', value: 'sent' },
+    { label: 'Drafts', value: 'drafts', badge: 'new' },
+  ]}
+  selectedValue={mailbox}
+  onSelect={setMailbox}
+  badgeStyle={{ backgroundColor: '#5856D6', color: 'white' }}
+/>
+```
+
+- **iOS**: a capsule label drawn over the segment (UISegmentedControl has no badge API). Defaults to system red with white text.
+- **Android**: a Material `BadgeDrawable` attached to the button. Defaults to the theme's error color.
+- Screen readers announce the badge with the segment label ("Inbox, 3").
 
 ---
 
@@ -819,7 +842,7 @@ All color props in this library support the same formats as React Native's `back
 **Props that accept colors:**
 
 - `ContextMenu`: `imageColor` (icon tint)
-- `SegmentedControl`: `selectedSegmentColor`, `activeTintColor`, `inactiveTintColor`, `android.rippleColor`, `android.strokeColor` (these also accept `PlatformColor` / `DynamicColorIOS`)
+- `SegmentedControl`: `selectedSegmentColor`, `activeTintColor`, `inactiveTintColor`, `badgeStyle.backgroundColor`, `badgeStyle.color`, `android.rippleColor`, `android.strokeColor` (these also accept `PlatformColor` / `DynamicColorIOS`)
 - `LiquidGlass`: `ios.tintColor`, `android.fallbackBackgroundColor`
 
 ```tsx

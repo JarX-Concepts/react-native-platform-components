@@ -23,6 +23,7 @@ export type SegmentedControlSegment = Readonly<{
   iconUri: string; // Resolved image URI when iconType === 'image'
   iconScale: CodegenTypes.Double; // Resolved image scale when iconType === 'image'
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
+  badge: string; // Badge text, empty = no badge
   accessibilityLabel: string; // Screen-reader label, empty = use label
 }>;
 
@@ -111,6 +112,12 @@ export interface SegmentedControlProps extends ViewProps {
 
   /** Label font. */
   labelStyle?: LabelStyleProps;
+
+  /** Badge background (default: system red). */
+  badgeBackgroundColor?: ColorValue;
+
+  /** Badge text color (default: white). */
+  badgeTextColor?: ColorValue;
 
   /**
    * Fired when the user selects a segment.

@@ -38,6 +38,7 @@ static inline bool SegmentsEqual(
     if (a[i].iconUri != b[i].iconUri) return false;
     if (a[i].iconScale != b[i].iconScale) return false;
     if (a[i].iconTinted != b[i].iconTinted) return false;
+    if (a[i].badge != b[i].badge) return false;
     if (a[i].accessibilityLabel != b[i].accessibilityLabel) return false;
   }
   return true;
@@ -144,6 +145,7 @@ static UIFont *FontFromLabelStyle(
         @"iconUri": NSStringFromStd(seg.iconUri, @""),
         @"iconScale": @(seg.iconScale),
         @"iconTinted": NSStringFromStd(seg.iconTinted, @"true"),
+        @"badge": NSStringFromStd(seg.badge, @""),
         @"accessibilityLabel": NSStringFromStd(seg.accessibilityLabel, @""),
       }];
     }
@@ -204,6 +206,14 @@ static UIFont *FontFromLabelStyle(
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
   if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
     _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  }
+
+  if (!prevProps || newProps.badgeBackgroundColor != prevProps->badgeBackgroundColor) {
+    _view.badgeBackgroundColor = RCTUIColorFromSharedColor(newProps.badgeBackgroundColor);
+  }
+
+  if (!prevProps || newProps.badgeTextColor != prevProps->badgeTextColor) {
+    _view.badgeTextColor = RCTUIColorFromSharedColor(newProps.badgeTextColor);
   }
 
   [super updateProps:props oldProps:oldProps];

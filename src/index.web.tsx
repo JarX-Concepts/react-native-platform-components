@@ -128,7 +128,13 @@ export interface SegmentedControlSegmentProps {
   value: string;
   disabled?: boolean;
   icon?: SegmentedControlIcon;
+  badge?: string | number;
   accessibilityLabel?: string;
+}
+
+export interface SegmentedControlBadgeStyle {
+  backgroundColor?: string;
+  color?: string;
 }
 
 export interface SegmentedControlLabelStyle {
@@ -147,6 +153,7 @@ export interface SegmentedControlProps extends ViewProps {
   activeTintColor?: string;
   inactiveTintColor?: string;
   labelStyle?: SegmentedControlLabelStyle;
+  badgeStyle?: SegmentedControlBadgeStyle;
   onSelect?: (value: string, index: number) => void;
   onDeselect?: () => void;
   ios?: Record<string, unknown>;

@@ -304,3 +304,43 @@ describe('SegmentedControl styling', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('SegmentedControl badges', () => {
+  beforeEach(() => {
+    NativeSegmentedControl.mockClear();
+  });
+
+  it('normalizes badges to strings and empty for none', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={[
+          { label: 'Inbox', value: 'inbox', badge: 3 },
+          { label: 'Drafts', value: 'drafts', badge: 'new' },
+          { label: 'Sent', value: 'sent' },
+        ]}
+        selectedValue="inbox"
+      />
+    );
+    const segments = lastNativeProps().segments;
+    expect(segments.map((s: { badge: string }) => s.badge)).toEqual([
+      '3',
+      'new',
+      '',
+    ]);
+    act(() => tree.unmount());
+  });
+
+  it('flattens badgeStyle into native color props', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={SEGMENTS}
+        selectedValue="day"
+        badgeStyle={{ backgroundColor: '#5856D6', color: 'white' }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.badgeBackgroundColor).toBe('#5856D6');
+    expect(props.badgeTextColor).toBe('white');
+    act(() => tree.unmount());
+  });
+});
