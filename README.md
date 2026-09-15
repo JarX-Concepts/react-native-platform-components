@@ -116,12 +116,17 @@ eas build --platform android
 
 **Config Plugin:**
 
-Add to your `app.json`:
+Add to your `app.json`. The `android.theme` option re-parents Expo's generated `AppTheme` onto Material 3, which `SegmentedControl` and the `material: 'm3'` modes use for their colors (see [Android Theme Configuration](#android-theme-configuration)):
 
 ```json
 {
   "expo": {
-    "plugins": [["react-native-platform-components/app.plugin", {}]]
+    "plugins": [
+      [
+        "react-native-platform-components/app.plugin",
+        { "android": { "theme": "material3" } }
+      ]
+    ]
   }
 }
 ```
@@ -968,7 +973,7 @@ Choose the appropriate mode based on your app's theme:
 
 ### Expo Configuration
 
-For Expo projects, the config plugin can configure your theme automatically. Add to `app.json`:
+For Expo projects, the config plugin configures the theme for you. With `android.theme` set to `material3`, `npx expo prebuild` re-parents the generated `AppTheme` onto `Theme.Material3.DayNight.NoActionBar` and keeps every item Expo already put there (`colorPrimary`, status bar colors, and so on). Material 3 supplies the remaining colors, so you only add the ones you want to override. Add to `app.json`:
 
 ```json
 {
@@ -987,7 +992,7 @@ For Expo projects, the config plugin can configure your theme automatically. Add
 }
 ```
 
-Then run `npx expo prebuild` to apply the configuration.
+Then run `npx expo prebuild` to apply the configuration. Leave the option out (or set it to `appcompat`) to keep Expo's default AppCompat theme.
 
 ---
 
