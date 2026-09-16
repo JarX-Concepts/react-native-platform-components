@@ -28,5 +28,5 @@
     "types": ["jest", "node"],
     "verbatimModuleSyntax": true
   },
-  "exclude": ["example", "example-expo", "plugin", "lib"]
+  "exclude": ["example", "example-expo", "plugin", "lib", "docs"]
 }

@@ -57,6 +57,7 @@
   "scripts": {
     "example": "yarn workspace react-native-platform-components-example",
     "example-expo": "yarn workspace react-native-platform-components-example-expo",
+    "docs": "yarn workspace react-native-platform-components-docs",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib plugin/build",
     "prepare": "bob build && yarn build:plugin",
     "typecheck": "tsc",
@@ -146,7 +147,8 @@
   },
   "workspaces": [
     "example",
-    "example-expo"
+    "example-expo",
+    "docs"
   ],
   "packageManager": "yarn@4.11.0",
   "react-native-builder-bob": {
@@ -226,6 +228,7 @@
     "preset": "@react-native/jest-preset",
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
+      "<rootDir>/docs/",
       "<rootDir>/lib/"
     ],
     "testPathIgnorePatterns": [
