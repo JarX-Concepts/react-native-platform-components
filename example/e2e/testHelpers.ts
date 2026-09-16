@@ -15,17 +15,11 @@ export const selectDemo = async (label: string) => {
     ).scrollTo('top');
     await pause(200);
   }
-  try {
-    await expect(element(by.id('demo-picker-title'))).toHaveText(label);
-    return;
-  } catch {
-    // Another demo is showing.
-  }
   await element(by.id('demo-picker')).tap();
   await pause(500);
   await element(by.text(label)).atIndex(0).tap();
-  // Wait for React state to update
-  await pause(isAndroid() ? 500 : 300);
+  // Let the demo mount and settle; the README GIFs are trimmed to start here
+  await pause(1000);
 };
 
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {

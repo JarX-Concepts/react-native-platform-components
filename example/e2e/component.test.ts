@@ -37,17 +37,11 @@ export const selectDemo = async (label: string) => {
     ).scrollTo('top');
     await pause(200);
   }
-  try {
-    await expect(element(by.id('demo-picker-title'))).toHaveText(label);
-    return;
-  } catch {
-    // Another demo is showing.
-  }
   await element(by.id('demo-picker')).tap();
   await pause(500);
   await element(by.text(label)).atIndex(0).tap();
-  // Wait for React state to update
-  await pause(isAndroid() ? 500 : 300);
+  // Let the demo mount and settle; the README GIFs are trimmed to start here
+  await pause(1000);
 };
 
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
@@ -128,8 +122,7 @@ describe('Platform Components Example', () => {
       }
     };
 
-    // Ensure we're on the DatePicker tab
-    await selectDemo('Date Picker');
+    // The app opens on the Date Picker demo (beforeEach waits for it)
 
     // Enable DatePicker Tap
     await ensureModalMode(true);
@@ -630,5 +623,32 @@ describe('Platform Components Example', () => {
 
     // Take final screenshot
     await device.takeScreenshot('liquid-glass-final');
+  });
+
+  it('should test Theme functionality', async () => {
+    await selectDemo('Theme');
+    await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
+    await pause(800);
+
+    // Brand colors recolor the native components in place
+    for (const brand of ['teal', 'indigo', 'orange']) {
+      await element(by.id(`native-theme-brand-${brand}`)).tap();
+      await pause(1200);
+    }
+
+    await tapSegment('Month');
+    await pause(800);
+
+    // Dark mode, then a brand color change while dark
+    await element(by.id('native-theme-appearance-dark')).tap();
+    await pause(1200);
+    await element(by.id('native-theme-brand-teal')).tap();
+    await pause(1200);
+
+    // Back to the defaults
+    await element(by.id('native-theme-appearance-system')).tap();
+    await pause(500);
+    await element(by.id('native-theme-brand-default')).tap();
+    await pause(800);
   });
 });
