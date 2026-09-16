@@ -3,8 +3,6 @@ title: "ContextMenu"
 description: "Native context menu for React Native: UIContextMenuInteraction on iOS, PopupMenu on Android, with icons."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native context menu that wraps content and responds to **long-press** or **tap** gestures.
 
 ### Props

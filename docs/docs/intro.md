@@ -5,8 +5,6 @@ slug: /
 description: "Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl and LiquidGlass for React Native, native on iOS and Android."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 ```sh

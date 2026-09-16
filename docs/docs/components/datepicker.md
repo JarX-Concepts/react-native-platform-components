@@ -3,8 +3,6 @@ title: "DatePicker"
 description: "Native date and time picker for React Native: UIDatePicker on iOS, MaterialDatePicker and MaterialTimePicker on Android."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native date & time picker using **platform system pickers**.
 
 ### Props

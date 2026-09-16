@@ -3,8 +3,6 @@ title: "LiquidGlass"
 description: "Liquid glass for React Native: UIGlassEffect on iOS 26 with a fallback View on Android and older iOS."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and older iOS versions, renders as a regular View with optional fallback styling.
 
 > **Note:** LiquidGlass requires **iOS 26+** (Xcode 16+). On older iOS versions and Android, the component renders children without the glass effect. Use `isLiquidGlassSupported` to check availability and provide fallback UI.
