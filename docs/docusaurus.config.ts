@@ -20,6 +20,18 @@ const config: Config = {
     hooks: { onBrokenMarkdownLinks: 'throw' },
   },
   i18n: { defaultLocale: 'en', locales: ['en'] },
+  themes: [
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        docsRouteBasePath: '/',
+        indexBlog: false,
+        indexPages: false,
+        highlightSearchTermsOnTargetPage: true,
+      },
+    ],
+  ],
   presets: [
     [
       'classic',
