@@ -1,5 +1,7 @@
 # Changelog
 
+# [1.1.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.0.0...v1.1.0) (2026-09-16)
+
 # [1.0.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v0.9.0...v1.0.0) (2026-09-16)
 
 ### Bug Fixes
