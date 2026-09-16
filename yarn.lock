@@ -21664,6 +21664,7 @@ __metadata:
     "@docusaurus/core": "npm:3.10.2"
     "@docusaurus/module-type-aliases": "npm:3.10.2"
     "@docusaurus/preset-classic": "npm:3.10.2"
+    "@docusaurus/theme-common": "npm:3.10.2"
     "@docusaurus/tsconfig": "npm:3.10.2"
     "@docusaurus/types": "npm:3.10.2"
     "@easyops-cn/docusaurus-search-local": "npm:^0.55.3"
