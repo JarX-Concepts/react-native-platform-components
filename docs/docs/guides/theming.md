@@ -33,6 +33,17 @@ If your theme already follows the system through `useColorScheme()`, there is no
 
 ### Brand color
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-theme.gif" height="480" alt="Brand color and dark mode on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-theme.gif" height="480" alt="Brand color and dark mode on Android" /></td>
+  </tr>
+</table>
+
 `useNativeTheme` applies your theme's brand color to the native platform theme, app-wide. Call it once, near the root of the app. A [React Navigation](https://reactnavigation.org/docs/themes/) theme can be passed as is:
 
 ```tsx
