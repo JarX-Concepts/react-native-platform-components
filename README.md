@@ -91,7 +91,7 @@ pod install
 
 - Uses native Android Views with Material Design (including `PopupMenu` for context menus)
 - Supports **Material 3** styling
-- **⚠️ Your app may crash if theme is not configured** — See [Android Theme Configuration](#android-theme-configuration) below
+- Works with the default React Native and Expo AppCompat theme. To have the Material 3 components use your app's colors, see [Android Theme Configuration](#android-theme-configuration)
 
 ### Expo (Managed Workflow)
 
@@ -857,102 +857,57 @@ All color props in this library support the same formats as React Native's `back
 
 ## Android Theme Configuration
 
-> **⚠️ Your app may hard crash if you skip this section.** Android components require specific theme configuration. Components can crash immediately on mount if the required theme attributes are missing.
+No theme setup is required to avoid a crash. React Native and Expo templates ship an AppCompat app theme, and every component works with it. When the theme is not a Material theme, `SegmentedControl` and the inline M3 `SelectionMenu` render with Material 3 default colors, the M3 date and time pickers use a built-in Material 3 dialog theme, and the library logs one warning under the `PlatformComponents` tag. Give the app a Material 3 theme to have those components use your app's colors instead.
+
+> Releases up to 0.9.x crashed on mount in these cases (`Cannot find theme attribute materialButtonOutlinedStyle`, `You need to use a Theme.AppCompat theme`). Upgrade to get the fallback behavior.
 
 ### Theme Requirements by Component
 
-| Component            | Mode                         | Required Theme      | Crash if Missing |
-| -------------------- | ---------------------------- | ------------------- | ---------------- |
-| **SegmentedControl** | (always M3)                  | `Theme.Material3.*` | ✅ Yes           |
-| **DatePicker**       | `android.material: 'm3'`     | `Theme.Material3.*` | ✅ Yes           |
-| **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*` | ✅ Yes           |
-| **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*` | ✅ Yes           |
-| **SelectionMenu**    | `android.material: 'system'` | `Theme.AppCompat.*` | ✅ Yes           |
-| **ContextMenu**      | —                            | Any                 | ❌ No            |
-| **LiquidGlass**      | —                            | Any                 | ❌ No            |
+| Component            | Mode                         | Uses your colors with | Without it                                          |
+| -------------------- | ---------------------------- | --------------------- | --------------------------------------------------- |
+| **SegmentedControl** | (always M3)                  | `Theme.Material3.*`   | Material 3 default colors, one warning logged       |
+| **DatePicker**       | `android.material: 'm3'`     | `Theme.Material3.*`   | Built-in Material 3 dialog theme, one warning logged |
+| **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*`   | Built-in AppCompat dialog theme, one warning logged |
+| **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*`   | Material 3 default colors, one warning logged       |
+| **SelectionMenu**    | `android.material: 'system'` | `Theme.AppCompat.*`   | Platform widgets, no theme dependency               |
+| **ContextMenu**      | —                            | Any                   | —                                                   |
+| **LiquidGlass**      | —                            | Any                   | —                                                   |
 
-### Material 3 Theme Setup (Required for SegmentedControl)
+`Theme.Material3.*` extends `Theme.AppCompat.*`, so a Material 3 theme satisfies every row.
 
-`SegmentedControl` always uses Material 3 widgets (`MaterialButtonToggleGroup`). Your app **must** use a Material 3 theme or the app will crash on component mount.
+### Material 3 Theme Setup (Recommended)
 
-**1. Update your app theme in `android/app/src/main/res/values/styles.xml`:**
+**Expo:** pass `{ "android": { "theme": "material3" } }` to the config plugin. See [Expo Configuration](#expo-configuration) below.
+
+**Bare React Native:** change the parent of your app theme in `android/app/src/main/res/values/styles.xml`:
 
 ```xml
 <resources>
-    <!-- Base application theme - MUST inherit from Material3 -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Material 3 requires these color attributes -->
-        <item name="colorPrimary">@color/md_theme_primary</item>
-        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
-        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
-        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
-        <item name="colorSecondary">@color/md_theme_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
-        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
-        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
-        <item name="colorTertiary">@color/md_theme_tertiary</item>
-        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
-        <item name="colorBackground">@color/md_theme_background</item>
-        <item name="colorOnBackground">@color/md_theme_onBackground</item>
-        <item name="colorSurface">@color/md_theme_surface</item>
-        <item name="colorOnSurface">@color/md_theme_onSurface</item>
-        <item name="colorError">@color/md_theme_error</item>
-        <item name="colorOnError">@color/md_theme_onError</item>
+        <!-- Keep the items the React Native template put here -->
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 </resources>
 ```
 
-**2. Define your Material 3 colors in `android/app/src/main/res/values/colors.xml`:**
+Material 3 supplies a complete default color scheme. To use your own, override the colors you care about in the same style:
 
 ```xml
-<resources>
-    <!-- Generate these using Material Theme Builder: https://m3.material.io/theme-builder -->
-    <color name="md_theme_primary">#6750A4</color>
-    <color name="md_theme_onPrimary">#FFFFFF</color>
-    <color name="md_theme_primaryContainer">#EADDFF</color>
-    <color name="md_theme_onPrimaryContainer">#21005D</color>
-    <color name="md_theme_secondary">#625B71</color>
-    <color name="md_theme_onSecondary">#FFFFFF</color>
-    <color name="md_theme_secondaryContainer">#E8DEF8</color>
-    <color name="md_theme_onSecondaryContainer">#1D192B</color>
-    <color name="md_theme_tertiary">#7D5260</color>
-    <color name="md_theme_onTertiary">#FFFFFF</color>
-    <color name="md_theme_background">#FFFBFE</color>
-    <color name="md_theme_onBackground">#1C1B1F</color>
-    <color name="md_theme_surface">#FFFBFE</color>
-    <color name="md_theme_onSurface">#1C1B1F</color>
-    <color name="md_theme_error">#B3261E</color>
-    <color name="md_theme_onError">#FFFFFF</color>
-</resources>
+<item name="colorPrimary">@color/md_theme_primary</item>
+<item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+<item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+<item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+<item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+<item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+<item name="colorSurface">@color/md_theme_surface</item>
+<item name="colorOnSurface">@color/md_theme_onSurface</item>
 ```
 
-> **Tip:** Use Google's [Material Theme Builder](https://m3.material.io/theme-builder) to generate a complete color scheme.
-
-### Common Crash Scenarios
-
-#### Crash: `Cannot find theme attribute materialButtonOutlinedStyle`
-
-**Cause:** Using `SegmentedControl` without a Material 3 theme.
-
-**Fix:** Update your theme to inherit from `Theme.Material3.*`:
-
-```xml
-<!-- Change this -->
-<style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-
-<!-- To this -->
-<style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-```
-
-#### Crash: `You need to use a Theme.AppCompat theme`
-
-**Cause:** Using `DatePicker` or `SelectionMenu` with `android.material: 'system'` while not extending AppCompat.
-
-**Fix:** Ensure your theme inherits from `Theme.AppCompat.*` or `Theme.Material3.*` (which extends AppCompat), and your `MainActivity` extends `AppCompatActivity`.
+> **Tip:** Use Google's [Material Theme Builder](https://m3.material.io/theme-builder) to generate a complete color scheme, and define the colors in `res/values/colors.xml`.
 
 ### Mode Selection Guide
 
-Choose the appropriate mode based on your app's theme:
+Choose the mode that matches your app's theme:
 
 ```tsx
 // If your app uses Theme.Material3.* (recommended)
@@ -960,10 +915,10 @@ Choose the appropriate mode based on your app's theme:
 <SelectionMenu android={{ material: 'm3' }} />
 <SegmentedControl /> // Always M3
 
-// If your app uses Theme.AppCompat.*
+// If your app uses Theme.AppCompat.* (the React Native default)
 <DatePicker android={{ material: 'system' }} />
 <SelectionMenu android={{ material: 'system' }} />
-// ⚠️ SegmentedControl will crash - upgrade to Material 3
+<SegmentedControl /> // Renders with Material 3 default colors
 ```
 
 ### Expo Configuration

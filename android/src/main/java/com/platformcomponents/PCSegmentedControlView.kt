@@ -190,7 +190,9 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     rebuildGeneration += 1
     val generation = rebuildGeneration
 
-    val group = MaterialButtonToggleGroup(context).apply {
+    // Material widgets need a Material theme; fall back to Material 3 defaults instead of crashing.
+    val themedContext = PCThemeSupport.materialContext(context, "SegmentedControl")
+    val group = MaterialButtonToggleGroup(themedContext).apply {
       layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
       isSingleSelection = true
       isSelectionRequired = selectionRequired
@@ -207,7 +209,7 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
       // without one keep their label. "auto" and "labeled" show icon + label.
       val iconOnly = labelVisibility == "unlabeled" && segment.hasIcon
 
-      val button = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+      val button = MaterialButton(themedContext, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
         id = View.generateViewId()
         text = if (iconOnly) "" else segment.label
         isAllCaps = false  // Preserve original text casing
@@ -311,7 +313,7 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     if (segment.badge.isEmpty()) return
 
     val inset = (2 * resources.displayMetrics.density).toInt()
-    val badge = BadgeDrawable.create(context).apply {
+    val badge = BadgeDrawable.create(button.context).apply {
       text = segment.badge
       badgeGravity = BadgeDrawable.TOP_END
       badgeBackgroundColor?.let { backgroundColor = it }

@@ -465,7 +465,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       addView(picker)
     }
 
-    val dlg = AlertDialog.Builder(act)
+    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
       .setTitle(androidDialogTitle ?: "")
       .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
@@ -513,7 +513,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       }
     }
 
-    val dlg = AlertDialog.Builder(act)
+    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
       .setTitle(androidDialogTitle ?: "")
       .setView(picker)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
@@ -580,7 +580,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       addView(picker)
     }
 
-    val dlg = AlertDialog.Builder(act)
+    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
       .setTitle(androidDialogTitle ?: "")
       .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "Next") { _, _ ->
@@ -617,6 +617,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     val builder = MaterialDatePicker.Builder.datePicker()
       .setSelection(ts)
+      .setTheme(m3CalendarTheme(act))
 
     androidDialogTitle?.let { builder.setTitleText(it) }
     androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
@@ -660,6 +661,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     val is24 = android.text.format.DateFormat.is24HourFormat(act)
     val builder = MaterialTimePicker.Builder()
+      .setTheme(m3TimePickerTheme(act))
       .setTimeFormat(if (is24) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
       .setHour(cal.get(Calendar.HOUR_OF_DAY))
       .setMinute(cal.get(Calendar.MINUTE))
@@ -698,6 +700,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     val builder = MaterialDatePicker.Builder.datePicker()
       .setSelection(ts)
+      .setTheme(m3CalendarTheme(act))
 
     androidDialogTitle?.let { builder.setTitleText(it) }
     androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
@@ -732,6 +735,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     picker.show(act.supportFragmentManager, "PCDatePicker_M3_DATE_THEN_TIME")
   }
+
+  /**
+   * Material pickers resolve their theme from the activity. When the app theme is
+   * not a Material theme they would throw, so hand them a full Material 3 dialog
+   * theme instead (0 = use the activity theme).
+   */
+  private fun m3CalendarTheme(act: FragmentActivity): Int =
+    PCThemeSupport.materialDialogThemeOverride(act, "DatePicker", R.style.PCMaterial3CalendarDialogTheme)
+
+  private fun m3TimePickerTheme(act: FragmentActivity): Int =
+    PCThemeSupport.materialDialogThemeOverride(act, "DatePicker", R.style.PCMaterial3TimePickerDialogTheme)
 
   private fun buildM3CalendarConstraints(): CalendarConstraints? {
     val min = minDateMs

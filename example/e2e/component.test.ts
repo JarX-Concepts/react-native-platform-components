@@ -48,11 +48,9 @@ export const selectTab = async (tabLabel: string) => {
 
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
   if (isAndroid()) {
-    // Android: Tap the MaterialTextView inside the Spinner to open dropdown
+    // Android: tap the selected-item TextView inside the Spinner to open the dropdown
     const spinnerText = element(
-      by
-        .type('com.google.android.material.textview.MaterialTextView')
-        .withAncestor(by.id(menuId))
+      by.type('android.widget.TextView').withAncestor(by.id(menuId))
     );
     await spinnerText.tap();
     // Wait for dropdown to fully appear
@@ -223,10 +221,10 @@ describe('Platform Components Example', () => {
 
     // Select a state in embedded mode - tap the menu to open it
     if (isAndroid()) {
-      // Android: tap the MaterialTextView inside the menu
+      // Android: tap the selected-item TextView inside the menu
       const embeddedMenuText = element(
         by
-          .type('com.google.android.material.textview.MaterialTextView')
+          .type('android.widget.TextView')
           .withAncestor(by.id('state-menu-embedded'))
       );
       await embeddedMenuText.tap();

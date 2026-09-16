@@ -356,7 +356,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (mode == MaterialMode.M3) {
       // M3 exposed dropdown menu - the standard Material 3 way
       // Must set box background mode BEFORE setting endIconMode to avoid IllegalStateException
-      val til = TextInputLayout(context).apply {
+      // Material widgets need a Material theme; fall back to Material 3 defaults instead of crashing.
+      val til = TextInputLayout(PCThemeSupport.materialContext(context, "SelectionMenu")).apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.WRAP_CONTENT,
           FrameLayout.LayoutParams.WRAP_CONTENT
