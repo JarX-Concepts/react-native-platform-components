@@ -3,8 +3,6 @@ title: "Theming and Colors"
 description: "Design philosophy, theming, and the color formats accepted by react-native-platform-components."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 - **Native first** — no JS re-implementation of pickers
 - **Headless-friendly** — works with any custom UI
 - **Codegen-safe** — string unions & sentinel values for type safety

@@ -3,8 +3,6 @@ title: "Installation"
 description: "Install react-native-platform-components in a bare React Native or Expo app (New Architecture, dev client, config plugin)."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 ```sh
 npm install react-native-platform-components
 yarn add react-native-platform-components

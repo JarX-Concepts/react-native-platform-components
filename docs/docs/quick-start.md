@@ -3,8 +3,6 @@ title: "Quick Start"
 description: "Copy-paste examples for every component: DatePicker, ContextMenu, SelectionMenu, SegmentedControl and LiquidGlass."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 ### DatePicker (Modal)
 
 ```tsx

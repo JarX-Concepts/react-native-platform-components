@@ -3,8 +3,6 @@ title: "SegmentedControl"
 description: "Native segmented control for React Native: UISegmentedControl on iOS, Material 3 segmented buttons on Android, with icons and badges."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native segmented control using **UISegmentedControl** on iOS and **MaterialButtonToggleGroup** on Android.
 
 ### Props

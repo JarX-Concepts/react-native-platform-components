@@ -13,7 +13,7 @@ This project is a monorepo managed with [Yarn workspaces](https://yarnpkg.com/fe
 - Library source in the root directory (`src/`, `ios/`, `android/`, `shared/`, `plugin/`)
 - Bare React Native example app in `example/` (also hosts the Detox tests)
 - Expo example app in `example-expo/` (exercises the config plugin)
-- Documentation site in `docs/`
+- Documentation site in `docs/` (`yarn docs start` to preview)
 
 ### Prerequisites
 
@@ -55,21 +55,22 @@ Re-run `prebuild` after changing the config plugin or `example-expo/app.json`.
 
 ## Project layout
 
-| Path | What lives there |
-| --- | --- |
-| `src/<Component>.tsx` | Public TypeScript component and its props |
-| `src/<Component>NativeComponent.ts` | Codegen spec for the Fabric view |
-| `src/index.tsx`, `src/index.web.tsx` | Public exports and the render-nothing web stubs |
-| `ios/PC<Component>.swift` | iOS implementation (UIKit / SwiftUI) |
-| `ios/PC<Component>.h`, `ios/PC<Component>.mm` | Fabric component view bridging into the Swift implementation |
-| `android/src/main/java/com/platformcomponents/PC<Component>View.kt` | Android implementation |
-| `android/src/main/java/com/platformcomponents/PC<Component>ViewManager.kt` | Android view manager (props, events, Fabric state) |
-| `android/src/main/java/com/platformcomponents/PCThemeSupport.kt` | Theme guards: build Material widgets through `PCThemeSupport.materialContext(...)` so an AppCompat app theme falls back instead of crashing |
-| `android/src/main/res/values/styles.xml` | Bundled Material 3 dialog themes used by that fallback |
-| `shared/` | Custom C++ shadow nodes and component descriptors for components that measure themselves natively |
-| `plugin/src/index.ts` | Expo config plugin (compiled to `plugin/build` by `yarn build:plugin`) |
-| `example/e2e/` | Detox flows for all components |
-| `scripts/generate-readme-gifs.sh` | Regenerates the README GIFs from Detox recordings |
+| Path                                                                       | What lives there                                                                                                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/<Component>.tsx`                                                      | Public TypeScript component and its props                                                                                                   |
+| `src/<Component>NativeComponent.ts`                                        | Codegen spec for the Fabric view                                                                                                            |
+| `src/index.tsx`, `src/index.web.tsx`                                       | Public exports and the render-nothing web stubs                                                                                             |
+| `ios/PC<Component>.swift`                                                  | iOS implementation (UIKit / SwiftUI)                                                                                                        |
+| `ios/PC<Component>.h`, `ios/PC<Component>.mm`                              | Fabric component view bridging into the Swift implementation                                                                                |
+| `android/src/main/java/com/platformcomponents/PC<Component>View.kt`        | Android implementation                                                                                                                      |
+| `android/src/main/java/com/platformcomponents/PC<Component>ViewManager.kt` | Android view manager (props, events, Fabric state)                                                                                          |
+| `android/src/main/java/com/platformcomponents/PCThemeSupport.kt`           | Theme guards: build Material widgets through `PCThemeSupport.materialContext(...)` so an AppCompat app theme falls back instead of crashing |
+| `android/src/main/res/values/styles.xml`                                   | Bundled Material 3 dialog themes used by that fallback                                                                                      |
+| `shared/`                                                                  | Custom C++ shadow nodes and component descriptors for components that measure themselves natively                                           |
+| `plugin/src/index.ts`                                                      | Expo config plugin (compiled to `plugin/build` by `yarn build:plugin`)                                                                      |
+| `docs/docs/`                                                               | Documentation site content (Docusaurus). The README stays short and links here; document props and behavior on the component pages          |
+| `example/e2e/`                                                             | Detox flows for all components                                                                                                              |
+| `scripts/generate-readme-gifs.sh`                                          | Regenerates the README GIFs from Detox recordings                                                                                           |
 
 ### Editing native code
 
@@ -92,17 +93,17 @@ Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurr
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `yarn` | Install dependencies |
-| `yarn typecheck` | Type-check with TypeScript |
-| `yarn lint` | Lint with ESLint (`yarn lint --fix` to auto-fix) |
-| `yarn test` | Unit tests (Jest), including the config plugin tests |
-| `yarn build:plugin` | Compile the Expo config plugin |
-| `yarn example <cmd>` | Run a script in the bare example app |
-| `yarn example-expo <cmd>` | Run a script in the Expo example app |
-| `yarn generate:gifs` | Regenerate the README GIFs (runs the full Detox suite on both platforms) |
-| `yarn clean` | Clean build artifacts |
+| Command                   | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `yarn`                    | Install dependencies                                                     |
+| `yarn typecheck`          | Type-check with TypeScript                                               |
+| `yarn lint`               | Lint with ESLint (`yarn lint --fix` to auto-fix)                         |
+| `yarn test`               | Unit tests (Jest), including the config plugin tests                     |
+| `yarn build:plugin`       | Compile the Expo config plugin                                           |
+| `yarn example <cmd>`      | Run a script in the bare example app                                     |
+| `yarn example-expo <cmd>` | Run a script in the Expo example app                                     |
+| `yarn generate:gifs`      | Regenerate the README GIFs (runs the full Detox suite on both platforms) |
+| `yarn clean`              | Clean build artifacts                                                    |
 
 ### E2E testing (Detox)
 

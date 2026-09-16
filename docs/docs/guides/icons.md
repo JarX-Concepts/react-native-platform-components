@@ -3,8 +3,6 @@ title: "Icons"
 description: "SF Symbols on iOS and drawables or images on Android for ContextMenu and SegmentedControl icons."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl accepts the same names, plus image assets and per-platform pairs; see [SegmentedControl Icon Support](https://github.com/JarX-Concepts/react-native-platform-components#icon-support-1).
 
 ### iOS

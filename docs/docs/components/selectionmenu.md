@@ -3,8 +3,6 @@ title: "SelectionMenu"
 description: "Native selection menu for React Native: system menus on iOS, Material exposed dropdown or Spinner on Android."
 ---
 
-<!-- Generated from the root README by docs/scripts/generate-from-readme.mjs. Edit the README, then run `yarn docs generate`. -->
-
 Native selection menu with **modal** and **embedded** modes.
 
 ### Props
