@@ -27,23 +27,21 @@ const tapSegment = async (label: string) => {
   }
 };
 
-// Helper to select a tab from the native SegmentedControl
-export const selectTab = async (tabLabel: string) => {
+// Pick a demo from the header menu (a headless SelectionMenu)
+export const selectDemo = async (label: string) => {
   if (isAndroid()) {
-    // On Android, scroll to top first to ensure tabs are visible
+    // Scroll to top first so the header is visible (iOS tests start at the top,
+    // and scrolling an already-top ScrollView there stalls the app)
     await element(
       by.type('com.facebook.react.views.scroll.ReactScrollView')
     ).scrollTo('top');
     await pause(200);
-    // Find the MaterialButton by its content description (accessibility label)
-    await element(by.label(tabLabel)).atIndex(0).tap();
-    // Wait longer for React state to update on Android
-    await pause(500);
-  } else {
-    // On iOS, UISegmentedControl segments are found by text
-    await element(by.text(tabLabel)).atIndex(0).tap();
-    await pause(300);
   }
+  await element(by.id('demo-picker')).tap();
+  await pause(500);
+  await element(by.text(label)).atIndex(0).tap();
+  // Let the demo mount and settle; the README GIFs are trimmed to start here
+  await pause(1000);
 };
 
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
@@ -116,16 +114,15 @@ describe('Platform Components Example', () => {
       }
 
       try {
-        // Tap the Date tab to dismiss
-        await selectTab('Date');
+        // Tap outside the popover to dismiss it
+        await element(by.text('BASICS')).tap();
         return;
       } catch {
-        // Tab not available.
+        // Section title not reachable.
       }
     };
 
-    // Ensure we're on the DatePicker tab
-    await selectTab('Date');
+    // The app opens on the Date Picker demo (beforeEach waits for it)
 
     // Enable DatePicker Tap
     await ensureModalMode(true);
@@ -182,7 +179,7 @@ describe('Platform Components Example', () => {
 
   it('should test Selection Menu functionality', async () => {
     // Navigate to SelectionMenu tab
-    await selectTab('Select');
+    await selectDemo('Selection Menu');
 
     // Verify we're on the SelectionMenu screen
     await expect(element(by.id('state-field-headless'))).toBeVisible();
@@ -281,7 +278,7 @@ describe('Platform Components Example', () => {
 
   it('should test Context Menu functionality', async () => {
     // Navigate to ContextMenu tab
-    await selectTab('Context');
+    await selectDemo('Context Menu');
 
     // Verify we're on the ContextMenu screen
     await expect(element(by.text('Long-press me'))).toBeVisible();
@@ -404,7 +401,7 @@ describe('Platform Components Example', () => {
 
   it('should test Segmented Control functionality', async () => {
     // Navigate to SegmentedControl tab
-    await selectTab('Segment');
+    await selectDemo('Segmented Control');
 
     // Verify we're on the SegmentedControl demo
     await expect(element(by.id('segment-basic'))).toBeVisible();
@@ -544,7 +541,7 @@ describe('Platform Components Example', () => {
     }
 
     // Navigate to LiquidGlass tab
-    await selectTab('Glass');
+    await selectDemo('Liquid Glass');
 
     // Take initial screenshot of the glass effect
     await device.takeScreenshot('liquid-glass-initial');
@@ -626,5 +623,32 @@ describe('Platform Components Example', () => {
 
     // Take final screenshot
     await device.takeScreenshot('liquid-glass-final');
+  });
+
+  it('should test Theme functionality', async () => {
+    await selectDemo('Theme');
+    await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
+    await pause(800);
+
+    // Brand colors recolor the native components in place
+    for (const brand of ['teal', 'indigo', 'orange']) {
+      await element(by.id(`native-theme-brand-${brand}`)).tap();
+      await pause(1200);
+    }
+
+    await tapSegment('Month');
+    await pause(800);
+
+    // Dark mode, then a brand color change while dark
+    await element(by.id('native-theme-appearance-dark')).tap();
+    await pause(1200);
+    await element(by.id('native-theme-brand-teal')).tap();
+    await pause(1200);
+
+    // Back to the defaults
+    await element(by.id('native-theme-appearance-system')).tap();
+    await pause(500);
+    await element(by.id('native-theme-brand-default')).tap();
+    await pause(800);
   });
 });

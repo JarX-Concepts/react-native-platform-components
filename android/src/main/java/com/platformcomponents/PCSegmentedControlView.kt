@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
@@ -20,7 +21,10 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 
-class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScrollViewHelper.HasStateWrapper {
+class PCSegmentedControlView(context: Context) :
+  FrameLayout(context),
+  ReactScrollViewHelper.HasStateWrapper,
+  ReactCompoundViewGroup {
 
   data class Segment(
     val label: String,
@@ -87,6 +91,15 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
 
   /** Bumped on every rebuild so late image loads can't touch stale buttons. */
   private var rebuildGeneration = 0
+
+  // --- Native theme ---
+  // Widgets read theme colors when they are created, so they are rebuilt when the
+  // native theme changes (brand color, light/dark switch).
+  private var builtThemeVersion = PCNativeTheme.version
+  private val nativeThemeListener = PCNativeTheme.Listener {
+    PCThemeSupport.clearColorStateListCaches(this)
+    rebuildUI()
+  }
 
   init {
     minimumHeight = (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
@@ -182,9 +195,29 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     rebuildUI()
   }
 
+  // The buttons have generated view ids, which React Native's touch handling would
+  // take for React tags and dispatch JS touch events to unrelated views. Claim the
+  // touch for this view instead; the buttons still receive it natively.
+  override fun interceptsTouchEvent(touchX: Float, touchY: Float): Boolean = true
+
+  override fun reactTagForTouch(touchX: Float, touchY: Float): Int = id
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    PCNativeTheme.addListener(nativeThemeListener)
+    PCNativeTheme.attach(context)
+    if (builtThemeVersion != PCNativeTheme.version) nativeThemeListener.onNativeThemeChanged()
+  }
+
+  override fun onDetachedFromWindow() {
+    PCNativeTheme.removeListener(nativeThemeListener)
+    super.onDetachedFromWindow()
+  }
+
   // ---- UI Building ----
 
   private fun rebuildUI() {
+    builtThemeVersion = PCNativeTheme.version
     removeAllViews()
     buttonIdToSegment.clear()
     rebuildGeneration += 1

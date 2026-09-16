@@ -83,7 +83,7 @@ This library is built for the **React Native New Architecture** (Fabric + TurboM
 | Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
 | React        | 19                                                        |
 | iOS          | 13 (LiquidGlass needs iOS 26)                             |
-| Android      | API 24 (Android 7.0); Material Components 1.12 is bundled |
+| Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
 
 **Requirements:**
 

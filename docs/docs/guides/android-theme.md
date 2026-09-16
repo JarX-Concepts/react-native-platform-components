@@ -21,6 +21,8 @@ No theme setup is required to avoid a crash. React Native and Expo templates shi
 
 `Theme.Material3.*` extends `Theme.AppCompat.*`, so a Material 3 theme satisfies every row.
 
+To use your brand color without editing `styles.xml`, set it from JavaScript with `useNativeTheme` (Android 13 and later). See [Brand color](/guides/theming#brand-color).
+
 ### Material 3 Theme Setup (Recommended)
 
 **Expo:** pass `{ "android": { "theme": "material3" } }` to the config plugin. See [Expo Configuration](#expo-configuration) below.

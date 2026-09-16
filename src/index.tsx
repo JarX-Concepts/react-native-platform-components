@@ -4,3 +4,4 @@ export * from './ContextMenu';
 export * from './SegmentedControl';
 export * from './LiquidGlass';
 export * from './sharedTypes';
+export * from './NativeTheme';

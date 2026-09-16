@@ -1,11 +1,15 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.Resources
 import android.util.Log
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.AttrRes
 import androidx.appcompat.R as AppCompatR
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.R as MaterialR
 
 /**
@@ -39,9 +43,34 @@ internal object PCThemeSupport {
    * renders with Material 3 defaults instead of throwing.
    */
   fun materialContext(context: Context, component: String): Context {
-    if (hasMaterialTheme(context)) return context
-    warnMaterial(component)
-    return ContextThemeWrapper(context, MaterialR.style.Theme_Material3_DayNight_NoActionBar)
+    val base =
+      if (hasMaterialTheme(context)) {
+        context
+      } else {
+        warnMaterial(component)
+        ContextThemeWrapper(context, MaterialR.style.Theme_Material3_DayNight_NoActionBar)
+      }
+    if (!PCNativeTheme.isActive) return base
+    // Re-applies the native theme's brand colors, which the Material 3 fallback resets.
+    return ContextThemeWrapper(base, R.style.PCNativeThemeOverlay)
+  }
+
+  /**
+   * Clears AndroidX's color state list cache for the themes the views under [root] were
+   * built with. Material widgets load their colors through that cache, keyed by theme,
+   * and widgets rebuilt for a new brand color use the same theme keys as the ones they
+   * replace, so without this they would get the previous brand colors back.
+   */
+  fun clearColorStateListCaches(root: View) {
+    val themes = HashSet<Resources.Theme>()
+    fun collect(view: View) {
+      themes.add(view.context.theme)
+      if (view is ViewGroup) {
+        for (i in 0 until view.childCount) collect(view.getChildAt(i))
+      }
+    }
+    collect(root)
+    themes.forEach { ResourcesCompat.clearCachesForTheme(it) }
   }
 
   /**
@@ -57,11 +86,17 @@ internal object PCThemeSupport {
   /**
    * Theme override for MaterialDatePicker / MaterialTimePicker when the activity
    * theme is not a Material theme. Returns 0 (no override) when it is.
+   * [nativeThemeFallback] is the variant that keeps the native theme's brand colors.
    */
-  fun materialDialogThemeOverride(context: Context, component: String, fallbackTheme: Int): Int {
+  fun materialDialogThemeOverride(
+    context: Context,
+    component: String,
+    fallbackTheme: Int,
+    nativeThemeFallback: Int
+  ): Int {
     if (hasMaterialTheme(context)) return 0
     warnMaterial(component)
-    return fallbackTheme
+    return if (PCNativeTheme.isActive) nativeThemeFallback else fallbackTheme
   }
 
   private fun resolves(context: Context, @AttrRes attr: Int): Boolean =
