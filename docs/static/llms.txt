@@ -1,0 +1,35 @@
+# react-native-platform-components
+
+> Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl and LiquidGlass for React Native. Every component is the real platform widget on both iOS (UIKit / SwiftUI) and Android (Material 3), behind one typed, declarative API. No JavaScript re-implementations. New Architecture (Fabric + Codegen) only. TypeScript types included. Expo config plugin included.
+
+Install: `npm install react-native-platform-components`. iOS: `cd ios && pod install`. Android: nothing to configure; give the app a Material 3 theme to use your colors (the components fall back to Material 3 defaults otherwise). Expo: dev client or EAS Build (not Expo Go); add `["react-native-platform-components/app.plugin", { "android": { "theme": "material3" } }]` to `expo.plugins`, then `npx expo prebuild`.
+
+Requirements: React Native 0.81+ with the New Architecture, Expo SDK 54+, React 19, iOS 13+ (LiquidGlass needs iOS 26), Android API 24+.
+
+Platform-only props live under `ios={{ ... }}` and `android={{ ... }}` on every component.
+
+## Components
+
+- [DatePicker](https://jarx-concepts.github.io/react-native-platform-components/components/datepicker): `UIDatePicker` on iOS; `MaterialDatePicker` / `MaterialTimePicker` (`android.material: 'm3'`) or AppCompat dialogs (`'system'`) on Android. Props: `date`, `mode` (`date` | `time` | `dateAndTime` | `countDownTimer`), `presentation` (`modal` | `embedded`), `visible`, `minDate`, `maxDate`, `locale`, `timeZoneName`, `onConfirm`, `onClosed`.
+- [ContextMenu](https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu): `UIContextMenuInteraction` on iOS; `PopupMenu` on Android. Long-press gesture mode or modal mode, actions with icons (SF Symbols on iOS, drawables or images on Android), `onSelect`.
+- [SelectionMenu](https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu): system menus on iOS; Material exposed dropdown (`m3`) or `Spinner` (`system`) on Android. Headless (anchored to your own view) or inline modes, `options`, `selected`, `onSelect`.
+- [SegmentedControl](https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol): `UISegmentedControl` on iOS; `MaterialButtonToggleGroup` (Material 3 segmented buttons) on Android. `segments` (label, value, icon, badge, disabled), `selectedValue`, `onSelect`, label visibility, per-platform styling.
+- [LiquidGlass](https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass): `UIGlassEffect` on iOS 26+; plain `View` with `android.fallbackBackgroundColor` elsewhere. `cornerRadius`, `ios.effect` (`regular` | `clear` | `none`), `ios.interactive`, `ios.tintColor`, `ios.colorScheme`; `isLiquidGlassSupported` constant.
+
+## Docs
+
+- [Overview](https://jarx-concepts.github.io/react-native-platform-components/): pitch, install, comparison with datetimepicker / segmented-control / zeego / picker / liquid-glass
+- [Installation](https://jarx-concepts.github.io/react-native-platform-components/installation): bare React Native, Expo, New Architecture, compatibility table
+- [Quick Start](https://jarx-concepts.github.io/react-native-platform-components/quick-start): copy-paste examples for every component and mode
+- [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme): Material 3 setup, Expo plugin option, fallback behavior
+- [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, Android drawables, image sources
+- [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
+
+## Full content
+
+- [llms-full.txt](https://jarx-concepts.github.io/react-native-platform-components/llms-full.txt): every documentation page in one file
+
+## Source
+
+- [GitHub](https://github.com/JarX-Concepts/react-native-platform-components)
+- [npm](https://www.npmjs.com/package/react-native-platform-components)
