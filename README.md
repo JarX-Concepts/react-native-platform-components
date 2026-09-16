@@ -89,7 +89,7 @@ yarn add react-native-platform-components
 
 **Android:** nothing to configure. The components work with the default AppCompat app theme; give the app a Material 3 theme to have `SegmentedControl` and the Material pickers use your colors. See [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme).
 
-**Expo:** needs a dev client or EAS Build (native code, so not Expo Go). The config plugin sets up the Material 3 theme for you:
+**Expo:** needs a dev client or EAS Build (native code, so not Expo Go). Give the config plugin your brand color and it writes the native theme for you: a Material 3 light and dark color scheme on Android, the accent color on iOS. See [Brand colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming#brand-colors).
 
 ```json
 {
@@ -97,7 +97,7 @@ yarn add react-native-platform-components
     "plugins": [
       [
         "react-native-platform-components/app.plugin",
-        { "android": { "theme": "material3" } }
+        { "seedColor": "#00897B" }
       ]
     ]
   }
@@ -132,7 +132,7 @@ Everything else lives on the documentation site:
 - [DatePicker](https://jarx-concepts.github.io/react-native-platform-components/components/datepicker), [ContextMenu](https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu), [SelectionMenu](https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu), [SegmentedControl](https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol), [LiquidGlass](https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass): props, platform options and behavior
 - [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme): Material 3 setup and what happens without it
 - [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, drawables and images
-- [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
+- [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, brand colors from the config plugin, accepted color formats
 
 ## Contributing
 

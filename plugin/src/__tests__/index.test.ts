@@ -4,6 +4,7 @@ import withPlatformComponents, {
   MATERIAL3_THEME_PARENT,
   applyMaterial3Theme,
   resolveMaterial3Parent,
+  resolveOptions,
 } from '../index';
 
 type ResourceXML = AndroidConfig.Resources.ResourceXML;
@@ -121,5 +122,105 @@ describe('withPlatformComponents', () => {
     );
 
     expect(typeof config.mods?.android?.styles).toBe('function');
+    expect(config.mods?.android?.colors).toBeUndefined();
+  });
+
+  it('registers Android color mods and iOS accent color mods for seedColor', () => {
+    const config = withPlatformComponents(
+      { ...baseConfig },
+      { seedColor: '#0B6E4F' }
+    );
+
+    expect(typeof config.mods?.android?.styles).toBe('function');
+    expect(typeof config.mods?.android?.colors).toBe('function');
+    expect(typeof config.mods?.android?.colorsNight).toBe('function');
+    expect(typeof config.mods?.ios?.dangerous).toBe('function');
+    expect(typeof config.mods?.ios?.xcodeproj).toBe('function');
+  });
+
+  it('registers only iOS mods for ios.accentColor', () => {
+    const config = withPlatformComponents(
+      { ...baseConfig },
+      { ios: { accentColor: '#0B6E4F' } }
+    );
+
+    expect(config.mods?.android).toBeUndefined();
+    expect(typeof config.mods?.ios?.xcodeproj).toBe('function');
+  });
+
+  it('throws on invalid options', () => {
+    expect(() =>
+      withPlatformComponents({ ...baseConfig }, { seedColor: 'green' })
+    ).toThrow(/seedColor must be a hex color/);
+  });
+});
+
+describe('resolveOptions', () => {
+  it('changes nothing by default', () => {
+    expect(resolveOptions(undefined)).toEqual({
+      android: { theme: 'appcompat' },
+      iosAccentColor: undefined,
+    });
+  });
+
+  it('applies seedColor to both platforms and implies the material3 theme', () => {
+    expect(resolveOptions({ seedColor: '#0b6e4f' })).toEqual({
+      android: { theme: 'material3', seedColor: '#0B6E4F' },
+      iosAccentColor: { light: '#0B6E4F' },
+    });
+  });
+
+  it('lets platform options take precedence over seedColor', () => {
+    expect(
+      resolveOptions({
+        seedColor: '#0B6E4F',
+        android: { seedColor: '#6750A4' },
+        ios: { accentColor: { light: '#0B6E4F', dark: '#7ED8B2' } },
+      })
+    ).toEqual({
+      android: { theme: 'material3', seedColor: '#6750A4' },
+      iosAccentColor: { light: '#0B6E4F', dark: '#7ED8B2' },
+    });
+  });
+
+  it('uses android.colors without a seed color', () => {
+    expect(
+      resolveOptions({
+        android: { colors: { light: { primary: '#0B6E4F' } } },
+      })
+    ).toEqual({
+      android: {
+        theme: 'material3',
+        colors: { light: { primary: '#0B6E4F' }, dark: {} },
+      },
+      iosAccentColor: undefined,
+    });
+  });
+
+  it('rejects colors with the appcompat theme', () => {
+    expect(() =>
+      resolveOptions({
+        seedColor: '#0B6E4F',
+        android: { theme: 'appcompat' },
+      })
+    ).toThrow(/need the Material 3 theme/);
+  });
+
+  it('rejects an unknown theme', () => {
+    expect(() =>
+      resolveOptions({
+        android: { theme: 'Material3' as 'material3' },
+      })
+    ).toThrow(/android\.theme must be "material3" or "appcompat"/);
+  });
+
+  it('rejects an accent color pair without a dark color', () => {
+    expect(() =>
+      resolveOptions({
+        ios: {
+          accentColor: { light: '#0B6E4F' } as { light: string; dark: string },
+        },
+      })
+    ).toThrow(/ios\.accentColor\.dark must be a hex color/);
   });
 });
