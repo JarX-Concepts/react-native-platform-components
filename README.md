@@ -2,12 +2,48 @@
 
 [![npm version](https://img.shields.io/npm/v/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
 [![npm downloads](https://img.shields.io/npm/dm/react-native-platform-components.svg)](https://www.npmjs.com/package/react-native-platform-components)
+[![CI](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml/badge.svg)](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/react-native-platform-components.svg)](./LICENSE)
 
-High-quality **native UI components for React Native**, implemented with platform-first APIs and exposed through clean, typed JavaScript interfaces.
+Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
-This library focuses on **true native behavior**, not JavaScript re-implementations.
+```sh
+npm install react-native-platform-components
+```
 
-**Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
+```tsx
+import { SegmentedControl } from 'react-native-platform-components';
+
+<SegmentedControl
+  segments={[
+    { label: 'Day', value: 'day' },
+    { label: 'Week', value: 'week' },
+  ]}
+  selectedValue={range}
+  onSelect={setRange}
+/>;
+```
+
+That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`MaterialButtonToggleGroup`) on Android. The library needs the New Architecture: React Native 0.81+, or Expo SDK 54+ with a dev client (not Expo Go). See [Installation](#installation).
+
+## Why this library
+
+| You need              | This library                                                                                                                                             | Common alternative                                                                                                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Date and time pickers | `UIDatePicker` on iOS; `MaterialDatePicker` / `MaterialTimePicker` or the AppCompat dialogs on Android. Declarative `visible` prop, modal or embedded.   | `@react-native-community/datetimepicker`: platform dialogs on Android; Material 3 pickers are an [open request](https://github.com/react-native-datetimepicker/datetimepicker/issues/790). |
+| Segmented control     | `UISegmentedControl` on iOS; Material 3 segmented buttons on Android. Icons and badges on both.                                                          | `@react-native-segmented-control/segmented-control`: native on iOS, drawn in JavaScript on Android.                                                                                        |
+| Context menu          | `UIContextMenuInteraction` on iOS; `PopupMenu` on Android. Long-press gesture or modal trigger, icons on both.                                           | `zeego`: native on both platforms, through two additional native dependencies (`react-native-ios-context-menu`, `@react-native-menu/menu`).                                                |
+| Selection menu        | System menus on iOS; Material exposed dropdown or `Spinner` on Android. Headless or inline.                                                              | `@react-native-picker/picker`: wheel picker on iOS, dialog or dropdown `Spinner` on Android; no menu-style presentation.                                                                   |
+| Liquid glass          | `UIGlassEffect` on iOS 26+, a fallback `View` elsewhere, `isLiquidGlassSupported` flag.                                                                  | `@callstack/liquid-glass`, `expo-glass-effect`: same idea on iOS; here it ships with the components above.                                                                                 |
+| All of the above      | One package, one API shape (platform-only props under `ios={{ }}` and `android={{ }}`), Fabric + Codegen typed bindings, Expo config plugin, TypeScript. | Four or five packages with different conventions, install steps and upgrade cadences.                                                                                                      |
+
+### Components
+
+- **DatePicker** – native date & time pickers with modal and embedded presentations
+- **ContextMenu** – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)
+- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
+- **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)
+- **LiquidGlass** – iOS 26+ glass morphism effects (UIGlassEffect on iOS, fallback View on Android)
 
 <table>
   <tr>
@@ -52,20 +88,9 @@ This library focuses on **true native behavior**, not JavaScript re-implementati
   </tr>
 </table>
 
-### Components
+**Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
 
-- **DatePicker** – native date & time pickers with modal and embedded presentations
-- **ContextMenu** – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)
-- **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
-- **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)
-- **LiquidGlass** – iOS 26+ glass morphism effects (UIGlassEffect on iOS, fallback View on Android)
-
-### Goals
-
-- Feel **100% native** on each platform
-- Support modern platform design systems (Material 3 on Android, system pickers on iOS)
-- Offer **headless** and **inline** modes for maximum layout control
-- Integrate cleanly with **React Native Codegen / Fabric**
+**Using it in a shipped app?** Open a PR to list it here.
 
 ---
 
@@ -146,10 +171,15 @@ This library is built for the **React Native New Architecture** (Fabric + TurboM
 | TurboModules          | N/A (view components only)         |
 | Old Architecture      | Not supported                      |
 
-**Tested with:**
+**Compatibility:**
 
-- React Native 0.81+ (bare and Expo)
-- Expo SDK 54+
+| Platform     | Minimum                                                   |
+| ------------ | --------------------------------------------------------- |
+| React Native | 0.81 with the New Architecture enabled                    |
+| Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
+| React        | 19                                                        |
+| iOS          | 13 (LiquidGlass needs iOS 26)                             |
+| Android      | API 24 (Android 7.0); Material Components 1.12 is bundled |
 
 **Requirements:**
 
@@ -484,12 +514,12 @@ Native date & time picker using **platform system pickers**.
 
 ### iOS Props (`ios`)
 
-| Prop                       | Type                                               | Description                                                              |
-| -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
-| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style                                                    |
-| `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode                                        |
-| `minuteInterval`           | `number`                                           | Minute interval (1-30)                                                   |
-| `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                                                        |
+| Prop                       | Type                                               | Description                                                                           |
+| -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style                                                                 |
+| `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode                                                     |
+| `minuteInterval`           | `number`                                           | Minute interval (1-30)                                                                |
+| `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                                                                     |
 | `showConfirmToolbar`       | `boolean`                                          | Modal only. Show Cancel/Done toolbar below the picker. Defaults to `true`. See below. |
 
 ### Android Props (`android`)
@@ -506,12 +536,12 @@ Native date & time picker using **platform system pickers**.
 
 `onConfirm` fires on every date/time change, but the second argument (`confirmed`) lets you distinguish between browsing and deliberate selections:
 
-| Platform / Mode      | Every change                              | Deliberate selection                  |
-| -------------------- | ----------------------------------------- | ------------------------------------- |
-| **iOS modal**        | `confirmed: false` (user still adjusting) | `confirmed: true` (tapping **Done**)  |
-| **iOS embedded**     | `confirmed: true`                         | —                                     |
-| **Android modal**    | —                                         | `confirmed: true` (pressing OK)       |
-| **Android embedded** | `confirmed: true`                         | —                                     |
+| Platform / Mode      | Every change                              | Deliberate selection                 |
+| -------------------- | ----------------------------------------- | ------------------------------------ |
+| **iOS modal**        | `confirmed: false` (user still adjusting) | `confirmed: true` (tapping **Done**) |
+| **iOS embedded**     | `confirmed: true`                         | —                                    |
+| **Android modal**    | —                                         | `confirmed: true` (pressing OK)      |
+| **Android embedded** | `confirmed: true`                         | —                                    |
 
 On iOS in modal presentation, the picker is shown in a popover with a Cancel/Done toolbar below it. Tapping **Done** emits `confirmed: true`; tapping **Cancel** or outside the popover calls `onClosed`. Set `ios.showConfirmToolbar: false` to hide the toolbar — in that mode `confirmed: true` never fires, and your app is expected to drive dismissal by flipping `visible` off (reading the current date from the stream of `confirmed: false` events). This only makes UX sense paired with `ios.preferredStyle: 'inline'`.
 
@@ -622,58 +652,58 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Props
 
-| Prop              | Type                                     | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `segments`        | `SegmentedControlSegment[]`              | Array of segments to display                                                                                                                               |
-| `selectedValue`   | `string \| null`                         | Currently selected segment's `value`                                                                                                                       |
-| `disabled`        | `boolean`                                | Disables the entire control                                                                                                                                |
-| `labelVisibility` | `'auto' \| 'labeled' \| 'unlabeled'`     | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                                                 |
-| `selectedSegmentColor` | `ColorValue`                        | Background of the selected segment                                                                                                                         |
-| `activeTintColor` | `ColorValue`                             | Text and icon color of the selected segment                                                                                                                |
-| `inactiveTintColor` | `ColorValue`                           | Text and icon color of unselected segments                                                                                                                 |
-| `labelStyle`      | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                              |
-| `badgeStyle`      | `{ backgroundColor?, color? }`           | Colors for segment badges. See [Badges](#badges)                                                                                                            |
-| `onSelect`        | `(value: string, index: number) => void` | Called when user selects a segment                                                                                                                         |
-| `onDeselect`      | `() => void`                             | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false`                        |
+| Prop                   | Type                                                  | Description                                                                                                                          |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `segments`             | `SegmentedControlSegment[]`                           | Array of segments to display                                                                                                         |
+| `selectedValue`        | `string \| null`                                      | Currently selected segment's `value`                                                                                                 |
+| `disabled`             | `boolean`                                             | Disables the entire control                                                                                                          |
+| `labelVisibility`      | `'auto' \| 'labeled' \| 'unlabeled'`                  | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                           |
+| `selectedSegmentColor` | `ColorValue`                                          | Background of the selected segment                                                                                                   |
+| `activeTintColor`      | `ColorValue`                                          | Text and icon color of the selected segment                                                                                          |
+| `inactiveTintColor`    | `ColorValue`                                          | Text and icon color of unselected segments                                                                                           |
+| `labelStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                     |
+| `badgeStyle`           | `{ backgroundColor?, color? }`                        | Colors for segment badges. See [Badges](#badges)                                                                                     |
+| `onSelect`             | `(value: string, index: number) => void`              | Called when user selects a segment                                                                                                   |
+| `onDeselect`           | `() => void`                                          | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
 
 ### SegmentedControlSegment
 
-| Property             | Type                   | Description                                                                                                       |
-| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `label`              | `string`               | Display text for the segment                                                                                      |
-| `value`              | `string`               | Unique value returned in callbacks                                                                                |
-| `disabled`           | `boolean`              | Disables this specific segment                                                                                    |
-| `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](#icon-support-1)                                                                |
-| `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                              |
+| Property             | Type                   | Description                                                                                                      |
+| -------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `label`              | `string`               | Display text for the segment                                                                                     |
+| `value`              | `string`               | Unique value returned in callbacks                                                                               |
+| `disabled`           | `boolean`              | Disables this specific segment                                                                                   |
+| `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](#icon-support-1)                                                               |
+| `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                             |
 | `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title |
 
 ### iOS Props (`ios`)
 
-| Prop                               | Type      | Description                                                                 |
-| ---------------------------------- | --------- | --------------------------------------------------------------------------- |
-| `momentary`                        | `boolean` | If true, segments don't show selected state                                 |
-| `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content                         |
+| Prop                               | Type      | Description                                                                |
+| ---------------------------------- | --------- | -------------------------------------------------------------------------- |
+| `momentary`                        | `boolean` | If true, segments don't show selected state                                |
+| `apportionsSegmentWidthsByContent` | `boolean` | If true, segment widths are proportional to content                        |
 | `selectedSegmentTintColor`         | `string`  | **Deprecated.** Use `selectedSegmentColor`, which works on both platforms. |
 
 ### Android Props (`android`)
 
-| Prop                | Type         | Description                                                                                                                                  |
-| ------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prop                | Type         | Description                                                                                                                                 |
+| ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `selectionRequired` | `boolean`    | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
-| `rippleColor`       | `ColorValue` | Ripple shown while pressing a segment                                                                                                        |
-| `strokeColor`       | `ColorValue` | Outline color of the segments                                                                                                                |
+| `rippleColor`       | `ColorValue` | Ripple shown while pressing a segment                                                                                                       |
+| `strokeColor`       | `ColorValue` | Outline color of the segments                                                                                                               |
 
 ### Icon Support
 
 `icon` accepts a single source, or an `{ ios, android }` pair so you never branch on `Platform.OS`:
 
-| Shape                                       | iOS                                 | Android                                       |
-| ------------------------------------------- | ----------------------------------- | --------------------------------------------- |
-| `'name'` (string)                           | SF Symbol name                      | Drawable resource name                        |
-| `{ type: 'sfSymbol', name }`                | SF Symbol                           | Ignored (segment shows its label)             |
-| `{ type: 'drawable', name }`                | Ignored (segment shows its label)   | Drawable from `res/drawable`                  |
-| `{ type: 'image', source, tinted? }`        | Image asset or `{ uri }`            | Image asset or `{ uri }`                      |
-| `{ ios: <source>, android: <source> }`      | Uses `ios`                          | Uses `android`                                |
+| Shape                                  | iOS                               | Android                           |
+| -------------------------------------- | --------------------------------- | --------------------------------- |
+| `'name'` (string)                      | SF Symbol name                    | Drawable resource name            |
+| `{ type: 'sfSymbol', name }`           | SF Symbol                         | Ignored (segment shows its label) |
+| `{ type: 'drawable', name }`           | Ignored (segment shows its label) | Drawable from `res/drawable`      |
+| `{ type: 'image', source, tinted? }`   | Image asset or `{ uri }`          | Image asset or `{ uri }`          |
+| `{ ios: <source>, android: <source> }` | Uses `ios`                        | Uses `android`                    |
 
 ```tsx
 // A bundled asset works everywhere and is tinted like a template.
@@ -692,11 +722,11 @@ Image icons render at their point size, so ship `@2x` / `@3x` variants sized aro
 
 `UISegmentedControl` shows either a title or an image per segment, while Material buttons can show both. `labelVisibility` makes the outcome predictable:
 
-| Value                 | iOS                                        | Android                    |
-| --------------------- | ------------------------------------------ | -------------------------- |
-| `'auto'` (default)    | Icon when the segment has one, else label  | Icon and label             |
-| `'labeled'`           | Label only (icon is not shown)             | Icon and label             |
-| `'unlabeled'`         | Icon when the segment has one, else label  | Icon only, else label      |
+| Value              | iOS                                       | Android               |
+| ------------------ | ----------------------------------------- | --------------------- |
+| `'auto'` (default) | Icon when the segment has one, else label | Icon and label        |
+| `'labeled'`        | Label only (icon is not shown)            | Icon and label        |
+| `'unlabeled'`      | Icon when the segment has one, else label | Icon only, else label |
 
 Screen readers announce the label (or `accessibilityLabel`) in every mode on both platforms.
 
@@ -717,14 +747,14 @@ Colors take any React Native `ColorValue` (hex, `rgba()`, named colors, `Platfor
 />
 ```
 
-| Prop                   | iOS                                          | Android                                      |
-| ---------------------- | -------------------------------------------- | -------------------------------------------- |
-| `selectedSegmentColor` | `selectedSegmentTintColor` (the pill)        | Checked button background                    |
-| `activeTintColor`      | Selected title / template image color        | Checked button text and icon tint            |
-| `inactiveTintColor`    | Normal title / template image color          | Unchecked button text and icon tint          |
-| `labelStyle`           | Title font (default: 13pt system)            | Button typeface and size (default: theme)    |
-| `android.rippleColor`  | —                                            | Press ripple                                 |
-| `android.strokeColor`  | —                                            | Button outline                               |
+| Prop                   | iOS                                   | Android                                   |
+| ---------------------- | ------------------------------------- | ----------------------------------------- |
+| `selectedSegmentColor` | `selectedSegmentTintColor` (the pill) | Checked button background                 |
+| `activeTintColor`      | Selected title / template image color | Checked button text and icon tint         |
+| `inactiveTintColor`    | Normal title / template image color   | Unchecked button text and icon tint       |
+| `labelStyle`           | Title font (default: 13pt system)     | Button typeface and size (default: theme) |
+| `android.rippleColor`  | —                                     | Press ripple                              |
+| `android.strokeColor`  | —                                     | Button outline                            |
 
 Images with `tinted: false` keep their own colors and ignore the tint props.
 
@@ -868,15 +898,15 @@ No theme setup is required to avoid a crash. React Native and Expo templates shi
 
 ### Theme Requirements by Component
 
-| Component            | Mode                         | Uses your colors with | Without it                                          |
-| -------------------- | ---------------------------- | --------------------- | --------------------------------------------------- |
-| **SegmentedControl** | (always M3)                  | `Theme.Material3.*`   | Material 3 default colors, one warning logged       |
+| Component            | Mode                         | Uses your colors with | Without it                                           |
+| -------------------- | ---------------------------- | --------------------- | ---------------------------------------------------- |
+| **SegmentedControl** | (always M3)                  | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
 | **DatePicker**       | `android.material: 'm3'`     | `Theme.Material3.*`   | Built-in Material 3 dialog theme, one warning logged |
-| **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*`   | Built-in AppCompat dialog theme, one warning logged |
-| **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*`   | Material 3 default colors, one warning logged       |
-| **SelectionMenu**    | `android.material: 'system'` | `Theme.AppCompat.*`   | Platform widgets, no theme dependency               |
-| **ContextMenu**      | —                            | Any                   | —                                                   |
-| **LiquidGlass**      | —                            | Any                   | —                                                   |
+| **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*`   | Built-in AppCompat dialog theme, one warning logged  |
+| **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
+| **SelectionMenu**    | `android.material: 'system'` | `Theme.AppCompat.*`   | Platform widgets, no theme dependency                |
+| **ContextMenu**      | —                            | Any                   | —                                                    |
+| **LiquidGlass**      | —                            | Any                   | —                                                    |
 
 `Theme.Material3.*` extends `Theme.AppCompat.*`, so a Material 3 theme satisfies every row.
 
