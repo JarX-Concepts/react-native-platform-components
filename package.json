@@ -1,7 +1,7 @@
 {
   "name": "react-native-platform-components",
   "version": "0.9.0",
-  "description": "Native UI components for React Native: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, LiquidGlass.",
+  "description": "Native UI components for React Native that are native on Android too: DatePicker, ContextMenu, SelectionMenu, SegmentedControl (Material 3) and LiquidGlass (iOS 26). Fabric, typed, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "browser": "./lib/module/index.web.js",
@@ -57,6 +57,7 @@
   "scripts": {
     "example": "yarn workspace react-native-platform-components-example",
     "example-expo": "yarn workspace react-native-platform-components-example-expo",
+    "docs": "yarn workspace react-native-platform-components-docs",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib plugin/build",
     "prepare": "bob build && yarn build:plugin",
     "typecheck": "tsc",
@@ -71,26 +72,42 @@
   },
   "keywords": [
     "react-native",
+    "expo",
+    "expo-config-plugin",
     "ios",
     "android",
+    "fabric",
+    "new-architecture",
+    "native-ui",
+    "ui-components",
     "datepicker",
     "date-picker",
     "time-picker",
-    "picker",
+    "datetimepicker",
+    "uidatepicker",
+    "material-date-picker",
     "menu",
-    "selection-menu",
     "context-menu",
+    "contextmenu",
+    "popup-menu",
+    "uicontextmenu",
+    "selection-menu",
     "dropdown",
-    "native",
-    "material-design",
-    "expo",
+    "picker",
     "segmented-control",
     "segmentedcontrol",
-    "tabs",
     "segmented-buttons",
     "segmentedbuttons",
+    "uisegmentedcontrol",
+    "tabs",
     "liquid-glass",
-    "liquidglass"
+    "liquidglass",
+    "glass-effect",
+    "uiglasseffect",
+    "material-design",
+    "material3",
+    "material-3",
+    "material-you"
   ],
   "repository": {
     "type": "git",
@@ -141,12 +158,13 @@
     "typescript": "~6.0.3"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-native": "*"
+    "react": ">=19.0.0",
+    "react-native": ">=0.81.0"
   },
   "workspaces": [
     "example",
-    "example-expo"
+    "example-expo",
+    "docs"
   ],
   "packageManager": "yarn@4.11.0",
   "react-native-builder-bob": {
@@ -218,7 +236,9 @@
       "@release-it/conventional-changelog": {
         "preset": {
           "name": "angular"
-        }
+        },
+        "infile": "CHANGELOG.md",
+        "header": "# Changelog"
       }
     }
   },
@@ -226,6 +246,7 @@
     "preset": "@react-native/jest-preset",
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
+      "<rootDir>/docs/",
       "<rootDir>/lib/"
     ],
     "testPathIgnorePatterns": [
