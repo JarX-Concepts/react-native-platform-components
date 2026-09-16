@@ -1,6 +1,7 @@
 // DemoUI.tsx
 import React from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -43,6 +44,8 @@ export function Screen(props: {
   return (
     <ScrollView
       testID="demo-scroll"
+      // iOS insets the content below the status bar / Dynamic Island
+      contentInsetAdjustmentBehavior="automatic"
       style={[ui.container, { backgroundColor: colors.background }]}
     >
       {props.children}
@@ -213,7 +216,7 @@ export function ActionField(props: {
 export const ui = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 54,
+    paddingTop: Platform.OS === 'ios' ? 8 : 54,
     paddingHorizontal: 20,
   },
   header: {

@@ -59,7 +59,7 @@ export default function App() {
 
 Only `colors.primary` is read. It accepts any color value, including `PlatformColor` and `DynamicColorIOS`. Pass `null` to go back to the app's own theme colors.
 
-- **iOS**: the color becomes the tint color of every window, including windows opened later. These components and any other UIKit view that uses the tint color inherit it and update right away.
+- **iOS**: the color becomes the tint color of every window, including windows opened later. These components and any other UIKit view that uses the tint color inherit it and update right away. Switches keep their green "on" color, as elsewhere on iOS; pass `trackColor={{ true: theme.colors.primary }}` to brand a React Native `Switch`.
 - **Android 13 and later**: the color seeds a Material 3 color scheme (Material's content-based dynamic color) for the current light or dark mode, applied to the activity. `SegmentedControl`, `SelectionMenu` and both `DatePicker` modes use it, and so do other Material and AppCompat widgets, such as React Native's `Switch`. These components rebuild right away; other native views pick up the colors the next time they are created. On older Android versions the app theme's colors stay in place.
 
 To apply the color outside of React, use `setNativeTheme`:

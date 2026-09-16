@@ -1,13 +1,6 @@
 // ThemeDemo.tsx
 import React, { useState } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import {
   ContextMenu,
   DatePicker,
@@ -88,7 +81,6 @@ export function ThemeDemo(props: {
   const [fruit, setFruit] = useState<string | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [switchOn, setSwitchOn] = useState(true);
 
   return (
     <>
@@ -198,24 +190,6 @@ export function ThemeDemo(props: {
           />
         </View>
       </Section>
-
-      <Section title="React Native views">
-        <Row label="Switch">
-          <Switch
-            style={ui.alignEnd}
-            value={switchOn}
-            onValueChange={setSwitchOn}
-          />
-        </Row>
-        <Divider />
-        <Row label="Text input">
-          <TextInput
-            placeholder="Cursor and selection"
-            placeholderTextColor={colors.placeholder}
-            style={[styles.input, { color: colors.text }]}
-          />
-        </Row>
-      </Section>
     </>
   );
 }
@@ -236,5 +210,4 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
-  input: { fontSize: 14, paddingVertical: 8 },
 });
