@@ -12,7 +12,7 @@ const repo = 'https://github.com/JarX-Concepts/react-native-platform-components'
 // Page -> README h2 sections it is built from (first one supplies the body; its
 // own heading is dropped because the frontmatter title replaces it).
 const pages = [
-  { file: 'intro.md', slug: '/', title: 'Overview', sidebar: 'Overview', sections: ['__top__'],
+  { file: 'intro.md', slug: '/', title: 'Overview', sidebar: 'Overview', sections: ['__top__', 'Why this library'],
     description: 'Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl and LiquidGlass for React Native, native on iOS and Android.' },
   { file: 'installation.md', title: 'Installation', sections: ['Installation', 'React Native New Architecture'],
     description: 'Install react-native-platform-components in a bare React Native or Expo app (New Architecture, dev client, config plugin).' },
