@@ -3,6 +3,17 @@ title: "ContextMenu"
 description: "Native context menu for React Native: UIContextMenuInteraction on iOS, PopupMenu on Android, with icons."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="480" alt="ContextMenu on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="480" alt="ContextMenu on Android" /></td>
+  </tr>
+</table>
+
 Native context menu that wraps content and responds to **long-press** or **tap** gestures.
 
 ### Props

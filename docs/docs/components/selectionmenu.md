@@ -3,6 +3,17 @@ title: "SelectionMenu"
 description: "Native selection menu for React Native: system menus on iOS, Material exposed dropdown or Spinner on Android."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="480" alt="SelectionMenu on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="480" alt="SelectionMenu on Android" /></td>
+  </tr>
+</table>
+
 Native selection menu with **modal** and **embedded** modes.
 
 ### Props
