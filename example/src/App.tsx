@@ -1,70 +1,152 @@
 // App.tsx
-import React, { useMemo, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { SegmentedControl } from 'react-native-platform-components';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Appearance,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {
+  SelectionMenu,
+  useNativeTheme,
+} from 'react-native-platform-components';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
-import { Screen } from './DemoUI';
+import { Screen, useDemoColors } from './DemoUI';
+import {
+  BRAND_COLORS,
+  ThemeDemo,
+  type AppearanceSetting,
+  type BrandColor,
+} from './ThemeDemo';
 
 type DemoKey =
   | 'datePicker'
   | 'selectionMenu'
   | 'contextMenu'
   | 'segmentedControl'
-  | 'liquidGlass';
+  | 'liquidGlass'
+  | 'theme';
 
-const BASE_TABS = [
-  { label: 'Date', value: 'datePicker' as const },
-  { label: 'Select', value: 'selectionMenu' as const },
-  { label: 'Context', value: 'contextMenu' as const },
-  { label: 'Segment', value: 'segmentedControl' as const },
+const COMPONENT_DEMOS = [
+  { label: 'Date Picker', data: 'datePicker' },
+  { label: 'Selection Menu', data: 'selectionMenu' },
+  { label: 'Context Menu', data: 'contextMenu' },
+  { label: 'Segmented Control', data: 'segmentedControl' },
 ];
 
-// LiquidGlass is iOS 26+ only, so hide the tab on Android
-const IOS_ONLY_TABS = [{ label: 'Glass', value: 'liquidGlass' as const }];
+// LiquidGlass is iOS 26+ only, so hide the demo on Android
+const IOS_ONLY_DEMOS = [{ label: 'Liquid Glass', data: 'liquidGlass' }];
+
+const THEME_DEMO = { label: 'Theme', data: 'theme' };
 
 export default function App(): React.ReactElement {
+  const colors = useDemoColors();
   const [demo, setDemo] = useState<DemoKey>('datePicker');
+  const [demoMenuOpen, setDemoMenuOpen] = useState(false);
+  const [brand, setBrand] = useState<BrandColor>('default');
+  const [appearance, setAppearance] = useState<AppearanceSetting>('system');
 
-  const tabs = useMemo(
-    () =>
-      Platform.OS === 'ios' ? [...BASE_TABS, ...IOS_ONLY_TABS] : BASE_TABS,
+  const demos = useMemo(
+    () => [
+      ...COMPONENT_DEMOS,
+      ...(Platform.OS === 'ios' ? IOS_ONLY_DEMOS : []),
+      THEME_DEMO,
+    ],
     []
   );
 
+  // The native theme is app-wide, so it lives here rather than in ThemeDemo.
+  useNativeTheme(
+    brand === 'default' ? null : { colors: { primary: BRAND_COLORS[brand] } }
+  );
+
+  useEffect(() => {
+    Appearance.setColorScheme(
+      appearance === 'system' ? 'unspecified' : appearance
+    );
+  }, [appearance]);
+
   return (
     <Screen title="Platform Components" subtitle="Demo">
-      <View style={styles.tabContainer}>
-        <SegmentedControl
-          testID="demo-tabs"
-          style={styles.segmentedControl}
-          segments={tabs}
-          selectedValue={demo}
-          onSelect={(value) => setDemo(value as DemoKey)}
-          ios={{ apportionsSegmentWidthsByContent: true }}
-        />
-      </View>
+      <Pressable
+        testID="demo-picker"
+        accessibilityRole="button"
+        accessibilityHint="Choose a demo"
+        onPress={() => setDemoMenuOpen(true)}
+        style={({ pressed }) => [
+          styles.header,
+          pressed && styles.headerPressed,
+        ]}
+      >
+        <Text style={[styles.caption, { color: colors.placeholder }]}>
+          Platform Components
+        </Text>
+        <View style={styles.titleRow}>
+          <Text
+            testID="demo-picker-title"
+            style={[styles.title, { color: colors.text }]}
+          >
+            {demos.find((d) => d.data === demo)?.label}
+          </Text>
+          <Text style={[styles.chevron, { color: colors.placeholder }]}>▾</Text>
+        </View>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <SelectionMenu
+            testID="demo-menu"
+            style={styles.menuAnchor}
+            options={demos}
+            selected={demo}
+            presentation="modal"
+            visible={demoMenuOpen}
+            onSelect={(data) => {
+              setDemo(data as DemoKey);
+              setDemoMenuOpen(false);
+            }}
+            onRequestClose={() => setDemoMenuOpen(false)}
+          />
+        </View>
+      </Pressable>
 
       {demo === 'datePicker' && <DatePickerDemo />}
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
       {demo === 'contextMenu' && <ContextMenuDemo />}
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
+      {demo === 'theme' && (
+        <ThemeDemo
+          brand={brand}
+          onBrandChange={setBrand}
+          appearance={appearance}
+          onAppearanceChange={setAppearance}
+        />
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  tabContainer: {
-    alignSelf: 'stretch',
+  header: {
+    alignSelf: 'flex-start',
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 4,
+    marginLeft: 4,
   },
-  segmentedControl: {
-    alignSelf: 'stretch',
-    marginHorizontal: 8,
+  headerPressed: { opacity: 0.6 },
+  caption: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  title: { fontSize: 28, fontWeight: '700' },
+  chevron: { fontSize: 20, marginTop: 4 },
+  // The menu anchors to this view: the bottom edge of the header.
+  menuAnchor: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1 },
 });

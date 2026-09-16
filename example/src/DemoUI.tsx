@@ -1,14 +1,50 @@
 // DemoUI.tsx
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
+
+const LIGHT_COLORS = {
+  background: '#ecf0f1',
+  card: '#FFFFFF',
+  border: '#E6E6EA',
+  text: '#000000',
+  fill: '#F4F4F6',
+  link: '#2A5BD7',
+  placeholder: '#777777',
+};
+
+const DARK_COLORS: typeof LIGHT_COLORS = {
+  background: '#000000',
+  card: '#1C1C1E',
+  border: '#38383A',
+  text: '#FFFFFF',
+  fill: '#2C2C2E',
+  link: '#6E9BFF',
+  placeholder: '#8E8E93',
+};
+
+/** Colors for the demo chrome, following the native light/dark appearance. */
+export function useDemoColors() {
+  return useColorScheme() === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+}
 
 export function Screen(props: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const colors = useDemoColors();
   return (
-    <ScrollView testID="demo-scroll" style={ui.container}>
+    <ScrollView
+      testID="demo-scroll"
+      style={[ui.container, { backgroundColor: colors.background }]}
+    >
       {props.children}
       <Text style={ui.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -16,16 +52,27 @@ export function Screen(props: {
 }
 
 export function Section(props: { title: string; children: React.ReactNode }) {
+  const colors = useDemoColors();
   return (
     <View style={ui.section}>
-      <Text style={ui.sectionTitle}>{props.title}</Text>
-      <View style={ui.card}>{props.children}</View>
+      <Text style={[ui.sectionTitle, { color: colors.text }]}>
+        {props.title}
+      </Text>
+      <View
+        style={[
+          ui.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        {props.children}
+      </View>
     </View>
   );
 }
 
 export function Divider() {
-  return <View style={ui.divider} />;
+  const colors = useDemoColors();
+  return <View style={[ui.divider, { backgroundColor: colors.border }]} />;
 }
 
 export function Row(props: {
@@ -33,9 +80,10 @@ export function Row(props: {
   children: React.ReactNode;
   right?: React.ReactNode;
 }) {
+  const colors = useDemoColors();
   return (
     <View style={ui.row}>
-      <Text style={ui.label}>{props.label}</Text>
+      <Text style={[ui.label, { color: colors.text }]}>{props.label}</Text>
       <View style={ui.rowMain}>{props.children}</View>
       {props.right ? <View style={ui.rowRight}>{props.right}</View> : null}
     </View>
@@ -45,11 +93,14 @@ export function Row(props: {
 export function RowGroup(props: {
   items: Array<{ label: string; children: React.ReactNode }>;
 }) {
+  const colors = useDemoColors();
   return (
     <View style={ui.rowGroup}>
       {props.items.map((item, idx) => (
         <View key={idx} style={ui.rowGroupItem}>
-          <Text style={ui.rowGroupLabel}>{item.label}</Text>
+          <Text style={[ui.rowGroupLabel, { color: colors.text }]}>
+            {item.label}
+          </Text>
           <View style={ui.rowGroupMain}>{item.children}</View>
         </View>
       ))}
@@ -63,8 +114,14 @@ export function ChipTabs<T extends string>(props: {
   onChange: (v: T) => void;
   testID?: string;
 }) {
+  const colors = useDemoColors();
   return (
-    <View style={ui.tabs}>
+    <View
+      style={[
+        ui.tabs,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+    >
       {props.options.map((o) => {
         const active = o.value === props.value;
         return (
@@ -74,11 +131,17 @@ export function ChipTabs<T extends string>(props: {
             onPress={() => props.onChange(o.value)}
             style={({ pressed }) => [
               ui.tab,
-              active && ui.tabActive,
+              active && { backgroundColor: colors.fill },
               pressed && ui.tabPressed,
             ]}
           >
-            <Text style={[ui.tabText, active && ui.tabTextActive]}>
+            <Text
+              style={[
+                ui.tabText,
+                { color: colors.text },
+                active && ui.tabTextActive,
+              ]}
+            >
               {o.label}
             </Text>
           </Pressable>
@@ -94,6 +157,7 @@ export function PillButton(props: {
   disabled?: boolean;
   testID?: string;
 }) {
+  const colors = useDemoColors();
   return (
     <Pressable
       testID={props.testID}
@@ -101,11 +165,12 @@ export function PillButton(props: {
       disabled={props.disabled}
       style={({ pressed }) => [
         ui.pill,
+        { backgroundColor: colors.fill },
         pressed && !props.disabled && ui.pillPressed,
         props.disabled && ui.pillDisabled,
       ]}
     >
-      <Text style={ui.pillText}>{props.label}</Text>
+      <Text style={[ui.pillText, { color: colors.text }]}>{props.label}</Text>
     </Pressable>
   );
 }
@@ -118,6 +183,7 @@ export function ActionField(props: {
   numberOfLines?: number;
   testID?: string;
 }) {
+  const colors = useDemoColors();
   const showPlaceholder = !props.text || props.text === '—';
   return (
     <Pressable
@@ -126,13 +192,17 @@ export function ActionField(props: {
       disabled={props.disabled || !props.onPress}
       style={({ pressed }) => [
         ui.field,
+        { backgroundColor: colors.fill },
         pressed && !!props.onPress && !props.disabled && ui.fieldPressed,
         props.disabled && ui.fieldDisabled,
       ]}
     >
       <Text
         numberOfLines={props.numberOfLines ?? 1}
-        style={[ui.fieldText, showPlaceholder && ui.fieldPlaceholder]}
+        style={[
+          ui.fieldText,
+          { color: showPlaceholder ? colors.placeholder : colors.link },
+        ]}
       >
         {showPlaceholder ? (props.placeholder ?? '—') : props.text}
       </Text>
@@ -145,7 +215,6 @@ export const ui = StyleSheet.create({
     flex: 1,
     paddingTop: 54,
     paddingHorizontal: 20,
-    backgroundColor: '#ecf0f1',
   },
   header: {
     fontSize: 26,
@@ -176,11 +245,9 @@ export const ui = StyleSheet.create({
     textTransform: 'uppercase',
   },
   card: {
-    backgroundColor: 'white',
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E6E6EA',
   },
 
   row: {
@@ -194,7 +261,6 @@ export const ui = StyleSheet.create({
   rowRight: { marginLeft: 8, justifyContent: 'center' },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#E6E6EA',
     marginLeft: 10,
   },
 
@@ -206,16 +272,13 @@ export const ui = StyleSheet.create({
     marginBottom: 4,
     padding: 4,
     borderRadius: 999,
-    backgroundColor: 'white',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E6E6EA',
   },
   tab: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999,
   },
-  tabActive: { backgroundColor: '#F4F4F6' },
   tabPressed: { opacity: 0.85 },
   tabText: { opacity: 0.65, fontSize: 13, fontWeight: '600' },
   tabTextActive: { opacity: 0.95 },
@@ -224,25 +287,22 @@ export const ui = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#F4F4F6',
   },
   fieldPressed: { opacity: 0.85 },
   fieldDisabled: { opacity: 0.5 },
-  fieldText: { color: '#2A5BD7', fontSize: 13 },
-  fieldPlaceholder: { color: '#777' },
+  fieldText: { fontSize: 13 },
 
   pill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: '#EFEFF3',
   },
   pillPressed: { opacity: 0.8 },
   pillDisabled: { opacity: 0.45 },
   pillText: { fontSize: 13, opacity: 0.8 },
   fullFlex: { flex: 1 },
   alignEnd: { alignSelf: 'flex-end' as const },
-  valueText: { fontSize: 14, color: '#333' },
+  valueText: { fontSize: 14, color: '#8E8E93' },
   datePickerContainer: { alignItems: 'center', paddingVertical: 4 },
 
   androidHardCodedDatePicker: {

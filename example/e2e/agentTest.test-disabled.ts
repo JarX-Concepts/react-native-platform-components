@@ -1,5 +1,5 @@
 import { device } from 'detox';
-import { selectMenuOption, selectTab } from './testHelpers';
+import { selectDemo, selectMenuOption } from './testHelpers';
 
 describe('Agent Testing', () => {
   beforeAll(async () => {
@@ -8,7 +8,7 @@ describe('Agent Testing', () => {
   });
 
   it('agent changes selection from Date → Time', async () => {
-    await selectTab('Date');
+    await selectDemo('Date Picker');
 
     await device.takeScreenshot('DatePicker-Date-Initial');
 
@@ -50,7 +50,7 @@ describe('Agent Testing', () => {
 
   /*   it('compare inline and headless modes', async () => {
     // Navigate to SelectionMenu tab
-    await element(by.id('demo-tabs-selectionMenu')).tap();
+    await selectDemo('Selection Menu');
 
     // Verify we're on the SelectionMenu screen
     await expect(element(by.id('state-field-headless'))).toBeVisible();
@@ -67,7 +67,7 @@ describe('Agent Testing', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     // dismiss it
-    await element(by.id('demo-tabs-selectionMenu')).tap();
+    await selectDemo('Selection Menu');
 
     await element(by.id('inline-switch')).tap();
 
