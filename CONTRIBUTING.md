@@ -1,22 +1,26 @@
 # Contributing
 
-Contributions are welcome! This library provides native UI components (DatePicker, SelectionMenu) for React Native using Fabric/Codegen architecture.
+Contributions are welcome. This library provides native UI components for React Native (DatePicker, ContextMenu, SelectionMenu, SegmentedControl, LiquidGlass) built on Fabric and Codegen, with the real platform widget on both iOS and Android.
 
 Before contributing, please read the [code of conduct](./CODE_OF_CONDUCT.md).
 
+Looking for something to pick up? Issues labeled [good first issue](https://github.com/JarX-Concepts/react-native-platform-components/labels/good%20first%20issue) are scoped for a first contribution.
+
 ## Development workflow
 
-This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/features/workspaces):
+This project is a monorepo managed with [Yarn workspaces](https://yarnpkg.com/features/workspaces):
 
-- Library source in the root directory (`src/`, `ios/`, `android/`)
-- Example app in `example/`
+- Library source in the root directory (`src/`, `ios/`, `android/`, `shared/`, `plugin/`)
+- Bare React Native example app in `example/` (also hosts the Detox tests)
+- Expo example app in `example-expo/` (exercises the config plugin)
+- Documentation site in `docs/`
 
 ### Prerequisites
 
-- Node.js (see [`.nvmrc`](./.nvmrc) for version)
+- Node.js (see [`.nvmrc`](./.nvmrc) for the version)
 - Yarn 4.x (specified in `packageManager`)
 - Xcode (for iOS development)
-- Android Studio (for Android development)
+- Android Studio with an emulator (for Android development)
 
 ### Setup
 
@@ -26,120 +30,118 @@ yarn
 
 > This project uses Yarn workspaces. npm is not supported.
 
-### Running the example app
-
-The example app demonstrates the library's components and is used for development testing.
-
-Start the Metro bundler:
+### Running the bare example app
 
 ```sh
-yarn example start
-```
-
-Run on iOS:
-
-```sh
+yarn example start     # Metro
 yarn example ios
-```
-
-Run on Android:
-
-```sh
 yarn example android
 ```
 
 JavaScript changes reflect immediately. Native code changes require a rebuild.
 
+### Running the Expo example app
+
+The library does not run in Expo Go, so the Expo example uses a dev client:
+
+```sh
+yarn build:plugin              # compile the config plugin used by prebuild
+yarn example-expo prebuild
+yarn example-expo ios
+yarn example-expo android
+```
+
+Re-run `prebuild` after changing the config plugin or `example-expo/app.json`.
+
+## Project layout
+
+| Path | What lives there |
+| --- | --- |
+| `src/<Component>.tsx` | Public TypeScript component and its props |
+| `src/<Component>NativeComponent.ts` | Codegen spec for the Fabric view |
+| `src/index.tsx`, `src/index.web.tsx` | Public exports and the render-nothing web stubs |
+| `ios/PC<Component>.swift` | iOS implementation (UIKit / SwiftUI) |
+| `ios/PC<Component>.h`, `ios/PC<Component>.mm` | Fabric component view bridging into the Swift implementation |
+| `android/src/main/java/com/platformcomponents/PC<Component>View.kt` | Android implementation |
+| `android/src/main/java/com/platformcomponents/PC<Component>ViewManager.kt` | Android view manager (props, events, Fabric state) |
+| `android/src/main/java/com/platformcomponents/PCThemeSupport.kt` | Theme guards: build Material widgets through `PCThemeSupport.materialContext(...)` so an AppCompat app theme falls back instead of crashing |
+| `android/src/main/res/values/styles.xml` | Bundled Material 3 dialog themes used by that fallback |
+| `shared/` | Custom C++ shadow nodes and component descriptors for components that measure themselves natively |
+| `plugin/src/index.ts` | Expo config plugin (compiled to `plugin/build` by `yarn build:plugin`) |
+| `example/e2e/` | Detox flows for all components |
+| `scripts/generate-readme-gifs.sh` | Regenerates the README GIFs from Detox recordings |
+
 ### Editing native code
 
-**iOS (Swift/Objective-C):**
+**iOS (Swift / Objective-C++):** open `example/ios/PlatformComponentsExample.xcworkspace` in Xcode. The library sources are under `Pods > Development Pods > react-native-platform-components`.
 
-Open `example/ios/PlatformComponentsExample.xcworkspace` in Xcode. Find the library source files at:
-- `Pods > Development Pods > react-native-platform-components`
+**Android (Kotlin):** open `example/android` in Android Studio. The library module is `react-native-platform-components`.
 
-Key files:
-- `ios/PCDatePickerView.swift` - DatePicker implementation
-- `ios/PCSelectionMenu.swift` - SelectionMenu implementation
-
-**Android (Kotlin):**
-
-Open `example/android` in Android Studio. Find the library source files under `react-native-platform-components`.
-
-Key files:
-- `android/src/main/java/com/platformcomponents/PCDatePickerView.kt`
-- `android/src/main/java/com/platformcomponents/PCSelectionMenuView.kt`
-
-### Verifying Fabric/New Architecture
-
-The example app runs with React Native's New Architecture. Confirm it's enabled by checking Metro logs for:
+Both example apps run with the New Architecture. Confirm it in Metro's logs:
 
 ```
 Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurrentRoot":true},"rootTag":1}
 ```
 
----
+### Adding a component
+
+1. Codegen spec in `src/<Name>NativeComponent.ts`, public wrapper in `src/<Name>.tsx`, export from `src/index.tsx`, stub in `src/index.web.tsx`.
+2. iOS: `ios/PC<Name>.swift` plus the `.h`/`.mm` Fabric view, and an entry in `codegenConfig.ios.componentProvider` in `package.json`.
+3. Android: `PC<Name>View.kt` and `PC<Name>ViewManager.kt`, registered in `PlatformComponentsPackage.kt`. Build Material widgets from `PCThemeSupport.materialContext(...)`.
+4. Demo in `example/src/<Name>Demo.tsx` and `example-expo/src/App.tsx`, a Detox flow in `example/e2e/component.test.ts`, a README section, and GIFs.
 
 ## Scripts
 
 | Command | Description |
-|---------|-------------|
+| --- | --- |
 | `yarn` | Install dependencies |
 | `yarn typecheck` | Type-check with TypeScript |
-| `yarn lint` | Lint with ESLint |
-| `yarn lint --fix` | Fix linting errors |
-| `yarn test` | Run unit tests (Jest) |
-| `yarn example start` | Start Metro bundler |
-| `yarn example ios` | Run example on iOS |
-| `yarn example android` | Run example on Android |
+| `yarn lint` | Lint with ESLint (`yarn lint --fix` to auto-fix) |
+| `yarn test` | Unit tests (Jest), including the config plugin tests |
+| `yarn build:plugin` | Compile the Expo config plugin |
+| `yarn example <cmd>` | Run a script in the bare example app |
+| `yarn example-expo <cmd>` | Run a script in the Expo example app |
+| `yarn generate:gifs` | Regenerate the README GIFs (runs the full Detox suite on both platforms) |
 | `yarn clean` | Clean build artifacts |
-| `yarn release` | Publish a new version |
 
 ### E2E testing (Detox)
 
-The example app includes Detox end-to-end tests.
+Full suites:
 
 ```sh
-# iOS
 yarn example test:e2e:ios
-
-# Android
 yarn example test:e2e:android
 ```
 
----
+To run a single flow, build once and call Jest directly (Yarn 4 rejects the argument forwarding that `detox test` relies on):
+
+```sh
+cd example
+npx detox build --configuration android.emu.release
+DETOX_CONFIGURATION=android.emu.release npx jest --config e2e/jest.config.js -t "Segmented Control"
+```
+
+Use `ios.sim.release` for iOS. Recordings land in `example/artifacts/<configuration>.<timestamp>/`.
 
 ## Commit message convention
 
-We use [conventional commits](https://www.conventionalcommits.org/en):
+We use [conventional commits](https://www.conventionalcommits.org/en). The type decides the next version:
 
-- `fix`: Bug fixes
-- `feat`: New features
-- `refactor`: Code refactoring
-- `docs`: Documentation changes
-- `test`: Adding or updating tests
-- `chore`: Tooling/config changes
+- `fix`: bug fixes (patch)
+- `feat`: new features (minor)
+- `refactor`, `docs`, `test`, `chore`, `ci`: no release on their own
 
-Pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) verify commit message format.
-
----
+Pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) lint staged files and verify the commit message format.
 
 ## Pull requests
 
 - Keep PRs focused on a single change
-- Ensure `yarn typecheck` and `yarn lint` pass
-- Add tests when possible
+- Ensure `yarn typecheck`, `yarn lint` and `yarn test` pass
+- Add tests when possible; run the relevant Detox flow for native changes
 - For API or architectural changes, open an issue first to discuss
 
 > **First time contributing?** See [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).
 
----
+## Releases
 
-## Publishing
-
-Releases are managed with [release-it](https://github.com/release-it/release-it):
-
-```sh
-yarn release
-```
-
-This handles version bumping, tagging, npm publishing, and GitHub releases.
+Releases are cut from `main` by the maintainer through the **Release** GitHub Action (Actions → Release → Run workflow). [release-it](https://github.com/release-it/release-it) computes the version from the conventional commits since the last tag, updates `CHANGELOG.md`, publishes to npm, and creates the GitHub release. Contributors do not bump versions.
