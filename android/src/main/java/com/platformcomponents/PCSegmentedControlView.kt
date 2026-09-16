@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
@@ -20,7 +21,10 @@ import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 
-class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScrollViewHelper.HasStateWrapper {
+class PCSegmentedControlView(context: Context) :
+  FrameLayout(context),
+  ReactScrollViewHelper.HasStateWrapper,
+  ReactCompoundViewGroup {
 
   data class Segment(
     val label: String,
@@ -181,6 +185,13 @@ class PCSegmentedControlView(context: Context) : FrameLayout(context), ReactScro
     labelFontStyle = fontStyle
     rebuildUI()
   }
+
+  // The buttons have generated view ids, which React Native's touch handling would
+  // take for React tags and dispatch JS touch events to unrelated views. Claim the
+  // touch for this view instead; the buttons still receive it natively.
+  override fun interceptsTouchEvent(touchX: Float, touchY: Float): Boolean = true
+
+  override fun reactTagForTouch(touchX: Float, touchY: Float): Int = id
 
   // ---- UI Building ----
 
