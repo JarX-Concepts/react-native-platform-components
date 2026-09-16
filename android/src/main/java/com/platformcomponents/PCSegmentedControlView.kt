@@ -92,6 +92,15 @@ class PCSegmentedControlView(context: Context) :
   /** Bumped on every rebuild so late image loads can't touch stale buttons. */
   private var rebuildGeneration = 0
 
+  // --- Native theme ---
+  // Widgets read theme colors when they are created, so they are rebuilt when the
+  // native theme changes (brand color, light/dark switch).
+  private var builtThemeVersion = PCNativeTheme.version
+  private val nativeThemeListener = PCNativeTheme.Listener {
+    PCThemeSupport.clearColorStateListCaches(this)
+    rebuildUI()
+  }
+
   init {
     minimumHeight = (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
     // Badges overhang the button corner
@@ -193,9 +202,22 @@ class PCSegmentedControlView(context: Context) :
 
   override fun reactTagForTouch(touchX: Float, touchY: Float): Int = id
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    PCNativeTheme.addListener(nativeThemeListener)
+    PCNativeTheme.attach(context)
+    if (builtThemeVersion != PCNativeTheme.version) nativeThemeListener.onNativeThemeChanged()
+  }
+
+  override fun onDetachedFromWindow() {
+    PCNativeTheme.removeListener(nativeThemeListener)
+    super.onDetachedFromWindow()
+  }
+
   // ---- UI Building ----
 
   private fun rebuildUI() {
+    builtThemeVersion = PCNativeTheme.version
     removeAllViews()
     buttonIdToSegment.clear()
     rebuildGeneration += 1

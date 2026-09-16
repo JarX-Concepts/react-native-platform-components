@@ -5,7 +5,7 @@
 
 import React from 'react';
 import type { ReactNode } from 'react';
-import type { StyleProp, ViewStyle, ViewProps } from 'react-native';
+import type { ColorValue, StyleProp, ViewStyle, ViewProps } from 'react-native';
 
 // ============================================================================
 // Shared Types (duplicated to avoid importing from files with native deps)
@@ -182,3 +182,19 @@ export const LiquidGlass = ({
 };
 
 export const isLiquidGlassSupported = false;
+
+// ============================================================================
+// Native theme
+// ============================================================================
+
+export type NativeTheme = {
+  colors: {
+    primary: ColorValue;
+  };
+};
+
+export const setNativeTheme = (_theme: NativeTheme | null): void => {};
+
+export const useNativeTheme = (
+  _theme: NativeTheme | null | undefined
+): void => {};

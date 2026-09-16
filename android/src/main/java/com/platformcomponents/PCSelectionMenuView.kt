@@ -64,6 +64,15 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private var headlessDismissAfterSelect = false
   private var headlessOpenToken = 0
 
+  // --- Native theme ---
+  // Widgets read theme colors when they are created, so they are rebuilt when the
+  // native theme changes (brand color, light/dark switch).
+  private var builtThemeVersion = PCNativeTheme.version
+  private val nativeThemeListener = PCNativeTheme.Listener {
+    PCThemeSupport.clearColorStateListCaches(this)
+    rebuildUI()
+  }
+
   init {
     minimumHeight = 0
     minimumWidth = 0
@@ -306,6 +315,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   // ---- UI building ----
 
   private fun rebuildUI() {
+    builtThemeVersion = PCNativeTheme.version
     if (headlessMenuShowing) {
       headlessDismissProgrammatic = true
       headlessMenu?.dismiss()
@@ -713,6 +723,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+    PCNativeTheme.addListener(nativeThemeListener)
+    PCNativeTheme.attach(context)
+    if (builtThemeVersion != PCNativeTheme.version) nativeThemeListener.onNativeThemeChanged()
     // When attached, trigger a measure/layout pass to ensure correct sizing
     if (anchorMode == "inline") {
       // Use ViewTreeObserver to wait until after the first layout pass
@@ -741,6 +754,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   override fun onDetachedFromWindow() {
     detachInlineDropdownOverlay()
+    PCNativeTheme.removeListener(nativeThemeListener)
     super.onDetachedFromWindow()
   }
 

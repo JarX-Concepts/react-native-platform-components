@@ -120,7 +120,7 @@ The library is built for the New Architecture (Fabric + Codegen) and does not su
 | Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
 | React        | 19                                                        |
 | iOS          | 13 (LiquidGlass needs iOS 26)                             |
-| Android      | API 24 (Android 7.0); Material Components 1.12 is bundled |
+| Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
 
 Full details: [Installation](https://jarx-concepts.github.io/react-native-platform-components/installation).
 
@@ -132,7 +132,7 @@ Everything else lives on the documentation site:
 - [DatePicker](https://jarx-concepts.github.io/react-native-platform-components/components/datepicker), [ContextMenu](https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu), [SelectionMenu](https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu), [SegmentedControl](https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol), [LiquidGlass](https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass): props, platform options and behavior
 - [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme): Material 3 setup and what happens without it
 - [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, drawables and images
-- [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
+- [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): light/dark mode and your brand color from JavaScript (`useNativeTheme`), accepted color formats
 
 ## Contributing
 

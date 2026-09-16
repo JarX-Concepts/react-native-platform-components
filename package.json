@@ -188,12 +188,15 @@
   },
   "codegenConfig": {
     "name": "PlatformComponentsViewSpec",
-    "type": "components",
+    "type": "all",
     "jsSrcsDir": "src",
     "android": {
       "javaPackageName": "com.platformcomponents"
     },
     "ios": {
+      "modulesProvider": {
+        "PlatformComponentsTheme": "PCNativeThemeModule"
+      },
       "componentProvider": {
         "PCSelectionMenu": "PCSelectionMenu",
         "PCDatePicker": "PCDatePicker",

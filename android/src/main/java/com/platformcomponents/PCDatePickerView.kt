@@ -74,6 +74,12 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   // --- Modal state ---
   private var showingModal = false
 
+  // --- Native theme ---
+  // Widgets read theme colors when they are created, so they are rebuilt when the
+  // native theme changes (brand color, light/dark switch).
+  private var builtThemeVersion = PCNativeTheme.version
+  private val nativeThemeListener = PCNativeTheme.Listener { rebuildForNativeTheme() }
+
   init {
     rebuildUI()
   }
@@ -226,6 +232,33 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     syncInlineFromState()
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    PCNativeTheme.addListener(nativeThemeListener)
+    PCNativeTheme.attach(context)
+    if (builtThemeVersion != PCNativeTheme.version) rebuildForNativeTheme()
+  }
+
+  override fun onDetachedFromWindow() {
+    PCNativeTheme.removeListener(nativeThemeListener)
+    super.onDetachedFromWindow()
+  }
+
+  /**
+   * A theme change isn't a React commit, so nothing measures the rebuilt inline
+   * pickers; lay them out in the frame Yoga already gave this view.
+   */
+  private fun rebuildForNativeTheme() {
+    PCThemeSupport.clearColorStateListCaches(this)
+    rebuildUI()
+    if (!isInline() || width == 0 || height == 0) return
+    measure(
+      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+    )
+    layout(left, top, right, bottom)
+  }
+
   // -----------------------------
   // UI construction
   // -----------------------------
@@ -233,6 +266,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun isInline(): Boolean = presentation == "inline" || presentation == "embedded"
 
   private fun rebuildUI() {
+    builtThemeVersion = PCNativeTheme.version
     removeAllViews()
     inlineContainer = null
     inlineDatePicker = null
@@ -742,10 +776,20 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
    * theme instead (0 = use the activity theme).
    */
   private fun m3CalendarTheme(act: FragmentActivity): Int =
-    PCThemeSupport.materialDialogThemeOverride(act, "DatePicker", R.style.PCMaterial3CalendarDialogTheme)
+    PCThemeSupport.materialDialogThemeOverride(
+      act,
+      "DatePicker",
+      R.style.PCMaterial3CalendarDialogTheme,
+      R.style.PCMaterial3CalendarDialogTheme_NativeTheme
+    )
 
   private fun m3TimePickerTheme(act: FragmentActivity): Int =
-    PCThemeSupport.materialDialogThemeOverride(act, "DatePicker", R.style.PCMaterial3TimePickerDialogTheme)
+    PCThemeSupport.materialDialogThemeOverride(
+      act,
+      "DatePicker",
+      R.style.PCMaterial3TimePickerDialogTheme,
+      R.style.PCMaterial3TimePickerDialogTheme_NativeTheme
+    )
 
   private fun buildM3CalendarConstraints(): CalendarConstraints? {
     val min = minDateMs
