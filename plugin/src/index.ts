@@ -1,10 +1,28 @@
 import {
+  WarningAggregator,
+  withAndroidColors,
+  withAndroidColorsNight,
   withAndroidStyles,
-  type AndroidConfig,
   type ConfigPlugin,
 } from '@expo/config-plugins';
 
-type ResourceXML = AndroidConfig.Resources.ResourceXML;
+import { applyMaterial3Theme, applyThemeColorResources } from './android';
+import { withIosAccentColor, type AccentColor } from './ios';
+import {
+  buildMaterialColorScheme,
+  normalizeHexColor,
+  parseMaterialColors,
+  schemeRoles,
+  type MaterialColorScheme,
+  type MaterialColors,
+} from './materialColors';
+
+export {
+  MATERIAL3_THEME_PARENT,
+  applyMaterial3Theme,
+  resolveMaterial3Parent,
+} from './android';
+export type { MaterialColorRole, MaterialColors } from './materialColors';
 
 /**
  * Parent theme for the Android `AppTheme` style.
@@ -12,60 +30,122 @@ type ResourceXML = AndroidConfig.Resources.ResourceXML;
  * - `'material3'`: re-parent `AppTheme` onto `Theme.Material3.DayNight.NoActionBar`.
  *   Required for `SegmentedControl` and for `DatePicker` / `SelectionMenu` in
  *   `android={{ material: 'm3' }}` mode to pick up your app's Material colors.
- * - `'appcompat'` (default): leave Expo's `Theme.AppCompat.DayNight.NoActionBar` as is.
+ * - `'appcompat'`: leave Expo's `Theme.AppCompat.DayNight.NoActionBar` as is.
  */
 export type AndroidTheme = 'material3' | 'appcompat';
 
 export type PlatformComponentsPluginOptions = {
+  /**
+   * One brand color for both platforms, as `#RRGGBB`. Android generates a
+   * Material 3 light and dark color scheme from it; iOS uses it as the app's
+   * accent color. `android.seedColor` and `ios.accentColor` take precedence.
+   */
+  seedColor?: string;
   android?: {
+    /**
+     * Defaults to `'material3'` when a seed color or `colors` is set, and to
+     * `'appcompat'` otherwise.
+     */
     theme?: AndroidTheme;
+    /** Seed for the generated Material 3 color scheme on Android. */
+    seedColor?: string;
+    /**
+     * Colors by Material 3 role, applied on top of the generated scheme. The
+     * `schemes` object of a Material Theme Builder JSON export fits here. A
+     * role set for only `light` or only `dark` is used for both.
+     */
+    colors?: { light?: MaterialColors; dark?: MaterialColors };
+  };
+  ios?: {
+    /**
+     * The app's accent color, which UIKit uses as the default tint color. Pass
+     * `{ light, dark }` for a separate dark mode color.
+     */
+    accentColor?: string | { light: string; dark: string };
   };
 };
 
-export const MATERIAL3_THEME_PARENT = 'Theme.Material3.DayNight.NoActionBar';
+type ResolvedOptions = {
+  android: {
+    theme: AndroidTheme;
+    seedColor?: string;
+    colors?: MaterialColorScheme;
+  };
+  iosAccentColor?: AccentColor;
+};
 
-/**
- * `react-native-edge-to-edge` re-parents `AppTheme` onto its own themes. When we
- * see one of those, switch to the matching Material 3 flavour instead of
- * replacing it, so edge-to-edge keeps working.
- */
-const EDGE_TO_EDGE_PREFIX = 'Theme.EdgeToEdge';
+const WARNING_PROPERTY = 'react-native-platform-components';
 
-const APP_THEME_NAME = 'AppTheme';
-
-export function resolveMaterial3Parent(
-  currentParent: string | undefined
-): string {
-  if (!currentParent || !currentParent.startsWith(EDGE_TO_EDGE_PREFIX)) {
-    return MATERIAL3_THEME_PARENT;
+function resolveColors(colors: unknown): MaterialColorScheme | undefined {
+  if (colors === undefined) {
+    return undefined;
   }
-  if (currentParent.includes('.Material3')) {
-    return currentParent;
+  if (typeof colors !== 'object' || colors === null || Array.isArray(colors)) {
+    throw new Error(
+      'react-native-platform-components: android.colors must be an object with "light" and/or "dark" color roles.'
+    );
   }
-  const suffix = currentParent.slice(EDGE_TO_EDGE_PREFIX.length); // '' | '.Light'
-  return `${EDGE_TO_EDGE_PREFIX}.Material3${suffix}`;
+  const { light, dark } = colors as Record<string, unknown>;
+  const warn = (message: string) =>
+    WarningAggregator.addWarningAndroid(WARNING_PROPERTY, message);
+  return {
+    light: parseMaterialColors(light, 'android.colors.light', warn),
+    dark: parseMaterialColors(dark, 'android.colors.dark', warn),
+  };
 }
 
-/**
- * Re-parents the app theme onto Material 3, keeping every existing `<item>`
- * (`colorPrimary`, `android:editTextBackground`, status bar colors, ...).
- * Idempotent: running prebuild again leaves the result unchanged.
- */
-export function applyMaterial3Theme(xml: ResourceXML): ResourceXML {
-  const styles = xml.resources.style ?? [];
-  const appTheme = styles.find((style) => style.$.name === APP_THEME_NAME);
+function resolveAccentColor(
+  accentColor: unknown,
+  path: string
+): AccentColor | undefined {
+  if (accentColor === undefined) {
+    return undefined;
+  }
+  if (typeof accentColor === 'object' && accentColor !== null) {
+    const { light, dark } = accentColor as Record<string, unknown>;
+    return {
+      light: normalizeHexColor(light, `${path}.light`),
+      dark: normalizeHexColor(dark, `${path}.dark`),
+    };
+  }
+  return { light: normalizeHexColor(accentColor, path) };
+}
 
-  if (appTheme) {
-    appTheme.$.parent = resolveMaterial3Parent(appTheme.$.parent);
-  } else {
-    styles.push({
-      $: { name: APP_THEME_NAME, parent: MATERIAL3_THEME_PARENT },
-      item: [],
-    });
+/** Validates the plugin options and applies defaults and precedence. */
+export function resolveOptions(
+  options: PlatformComponentsPluginOptions | void
+): ResolvedOptions {
+  const seedColor =
+    options?.seedColor === undefined
+      ? undefined
+      : normalizeHexColor(options.seedColor, 'seedColor');
+  const androidSeedColor =
+    options?.android?.seedColor === undefined
+      ? seedColor
+      : normalizeHexColor(options.android.seedColor, 'android.seedColor');
+  const colors = resolveColors(options?.android?.colors);
+  const hasColors = androidSeedColor !== undefined || colors !== undefined;
+
+  const theme =
+    options?.android?.theme ?? (hasColors ? 'material3' : 'appcompat');
+  if (theme !== 'material3' && theme !== 'appcompat') {
+    throw new Error(
+      `react-native-platform-components: android.theme must be "material3" or "appcompat", got ${JSON.stringify(theme)}.`
+    );
+  }
+  if (hasColors && theme !== 'material3') {
+    throw new Error(
+      'react-native-platform-components: seedColor and android.colors need the Material 3 theme. Remove android.theme: "appcompat" or the colors.'
+    );
   }
 
-  xml.resources.style = styles;
-  return xml;
+  return {
+    android: { theme, seedColor: androidSeedColor, colors },
+    iosAccentColor:
+      options?.ios?.accentColor === undefined
+        ? resolveAccentColor(seedColor, 'seedColor')
+        : resolveAccentColor(options.ios.accentColor, 'ios.accentColor'),
+  };
 }
 
 /**
@@ -74,24 +154,65 @@ export function applyMaterial3Theme(xml: ResourceXML): ResourceXML {
  * Native linking needs no configuration on either platform: CocoaPods and
  * Gradle autolinking pick the library up during `expo prebuild`.
  *
- * The plugin's job is the Android theme. Expo's generated `AppTheme` inherits
- * from AppCompat, which is enough for ContextMenu, LiquidGlass and the
+ * The plugin's job is theming. Expo's generated `AppTheme` inherits from
+ * AppCompat, which is enough for ContextMenu, LiquidGlass and the
  * `material: 'system'` modes, but Material 3 widgets look best under a
- * Material 3 app theme. Pass `{ android: { theme: 'material3' } }` to have
- * prebuild re-parent `AppTheme` accordingly.
+ * Material 3 app theme with the app's colors:
+ *
+ * - `android.theme: 'material3'` re-parents `AppTheme` onto Material 3.
+ * - `seedColor` / `android.seedColor` / `android.colors` write a Material 3
+ *   light and dark color scheme to `values/colors.xml` and
+ *   `values-night/colors.xml` and point `AppTheme` at it.
+ * - `seedColor` / `ios.accentColor` set the iOS app accent color.
  */
 const withPlatformComponents: ConfigPlugin<
   PlatformComponentsPluginOptions | void
 > = (config, options) => {
-  const theme = options?.android?.theme ?? 'appcompat';
-  if (theme !== 'material3') {
-    return config;
+  const { android, iosAccentColor } = resolveOptions(options);
+  const hasColors =
+    android.seedColor !== undefined || android.colors !== undefined;
+
+  // Every Android mod needs the same scheme; generate it once, on first use.
+  let scheme: Promise<MaterialColorScheme> | undefined;
+  const getScheme = () =>
+    (scheme ??= buildMaterialColorScheme(
+      android.seedColor,
+      android.colors ?? { light: {}, dark: {} }
+    ));
+
+  if (android.theme === 'material3') {
+    config = withAndroidStyles(config, async (styleConfig) => {
+      const colorRoles = hasColors ? schemeRoles(await getScheme()) : [];
+      styleConfig.modResults = applyMaterial3Theme(
+        styleConfig.modResults,
+        colorRoles
+      );
+      return styleConfig;
+    });
   }
 
-  return withAndroidStyles(config, (styleConfig) => {
-    styleConfig.modResults = applyMaterial3Theme(styleConfig.modResults);
-    return styleConfig;
-  });
+  if (hasColors) {
+    config = withAndroidColors(config, async (colorConfig) => {
+      colorConfig.modResults = applyThemeColorResources(
+        colorConfig.modResults,
+        (await getScheme()).light
+      );
+      return colorConfig;
+    });
+    config = withAndroidColorsNight(config, async (colorConfig) => {
+      colorConfig.modResults = applyThemeColorResources(
+        colorConfig.modResults,
+        (await getScheme()).dark
+      );
+      return colorConfig;
+    });
+  }
+
+  if (iosAccentColor) {
+    config = withIosAccentColor(config, iosAccentColor);
+  }
+
+  return config;
 };
 
 export default withPlatformComponents;

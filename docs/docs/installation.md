@@ -47,7 +47,7 @@ eas build --platform android
 
 **Config Plugin:**
 
-Add to your `app.json`. The `android.theme` option re-parents Expo's generated `AppTheme` onto Material 3, which `SegmentedControl` and the `material: 'm3'` modes use for their colors (see [Android Theme Configuration](/guides/android-theme)):
+Add to your `app.json` with your brand color. On Android, `seedColor` switches Expo's generated `AppTheme` to Material 3 and generates its light and dark color scheme, which `SegmentedControl` and the `material: 'm3'` modes use. On iOS it becomes the app's accent color:
 
 ```json
 {
@@ -55,12 +55,14 @@ Add to your `app.json`. The `android.theme` option re-parents Expo's generated `
     "plugins": [
       [
         "react-native-platform-components/app.plugin",
-        { "android": { "theme": "material3" } }
+        { "seedColor": "#00897B" }
       ]
     ]
   }
 }
 ```
+
+All options are optional; without any, the plugin changes nothing. See [Brand colors](/guides/theming#brand-colors) for per-platform colors and [Android Theme Configuration](/guides/android-theme#expo-configuration) for what prebuild writes.
 
 For a complete working example, see the [`example-expo/`](https://github.com/JarX-Concepts/react-native-platform-components/tree/main/example-expo) directory.
 

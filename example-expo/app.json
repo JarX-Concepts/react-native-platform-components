@@ -18,9 +18,7 @@
       [
         "react-native-platform-components/app.plugin",
         {
-          "android": {
-            "theme": "material3"
-          }
+          "seedColor": "#00897B"
         }
       ]
     ]

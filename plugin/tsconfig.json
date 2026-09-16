@@ -9,7 +9,8 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "build",
-    "rootDir": "src"
+    "rootDir": "src",
+    "types": ["node"]
   },
   "include": [
     "src/**/*"

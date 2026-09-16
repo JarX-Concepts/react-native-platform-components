@@ -122,6 +122,9 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
+  "dependencies": {
+    "@material/material-color-utilities": "^0.3.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/eslint-parser": "^7.29.7",
@@ -251,6 +254,9 @@
     ],
     "testPathIgnorePatterns": [
       "<rootDir>/example/e2e/"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@material/material-color-utilities)/)"
     ]
   },
   "create-react-native-library": {
