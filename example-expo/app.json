@@ -15,7 +15,14 @@
     },
     "plugins": [
       "expo-dev-client",
-      ["react-native-platform-components/app.plugin", {}]
+      [
+        "react-native-platform-components/app.plugin",
+        {
+          "android": {
+            "theme": "material3"
+          }
+        }
+      ]
     ]
   }
 }
