@@ -9,24 +9,24 @@ Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl** 
 
 <table>
   <tr>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker"><strong>DatePicker</strong></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><strong>ContextMenu</strong></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><strong>SelectionMenu</strong></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><strong>SegmentedControl</strong></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass"><strong>LiquidGlass</strong></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker">DatePicker</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu">ContextMenu</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu">SelectionMenu</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol">SegmentedControl</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass">LiquidGlass</a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" width="150" alt="DatePicker on iOS" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" width="150" alt="ContextMenu on iOS" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" width="150" alt="SelectionMenu on iOS" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" width="150" alt="SegmentedControl on iOS" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-liquidglass.gif" width="150" alt="LiquidGlass on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-datepicker.gif" width="120" alt="DatePicker on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" width="120" alt="ContextMenu on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" width="120" alt="SelectionMenu on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" width="120" alt="SegmentedControl on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-liquidglass.gif" width="120" alt="LiquidGlass on iOS" /></a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" width="150" alt="DatePicker on Android" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" width="150" alt="ContextMenu on Android" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" width="150" alt="SelectionMenu on Android" /></a></td>
-    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" width="150" alt="SegmentedControl on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/datepicker"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-datepicker.gif" width="120" alt="DatePicker on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" width="120" alt="ContextMenu on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" width="120" alt="SelectionMenu on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" width="120" alt="SegmentedControl on Android" /></a></td>
     <td align="center" valign="middle"><sub>iOS 26+ only.<br/>Plain View on Android.</sub></td>
   </tr>
 </table>
