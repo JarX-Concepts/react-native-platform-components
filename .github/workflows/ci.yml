@@ -279,11 +279,17 @@ jobs:
           ./gradlew assembleRelease --no-daemon
 
   build-floor-ios:
-    name: build-floor-ios (Expo SDK 52 / RN 0.76)
+    name: build-floor-ios (Expo SDK ${{ matrix.expo-sdk }})
     runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        expo-sdk: [53, 54]
 
     env:
       XCODE_VERSION: 26.6
+      FLOOR_EXPO_SDK: ${{ matrix.expo-sdk }}
 
     steps:
       - name: Checkout
