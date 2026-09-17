@@ -230,6 +230,95 @@ jobs:
           yarn workspace react-native-platform-components-example detox build-framework-cache
           yarn workspace react-native-platform-components-example test:e2e:ios
 
+  # The compatibility table claims React Native 0.76 / Expo SDK 52 as the
+  # minimum. These two jobs build a throwaway app at exactly those versions, so
+  # the floor is verified rather than asserted: without them, upgrading our own
+  # dev dependencies could silently start requiring a newer React Native.
+  build-floor-android:
+    name: build-floor-android (Expo SDK 52 / RN 0.76)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Install JDK
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Finalize Android SDK
+        run: |
+          /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
+
+      - name: Cache Gradle
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.gradle/wrapper
+            ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-floor-${{ hashFiles('scripts/setup-floor-app.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-floor-
+
+      - name: Build library
+        run: yarn prepare
+
+      - name: Create the minimum-version app
+        run: ./scripts/setup-floor-app.sh android
+
+      - name: Build the minimum-version app for Android
+        env:
+          JAVA_OPTS: '-XX:MaxHeapSize=6g'
+        run: |
+          cd "$RUNNER_TEMP/floor-app/android"
+          ./gradlew assembleRelease --no-daemon
+
+  build-floor-ios:
+    name: build-floor-ios (Expo SDK 52 / RN 0.76)
+    runs-on: macos-latest
+
+    env:
+      XCODE_VERSION: 26.6
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Use appropriate Xcode version
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Build library
+        run: yarn prepare
+
+      - name: Create the minimum-version app
+        run: ./scripts/setup-floor-app.sh ios
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd "$RUNNER_TEMP/floor-app/ios"
+          pod install
+
+      - name: Build the minimum-version app for iOS
+        run: |
+          cd "$RUNNER_TEMP/floor-app/ios"
+          WORKSPACE="$(ls -d ./*.xcworkspace | head -1)"
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$(basename "$WORKSPACE" .xcworkspace)" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
   build-expo-android:
     runs-on: ubuntu-latest
 

@@ -119,10 +119,10 @@ The library is built for the New Architecture (Fabric + Codegen) and does not su
 
 | Platform     | Minimum                                                   |
 | ------------ | --------------------------------------------------------- |
-| React Native | 0.81 with the New Architecture enabled                    |
-| Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
-| React        | 19                                                        |
-| iOS          | 13 (LiquidGlass needs iOS 26)                             |
+| React Native | 0.76 with the New Architecture enabled                    |
+| Expo SDK     | 52, with a dev client or EAS Build (not Expo Go)          |
+| React        | 18.2                                                      |
+| iOS          | 15.1 (LiquidGlass needs iOS 26)                           |
 | Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
 
 Full details: [Installation](https://jarx-concepts.github.io/react-native-platform-components/installation).

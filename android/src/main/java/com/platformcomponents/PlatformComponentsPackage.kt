@@ -29,13 +29,16 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
   override fun getReactModuleInfoProvider(): ReactModuleInfoProvider = ReactModuleInfoProvider {
     mapOf(
       PCNativeThemeModule.NAME to
+        // Positional arguments on purpose: React Native 0.76 names the
+        // parameters of this constructor `_name` / `_className`, so named
+        // arguments only compile against newer releases.
         ReactModuleInfo(
-          name = PCNativeThemeModule.NAME,
-          className = PCNativeThemeModule::class.java.name,
-          canOverrideExistingModule = false,
-          needsEagerInit = false,
-          isCxxModule = false,
-          isTurboModule = true,
+          PCNativeThemeModule.NAME,
+          PCNativeThemeModule::class.java.name,
+          /* canOverrideExistingModule = */ false,
+          /* needsEagerInit = */ false,
+          /* isCxxModule = */ false,
+          /* isTurboModule = */ true,
         )
     )
   }

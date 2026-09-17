@@ -1,6 +1,7 @@
 // ContextMenuNativeComponent.ts
-import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
+import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
+import type { BubblingEventHandler } from './codegenTypes';
 
 /**
  * Attributes for a context menu action.
@@ -120,17 +121,17 @@ export interface ContextMenuProps extends ViewProps {
   /**
    * Fired when user presses an action.
    */
-  onPressAction?: CodegenTypes.BubblingEventHandler<ContextMenuPressActionEvent>;
+  onPressAction?: BubblingEventHandler<ContextMenuPressActionEvent>;
 
   /**
    * Fired when menu opens.
    */
-  onMenuOpen?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
+  onMenuOpen?: BubblingEventHandler<Readonly<{}>>;
 
   /**
    * Fired when menu closes.
    */
-  onMenuClose?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
+  onMenuClose?: BubblingEventHandler<Readonly<{}>>;
 
   ios?: IOSProps;
   android?: AndroidProps;

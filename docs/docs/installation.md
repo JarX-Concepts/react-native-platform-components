@@ -15,7 +15,7 @@ cd ios
 pod install
 ```
 
-- Minimum iOS version: **iOS 13+**
+- Minimum iOS version: **iOS 15.1+** (React Native sets this floor; the podspec follows it)
 - Uses `UIDatePicker`, SwiftUI Menu, and `UIContextMenuInteraction`
 
 ### Android
@@ -79,10 +79,10 @@ This library is built for the **React Native New Architecture** (Fabric + TurboM
 
 | Platform     | Minimum                                                   |
 | ------------ | --------------------------------------------------------- |
-| React Native | 0.81 with the New Architecture enabled                    |
-| Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
-| React        | 19                                                        |
-| iOS          | 13 (LiquidGlass needs iOS 26)                             |
+| React Native | 0.76 with the New Architecture enabled                    |
+| Expo SDK     | 52, with a dev client or EAS Build (not Expo Go)          |
+| React        | 18.2                                                      |
+| iOS          | 15.1 (LiquidGlass needs iOS 26)                           |
 | Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
 
 **Requirements:**

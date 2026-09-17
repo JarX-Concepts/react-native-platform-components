@@ -24,6 +24,18 @@ export default defineConfig([
     },
   },
   {
+    // `codegenTypes.ts` mirrors React Native's codegen type signatures, which
+    // carry type parameters that exist for call-site parity only and are never
+    // referenced in the definition.
+    files: ['src/codegenTypes.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
     ignores: ['node_modules/', 'lib/', 'coverage/', '**/build/', 'docs/'],
   },
 ]);

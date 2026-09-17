@@ -1,6 +1,7 @@
 // SelectionMenuNativeComponent.ts
-import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
+import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
+import type { BubblingEventHandler, Int32, WithDefault } from './codegenTypes';
 
 /**
  * A single option in the menu.
@@ -15,7 +16,7 @@ export type SelectionMenuOption = Readonly<{
  */
 export type SelectionMenuSelectEvent = Readonly<{
   /** Selected option index (implementation detail; stable for this render) */
-  index: CodegenTypes.Int32;
+  index: Int32;
 
   /** Selected option label */
   label: string;
@@ -57,7 +58,7 @@ export interface SelectionMenuProps extends ViewProps {
    * - Empty string means "no selection".
    * - Native should treat this as the single source of truth.
    */
-  selectedData?: CodegenTypes.WithDefault<string, ''>;
+  selectedData?: WithDefault<string, ''>;
 
   /**
    * Enabled / disabled state.
@@ -83,12 +84,12 @@ export interface SelectionMenuProps extends ViewProps {
   /**
    * Fired when the user selects an option.
    */
-  onSelect?: CodegenTypes.BubblingEventHandler<SelectionMenuSelectEvent>;
+  onSelect?: BubblingEventHandler<SelectionMenuSelectEvent>;
 
   /**
    * Fired when dismissed without selection.
    */
-  onRequestClose?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
+  onRequestClose?: BubblingEventHandler<Readonly<{}>>;
 
   ios?: IOSProps;
   android?: AndroidProps;

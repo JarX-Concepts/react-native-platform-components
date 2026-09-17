@@ -1,11 +1,17 @@
 // DatePickerNativeComponent.ts
-import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
+import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
+import type {
+  BubblingEventHandler,
+  Double,
+  Int32,
+  WithDefault,
+} from './codegenTypes';
 
-export type TimestampMs = CodegenTypes.Double;
+export type TimestampMs = Double;
 
 export type DateChangeEvent = {
-  timestampMs: CodegenTypes.Double;
+  timestampMs: Double;
   confirmed: boolean;
 };
 
@@ -18,14 +24,14 @@ export type IOSConfirmToolbar = 'show' | 'hide';
 
 export type IOSProps = {
   preferredStyle?: string; // IOSDatePickerStyle
-  countDownDurationSeconds?: CodegenTypes.Double;
-  minuteInterval?: CodegenTypes.Int32;
+  countDownDurationSeconds?: Double;
+  minuteInterval?: Int32;
   roundsToMinuteInterval?: string; // IOSRoundsToMinuteInterval
   confirmToolbar?: string; // IOSConfirmToolbar
 };
 
 export type AndroidProps = {
-  firstDayOfWeek?: CodegenTypes.Int32;
+  firstDayOfWeek?: Int32;
   material?: string; // AndroidMaterialMode
   dialogTitle?: string;
   positiveButtonTitle?: string;
@@ -44,9 +50,9 @@ export type MacOSProps = Readonly<{}>;
 export type CommonProps = {
   mode?: string; // DatePickerMode
 
-  dateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
-  minDateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
-  maxDateMs?: CodegenTypes.WithDefault<TimestampMs, -9007199254740991>;
+  dateMs?: WithDefault<TimestampMs, -9007199254740991>;
+  minDateMs?: WithDefault<TimestampMs, -9007199254740991>;
+  maxDateMs?: WithDefault<TimestampMs, -9007199254740991>;
 
   locale?: string;
   timeZoneName?: string;
@@ -65,8 +71,8 @@ export interface NativeProps extends ViewProps, CommonProps {
   ios?: IOSProps;
   android?: AndroidProps;
 
-  onConfirm?: CodegenTypes.BubblingEventHandler<DateChangeEvent>;
-  onClosed?: CodegenTypes.BubblingEventHandler<Readonly<{}>>;
+  onConfirm?: BubblingEventHandler<DateChangeEvent>;
+  onClosed?: BubblingEventHandler<Readonly<{}>>;
 }
 
 export default codegenNativeComponent<NativeProps>(

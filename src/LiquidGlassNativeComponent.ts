@@ -1,6 +1,7 @@
 // LiquidGlassNativeComponent.ts
-import type { CodegenTypes, HostComponent, ViewProps } from 'react-native';
+import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
+import type { DirectEventHandler, Float, WithDefault } from './codegenTypes';
 
 /**
  * Glass effect intensity/style.
@@ -64,9 +65,9 @@ export type LiquidGlassAndroidProps = Readonly<{
  */
 export type LiquidGlassPressEvent = Readonly<{
   /** X coordinate of touch relative to view bounds */
-  x: CodegenTypes.Float;
+  x: Float;
   /** Y coordinate of touch relative to view bounds */
-  y: CodegenTypes.Float;
+  y: Float;
 }>;
 
 export interface LiquidGlassNativeProps extends ViewProps {
@@ -75,7 +76,7 @@ export interface LiquidGlassNativeProps extends ViewProps {
    * Applied uniformly to all corners.
    * @default 0
    */
-  cornerRadius?: CodegenTypes.WithDefault<CodegenTypes.Float, 0>;
+  cornerRadius?: WithDefault<Float, 0>;
 
   /**
    * iOS-specific props.
@@ -91,7 +92,7 @@ export interface LiquidGlassNativeProps extends ViewProps {
    * Fired when the glass view is pressed.
    * Includes touch coordinates relative to view bounds.
    */
-  onGlassPress?: CodegenTypes.DirectEventHandler<LiquidGlassPressEvent>;
+  onGlassPress?: DirectEventHandler<LiquidGlassPressEvent>;
 }
 
 export default codegenNativeComponent<LiquidGlassNativeProps>(
