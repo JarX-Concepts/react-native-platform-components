@@ -16,7 +16,7 @@ description: "Liquid glass for React Native: UIGlassEffect on iOS 26 with a fall
 
 Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and older iOS versions, renders as a regular View with optional fallback styling.
 
-> **Note:** LiquidGlass requires **iOS 26+** (Xcode 16+). On older iOS versions and Android, the component renders children without the glass effect. Use `isLiquidGlassSupported` to check availability and provide fallback UI.
+> **Note:** LiquidGlass requires **iOS 26+** at runtime, and the library must be **built with Xcode 26** (the iOS 26 SDK). Built with an older Xcode, the glass code is compiled out and the component falls back to a blur, so the library still builds without Xcode 26. On older iOS versions and on Android, the component renders children without the glass effect. Use `isLiquidGlassSupported` to check availability and provide fallback UI — it reports what the build can actually do, not just the OS version.
 
 ### Props
 
@@ -44,7 +44,7 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 
 | Export                   | Type      | Description                          |
 | ------------------------ | --------- | ------------------------------------ |
-| `isLiquidGlassSupported` | `boolean` | `true` on iOS 26+, `false` otherwise |
+| `isLiquidGlassSupported` | `boolean` | `true` on iOS 26+ when built with the iOS 26 SDK, `false` otherwise |
 
 ### Effect Modes
 

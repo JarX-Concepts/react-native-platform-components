@@ -328,6 +328,57 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
 
+  # LiquidGlass uses iOS 26 APIs, but they are compiled out on older toolchains
+  # (PCLiquidGlass.swift, PCSelectionMenu.swift) so the library does not force
+  # Xcode 26 on everyone. This job is what keeps that true: it builds the
+  # declared floor with an Xcode that has no iOS 26 SDK.
+  build-legacy-xcode-ios:
+    name: build-legacy-xcode-ios (Xcode 16.4, no iOS 26 SDK)
+    runs-on: macos-15
+
+    env:
+      XCODE_VERSION: '16.4'
+      FLOOR_EXPO_SDK: 54
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Use appropriate Xcode version
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Show the SDK in use
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphonesimulator
+
+      - name: Build library
+        run: yarn prepare
+
+      - name: Create the app
+        run: ./scripts/setup-floor-app.sh ios
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd "$RUNNER_TEMP/floor-app/ios"
+          pod install
+
+      - name: Build for iOS without the iOS 26 SDK
+        run: |
+          cd "$RUNNER_TEMP/floor-app/ios"
+          WORKSPACE="$(ls -d ./*.xcworkspace | head -1)"
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$(basename "$WORKSPACE" .xcworkspace)" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
   build-expo-android:
     runs-on: ubuntu-latest
 
