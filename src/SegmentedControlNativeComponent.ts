@@ -1,11 +1,12 @@
 // SegmentedControlNativeComponent.ts
-import type {
-  CodegenTypes,
-  ColorValue,
-  HostComponent,
-  ViewProps,
-} from 'react-native';
+import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
+import type {
+  BubblingEventHandler,
+  Double,
+  Int32,
+  WithDefault,
+} from './codegenTypes';
 
 /**
  * A single segment in the control.
@@ -21,7 +22,7 @@ export type SegmentedControlSegment = Readonly<{
   iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
   iconName: string; // SF Symbol (iOS) or drawable resource name (Android)
   iconUri: string; // Resolved image URI when iconType === 'image'
-  iconScale: CodegenTypes.Double; // Resolved image scale when iconType === 'image'
+  iconScale: Double; // Resolved image scale when iconType === 'image'
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
   badge: string; // Badge text, empty = no badge
   accessibilityLabel: string; // Screen-reader label, empty = use label
@@ -32,7 +33,7 @@ export type SegmentedControlSegment = Readonly<{
  */
 export type SegmentedControlSelectEvent = Readonly<{
   /** Selected segment index. -1 means the selection was cleared. */
-  index: CodegenTypes.Int32;
+  index: Int32;
 
   /** Selected segment value. Empty when the selection was cleared. */
   value: string;
@@ -49,7 +50,7 @@ export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
  */
 export type LabelStyleProps = Readonly<{
   fontFamily?: string;
-  fontSize?: CodegenTypes.Double;
+  fontSize?: Double;
   fontWeight?: string; // 'normal' | 'bold' | '100'..'900'
   fontStyle?: string; // 'normal' | 'italic'
 }>;
@@ -83,7 +84,7 @@ export interface SegmentedControlProps extends ViewProps {
    * Controlled selection by `value`.
    * Empty string means "no selection".
    */
-  selectedValue?: CodegenTypes.WithDefault<string, ''>;
+  selectedValue?: WithDefault<string, ''>;
 
   /**
    * Enabled / disabled state.
@@ -122,7 +123,7 @@ export interface SegmentedControlProps extends ViewProps {
   /**
    * Fired when the user selects a segment.
    */
-  onSelect?: CodegenTypes.BubblingEventHandler<SegmentedControlSelectEvent>;
+  onSelect?: BubblingEventHandler<SegmentedControlSelectEvent>;
 
   ios?: IOSProps;
   android?: AndroidProps;

@@ -319,13 +319,13 @@ class PCSegmentedControlView(context: Context) :
 
     when (segment.iconType) {
       "drawable" -> {
-        button.icon = ResourceDrawableIdHelper.getResourceDrawable(context, segment.iconName)
+        button.icon = ResourceDrawableIdHelper.instance.getResourceDrawable(context, segment.iconName)
       }
       "image" -> {
         val uri = segment.iconUri
         val isResourceName = !uri.contains(':')
         if (isResourceName) {
-          button.icon = ResourceDrawableIdHelper.getResourceDrawable(context, uri)
+          button.icon = ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri)
         } else {
           PCImageLoader.load(context, uri, segment.iconScale) { bitmap ->
             if (bitmap == null || generation != rebuildGeneration) return@load

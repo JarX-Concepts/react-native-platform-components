@@ -122,8 +122,13 @@ The library is built for the New Architecture (Fabric + Codegen) and does not su
 | React Native | 0.81 with the New Architecture enabled                    |
 | Expo SDK     | 54, with a dev client or EAS Build (not Expo Go)          |
 | React        | 19                                                        |
-| iOS          | 13 (LiquidGlass needs iOS 26)                             |
+| iOS          | 15.1 (LiquidGlass needs iOS 26)                           |
 | Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
+
+iOS sets that minimum. LiquidGlass uses iOS 26 APIs, so the library has to be
+built with Xcode 26, and React Native's bundled `fmt` only compiles under Xcode
+26 from 0.81 on. The Android code itself builds against React Native 0.76, and
+CI keeps it that way.
 
 Full details: [Installation](https://jarx-concepts.github.io/react-native-platform-components/installation).
 

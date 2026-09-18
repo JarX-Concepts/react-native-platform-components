@@ -44,4 +44,16 @@ target_link_libraries(
     reactnative
 )
 
-target_compile_reactnative_options(react_codegen_PlatformComponentsViewSpec PRIVATE)
+# target_compile_reactnative_options() arrived in React Native 0.80. On older
+# releases, apply the equivalent flags directly so the library still builds.
+if(COMMAND target_compile_reactnative_options)
+  target_compile_reactnative_options(react_codegen_PlatformComponentsViewSpec PRIVATE)
+else()
+  target_compile_options(react_codegen_PlatformComponentsViewSpec PRIVATE
+      -DLOG_TAG=\"ReactNative\"
+      -fexceptions
+      -frtti
+      -std=c++20
+      -Wall
+  )
+endif()

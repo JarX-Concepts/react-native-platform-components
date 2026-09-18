@@ -3,7 +3,7 @@
 #include <react/renderer/core/LayoutPrimitives.h>
 #include <memory>
 
-#ifdef RN_SERIALIZABLE_STATE
+#if defined(RN_SERIALIZABLE_STATE) || defined(ANDROID)
 #include <folly/dynamic.h>
 #include <react/renderer/mapbuffer/MapBuffer.h>
 #include <react/renderer/mapbuffer/MapBufferBuilder.h>
@@ -37,7 +37,7 @@ struct PCDatePickerStateFrameSize {
     return !(*this == other);
   }
 
-#ifdef RN_SERIALIZABLE_STATE
+#if defined(RN_SERIALIZABLE_STATE) || defined(ANDROID)
   // Required for Android state serialization
   PCDatePickerStateFrameSize(
       const PCDatePickerStateFrameSize& previousState,

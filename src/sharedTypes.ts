@@ -1,5 +1,5 @@
 // SharedTypes.ts
-import type { CodegenTypes } from 'react-native';
+import type { BubblingEventHandler } from './codegenTypes';
 
 /** Shared "open/closed" control state. */
 export type Visible = 'open' | 'closed';
@@ -14,4 +14,4 @@ export type AndroidMaterialMode = 'system' | 'm3';
 export type EmptyEvent = Readonly<{}>;
 
 /** Convenience alias (optional). */
-export type Bubbling<T> = CodegenTypes.BubblingEventHandler<T>;
+export type Bubbling<T> = BubblingEventHandler<T>;
