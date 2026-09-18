@@ -107,6 +107,9 @@ yarn add react-native-platform-components
 }
 ```
 
+Either form of the reference works: `react-native-platform-components/app.plugin`
+as above, or the bare package name.
+
 ```sh
 npx expo install react-native-platform-components
 npx expo prebuild
