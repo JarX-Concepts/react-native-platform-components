@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 #
-# Creates a throwaway app on the *minimum* supported versions and installs the
-# packed library into it, so CI proves the compatibility table instead of
-# trusting it. Expo SDK 52 pins React Native 0.76 and React 18, which is the
-# floor the library claims.
+# Creates a throwaway app on an old Expo SDK and installs the packed library
+# into it, so CI proves the compatibility table instead of trusting it.
+#
+# SDK 54 (React Native 0.81) is the declared floor and is built for both
+# platforms. SDK 52 (React Native 0.76) is built for Android only, to keep the
+# native code portable below the declared floor: iOS cannot go lower, because
+# LiquidGlass needs Xcode 26 and React Native's bundled fmt does not compile
+# under it before 0.81. That job sets FLOOR_IGNORE_PEERS=1, since it installs
+# deliberately outside the declared peer range.
 #
 # Usage: scripts/setup-floor-app.sh <ios|android> [app-dir]
 #
@@ -88,16 +93,33 @@ const styles = StyleSheet.create({
 });
 APP
 
-echo "==> Installing dependencies plus the packed library"
-npm install --no-audit --no-fund
-npm install --no-audit --no-fund "$TARBALL"
+echo "==> Installing dependencies"
+# npm refuses to install outside a declared peer range, which is exactly what
+# the below-the-floor Android job is for.
+PEER_FLAG=""
+if [ "${FLOOR_IGNORE_PEERS:-0}" = "1" ]; then
+  PEER_FLAG="--legacy-peer-deps"
+fi
+npm install --no-audit --no-fund $PEER_FLAG
 
-# Current npm nests expo-asset inside expo on this SDK, where Metro's bundling
-# step cannot resolve it. A stock app of this vintage hits the same thing, so
-# this is about the age of the template rather than about the library.
+# Current npm nests expo-asset inside expo on the older SDKs, where Metro's
+# bundling step cannot resolve it. A stock app of that vintage hits the same
+# thing, so this is about the age of the template rather than the library.
+# Run it before installing the library, while the tree still satisfies peers.
 npx expo install expo-asset
+
+echo "==> Installing the packed library"
+npm install --no-audit --no-fund $PEER_FLAG "$TARBALL"
 
 echo "==> Prebuilding for $PLATFORM"
 npx expo prebuild --platform "$PLATFORM" --clean
+
+if [ "$PLATFORM" = "android" ]; then
+  echo "==> Raising the Gradle heap"
+  # The template ships a 2 GB heap, which a release build exhausts on a CI
+  # runner (:app:collectReleaseDependencies dies with "Java heap space").
+  # The last definition of a key in a properties file wins.
+  printf '\norg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g\n' >> android/gradle.properties
+fi
 
 echo "==> Floor app ready at $APP_DIR"

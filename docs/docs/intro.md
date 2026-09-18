@@ -24,7 +24,7 @@ import { SegmentedControl } from 'react-native-platform-components';
 />;
 ```
 
-That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`MaterialButtonToggleGroup`) on Android. The library needs the New Architecture: React Native 0.76+, or Expo SDK 52+ with a dev client (not Expo Go). See [Installation](/installation).
+That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`MaterialButtonToggleGroup`) on Android. The library needs the New Architecture: React Native 0.81+, or Expo SDK 54+ with a dev client (not Expo Go). See [Installation](/installation).
 
 ## Why this library
 

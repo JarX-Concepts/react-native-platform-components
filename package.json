@@ -158,8 +158,8 @@
     "typescript": "~6.0.3"
   },
   "peerDependencies": {
-    "react": ">=18.2.0",
-    "react-native": ">=0.76.0"
+    "react": ">=19.0.0",
+    "react-native": ">=0.81.0"
   },
   "workspaces": [
     "example",

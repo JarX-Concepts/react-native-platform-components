@@ -230,13 +230,20 @@ jobs:
           yarn workspace react-native-platform-components-example detox build-framework-cache
           yarn workspace react-native-platform-components-example test:e2e:ios
 
-  # The compatibility table claims React Native 0.76 / Expo SDK 52 as the
-  # minimum. These two jobs build a throwaway app at exactly those versions, so
-  # the floor is verified rather than asserted: without them, upgrading our own
-  # dev dependencies could silently start requiring a newer React Native.
+  # These jobs build a throwaway app against old versions, so the compatibility
+  # table is verified rather than asserted: without them, upgrading our own dev
+  # dependencies could silently start requiring a newer React Native.
+  #
+  # iOS builds the declared floor (SDK 54). Android goes one release lower than
+  # we promise (SDK 52 / RN 0.76), which keeps the native code portable: the
+  # floor is set by iOS needing Xcode 26, not by anything in this library.
   build-floor-android:
-    name: build-floor-android (Expo SDK 52 / RN 0.76)
+    name: build-floor-android (Expo SDK 52 / RN 0.76, below the declared floor)
     runs-on: ubuntu-latest
+
+    env:
+      FLOOR_EXPO_SDK: 52
+      FLOOR_IGNORE_PEERS: 1
 
     steps:
       - name: Checkout
@@ -276,20 +283,16 @@ jobs:
           JAVA_OPTS: '-XX:MaxHeapSize=6g'
         run: |
           cd "$RUNNER_TEMP/floor-app/android"
-          ./gradlew assembleRelease --no-daemon
+          # One ABI is enough to prove the native code compiles.
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
 
   build-floor-ios:
-    name: build-floor-ios (Expo SDK ${{ matrix.expo-sdk }})
+    name: build-floor-ios (Expo SDK 54 / RN 0.81)
     runs-on: macos-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        expo-sdk: [53, 54]
 
     env:
       XCODE_VERSION: 26.6
-      FLOOR_EXPO_SDK: ${{ matrix.expo-sdk }}
+      FLOOR_EXPO_SDK: 54
 
     steps:
       - name: Checkout
