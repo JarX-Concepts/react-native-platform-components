@@ -28,7 +28,8 @@
       }
     },
     "./package.json": "./package.json",
-    "./app.plugin": "./app.plugin.cjs"
+    "./app.plugin": "./app.plugin.js",
+    "./app.plugin.js": "./app.plugin.js"
   },
   "files": [
     "src",
@@ -40,7 +41,7 @@
     "plugin",
     "*.podspec",
     "react-native.config.js",
-    "app.plugin.cjs",
+    "app.plugin.js",
     "expo-module.config.json",
     "!ios/build",
     "!android/build",

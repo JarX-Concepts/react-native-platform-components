@@ -49,9 +49,8 @@ node -e '
 const fs = require("fs");
 const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
 app.expo.newArchEnabled = true;
-// The documented reference (see docs/installation). Expo only resolves a
-// bare package name to app.plugin.cjs from SDK 54 on; the explicit
-// subpath works on every supported version.
+// The documented reference (see docs/installation). The bare package
+// name works too now that the entry point is app.plugin.js.
 app.expo.plugins = [...(app.expo.plugins ?? []), "react-native-platform-components/app.plugin"];
 app.expo.android = {...(app.expo.android ?? {}), package: "com.platformcomponents.floorapp"};
 app.expo.ios = {...(app.expo.ios ?? {}), bundleIdentifier: "com.platformcomponents.floorapp"};

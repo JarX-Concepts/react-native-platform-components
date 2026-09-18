@@ -62,6 +62,10 @@ Add to your `app.json`. The `android.theme` option re-parents Expo's generated `
 }
 ```
 
+Either form of the reference works: `react-native-platform-components/app.plugin`
+as above, or the bare package name.
+
+
 For a complete working example, see the [`example-expo/`](https://github.com/JarX-Concepts/react-native-platform-components/tree/main/example-expo) directory.
 
 ## React Native New Architecture
