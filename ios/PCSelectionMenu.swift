@@ -473,8 +473,12 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         menuContainer.clipsToBounds = true
         view.addSubview(menuContainer)
 
-        // Use liquid glass on iOS 26+, fall back to system material blur on older versions
+        // Use liquid glass on iOS 26+, fall back to system material blur on older
+        // versions. UIGlassEffect only exists in the iOS 26 SDK, so the branch is
+        // compiled out entirely on older toolchains — same guard as
+        // PCLiquidGlass.swift, which keeps the library buildable without Xcode 26.
         let effectView: UIVisualEffectView
+        #if compiler(>=6.2)
         if #available(iOS 26, *) {
             let glassEffect = UIGlassEffect()
             glassEffect.isInteractive = true
@@ -483,6 +487,10 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
             let blurEffect = UIBlurEffect(style: .systemMaterial)
             effectView = UIVisualEffectView(effect: blurEffect)
         }
+        #else
+        let blurEffect = UIBlurEffect(style: .systemMaterial)
+        effectView = UIVisualEffectView(effect: blurEffect)
+        #endif
         effectView.frame = menuContainer.bounds
         effectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         menuContainer.addSubview(effectView)

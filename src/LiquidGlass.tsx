@@ -7,6 +7,7 @@ import NativeLiquidGlass, {
   type LiquidGlassEffect,
   type LiquidGlassPressEvent,
 } from './LiquidGlassNativeComponent';
+import NativePlatformComponentsTheme from './NativePlatformComponentsTheme';
 
 export type {
   LiquidGlassEffect,
@@ -14,14 +15,32 @@ export type {
   LiquidGlassPressEvent,
 };
 
+function resolveLiquidGlassSupport(): boolean {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+  try {
+    // The native module answers for this build: Liquid Glass is compiled out
+    // when the library is built with an Xcode that predates the iOS 26 SDK,
+    // and then no device version makes it available.
+    const supported = NativePlatformComponentsTheme?.isLiquidGlassSupported();
+    if (typeof supported === 'boolean') {
+      return supported;
+    }
+  } catch {
+    // Native module not available (web, tests): fall back to the OS version.
+  }
+  return parseInt(String(Platform.Version), 10) >= 26;
+}
+
 /**
- * Whether the LiquidGlass effect is supported on the current device.
- * Returns true on iOS 26+ (with Liquid Glass support), false otherwise.
+ * Whether the LiquidGlass effect is supported here: iOS 26 or newer, in a
+ * build compiled against the iOS 26 SDK. False on Android, on older iOS, and
+ * in builds made with an older Xcode, where the views fall back to a blur.
  *
- * Use this to conditionally render fallback UI on unsupported devices.
+ * Use this to conditionally render fallback UI.
  */
-export const isLiquidGlassSupported: boolean =
-  Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 26;
+export const isLiquidGlassSupported: boolean = resolveLiquidGlassSupport();
 
 export interface LiquidGlassProps extends ViewProps {
   /**

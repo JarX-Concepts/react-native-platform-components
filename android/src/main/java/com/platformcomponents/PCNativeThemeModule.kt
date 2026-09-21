@@ -35,6 +35,9 @@ class PCNativeThemeModule(reactContext: ReactApplicationContext) :
     }
   }
 
+  /** Liquid Glass is an iOS effect; Android renders the fallback View. */
+  override fun isLiquidGlassSupported(): Boolean = false
+
   companion object {
     const val NAME = "PlatformComponentsTheme"
     private const val TAG = "PlatformComponents"
