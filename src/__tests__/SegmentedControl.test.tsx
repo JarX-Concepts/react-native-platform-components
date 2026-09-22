@@ -116,7 +116,10 @@ describe('SegmentedControl', () => {
     const tree = render(
       <SegmentedControl segments={SEGMENTS} selectedValue="day" android={{}} />
     );
-    expect(lastNativeProps().android).toEqual({ selectionRequired: 'true' });
+    expect(lastNativeProps().android).toEqual({
+      selectionRequired: 'true',
+      material: 'expressive',
+    });
 
     act(() => {
       tree.update(
@@ -127,7 +130,10 @@ describe('SegmentedControl', () => {
         />
       );
     });
-    expect(lastNativeProps().android).toEqual({ selectionRequired: 'false' });
+    expect(lastNativeProps().android).toEqual({
+      selectionRequired: 'false',
+      material: 'expressive',
+    });
     act(() => tree.unmount());
   });
 });
@@ -249,7 +255,10 @@ describe('SegmentedControl styling', () => {
     expect(props.inactiveTintColor).toBe('rgba(0, 0, 0, 0.5)');
     expect(props.androidRippleColor).toBe('red');
     expect(props.androidStrokeColor).toBe('blue');
-    expect(props.android).toEqual({ selectionRequired: 'true' });
+    expect(props.android).toEqual({
+      selectionRequired: 'true',
+      material: 'expressive',
+    });
     act(() => tree.unmount());
   });
 

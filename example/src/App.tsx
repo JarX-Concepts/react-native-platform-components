@@ -12,8 +12,10 @@ import {
   SelectionMenu,
   useNativeTheme,
 } from 'react-native-platform-components';
+import { ButtonDemo } from './ButtonDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
+import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
@@ -30,6 +32,8 @@ type DemoKey =
   | 'selectionMenu'
   | 'contextMenu'
   | 'segmentedControl'
+  | 'button'
+  | 'floatingToolbar'
   | 'liquidGlass'
   | 'theme';
 
@@ -38,6 +42,8 @@ const COMPONENT_DEMOS = [
   { label: 'Selection Menu', data: 'selectionMenu' },
   { label: 'Context Menu', data: 'contextMenu' },
   { label: 'Segmented Control', data: 'segmentedControl' },
+  { label: 'Button', data: 'button' },
+  { label: 'Floating Toolbar', data: 'floatingToolbar' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
@@ -117,6 +123,8 @@ export default function App(): React.ReactElement {
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
       {demo === 'contextMenu' && <ContextMenuDemo />}
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
+      {demo === 'button' && <ButtonDemo />}
+      {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
       {demo === 'theme' && (
         <ThemeDemo

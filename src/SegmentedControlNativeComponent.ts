@@ -72,6 +72,9 @@ export type IOSProps = Readonly<{
 export type AndroidProps = Readonly<{
   /** Whether one segment must always be selected */
   selectionRequired?: string; // 'true' | 'false'
+
+  /** Material style: 'm3' | 'expressive' */
+  material?: string;
 }>;
 
 export interface SegmentedControlProps extends ViewProps {

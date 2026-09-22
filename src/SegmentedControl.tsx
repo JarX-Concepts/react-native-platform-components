@@ -1,14 +1,10 @@
 // SegmentedControl.tsx
 import React, { useCallback, useMemo } from 'react';
 import {
-  Image,
   Platform,
   StyleSheet,
   type ColorValue,
-  type ImageRequireSource,
-  type ImageURISource,
   type StyleProp,
-  type TextStyle,
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
@@ -17,44 +13,27 @@ import NativeSegmentedControl, {
   type SegmentedControlSegment as NativeSegment,
   type SegmentedControlSelectEvent,
 } from './SegmentedControlNativeComponent';
+import {
+  resolveIcon,
+  type PlatformIcon,
+  type PlatformIconSource,
+} from './icons';
+import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { AndroidMaterialStyle } from './sharedTypes';
 
 // Android: Minimum height to ensure visibility.
 // Fabric's shadow node measurement isn't being called on initial render,
 // so we apply a minHeight that matches Material design touch target guidelines.
 const ANDROID_MIN_HEIGHT = 48;
 
-/**
- * A single icon source.
- *
- * - `string`: shorthand for an SF Symbol name on iOS and a drawable resource
- *   name on Android (the original API).
- * - `{ type: 'sfSymbol' }`: an SF Symbol. iOS only; ignored on Android.
- * - `{ type: 'drawable' }`: a drawable from the app's `res/drawable`.
- *   Android only; ignored on iOS.
- * - `{ type: 'image' }`: an image asset (`require('./icon.png')`) or a
- *   `{ uri }` source. Works on both platforms. Images are drawn as tinted
- *   templates unless `tinted` is `false`.
- */
-export type SegmentedControlIconSource =
-  | string
-  | { type: 'sfSymbol'; name: string }
-  | { type: 'drawable'; name: string }
-  | {
-      type: 'image';
-      source: ImageRequireSource | ImageURISource;
-      tinted?: boolean;
-    };
+/** A single icon source. Alias of {@link PlatformIconSource}. */
+export type SegmentedControlIconSource = PlatformIconSource;
 
 /**
  * An icon for a segment: a single source used on both platforms, or a
- * per-platform pair so callers don't need to branch on `Platform.OS`.
+ * per-platform pair. Alias of {@link PlatformIcon}.
  */
-export type SegmentedControlIcon =
-  | SegmentedControlIconSource
-  | {
-      ios?: SegmentedControlIconSource;
-      android?: SegmentedControlIconSource;
-    };
+export type SegmentedControlIcon = PlatformIcon;
 
 /**
  * How labels and icons combine for segments that have an icon.
@@ -67,15 +46,8 @@ export type SegmentedControlIcon =
  */
 export type SegmentedControlLabelVisibility = 'auto' | 'labeled' | 'unlabeled';
 
-/**
- * Font for segment labels. Each field falls back to the platform default.
- */
-export interface SegmentedControlLabelStyle {
-  fontFamily?: string;
-  fontSize?: number;
-  fontWeight?: TextStyle['fontWeight'];
-  fontStyle?: 'normal' | 'italic';
-}
+/** Font for segment labels. Alias of {@link LabelStyle}. */
+export type SegmentedControlLabelStyle = LabelStyle;
 
 /**
  * Badge colors. Both default to the platform look (red with white text).
@@ -201,77 +173,20 @@ export interface SegmentedControlProps extends ViewProps {
 
     /** Outline color of the segments. */
     strokeColor?: ColorValue;
+
+    /**
+     * Material style: the Material 3 Expressive connected buttons (default),
+     * or the classic Material 3 segmented buttons.
+     */
+    material?: AndroidMaterialStyle;
   };
 
   /** Test identifier */
   testID?: string;
 }
 
-type NativeIconFields = Pick<
-  NativeSegment,
-  'iconType' | 'iconName' | 'iconUri' | 'iconScale' | 'iconTinted'
->;
-
-const NO_ICON: NativeIconFields = {
-  iconType: '',
-  iconName: '',
-  iconUri: '',
-  iconScale: 1,
-  iconTinted: 'true',
-};
-
-function pickIconSource(
-  icon: SegmentedControlIcon | undefined
-): SegmentedControlIconSource | undefined {
-  if (icon === undefined || typeof icon === 'string' || 'type' in icon) {
-    return icon;
-  }
-  return Platform.OS === 'ios' ? icon.ios : icon.android;
-}
-
-/**
- * Flattens the public icon shape into the strings native expects, dropping
- * sources that don't apply to the current platform.
- */
-export function resolveSegmentIcon(
-  icon: SegmentedControlIcon | undefined
-): NativeIconFields {
-  const source = pickIconSource(icon);
-  if (source === undefined) return NO_ICON;
-
-  if (typeof source === 'string') {
-    if (source.length === 0) return NO_ICON;
-    return {
-      ...NO_ICON,
-      iconType: Platform.OS === 'ios' ? 'sfSymbol' : 'drawable',
-      iconName: source,
-    };
-  }
-
-  switch (source.type) {
-    case 'sfSymbol':
-      return Platform.OS === 'ios'
-        ? { ...NO_ICON, iconType: 'sfSymbol', iconName: source.name }
-        : NO_ICON;
-    case 'drawable':
-      return Platform.OS === 'android'
-        ? { ...NO_ICON, iconType: 'drawable', iconName: source.name }
-        : NO_ICON;
-    case 'image': {
-      const resolved = Image.resolveAssetSource(source.source);
-      if (!resolved?.uri) return NO_ICON;
-      return {
-        iconType: 'image',
-        iconName: '',
-        iconUri: resolved.uri,
-        iconScale: resolved.scale > 0 ? resolved.scale : 1,
-        iconTinted: source.tinted === false ? 'false' : 'true',
-      };
-    }
-    default:
-      return NO_ICON;
-  }
-}
+/** Flattens a segment icon for native. Alias of {@link resolveIcon}. */
+export const resolveSegmentIcon = resolveIcon;
 
 function normalizeSelectedValue(selected: string | null): string {
   return selected ?? '';
@@ -346,24 +261,17 @@ export function SegmentedControl(
     (Platform.OS === 'ios' ? ios?.selectedSegmentTintColor : undefined);
 
   // Normalize the label font; empty / 0 means platform default
-  const nativeLabelStyle = useMemo(() => {
-    if (!labelStyle) return undefined;
-    return {
-      fontFamily: labelStyle.fontFamily ?? '',
-      fontSize: labelStyle.fontSize ?? 0,
-      fontWeight:
-        labelStyle.fontWeight === undefined
-          ? ''
-          : String(labelStyle.fontWeight),
-      fontStyle: labelStyle.fontStyle ?? '',
-    };
-  }, [labelStyle]);
+  const nativeLabelStyle = useMemo(
+    () => normalizeLabelStyle(labelStyle),
+    [labelStyle]
+  );
 
   // Normalize Android props
   const nativeAndroid = useMemo(() => {
     if (!android) return undefined;
     return {
       selectionRequired: android.selectionRequired === false ? 'false' : 'true',
+      material: android.material ?? 'expressive',
     };
   }, [android]);
 

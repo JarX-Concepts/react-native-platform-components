@@ -6,6 +6,8 @@ module.exports = {
           'MeasuringPCSelectionMenuComponentDescriptor',
           'MeasuringPCDatePickerComponentDescriptor',
           'MeasuringPCSegmentedControlComponentDescriptor',
+          'MeasuringPCButtonComponentDescriptor',
+          'MeasuringPCButtonGroupComponentDescriptor',
         ],
         cmakeListsPath: 'src/main/jni/CMakeLists.txt',
       },

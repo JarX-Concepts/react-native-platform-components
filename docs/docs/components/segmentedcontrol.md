@@ -58,6 +58,17 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `selectionRequired` | `boolean`    | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
 | `rippleColor`       | `ColorValue` | Ripple shown while pressing a segment                                                                                                       |
 | `strokeColor`       | `ColorValue` | Outline color of the segments                                                                                                               |
+| `material`          | `'m3' \| 'expressive'` | Material style: the Material 3 Expressive connected buttons (default), or the classic Material 3 segmented buttons. See [Material style](#material-style) |
+
+### Material style
+
+On Android the control is a `MaterialButtonToggleGroup`. By default it uses the **Material 3 Expressive** connected button group styles: a hairline gap between segments, small inner corners, and the selected segment rounding into a pill, matching [ButtonGroup](/components/buttongroup). Pass `android={{ material: 'm3' }}` for the classic Material 3 segmented buttons (a shared outline, no gaps).
+
+```tsx
+<SegmentedControl segments={segments} selectedValue={selected} onSelect={setSelected} android={{ material: 'm3' }} />
+```
+
+> Before 1.4.0 the classic look was the only one; set `material: 'm3'` to keep it.
 
 ### Icon Support
 

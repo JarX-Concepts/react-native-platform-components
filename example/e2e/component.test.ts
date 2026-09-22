@@ -6,11 +6,14 @@ const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Scroll the demo screen until an element is visible
-const scrollToId = async (testID: string) => {
+const scrollToId = async (
+  testID: string,
+  direction: 'down' | 'up' = 'down'
+) => {
   await waitFor(element(by.id(testID)))
     .toBeVisible()
     .whileElement(by.id('demo-scroll'))
-    .scroll(200, 'down');
+    .scroll(200, direction);
 };
 
 // Tap a segment by its spoken label, which works for text and icon segments.
@@ -523,6 +526,20 @@ describe('Platform Components Example', () => {
       await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
+
+      // Classic Material 3 segmented buttons, then back to Expressive
+      await scrollToId('expressive-switch');
+      await element(by.id('expressive-switch')).tap();
+      await pause(400);
+      await scrollToId('segment-basic', 'up');
+      await element(by.text('Month')).atIndex(0).tap();
+      await pause(900);
+      await scrollToId('expressive-switch');
+      await element(by.id('expressive-switch')).tap();
+      await pause(400);
+      await scrollToId('segment-basic', 'up');
+      await element(by.text('Week')).atIndex(0).tap();
+      await pause(600);
     } else {
       // Final cycle: Week -> Year -> Day
       await scrollToId('segment-basic');
@@ -532,6 +549,126 @@ describe('Platform Components Example', () => {
       await element(by.text('Day')).atIndex(0).tap();
       await pause(300);
     }
+  });
+
+  it('should test Button functionality', async () => {
+    await selectDemo('Button');
+    await expect(element(by.id('button-filled'))).toBeVisible();
+
+    // Every variant is a native button; pressing reports back to JS
+    for (const variant of ['filled', 'tonal', 'outlined', 'text', 'elevated']) {
+      await element(by.id(`button-${variant}`)).tap();
+      await pause(350);
+      await expect(element(by.id('button-last-pressed'))).toHaveText(variant);
+    }
+
+    // Icon + label, and an icon-only button announced by its label
+    await scrollToId('button-icon-label');
+    await element(by.id('button-icon-label')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('edit');
+
+    await element(by.id('icon-button-tonal')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText(
+      'share (tonal)'
+    );
+
+    // Button groups: actions, single selection, multiple selection
+    await scrollToId('button-group-actions');
+    await element(by.text('Copy')).atIndex(0).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+
+    await element(by.text('Month')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · bold'
+    );
+
+    await element(by.text('Italic')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · bold, italic'
+    );
+
+    await element(by.text('Bold')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · italic'
+    );
+
+    // Sizes and shapes: cycle the size picker, then square corners. Larger
+    // buttons push the picker down, so bring it back before every tap.
+    for (const size of ['M', 'L', 'XL', 'XS', 'S']) {
+      await scrollToId('size-picker');
+      await element(by.text(size)).atIndex(0).tap();
+      await pause(700);
+    }
+    await scrollToId('square-switch');
+    await element(by.id('square-switch')).tap();
+    await pause(900);
+    await element(by.id('square-switch')).tap();
+    await pause(600);
+
+    // Disabled buttons don't report presses
+    await scrollToId('disabled-switch');
+    await element(by.id('disabled-switch')).tap();
+    await pause(600);
+    await scrollToId('button-filled', 'up');
+    await element(by.id('button-filled')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+  });
+
+  it('should test Floating Toolbar functionality', async () => {
+    await selectDemo('Floating Toolbar');
+    await expect(element(by.id('toolbar'))).toBeVisible();
+
+    // Toolbar actions are native buttons inside the native container
+    await element(by.id('toolbar-share')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('share');
+
+    await element(by.id('toolbar-delete')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('delete');
+
+    await element(by.id('toolbar-send')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('send');
+
+    // Vertical orientation, tint, and (Android) the vibrant variant
+    await element(by.id('vertical-switch')).tap();
+    await pause(1000);
+    await element(by.id('toolbar-edit')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('edit');
+    await element(by.id('vertical-switch')).tap();
+    await pause(800);
+
+    await element(by.id('tinted-switch')).tap();
+    await pause(1000);
+    await element(by.id('tinted-switch')).tap();
+    await pause(600);
+
+    if (isAndroid()) {
+      await element(by.text('Vibrant')).atIndex(0).tap();
+      await pause(1000);
+      await element(by.text('Standard')).atIndex(0).tap();
+      await pause(600);
+    }
+
+    // A SegmentedControl inside a toolbar: the view switcher
+    await scrollToId('view-toolbar');
+    await tapSegment('Months');
+    await pause(600);
+    await expect(element(by.id('toolbar-last-view'))).toHaveText('months');
+    await tapSegment('Years');
+    await pause(600);
+    await expect(element(by.id('toolbar-last-view'))).toHaveText('years');
+    await tapSegment('All');
+    await pause(600);
   });
 
   it('should test Liquid Glass functionality', async () => {
