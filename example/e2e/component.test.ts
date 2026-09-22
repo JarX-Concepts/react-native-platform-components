@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { expect } from 'detox';
 
 const isAndroid = () => device.getPlatform() === 'android';
@@ -153,6 +154,17 @@ export const ensureModalMode = async (enabled: boolean) => {
 
 describe('Platform Components Example', () => {
   beforeAll(async () => {
+    if (isAndroid()) {
+      // Text is entered with replaceText (see typeInto), so the soft keyboard
+      // has no part in the flows; keep it down so it never covers the demo's
+      // buttons below a focused field, as it does on the CI emulator
+      const adb = process.env.ANDROID_HOME
+        ? `${process.env.ANDROID_HOME}/platform-tools/adb`
+        : 'adb';
+      execSync(
+        `"${adb}" -s ${device.id} shell settings put secure show_ime_with_hard_keyboard 0`
+      );
+    }
     await device.launchApp();
   });
 
