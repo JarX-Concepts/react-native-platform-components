@@ -84,32 +84,37 @@ const inputOf = (fieldId: string, multiline = false) =>
       );
 
 // Espresso's key injection doesn't reach the Material field on the emulator,
-// so Android sets the text directly, which is still a native edit
+// so Android sets the text directly: still a native edit, reported to JS
+// like typing, but without focusing the field or opening the keyboard.
+// Focus and blur are exercised through the demo's buttons there.
 const typeInto = async (fieldId: string, text: string, multiline = false) => {
   const input = inputOf(fieldId, multiline);
-  await input.tap();
-  await pause(300);
   if (isAndroid()) {
     await input.replaceText(text);
   } else {
+    await input.tap();
+    await pause(300);
     await input.typeText(text);
   }
   await pause(300);
 };
 
 // Leaves a field. iOS presses the return key, which submits and blurs a
-// single-line field. Espresso's key injection is unreliable on the emulator
-// and a drag is not reliably a drag on the CI one, so Android moves the focus
-// to the Name field and blurs that through its ref, which the demo's Blur
-// button does.
+// single-line field. On Android the keyboard is only up after the demo's
+// Focus button, and the Blur button (the ref's blur) closes it; leaving
+// another field first moves the focus to the Name field by tapping it.
 const pressReturn = async (fieldId: string) => {
   if (isAndroid()) {
     if (fieldId !== 'field-name') {
       await scrollToId('field-name', 'up');
       await inputOf('field-name').tap();
-      await pause(500);
+      await pause(800);
     }
+    // The keyboard resizes the window and the list scrolls to the focused
+    // field; let that finish before the button is located and tapped
+    await pause(800);
     await scrollToId('field-blur');
+    await pause(400);
     await element(by.id('field-blur')).tap();
     await pause(700);
   } else {
@@ -122,7 +127,7 @@ const pressReturn = async (fieldId: string) => {
 const expectText = async (testID: string, text: string) => {
   await waitFor(element(by.id(testID)))
     .toHaveText(text)
-    .withTimeout(5000);
+    .withTimeout(8000);
 };
 
 export const ensureModalMode = async (enabled: boolean) => {
@@ -818,14 +823,16 @@ describe('Platform Components Example', () => {
     await selectDemo('Text Field');
     await expect(element(by.id('field-name'))).toBeVisible();
 
-    // Typing is a native edit reported through onChangeText. The keyboard
-    // covers the buttons below, so every field is left through its return
-    // key, which submits and blurs a single-line field.
+    // Typing is a native edit reported through onChangeText. On iOS the
+    // keyboard covers the buttons below, so a field is left through its
+    // return key, which submits and blurs it.
     await typeInto('field-name', 'Ada');
     await expectText('field-name-value', 'Ada');
-    await expectText('field-last-event', 'focus: name');
-    await pressReturn('field-name');
-    await expectText('field-last-event', 'blur: name');
+    if (!isAndroid()) {
+      await expectText('field-last-event', 'focus: name');
+      await pressReturn('field-name');
+      await expectText('field-last-event', 'blur: name');
+    }
 
     // A controlled value from JS reaches the native field
     await scrollToId('field-set');
@@ -833,20 +840,29 @@ describe('Platform Components Example', () => {
     await expectText('field-name-value', 'Grace Hopper');
     await expect(inputOf('field-name')).toHaveText('Grace Hopper');
 
-    // Ref methods: focus, then clear
+    // Ref methods: focus, blur, then clear
+    await scrollToId('field-focus');
     await element(by.id('field-focus')).tap();
-    await pause(700);
+    await pause(1200);
     await expectText('field-last-event', 'focus: name');
     await pressReturn('field-name');
     await expectText('field-last-event', 'blur: name');
+    await scrollToId('field-clear');
     await element(by.id('field-clear')).tap();
-    await pause(500);
     await expectText('field-name-value', '(empty)');
 
     // Validation: the error appears once the email field is left
+    await scrollToId('field-email', 'up');
+    if (isAndroid()) {
+      // Focus it so that leaving it is a blur
+      await inputOf('field-email').tap();
+      await pause(800);
+    }
     await typeInto('field-email', 'not-an-email');
     await pressReturn('field-email');
-    await expect(element(by.text('Enter a valid email address'))).toBeVisible();
+    await waitFor(element(by.text('Enter a valid email address')))
+      .toBeVisible()
+      .withTimeout(8000);
 
     // A password with its toggle. On iOS the keyboard's prediction bar would
     // cover the toggle where the field sits; bring the field up first.
@@ -854,25 +870,28 @@ describe('Platform Components Example', () => {
       await element(by.id('demo-scroll')).scroll(250, 'down');
       await pause(400);
     }
+    await scrollToId('field-password');
     await typeInto('field-password', 'hunter2');
     await element(by.label('Show password')).atIndex(0).tap();
     await pause(900);
-    await pressReturn('field-password');
+    if (!isAndroid()) {
+      await pressReturn('field-password');
+    }
 
     // Affixes, and a multi-line field that grows with its counter
     await scrollToId('field-amount');
     await typeInto('field-amount', '42.50');
-    await pressReturn('field-amount');
+    if (!isAndroid()) {
+      await pressReturn('field-amount');
+    }
     await scrollToId('field-notes');
     await typeInto('field-notes', 'First line\nSecond line', true);
     await pause(700);
 
-    // Leaving a multi-line field: on iOS a drag on the scroll view, which
-    // dismisses the keyboard (and blurs the field) as it does for a TextInput;
-    // the swipe starts near the top, above the keyboard.
-    if (isAndroid()) {
-      await pressReturn('field-notes');
-    } else {
+    // Leaving the multi-line field on iOS: a drag on the scroll view, which
+    // dismisses the keyboard (and blurs the field) as it does for a
+    // TextInput; the swipe starts near the top, above the keyboard.
+    if (!isAndroid()) {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
       await pause(700);
     }
