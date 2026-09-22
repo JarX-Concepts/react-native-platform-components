@@ -42,28 +42,32 @@ fi
 echo "iOS artifacts: $IOS_ARTIFACTS"
 echo "Android artifacts: $ANDROID_ARTIFACTS"
 
-# Locate the 11 video files (LiquidGlass is iOS-only)
+# Locate the 15 video files (LiquidGlass is iOS-only)
 IOS_DATEPICKER="$IOS_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
 IOS_SELECTIONMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
 IOS_CONTEXTMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
 IOS_SEGMENTEDCONTROL="$IOS_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
+IOS_BUTTON="$IOS_ARTIFACTS/✓ Platform Components Example should test Button functionality/test.mp4"
+IOS_FLOATINGTOOLBAR="$IOS_ARTIFACTS/✓ Platform Components Example should test Floating Toolbar functionality/test.mp4"
 IOS_LIQUIDGLASS="$IOS_ARTIFACTS/✓ Platform Components Example should test Liquid Glass functionality/test.mp4"
 IOS_THEME="$IOS_ARTIFACTS/✓ Platform Components Example should test Theme functionality/test.mp4"
 ANDROID_DATEPICKER="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
 ANDROID_SELECTIONMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
 ANDROID_CONTEXTMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
 ANDROID_SEGMENTEDCONTROL="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
+ANDROID_BUTTON="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Button functionality/test.mp4"
+ANDROID_FLOATINGTOOLBAR="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Floating Toolbar functionality/test.mp4"
 ANDROID_THEME="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Theme functionality/test.mp4"
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_THEME"; do
+for f in "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_BUTTON" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_BUTTON" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
     if [ ! -f "$f" ]; then
         echo "Error: Video file not found: $f"
         exit 1
     fi
 done
 
-echo "All 11 videos found!"
+echo "All 15 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -110,17 +114,21 @@ navigation_trim() {
     echo "${trim:-3}"
 }
 
-# Convert all 11 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 15 videos to GIFs (LiquidGlass is iOS-only)
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
 convert_to_gif "$IOS_SELECTIONMENU" "$ASSETS_DIR/ios-selectionmenu.gif" "$(navigation_trim "$IOS_SELECTIONMENU")"
 convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "$(navigation_trim "$IOS_CONTEXTMENU")"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "$(navigation_trim "$IOS_SEGMENTEDCONTROL")"
+convert_to_gif "$IOS_BUTTON" "$ASSETS_DIR/ios-button.gif" "$(navigation_trim "$IOS_BUTTON")"
+convert_to_gif "$IOS_FLOATINGTOOLBAR" "$ASSETS_DIR/ios-floatingtoolbar.gif" "$(navigation_trim "$IOS_FLOATINGTOOLBAR")"
 convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")"
 convert_to_gif "$IOS_THEME" "$ASSETS_DIR/ios-theme.gif" "$(navigation_trim "$IOS_THEME")"
 convert_to_gif "$ANDROID_DATEPICKER" "$ASSETS_DIR/android-datepicker.gif" ""
 convert_to_gif "$ANDROID_SELECTIONMENU" "$ASSETS_DIR/android-selectionmenu.gif" "$(navigation_trim "$ANDROID_SELECTIONMENU")"
 convert_to_gif "$ANDROID_CONTEXTMENU" "$ASSETS_DIR/android-contextmenu.gif" "$(navigation_trim "$ANDROID_CONTEXTMENU")"
 convert_to_gif "$ANDROID_SEGMENTEDCONTROL" "$ASSETS_DIR/android-segmentedcontrol.gif" "$(navigation_trim "$ANDROID_SEGMENTEDCONTROL")"
+convert_to_gif "$ANDROID_BUTTON" "$ASSETS_DIR/android-button.gif" "$(navigation_trim "$ANDROID_BUTTON")"
+convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.gif" "$(navigation_trim "$ANDROID_FLOATINGTOOLBAR")"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME")"
 
 echo ""

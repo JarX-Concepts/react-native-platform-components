@@ -1,0 +1,196 @@
+// PCButton.mm
+
+#import "PCButton.h"
+
+#import <React/RCTComponentViewFactory.h>
+#import <React/RCTConversions.h>
+#import <React/RCTFabricComponentsPlugins.h>
+#import <React/RCTFont.h>
+
+#import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
+#import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
+#import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
+#import <react/renderer/core/LayoutPrimitives.h>
+
+#if __has_include(<PlatformComponents/PlatformComponents-Swift.h>)
+#import <PlatformComponents/PlatformComponents-Swift.h>
+#else
+#import "PlatformComponents-Swift.h"
+#endif
+
+#import "PCButtonComponentDescriptors-custom.h"
+#import "PCButtonShadowNode-custom.h"
+#import "PCButtonState-custom.h"
+
+using namespace facebook::react;
+
+namespace {
+static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback) {
+  return s.empty() ? fallback : [NSString stringWithUTF8String:s.c_str()];
+}
+
+static inline bool IconEqual(const PCButtonIconStruct &a, const PCButtonIconStruct &b) {
+  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconUri == b.iconUri &&
+         a.iconScale == b.iconScale && a.iconTinted == b.iconTinted;
+}
+
+static inline bool LabelStyleEqual(
+    const PCButtonLabelStyleStruct &a,
+    const PCButtonLabelStyleStruct &b) {
+  return a.fontFamily == b.fontFamily && a.fontSize == b.fontSize &&
+         a.fontWeight == b.fontWeight && a.fontStyle == b.fontStyle;
+}
+
+/// Builds the label font from RN-style font props, or nil when every field is
+/// unset so the button keeps the configuration's font.
+static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
+  if (style.fontFamily.empty() && style.fontSize <= 0 &&
+      style.fontWeight.empty() && style.fontStyle.empty()) {
+    return nil;
+  }
+  // UIButton titles default to the body text style; start there so a lone
+  // fontWeight or fontStyle doesn't change the size.
+  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody]
+                  withFamily:NSStringFromStd(style.fontFamily, nil)
+                        size:style.fontSize > 0 ? @(style.fontSize) : nil
+                      weight:NSStringFromStd(style.fontWeight, nil)
+                       style:NSStringFromStd(style.fontStyle, nil)
+                     variant:nil
+             scaleMultiplier:1.0];
+}
+} // namespace
+
+@interface PCButton ()
+
+- (void)updateMeasurements;
+
+@end
+
+@implementation PCButton {
+  PCButtonView *_view;
+  MeasuringPCButtonShadowNode::ConcreteState::Shared _state;
+}
+
++ (ComponentDescriptorProvider)componentDescriptorProvider {
+  return concreteComponentDescriptorProvider<MeasuringPCButtonComponentDescriptor>();
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+  if (self = [super initWithFrame:frame]) {
+    _view = [PCButtonView new];
+    self.contentView = _view;
+
+    __weak __typeof(self) weakSelf = self;
+
+    _view.onPress = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onButtonPress({});
+    };
+
+    _view.onNeedsRemeasure = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+      [strongSelf updateMeasurements];
+    };
+  }
+  return self;
+}
+
+- (void)updateProps:(Props::Shared const &)props
+           oldProps:(Props::Shared const &)oldProps {
+  const auto &newProps = *std::static_pointer_cast<const PCButtonProps>(props);
+  const auto prevProps = std::static_pointer_cast<const PCButtonProps>(oldProps);
+
+  if (!prevProps || newProps.label != prevProps->label) {
+    _view.label = NSStringFromStd(newProps.label, @"");
+  }
+
+  // icon: {iconType, iconName, iconUri, iconScale, iconTinted}
+  if (!prevProps || !IconEqual(newProps.icon, prevProps->icon)) {
+    const auto &icon = newProps.icon;
+    [_view setIconWithType:NSStringFromStd(icon.iconType, @"")
+                      name:NSStringFromStd(icon.iconName, @"")
+                       uri:NSStringFromStd(icon.iconUri, @"")
+                     scale:icon.iconScale
+                    tinted:(icon.iconTinted != "false")];
+  }
+
+  if (!prevProps || newProps.variant != prevProps->variant) {
+    _view.variant = NSStringFromStd(newProps.variant, @"filled");
+  }
+
+  if (!prevProps || newProps.size != prevProps->size) {
+    _view.size = NSStringFromStd(newProps.size, @"small");
+  }
+
+  if (!prevProps || newProps.shape != prevProps->shape) {
+    _view.shape = NSStringFromStd(newProps.shape, @"");
+  }
+
+  if (!prevProps || newProps.interactivity != prevProps->interactivity) {
+    _view.interactivity = NSStringFromStd(newProps.interactivity, @"enabled");
+  }
+
+  // Colors arrive as SharedColor (already processed by React Native)
+  if (!prevProps || newProps.color != prevProps->color) {
+    _view.containerColor = RCTUIColorFromSharedColor(newProps.color);
+  }
+
+  if (!prevProps || newProps.foregroundColor != prevProps->foregroundColor) {
+    _view.foregroundColor = RCTUIColorFromSharedColor(newProps.foregroundColor);
+  }
+
+  // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
+  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
+    _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  }
+
+  if (!prevProps || newProps.spokenLabel != prevProps->spokenLabel) {
+    _view.spokenLabel = NSStringFromStd(newProps.spokenLabel, @"");
+  }
+
+  // androidRippleColor / androidStrokeColor: Android only
+
+  [super updateProps:props oldProps:oldProps];
+
+  // Update measurements when props change that affect layout
+  [self updateMeasurements];
+}
+
+#pragma mark - State (Measuring)
+
+- (void)updateState:(const State::Shared &)state
+           oldState:(const State::Shared &)oldState {
+  _state = std::static_pointer_cast<const MeasuringPCButtonShadowNode::ConcreteState>(state);
+
+  if (oldState == nullptr) {
+    // First time: compute initial size.
+    [self updateMeasurements];
+  }
+
+  [super updateState:state oldState:oldState];
+}
+
+- (void)updateMeasurements {
+  if (_state == nullptr)
+    return;
+
+  // The button's natural size; Yoga clamps it to the available width
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeZero];
+
+  PCButtonStateFrameSize next;
+  next.frameSize = {(Float)size.width, (Float)size.height};
+  _state->updateState(std::move(next));
+}
+
+@end
+
+Class<RCTComponentViewProtocol> PCButtonCls(void) {
+  return PCButton.class;
+}

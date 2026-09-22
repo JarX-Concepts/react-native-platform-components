@@ -168,4 +168,159 @@
     <item name="android:colorAccent">?attr/colorPrimary</item>
     <item name="android:colorControlActivated">?attr/colorPrimary</item>
   </style>
+
+  <!--
+    Material 3 Expressive, for Button and ButtonGroup. Theme.Material3Expressive
+    only swaps widget styles and motion springs, so applying those as an overlay
+    on the host theme keeps the app's colors. The button styles take their
+    materialSizeOverlay from the pcButtonSizeOverlay / pcIconButtonSizeOverlay
+    theme attributes (attrs.xml), so a PCSize.* overlay around the context
+    decides the size and shape.
+  -->
+  <style name="PCExpressiveOverlay" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Small</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Small</item>
+    <item name="materialButtonStyle">@style/PCButton.Filled</item>
+    <item name="materialButtonTonalStyle">@style/PCButton.Tonal</item>
+    <item name="materialButtonOutlinedStyle">@style/PCButton.Outlined</item>
+    <item name="materialButtonElevatedStyle">@style/PCButton.Elevated</item>
+    <item name="borderlessButtonStyle">@style/PCButton.Text</item>
+    <item name="materialIconButtonStyle">@style/PCButton.IconStandard</item>
+    <item name="materialIconButtonFilledStyle">@style/PCButton.IconFilled</item>
+    <item name="materialIconButtonFilledTonalStyle">@style/PCButton.IconTonal</item>
+    <item name="materialIconButtonOutlinedStyle">@style/PCButton.IconOutlined</item>
+    <item name="materialButtonGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup</item>
+    <item name="materialButtonToggleGroupStyle">@style/Widget.Material3Expressive.MaterialButtonToggleGroup</item>
+    <item name="motionSpringFastSpatial">@style/Motion.Material3.Spring.Expressive.Fast.Spatial</item>
+    <item name="motionSpringFastEffects">@style/Motion.Material3.Spring.Expressive.Fast.Effects</item>
+    <item name="motionSpringDefaultSpatial">@style/Motion.Material3.Spring.Expressive.Default.Spatial</item>
+    <item name="motionSpringDefaultEffects">@style/Motion.Material3.Spring.Expressive.Default.Effects</item>
+    <item name="motionSpringSlowSpatial">@style/Motion.Material3.Spring.Expressive.Slow.Spatial</item>
+    <item name="motionSpringSlowEffects">@style/Motion.Material3.Spring.Expressive.Slow.Effects</item>
+  </style>
+
+  <!-- Connected group of plain actions (the standard group is the default). -->
+  <style name="PCExpressiveOverlay.ConnectedGroup">
+    <item name="materialButtonGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup.Connected</item>
+  </style>
+
+  <!-- Toggle group with the standard (unconnected) spacing and shapes. -->
+  <style name="PCExpressiveOverlay.StandardToggleGroup">
+    <item name="materialButtonToggleGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup</item>
+  </style>
+
+  <style name="PCButton.Filled" parent="Widget.Material3Expressive.Button">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.Tonal" parent="Widget.Material3Expressive.Button.TonalButton">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.Outlined" parent="Widget.Material3Expressive.Button.OutlinedButton">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.Text" parent="Widget.Material3Expressive.Button.TextButton">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.Elevated" parent="Widget.Material3Expressive.Button.ElevatedButton">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.IconStandard" parent="Widget.Material3Expressive.Button.IconButton.Standard">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.IconFilled" parent="Widget.Material3Expressive.Button.IconButton.Filled">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.IconTonal" parent="Widget.Material3Expressive.Button.IconButton.Tonal">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
+  <style name="PCButton.IconOutlined" parent="Widget.Material3Expressive.Button.IconButton.Outlined">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
+
+
+  <!-- Size (and shape) of the buttons built from a context; see PCExpressive.sizeOverlay. -->
+  <style name="PCSize.Xsmall" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Xsmall</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Xsmall</item>
+  </style>
+  <style name="PCSize.Xsmall.Square">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Xsmall.Square</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Xsmall.Square</item>
+  </style>
+  <style name="PCSize.Small" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Small</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Small</item>
+  </style>
+  <style name="PCSize.Small.Square">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Small.Square</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Small.Square</item>
+  </style>
+  <style name="PCSize.Medium" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Medium</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Medium</item>
+  </style>
+  <style name="PCSize.Medium.Square">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Medium.Square</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Medium.Square</item>
+  </style>
+  <style name="PCSize.Large" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Large</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Large</item>
+  </style>
+  <style name="PCSize.Large.Square">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Large.Square</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Large.Square</item>
+  </style>
+  <style name="PCSize.Xlarge" parent="">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Xlarge</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Xlarge</item>
+  </style>
+  <style name="PCSize.Xlarge.Square">
+    <item name="pcButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.Xlarge.Square</item>
+    <item name="pcIconButtonSizeOverlay">@style/SizeOverlay.Material3Expressive.Button.IconButton.Xlarge.Square</item>
+  </style>
+
+  <!--
+    FloatingToolbar: the Material container without its window-inset margins,
+    which React Native lays out itself.
+  -->
+  <style name="PCFloatingToolbar" parent="Widget.Material3.FloatingToolbar">
+    <item name="marginLeftSystemWindowInsets">false</item>
+    <item name="marginTopSystemWindowInsets">false</item>
+    <item name="marginRightSystemWindowInsets">false</item>
+    <item name="marginBottomSystemWindowInsets">false</item>
+  </style>
+
+  <!--
+    Buttons inside a FloatingToolbar take the toolbar's button styles, as XML
+    children of a FloatingToolbarLayout would (ThemeOverlay.Material3.FloatingToolbar).
+  -->
+  <style name="PCToolbarOverlay" parent="">
+    <item name="materialButtonStyle">@style/PCToolbarButton</item>
+    <item name="borderlessButtonStyle">@style/PCToolbarButton.Text</item>
+    <item name="materialIconButtonStyle">@style/PCToolbarButton.Icon</item>
+  </style>
+  <style name="PCToolbarOverlay.Vibrant">
+    <item name="materialButtonStyle">@style/PCToolbarButton.Vibrant</item>
+    <item name="borderlessButtonStyle">@style/PCToolbarButton.Text.Vibrant</item>
+    <item name="materialIconButtonStyle">@style/PCToolbarButton.Icon.Vibrant</item>
+  </style>
+  <style name="PCToolbarButton" parent="Widget.Material3.FloatingToolbar.Button">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCToolbarButton.Vibrant" parent="Widget.Material3.FloatingToolbar.Button.Vibrant">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCToolbarButton.Text" parent="Widget.Material3.FloatingToolbar.TextButton">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCToolbarButton.Text.Vibrant" parent="Widget.Material3.FloatingToolbar.TextButton.Vibrant">
+    <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
+  </style>
+  <style name="PCToolbarButton.Icon" parent="Widget.Material3.FloatingToolbar.IconButton">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
+  <style name="PCToolbarButton.Icon.Vibrant" parent="Widget.Material3.FloatingToolbar.IconButton.Vibrant">
+    <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
+  </style>
 </resources>

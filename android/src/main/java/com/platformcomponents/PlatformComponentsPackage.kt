@@ -16,6 +16,9 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCDatePickerViewManager(),
           PCContextMenuViewManager(),
           PCSegmentedControlViewManager(),
+          PCButtonViewManager(),
+          PCButtonGroupViewManager(),
+          PCFloatingToolbarViewManager(),
           PCLiquidGlassViewManager(),
       )
   }

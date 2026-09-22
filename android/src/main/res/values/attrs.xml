@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    The Material 3 Expressive size overlay for buttons built by this library
+    (see PCExpressive). The Expressive button styles carry a fixed Small
+    materialSizeOverlay; the library's copies point it at these attributes so
+    the size can be chosen per button through a theme overlay (PCSize.*), while
+    Material's own buttons built from the same context (a button group's
+    overflow button) still get a size.
+  -->
+  <attr name="pcButtonSizeOverlay" format="reference" />
+  <attr name="pcIconButtonSizeOverlay" format="reference" />
+</resources>

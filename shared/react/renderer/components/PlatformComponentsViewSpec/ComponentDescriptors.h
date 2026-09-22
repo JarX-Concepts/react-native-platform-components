@@ -8,3 +8,5 @@
 #include "PCSelectionMenuComponentDescriptors-custom.h"
 #include "PCDatePickerComponentDescriptors-custom.h"
 #include "PCSegmentedControlComponentDescriptors-custom.h"
+#include "PCButtonComponentDescriptors-custom.h"
+#include "PCButtonGroupComponentDescriptors-custom.h"

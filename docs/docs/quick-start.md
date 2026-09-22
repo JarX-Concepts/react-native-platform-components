@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: DatePicker, ContextMenu, SelectionMenu, SegmentedControl and LiquidGlass."
+description: "Copy-paste examples for every component: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
 ---
 
 ### DatePicker (Modal)
@@ -249,6 +249,116 @@ export function Example() {
       labelVisibility="auto"
       ios={{ apportionsSegmentWidthsByContent: true }}
     />
+  );
+}
+```
+
+---
+
+### Button
+
+```tsx
+import { Button } from 'react-native-platform-components';
+
+export function Example() {
+  return (
+    <>
+      {/* Material 3 Expressive filled button on Android, UIButton .filled() on iOS */}
+      <Button label="Save" onPress={() => console.log('save')} />
+
+      {/* Lower emphasis, larger size, square corners */}
+      <Button
+        label="Cancel"
+        variant="text"
+        size="medium"
+        shape="square"
+        onPress={() => console.log('cancel')}
+      />
+
+      {/* Icon-only button: a Material icon button on Android */}
+      <Button
+        icon={{
+          ios: { type: 'sfSymbol', name: 'plus' },
+          android: { type: 'drawable', name: 'add' },
+        }}
+        variant="tonal"
+        accessibilityLabel="Add"
+        onPress={() => console.log('add')}
+      />
+    </>
+  );
+}
+```
+
+### ButtonGroup
+
+```tsx
+import { ButtonGroup } from 'react-native-platform-components';
+
+export function Example() {
+  const [range, setRange] = React.useState<string[]>(['week']);
+
+  return (
+    <>
+      {/* Actions: a standard group, buttons keep their shape */}
+      <ButtonGroup
+        buttons={[
+          { label: 'Copy', value: 'copy' },
+          { label: 'Paste', value: 'paste' },
+        ]}
+        variant="tonal"
+        onPress={(value) => console.log(value)}
+      />
+
+      {/* Single selection: a connected group, the Expressive segmented buttons */}
+      <ButtonGroup
+        buttons={[
+          { label: 'Day', value: 'day' },
+          { label: 'Week', value: 'week' },
+          { label: 'Month', value: 'month' },
+        ]}
+        selection="single"
+        selectedValues={range}
+        onSelectionChange={setRange}
+      />
+    </>
+  );
+}
+```
+
+### FloatingToolbar
+
+```tsx
+import { Button, FloatingToolbar } from 'react-native-platform-components';
+import { View } from 'react-native';
+
+export function Example() {
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Content the toolbar floats over */}
+
+      <FloatingToolbar style={{ position: 'absolute', bottom: 24 }}>
+        <Button
+          icon={{
+            ios: { type: 'sfSymbol', name: 'square.and.arrow.up' },
+            android: { type: 'drawable', name: 'share' },
+          }}
+          variant="text"
+          accessibilityLabel="Share"
+          onPress={() => console.log('share')}
+        />
+        <Button
+          icon={{
+            ios: { type: 'sfSymbol', name: 'trash' },
+            android: { type: 'drawable', name: 'delete' },
+          }}
+          variant="text"
+          accessibilityLabel="Delete"
+          onPress={() => console.log('delete')}
+        />
+        <Button label="Send" variant="tonal" onPress={() => console.log('send')} />
+      </FloatingToolbar>
+    </View>
   );
 }
 ```

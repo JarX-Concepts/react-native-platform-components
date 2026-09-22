@@ -534,6 +534,113 @@ describe('Platform Components Example', () => {
     }
   });
 
+  it('should test Button functionality', async () => {
+    await selectDemo('Button');
+    await expect(element(by.id('button-filled'))).toBeVisible();
+
+    // Every variant is a native button; pressing reports back to JS
+    for (const variant of ['filled', 'tonal', 'outlined', 'text', 'elevated']) {
+      await element(by.id(`button-${variant}`)).tap();
+      await pause(350);
+      await expect(element(by.id('button-last-pressed'))).toHaveText(variant);
+    }
+
+    // Icon + label, and an icon-only button announced by its label
+    await scrollToId('button-icon-label');
+    await element(by.id('button-icon-label')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('edit');
+
+    await element(by.id('icon-button-tonal')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText(
+      'share (tonal)'
+    );
+
+    // Button groups: actions, single selection, multiple selection
+    await scrollToId('button-group-actions');
+    await element(by.text('Copy')).atIndex(0).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+
+    await element(by.text('Month')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · bold'
+    );
+
+    await element(by.text('Italic')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · bold, italic'
+    );
+
+    await element(by.text('Bold')).atIndex(0).tap();
+    await pause(500);
+    await expect(element(by.id('button-group-value'))).toHaveText(
+      'month · italic'
+    );
+
+    // Sizes and shapes: cycle the size picker, then square corners
+    await scrollToId('size-picker');
+    for (const size of ['M', 'L', 'XL', 'XS', 'S']) {
+      await element(by.text(size)).atIndex(0).tap();
+      await pause(700);
+    }
+    await element(by.id('square-switch')).tap();
+    await pause(900);
+    await element(by.id('square-switch')).tap();
+    await pause(600);
+
+    // Disabled buttons don't report presses
+    await element(by.id('disabled-switch')).tap();
+    await pause(600);
+    await scrollToId('button-filled');
+    await element(by.id('button-last-pressed')).tap();
+    await element(by.id('button-filled')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+  });
+
+  it('should test Floating Toolbar functionality', async () => {
+    await selectDemo('Floating Toolbar');
+    await expect(element(by.id('toolbar'))).toBeVisible();
+
+    // Toolbar actions are native buttons inside the native container
+    await element(by.id('toolbar-share')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('share');
+
+    await element(by.id('toolbar-delete')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('delete');
+
+    await element(by.id('toolbar-send')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('send');
+
+    // Vertical orientation, tint, and (Android) the vibrant variant
+    await element(by.id('vertical-switch')).tap();
+    await pause(1000);
+    await element(by.id('toolbar-edit')).tap();
+    await pause(400);
+    await expect(element(by.id('toolbar-last-action'))).toHaveText('edit');
+    await element(by.id('vertical-switch')).tap();
+    await pause(800);
+
+    await element(by.id('tinted-switch')).tap();
+    await pause(1000);
+    await element(by.id('tinted-switch')).tap();
+    await pause(600);
+
+    if (isAndroid()) {
+      await element(by.text('Vibrant')).atIndex(0).tap();
+      await pause(1000);
+      await element(by.text('Standard')).atIndex(0).tap();
+      await pause(600);
+    }
+  });
+
   it('should test Liquid Glass functionality', async () => {
     // LiquidGlass is iOS 26+ only - skip on Android
     if (isAndroid()) {

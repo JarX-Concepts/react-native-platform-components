@@ -6,6 +6,8 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import type { ColorValue, StyleProp, ViewStyle, ViewProps } from 'react-native';
+import type { PlatformIcon } from './icons';
+import type { LabelStyle } from './labelStyle';
 
 // ============================================================================
 // Shared Types (duplicated to avoid importing from files with native deps)
@@ -163,6 +165,90 @@ export interface SegmentedControlProps extends ViewProps {
 export const SegmentedControl = (
   _props: SegmentedControlProps
 ): React.ReactElement | null => null;
+
+// ============================================================================
+// Button, ButtonGroup, FloatingToolbar
+// ============================================================================
+
+export type {
+  PlatformIcon,
+  PlatformIconSource,
+  NativeIconFields,
+} from './icons';
+export type { LabelStyle, NativeLabelStyle } from './labelStyle';
+
+export type ButtonVariant =
+  'filled' | 'tonal' | 'outlined' | 'text' | 'elevated';
+export type ButtonSize = 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge';
+export type ButtonShape = 'round' | 'square';
+
+export interface ButtonProps extends ViewProps {
+  label?: string;
+  icon?: PlatformIcon;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  shape?: ButtonShape;
+  disabled?: boolean;
+  color?: ColorValue;
+  tintColor?: ColorValue;
+  labelStyle?: LabelStyle;
+  accessibilityLabel?: string;
+  onPress?: () => void;
+  android?: Record<string, unknown>;
+}
+
+export const Button = (_props: ButtonProps): React.ReactElement | null => null;
+
+export type ButtonGroupSelection = 'none' | 'single' | 'multiple';
+export type ButtonGroupOverflow = 'none' | 'menu' | 'wrap';
+
+export interface ButtonGroupButtonProps {
+  label?: string;
+  value: string;
+  disabled?: boolean;
+  icon?: PlatformIcon;
+  accessibilityLabel?: string;
+}
+
+export interface ButtonGroupProps extends ViewProps {
+  buttons: readonly ButtonGroupButtonProps[];
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  shape?: ButtonShape;
+  connected?: boolean;
+  spacing?: number;
+  selection?: ButtonGroupSelection;
+  selectedValues?: readonly string[];
+  selectionRequired?: boolean;
+  disabled?: boolean;
+  color?: ColorValue;
+  tintColor?: ColorValue;
+  labelStyle?: LabelStyle;
+  onPress?: (value: string, index: number) => void;
+  onSelectionChange?: (values: string[]) => void;
+  android?: Record<string, unknown>;
+}
+
+export const ButtonGroup = (
+  _props: ButtonGroupProps
+): React.ReactElement | null => null;
+
+export type FloatingToolbarIOSEffect = 'regular' | 'clear';
+export type FloatingToolbarAndroidVariant = 'standard' | 'vibrant';
+
+export interface FloatingToolbarProps extends ViewProps {
+  orientation?: 'horizontal' | 'vertical';
+  color?: ColorValue;
+  ios?: Record<string, unknown>;
+  android?: Record<string, unknown>;
+  children?: ReactNode;
+}
+
+export const FloatingToolbar = ({
+  children,
+}: FloatingToolbarProps): React.ReactElement | null => {
+  return <>{children}</>;
+};
 
 // ============================================================================
 // LiquidGlass
