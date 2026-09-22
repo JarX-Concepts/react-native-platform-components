@@ -5,6 +5,7 @@ import {
   Button,
   ButtonGroup,
   FloatingToolbar,
+  SegmentedControl,
   type FloatingToolbarAndroidVariant,
   type PlatformIcon,
 } from 'react-native-platform-components';
@@ -42,6 +43,13 @@ const VARIANT_BUTTONS: {
   { label: 'Vibrant', value: 'vibrant' },
 ];
 
+// A view switcher inside a toolbar: the Photos picker on iOS 26
+const VIEWS = [
+  { label: 'Years', value: 'years' },
+  { label: 'Months', value: 'months' },
+  { label: 'All', value: 'all' },
+];
+
 // Placeholder "content" for the toolbar to float over
 const LINES = [0.9, 0.7, 0.8, 0.5, 0.85, 0.6, 0.75, 0.4, 0.8];
 
@@ -52,6 +60,7 @@ export function FloatingToolbarDemo(): React.JSX.Element {
   const [tinted, setTinted] = useState(false);
   const [variant, setVariant] =
     useState<FloatingToolbarAndroidVariant>('standard');
+  const [view, setView] = useState('all');
 
   return (
     <>
@@ -139,6 +148,54 @@ export function FloatingToolbarDemo(): React.JSX.Element {
           </>
         )}
       </Section>
+      <Section title="View Switcher">
+        <View
+          style={[
+            styles.canvas,
+            styles.canvasShort,
+            { backgroundColor: colors.fill },
+          ]}
+        >
+          <View style={styles.content}>
+            {LINES.slice(0, 4).map((width, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.line,
+                  { width: `${width * 100}%`, backgroundColor: colors.border },
+                ]}
+              />
+            ))}
+          </View>
+
+          <FloatingToolbar
+            testID="view-toolbar"
+            style={styles.toolbarHorizontal}
+          >
+            {/* Any component can go in a toolbar; a SegmentedControl needs a width */}
+            <SegmentedControl
+              testID="view-switcher"
+              style={styles.viewSwitcher}
+              segments={VIEWS}
+              selectedValue={view}
+              onSelect={setView}
+            />
+            <Button
+              testID="view-toolbar-share"
+              icon={SHARE_ICON}
+              variant="text"
+              accessibilityLabel="Share"
+              onPress={() => setLastAction('share')}
+            />
+          </FloatingToolbar>
+        </View>
+        <Divider />
+        <Row label="View">
+          <Text testID="toolbar-last-view" style={ui.valueText}>
+            {view}
+          </Text>
+        </Row>
+      </Section>
     </>
   );
 }
@@ -147,6 +204,12 @@ const styles = StyleSheet.create({
   canvas: {
     height: 380,
     overflow: 'hidden',
+  },
+  canvasShort: {
+    height: 220,
+  },
+  viewSwitcher: {
+    width: 250,
   },
   content: {
     padding: 16,

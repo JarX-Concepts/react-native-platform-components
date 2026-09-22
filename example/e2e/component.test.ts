@@ -644,6 +644,17 @@ describe('Platform Components Example', () => {
       await element(by.text('Standard')).atIndex(0).tap();
       await pause(600);
     }
+
+    // A SegmentedControl inside a toolbar: the view switcher
+    await scrollToId('view-toolbar');
+    await tapSegment('Months');
+    await pause(600);
+    await expect(element(by.id('toolbar-last-view'))).toHaveText('months');
+    await tapSegment('Years');
+    await pause(600);
+    await expect(element(by.id('toolbar-last-view'))).toHaveText('years');
+    await tapSegment('All');
+    await pause(600);
   });
 
   it('should test Liquid Glass functionality', async () => {

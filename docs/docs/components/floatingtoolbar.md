@@ -67,6 +67,26 @@ On Android the toolbar's window-inset margins are disabled, since React Native p
 
 On Android, `Button`s inside the toolbar take the toolbar's button styles (`ThemeOverlay.Material3.FloatingToolbar`), as XML children of a `FloatingToolbarLayout` would: `text` buttons are flat, icon-only `text` buttons are the toolbar's icon buttons, and `tonal` keeps its container for one emphasized action. The `vibrant` variant restyles them for the primary container. On iOS the buttons are plain `UIButton`s on the glass.
 
+### View switcher
+
+Any component can go in the toolbar. A [SegmentedControl](/components/segmentedcontrol) inside it is the iOS 26 Photos pattern, a view picker in a glass pill, and gives Material segmented buttons inside the Material toolbar on Android. Give the control a width: on its own it fills whatever width the toolbar offers.
+
+```tsx
+<FloatingToolbar style={{ position: 'absolute', bottom: 24 }}>
+  <SegmentedControl
+    style={{ width: 250 }}
+    segments={[
+      { label: 'Years', value: 'years' },
+      { label: 'Months', value: 'months' },
+      { label: 'All', value: 'all' },
+    ]}
+    selectedValue={view}
+    onSelect={setView}
+  />
+  <Button icon="square.and.arrow.up" variant="text" accessibilityLabel="Share" onPress={share} />
+</FloatingToolbar>
+```
+
 ### Orientation
 
 `orientation="vertical"` stacks the children; the container stays a capsule. Position it with `top` / `bottom` and `right` / `left`.
