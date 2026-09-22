@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
       label: 'Components',
       collapsed: false,
       items: [
+        'components/textfield',
         'components/datepicker',
         'components/contextmenu',
         'components/selectionmenu',
@@ -17,7 +18,6 @@ const sidebars: SidebarsConfig = {
         'components/button',
         'components/buttongroup',
         'components/floatingtoolbar',
-        'components/textfield',
         'components/liquidglass',
       ],
     },

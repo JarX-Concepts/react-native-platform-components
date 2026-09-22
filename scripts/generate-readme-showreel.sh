@@ -15,21 +15,23 @@ ARTIFACTS_DIR="$PROJECT_DIR/example/artifacts"
 OUT="$ASSETS_DIR/showreel.gif"
 
 CLIP_SECONDS="${CLIP_SECONDS:-5}"
-FPS=12
-PHONE_HEIGHT=400
-PANEL_WIDTH=192   # each phone, padded to a fixed width
-GAP=10
+FPS=15
+# Rendered at twice the size the README shows it (width="394"), so it is
+# crisp on a retina display
+PHONE_HEIGHT=800
+PANEL_WIDTH=384   # each phone, padded to a fixed width
+GAP=20
 BG="#eef1f2"      # the demo's background
 
 # Component caption | Detox test name
 COMPONENTS=(
+    "TextField|Text Field"
     "DatePicker|Date Picker"
     "SelectionMenu|Selection Menu"
     "ContextMenu|Context Menu"
     "SegmentedControl|Segmented Control"
     "Button|Button"
     "FloatingToolbar|Floating Toolbar"
-    "TextField|Text Field"
     "Theme|Theme"
 )
 
@@ -78,7 +80,7 @@ phone_filter() {
 caption_filter() {
     local text="$1"
     if [ -n "$FONT" ]; then
-        echo "drawtext=fontfile='$FONT':text='$text':fontsize=20:fontcolor=white:box=1:boxcolor=black@0.55:boxborderw=10:x=(w-text_w)/2:y=16,"
+        echo "drawtext=fontfile='$FONT':text='$text':fontsize=40:fontcolor=white:box=1:boxcolor=black@0.55:boxborderw=20:x=(w-text_w)/2:y=32,"
     fi
 }
 
@@ -124,8 +126,8 @@ card="$TEMP_DIR/card.mp4"
 card_text="react-native-platform-components"
 if [ -n "$FONT" ]; then
     ffmpeg -y -f lavfi -i "color=c=$BG:s=${WIDTH}x${PHONE_HEIGHT}:d=2:r=$FPS" \
-        -vf "drawtext=fontfile='$FONT':text='$card_text':fontsize=22:fontcolor=#1c1c1e:x=(w-text_w)/2:y=(h-text_h)/2-16,\
-drawtext=fontfile='$FONT':text='native on iOS and Android':fontsize=16:fontcolor=#6e6e73:x=(w-text_w)/2:y=(h-text_h)/2+16,\
+        -vf "drawtext=fontfile='$FONT':text='$card_text':fontsize=44:fontcolor=#1c1c1e:x=(w-text_w)/2:y=(h-text_h)/2-32,\
+drawtext=fontfile='$FONT':text='native on iOS and Android':fontsize=32:fontcolor=#6e6e73:x=(w-text_w)/2:y=(h-text_h)/2+32,\
 fade=t=in:st=0:d=0.3,fade=t=out:st=1.6:d=0.4" \
         -pix_fmt yuv420p "$card" 2>/dev/null
     CLIPS+=("$card")

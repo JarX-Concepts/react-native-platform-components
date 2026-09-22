@@ -185,15 +185,17 @@ export interface TextFieldNativeProps extends ViewProps {
 
 type NativeTextFieldComponent = HostComponent<TextFieldNativeProps>;
 
+// `React.ElementRef` rather than `React.ComponentRef`: the codegen shipped with
+// React Native 0.81 (and the 0.76 Android floor) only accepts the former.
 interface NativeCommands {
   /** Focuses the field and shows the keyboard. */
-  focus: (viewRef: React.ComponentRef<NativeTextFieldComponent>) => void;
+  focus: (viewRef: React.ElementRef<NativeTextFieldComponent>) => void;
 
   /** Removes focus and hides the keyboard. */
-  blur: (viewRef: React.ComponentRef<NativeTextFieldComponent>) => void;
+  blur: (viewRef: React.ElementRef<NativeTextFieldComponent>) => void;
 
   /** Clears the text; fires onFieldChange like a user edit. */
-  clear: (viewRef: React.ComponentRef<NativeTextFieldComponent>) => void;
+  clear: (viewRef: React.ElementRef<NativeTextFieldComponent>) => void;
 
   /**
    * Replaces the text, unless the user has edited since `eventCount` was
@@ -201,7 +203,7 @@ interface NativeCommands {
    * brings JS back in sync.
    */
   setText: (
-    viewRef: React.ComponentRef<NativeTextFieldComponent>,
+    viewRef: React.ElementRef<NativeTextFieldComponent>,
     eventCount: Int32,
     text: string
   ) => void;

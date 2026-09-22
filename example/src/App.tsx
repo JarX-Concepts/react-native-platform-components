@@ -40,13 +40,13 @@ type DemoKey =
   | 'theme';
 
 const COMPONENT_DEMOS = [
+  { label: 'Text Field', data: 'textField' },
   { label: 'Date Picker', data: 'datePicker' },
   { label: 'Selection Menu', data: 'selectionMenu' },
   { label: 'Context Menu', data: 'contextMenu' },
   { label: 'Segmented Control', data: 'segmentedControl' },
   { label: 'Button', data: 'button' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
-  { label: 'Text Field', data: 'textField' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
