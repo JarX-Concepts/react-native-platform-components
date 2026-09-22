@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Native UI components for React Native that are native on Android too: DatePicker, ContextMenu, SelectionMenu, SegmentedControl (Material 3) and LiquidGlass (iOS 26). Fabric, typed, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
