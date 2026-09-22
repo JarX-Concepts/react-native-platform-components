@@ -73,6 +73,44 @@ export const selectMenuOption = async (menuId: string, optionLabel: string) => {
   }
 };
 
+// The platform text input inside a TextField host view
+const inputOf = (fieldId: string, multiline = false) =>
+  isAndroid()
+    ? element(by.type('android.widget.EditText').withAncestor(by.id(fieldId)))
+    : element(
+        by
+          .type(multiline ? 'UITextView' : 'UITextField')
+          .withAncestor(by.id(fieldId))
+      );
+
+// Espresso's key injection doesn't reach the Material field on the emulator,
+// so Android sets the text directly, which is still a native edit
+const typeInto = async (fieldId: string, text: string, multiline = false) => {
+  const input = inputOf(fieldId, multiline);
+  await input.tap();
+  await pause(300);
+  if (isAndroid()) {
+    await input.replaceText(text);
+  } else {
+    await input.typeText(text);
+  }
+  await pause(300);
+};
+
+// Leaves a field. iOS presses the return key, which submits and blurs a
+// single-line field. Espresso's key injection is unreliable on the emulator,
+// so Android drags the scroll view instead: keyboardDismissMode="on-drag"
+// dismisses the keyboard through React Native's focus registry, which blurs
+// the field as it would a TextInput.
+const pressReturn = async (fieldId: string) => {
+  if (isAndroid()) {
+    await element(by.id('demo-scroll')).scroll(60, 'down');
+  } else {
+    await inputOf(fieldId).tapReturnKey();
+  }
+  await pause(700);
+};
+
 export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
 
@@ -760,6 +798,103 @@ describe('Platform Components Example', () => {
 
     // Take final screenshot
     await device.takeScreenshot('liquid-glass-final');
+  });
+
+  it('should test Text Field functionality', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
+
+    // Typing is a native edit reported through onChangeText. The keyboard
+    // covers the buttons below, so every field is left through its return
+    // key, which submits and blurs a single-line field.
+    await typeInto('field-name', 'Ada');
+    await expect(element(by.id('field-name-value'))).toHaveText('Ada');
+    await expect(element(by.id('field-last-event'))).toHaveText('focus: name');
+    await pressReturn('field-name');
+    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
+
+    // A controlled value from JS reaches the native field
+    await element(by.id('field-set')).tap();
+    await pause(500);
+    await expect(element(by.id('field-name-value'))).toHaveText('Grace Hopper');
+    await expect(inputOf('field-name')).toHaveText('Grace Hopper');
+
+    // Ref methods: focus, then clear
+    await element(by.id('field-focus')).tap();
+    await pause(700);
+    await expect(element(by.id('field-last-event'))).toHaveText('focus: name');
+    await pressReturn('field-name');
+    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
+    await element(by.id('field-clear')).tap();
+    await pause(500);
+    await expect(element(by.id('field-name-value'))).toHaveText('(empty)');
+
+    // Validation: the error appears once the email field is left
+    await typeInto('field-email', 'not-an-email');
+    await pressReturn('field-email');
+    await expect(element(by.text('Enter a valid email address'))).toBeVisible();
+
+    // A password with its toggle. On iOS the keyboard's prediction bar would
+    // cover the toggle where the field sits; bring the field up first.
+    if (!isAndroid()) {
+      await element(by.id('demo-scroll')).scroll(250, 'down');
+      await pause(400);
+    }
+    await typeInto('field-password', 'hunter2');
+    await element(by.label('Show password')).atIndex(0).tap();
+    await pause(900);
+    await pressReturn('field-password');
+
+    // Affixes, and a multi-line field that grows with its counter
+    await scrollToId('field-amount');
+    await typeInto('field-amount', '42.50');
+    await pressReturn('field-amount');
+    await scrollToId('field-notes');
+    await typeInto('field-notes', 'First line\nSecond line', true);
+    await pause(700);
+
+    // Leaving a multi-line field: a drag on the scroll view, which dismisses
+    // the keyboard (and blurs the field) as it does for a TextInput. On iOS
+    // the swipe starts near the top, above the keyboard.
+    if (isAndroid()) {
+      await element(by.id('demo-scroll')).scroll(60, 'down');
+    } else {
+      await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
+    }
+    await pause(700);
+    await scrollToId('editable-switch');
+
+    if (isAndroid()) {
+      // Material variants
+      await scrollToId('filled-switch');
+      await element(by.id('filled-switch')).tap();
+      await pause(900);
+      await scrollToId('dense-switch');
+      await element(by.id('dense-switch')).tap();
+      await pause(900);
+      await scrollToId('filled-switch');
+      await element(by.id('filled-switch')).tap();
+      await pause(600);
+      await scrollToId('dense-switch');
+      await element(by.id('dense-switch')).tap();
+      await pause(600);
+      // The platform EditText, then back to Material
+      await scrollToId('material-switch');
+      await element(by.id('material-switch')).tap();
+      await pause(900);
+      await element(by.id('material-switch')).tap();
+      await pause(600);
+    }
+
+    await scrollToId('editable-switch');
+
+    // A non-editable field ignores taps
+    await element(by.id('editable-switch')).tap();
+    await pause(700);
+    await scrollToId('field-name', 'up');
+    await inputOf('field-name').tap();
+    await pause(500);
+    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
   });
 
   it('should test Theme functionality', async () => {

@@ -10,3 +10,4 @@
 #include "PCSegmentedControlComponentDescriptors-custom.h"
 #include "PCButtonComponentDescriptors-custom.h"
 #include "PCButtonGroupComponentDescriptors-custom.h"
+#include "PCTextFieldComponentDescriptors-custom.h"

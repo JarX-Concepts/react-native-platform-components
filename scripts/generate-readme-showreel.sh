@@ -29,6 +29,7 @@ COMPONENTS=(
     "SegmentedControl|Segmented Control"
     "Button|Button"
     "FloatingToolbar|Floating Toolbar"
+    "TextField|Text Field"
     "Theme|Theme"
 )
 

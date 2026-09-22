@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.util.TypedValue
+import android.widget.TextView
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.text.ReactTypefaceUtils
@@ -74,7 +75,7 @@ object PCButtonSupport {
   }
 
   /** Applies the label font on top of the style's; empty / 0 keep the default. */
-  fun applyFont(button: MaterialButton, family: String, size: Float, weight: String, style: String) {
+  fun applyFont(button: TextView, family: String, size: Float, weight: String, style: String) {
     if (size > 0) {
       button.setTextSize(TypedValue.COMPLEX_UNIT_SP, size)
     }

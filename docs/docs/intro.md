@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar, TextField and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **Button**, **ButtonGroup**, **FloatingToolbar**, **TextField** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 ```sh
 npm install react-native-platform-components
@@ -47,6 +47,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 - **Button** – Material 3 Expressive buttons on Android (five sizes, round or square, shape morphing on press), UIButton on iOS
 - **ButtonGroup** – Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection
 - **FloatingToolbar** – Material 3 Expressive floating toolbar on Android, a Liquid Glass capsule on iOS 26
+- **TextField** – Material 3 text field on Android (floating label, outlined or filled, supporting text, error state, icons, counter), UITextField on iOS with the iOS 17 and 18 text traits
 - **LiquidGlass** – iOS 26+ glass morphism effects (UIGlassEffect on iOS, fallback View on Android)
 
 <table>

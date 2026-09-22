@@ -1,7 +1,7 @@
 {
   "name": "react-native-platform-components",
   "version": "1.3.0",
-  "description": "Native UI components for React Native that are native on Android too: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Material 3 Expressive Button, ButtonGroup and FloatingToolbar, and LiquidGlass (iOS 26). Fabric, typed, Expo config plugin.",
+  "description": "Native UI components for React Native that are native on Android too: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Material 3 Expressive Button, ButtonGroup and FloatingToolbar, a Material 3 TextField, and LiquidGlass (iOS 26). Fabric, typed, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "browser": "./lib/module/index.web.js",
@@ -108,6 +108,12 @@
     "floating-toolbar",
     "toolbar",
     "uibutton",
+    "textfield",
+    "text-field",
+    "textinput",
+    "text-input",
+    "textinputlayout",
+    "uitextfield",
     "material3-expressive",
     "material-3-expressive",
     "expressive",
@@ -216,7 +222,8 @@
         "PCButton": "PCButton",
         "PCButtonGroup": "PCButtonGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
-        "PCLiquidGlass": "PCLiquidGlass"
+        "PCLiquidGlass": "PCLiquidGlass",
+        "PCTextField": "PCTextField"
       }
     }
   },

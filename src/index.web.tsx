@@ -270,6 +270,114 @@ export const LiquidGlass = ({
 export const isLiquidGlassSupported = false;
 
 // ============================================================================
+// TextField
+// ============================================================================
+
+export type TextFieldKeyboardType =
+  | 'default'
+  | 'number-pad'
+  | 'decimal-pad'
+  | 'numeric'
+  | 'email-address'
+  | 'phone-pad'
+  | 'url'
+  | 'ascii-capable'
+  | 'numbers-and-punctuation'
+  | 'name-phone-pad'
+  | 'twitter'
+  | 'web-search'
+  | 'visible-password';
+export type TextFieldReturnKeyType =
+  'default' | 'done' | 'go' | 'next' | 'search' | 'send' | 'none' | 'previous';
+export type TextFieldAutoComplete =
+  | 'off'
+  | 'username'
+  | 'password'
+  | 'new-password'
+  | 'one-time-code'
+  | 'email'
+  | 'name'
+  | 'given-name'
+  | 'family-name'
+  | 'tel'
+  | 'street-address'
+  | 'postal-code'
+  | 'country'
+  | 'cc-number'
+  | 'cc-exp'
+  | 'cc-csc'
+  | 'url';
+export type TextFieldAutoCapitalize =
+  'none' | 'sentences' | 'words' | 'characters';
+export type TextFieldClearButtonMode =
+  'never' | 'while-editing' | 'unless-editing' | 'always';
+export type TextFieldIOSChoice = 'default' | 'yes' | 'no';
+export type TextFieldEvent = { nativeEvent: { text: string } };
+export type TextFieldChangeEvent = {
+  nativeEvent: { text: string; eventCount: number };
+};
+
+export interface TextFieldRef {
+  focus(): void;
+  blur(): void;
+  clear(): void;
+  isFocused(): boolean;
+}
+
+export interface TextFieldProps extends Omit<
+  ViewProps,
+  'onFocus' | 'onBlur' | 'children'
+> {
+  value?: string;
+  defaultValue?: string;
+  onChangeText?: (text: string) => void;
+  onChange?: (event: TextFieldChangeEvent) => void;
+  onFocus?: (event: TextFieldEvent) => void;
+  onBlur?: (event: TextFieldEvent) => void;
+  onSubmitEditing?: (event: TextFieldEvent) => void;
+  label?: string;
+  placeholder?: string;
+  supportingText?: string;
+  error?: boolean | string;
+  prefix?: string;
+  suffix?: string;
+  leadingIcon?: PlatformIcon;
+  trailingIcon?: PlatformIcon;
+  onTrailingIconPress?: () => void;
+  clearButtonMode?: TextFieldClearButtonMode;
+  passwordToggle?: boolean;
+  showCharacterCount?: boolean;
+  maxLength?: number;
+  keyboardType?: TextFieldKeyboardType;
+  returnKeyType?: TextFieldReturnKeyType;
+  autoCapitalize?: TextFieldAutoCapitalize;
+  autoCorrect?: boolean;
+  secureTextEntry?: boolean;
+  multiline?: boolean;
+  editable?: boolean;
+  autoFocus?: boolean;
+  selectTextOnFocus?: boolean;
+  autoComplete?: TextFieldAutoComplete;
+  keyboardAppearance?: 'default' | 'light' | 'dark';
+  textStyle?: LabelStyle;
+  accessibilityLabel?: string;
+  ios?: Record<string, unknown>;
+  android?: Record<string, unknown>;
+}
+
+export const TextField = React.forwardRef<TextFieldRef, TextFieldProps>(
+  function TextFieldComponent(_props, ref): React.ReactElement | null {
+    React.useImperativeHandle(ref, () => ({
+      focus: () => {},
+      blur: () => {},
+      clear: () => {},
+      isFocused: () => false,
+    }));
+    return null;
+  }
+);
+
+// ============================================================================
 // Native theme
 // ============================================================================
 

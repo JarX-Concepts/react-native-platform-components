@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
         'components/button',
         'components/buttongroup',
         'components/floatingtoolbar',
+        'components/textfield',
         'components/liquidglass',
       ],
     },

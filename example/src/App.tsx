@@ -19,6 +19,7 @@ import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
+import { TextFieldDemo } from './TextFieldDemo';
 import { Screen, useDemoColors } from './DemoUI';
 import {
   BRAND_COLORS,
@@ -34,6 +35,7 @@ type DemoKey =
   | 'segmentedControl'
   | 'button'
   | 'floatingToolbar'
+  | 'textField'
   | 'liquidGlass'
   | 'theme';
 
@@ -44,6 +46,7 @@ const COMPONENT_DEMOS = [
   { label: 'Segmented Control', data: 'segmentedControl' },
   { label: 'Button', data: 'button' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
+  { label: 'Text Field', data: 'textField' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
@@ -125,6 +128,7 @@ export default function App(): React.ReactElement {
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
       {demo === 'button' && <ButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
+      {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
       {demo === 'theme' && (
         <ThemeDemo
