@@ -78,6 +78,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `overflow`    | `'none' \| 'menu' \| 'wrap'`   | Buttons that don't fit are clipped (default), moved into an overflow menu (`MaterialButtonGroup` overflow), or wrapped onto more rows |
 | `rippleColor` | `ColorValue`                   | Ripple shown while pressing a button                                                                                          |
 | `strokeColor` | `ColorValue`                   | Outline color (`outlined` variant)                                                                                            |
+| `material`    | `'m3' \| 'expressive'`        | Material style: Material 3 Expressive (default) or the classic Material 3 group, which has one size and shape. See [Button](/components/button#material-style) |
 
 ### Standard and connected
 

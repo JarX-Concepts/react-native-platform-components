@@ -111,6 +111,11 @@ class PCButtonViewManager :
     view.applySpokenLabel(value ?: "")
   }
 
+  // "expressive" (default) | "m3"
+  override fun setAndroidMaterial(view: PCButtonView, value: String?) {
+    view.applyMaterial(value)
+  }
+
   // --- Events ---
   private class PressEvent(surfaceId: Int) : Event<PressEvent>(surfaceId) {
     override fun getEventName(): String = "topButtonPress"

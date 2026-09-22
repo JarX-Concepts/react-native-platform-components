@@ -67,7 +67,7 @@ describe('ButtonGroup', () => {
     expect(props.selectedValues).toEqual([]);
     expect(props.selectionRequired).toBe('false');
     expect(props.interactivity).toBe('enabled');
-    expect(props.android).toBeUndefined();
+    expect(props.android).toEqual({ overflow: 'none', material: 'expressive' });
     expect(props.onButtonPress).toBeUndefined();
     expect(props.onGroupSelectionChange).toBeUndefined();
     act(() => tree.unmount());
@@ -152,9 +152,20 @@ describe('ButtonGroup', () => {
     const props = lastNativeProps();
     expect(props.spacing).toBe(4);
     expect(props.interactivity).toBe('disabled');
-    expect(props.android).toEqual({ overflow: 'menu' });
+    expect(props.android).toEqual({ overflow: 'menu', material: 'expressive' });
     expect(props.androidRippleColor).toBe('red');
     expect(props.androidStrokeColor).toBe('blue');
+    act(() => tree.unmount());
+  });
+
+  it('passes the classic Material 3 style through', () => {
+    const tree = render(
+      <ButtonGroup buttons={BUTTONS} android={{ material: 'm3' }} />
+    );
+    expect(lastNativeProps().android).toEqual({
+      overflow: 'none',
+      material: 'm3',
+    });
     act(() => tree.unmount());
   });
 });

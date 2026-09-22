@@ -77,6 +77,13 @@ describe('Button', () => {
     expect(props.spokenLabel).toBe('Delete item');
     expect(props.androidRippleColor).toBe('red');
     expect(props.androidStrokeColor).toBe('blue');
+    expect(props.androidMaterial).toBe('expressive');
+    act(() => tree.unmount());
+  });
+
+  it('passes the classic Material 3 style through', () => {
+    const tree = render(<Button label="Plain" android={{ material: 'm3' }} />);
+    expect(lastNativeProps().androidMaterial).toBe('m3');
     act(() => tree.unmount());
   });
 

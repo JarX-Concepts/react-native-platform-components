@@ -526,6 +526,20 @@ describe('Platform Components Example', () => {
       await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
+
+      // Classic Material 3 segmented buttons, then back to Expressive
+      await scrollToId('expressive-switch');
+      await element(by.id('expressive-switch')).tap();
+      await pause(400);
+      await scrollToId('segment-basic', 'up');
+      await element(by.text('Month')).atIndex(0).tap();
+      await pause(900);
+      await scrollToId('expressive-switch');
+      await element(by.id('expressive-switch')).tap();
+      await pause(400);
+      await scrollToId('segment-basic', 'up');
+      await element(by.text('Week')).atIndex(0).tap();
+      await pause(600);
     } else {
       // Final cycle: Week -> Year -> Day
       await scrollToId('segment-basic');

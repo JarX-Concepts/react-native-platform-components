@@ -58,6 +58,7 @@ class PCButtonGroupView(context: Context) :
   var selectionRequired: Boolean = false
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var overflow: String = "none" // "none" | "menu" | "wrap"
+  var expressive: Boolean = true // android.material: "expressive" | "m3"
 
   // --- Styling (null / empty = Material theme default) ---
   var containerColor: Int? = null
@@ -175,6 +176,13 @@ class PCButtonGroupView(context: Context) :
     rebuildUI()
   }
 
+  fun applyMaterial(value: String?) {
+    val parsed = PCExpressive.parseExpressive(value)
+    if (expressive == parsed) return
+    expressive = parsed
+    rebuildUI()
+  }
+
   fun applyColors(container: Int?, foreground: Int?, ripple: Int?, stroke: Int?) {
     if (containerColor == container && foregroundColor == foreground &&
       rippleColor == ripple && strokeColor == stroke
@@ -229,14 +237,18 @@ class PCButtonGroupView(context: Context) :
     val base = PCThemeSupport.materialContext(context, "ButtonGroup")
     val toggle = selection != "none"
 
-    // The Expressive group styles: a standard group (spacing, press size
-    // morph) or a connected one (shared outline, small inner corners).
+    // The group styles: a standard group (spacing, press size morph) or a
+    // connected one (shared outline, small inner corners), Expressive or
+    // classic Material 3.
     val overlay = when {
-      toggle && !connected -> R.style.PCExpressiveOverlay_StandardToggleGroup
-      !toggle && connected -> R.style.PCExpressiveOverlay_ConnectedGroup
-      else -> R.style.PCExpressiveOverlay
+      expressive && toggle && !connected -> R.style.PCExpressiveOverlay_StandardToggleGroup
+      expressive && !toggle && connected -> R.style.PCExpressiveOverlay_ConnectedGroup
+      expressive -> R.style.PCExpressiveOverlay
+      toggle && !connected -> R.style.PCM3Overlay_StandardToggleGroup
+      !toggle && connected -> R.style.PCM3Overlay_ConnectedGroup
+      else -> 0
     }
-    val groupContext = ContextThemeWrapper(base, overlay)
+    val groupContext = if (overlay != 0) ContextThemeWrapper(base, overlay) else base
 
     val g: MaterialButtonGroup =
       if (toggle) {
@@ -262,7 +274,9 @@ class PCButtonGroupView(context: Context) :
     for ((index, item) in items.withIndex()) {
       val iconOnly = item.label.isEmpty() && item.icon.isPresent
 
-      val button = PCExpressive.createButton(base, variant, size, shape, iconOnly, 0).apply {
+      val button = PCExpressive.createButton(
+        base, variant, size, shape, iconOnly, 0, expressive
+      ).apply {
         id = View.generateViewId()
         text = item.label
         isAllCaps = false // Preserve original text casing

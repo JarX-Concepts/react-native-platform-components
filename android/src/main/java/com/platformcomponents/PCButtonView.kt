@@ -40,6 +40,7 @@ class PCButtonView(context: Context) :
   var shape: String = "round"
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var spokenLabel: String = ""
+  var expressive: Boolean = true // android.material: "expressive" | "m3"
 
   // --- Styling (null / empty = Material theme default) ---
   var containerColor: Int? = null
@@ -118,6 +119,13 @@ class PCButtonView(context: Context) :
     if (interactivity == newValue) return
     interactivity = newValue
     button?.isEnabled = newValue == "enabled"
+  }
+
+  fun applyMaterial(value: String?) {
+    val parsed = PCExpressive.parseExpressive(value)
+    if (expressive == parsed) return
+    expressive = parsed
+    rebuildUI()
   }
 
   fun applySpokenLabel(value: String) {
@@ -200,7 +208,9 @@ class PCButtonView(context: Context) :
     val base = PCThemeSupport.materialContext(context, "Button")
     val iconOnly = label.isEmpty() && icon.isPresent
 
-    val b = PCExpressive.createButton(base, variant, size, shape, iconOnly, builtToolbarOverlay).apply {
+    val b = PCExpressive.createButton(
+      base, variant, size, shape, iconOnly, builtToolbarOverlay, expressive
+    ).apply {
       id = View.generateViewId()
       text = label
       isAllCaps = false // Preserve original text casing

@@ -52,6 +52,9 @@ export type ButtonGroupLabelStyleProps = Readonly<{
 export type ButtonGroupAndroidProps = Readonly<{
   /** What happens to buttons that don't fit: 'none' | 'menu' | 'wrap' */
   overflow?: string;
+
+  /** Material style: 'm3' | 'expressive' */
+  material?: string;
 }>;
 
 export interface ButtonGroupNativeProps extends ViewProps {

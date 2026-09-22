@@ -104,13 +104,14 @@ convert_to_gif() {
 }
 
 # Seconds to trim from a test that navigates from the Date Picker demo: up to
-# the first large scene change after launch (the switch to the demo), plus a
-# short margin. The switch time varies between runs, especially on Android.
+# the largest scene change in the first 12 seconds (the switch to the demo;
+# opening the demo menu is a smaller one), plus a short margin. The switch time
+# varies between runs, especially on Android.
 navigation_trim() {
     local trim
-    trim=$(ffmpeg -t 15 -i "$1" -vf "select='gt(scene,0.05)',showinfo" -f null - 2>&1 \
-        | grep -o "pts_time:[0-9.]*" | cut -d: -f2 \
-        | awk '$1 > 1.5 { printf "%.2f", $1 + 0.4; exit }')
+    trim=$(ffmpeg -t 12 -i "$1" -vf "select='gt(scene,0.01)*gte(t,1.5)',metadata=print:key=lavfi.scene_score" -f null - 2>&1 \
+        | grep -oE "pts_time:[0-9.]+|lavfi.scene_score=[0-9.]+" | paste - - \
+        | awk -F'[:=\t]' '{ if ($4 + 0 > best) { best = $4 + 0; t = $2 } } END { if (t != "") printf "%.2f", t + 0.4 }')
     echo "${trim:-3}"
 }
 
@@ -130,6 +131,10 @@ convert_to_gif "$ANDROID_SEGMENTEDCONTROL" "$ASSETS_DIR/android-segmentedcontrol
 convert_to_gif "$ANDROID_BUTTON" "$ASSETS_DIR/android-button.gif" "$(navigation_trim "$ANDROID_BUTTON")"
 convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.gif" "$(navigation_trim "$ANDROID_FLOATINGTOOLBAR")"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME")"
+
+echo ""
+echo "Step 5: README showreel..."
+"$SCRIPT_DIR/generate-readme-showreel.sh"
 
 echo ""
 echo "=== Complete! ==="

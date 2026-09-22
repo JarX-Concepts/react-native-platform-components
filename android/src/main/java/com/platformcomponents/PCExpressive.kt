@@ -72,14 +72,20 @@ object PCExpressive {
       }
     }
 
+  /** "expressive" (default) | "m3" */
+  fun parseExpressive(value: String?): Boolean = value != "m3"
+
   /**
-   * Creates an Expressive button. [base] is a Material 3 context (see
+   * Creates a button. [base] is a Material 3 context (see
    * PCThemeSupport.materialContext); [toolbarOverlay] is the enclosing
    * FloatingToolbar's button overlay, or 0 outside a toolbar.
    *
-   * The toolbar overlay replaces the filled, text and standard icon button
-   * styles with the toolbar's, as it does for XML children of a
-   * FloatingToolbarLayout; the other variants keep their Expressive styles.
+   * With [expressive] the Material 3 Expressive styles apply, sized by the
+   * size overlay; otherwise the theme's classic Material 3 button styles,
+   * which have one size and shape. The toolbar overlay replaces the filled,
+   * text and standard icon button styles with the toolbar's, as it does for
+   * XML children of a FloatingToolbarLayout; the toolbar itself is an
+   * Expressive component, so its buttons always are.
    */
   fun createButton(
     base: Context,
@@ -87,10 +93,14 @@ object PCExpressive {
     size: String,
     shape: String,
     iconOnly: Boolean,
-    toolbarOverlay: Int
+    toolbarOverlay: Int,
+    expressive: Boolean = true
   ): MaterialButton {
-    val expressive = ContextThemeWrapper(base, R.style.PCExpressiveOverlay)
-    val themed = if (toolbarOverlay != 0) ContextThemeWrapper(expressive, toolbarOverlay) else expressive
+    if (!expressive && toolbarOverlay == 0) {
+      return MaterialButton(base, null, styleAttr(variant, iconOnly))
+    }
+    val overlaid = ContextThemeWrapper(base, R.style.PCExpressiveOverlay)
+    val themed = if (toolbarOverlay != 0) ContextThemeWrapper(overlaid, toolbarOverlay) else overlaid
     val sized = ContextThemeWrapper(themed, sizeOverlay(size, shape))
     return MaterialButton(sized, null, styleAttr(variant, iconOnly))
   }

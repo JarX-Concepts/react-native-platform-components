@@ -3,7 +3,14 @@ title: "Android Theme Configuration"
 description: "How the Android components use your Material 3 theme, what happens under an AppCompat theme, and the Expo plugin option."
 ---
 
-No theme setup is required to avoid a crash. React Native and Expo templates ship an AppCompat app theme, and every component works with it. When the theme is not a Material theme, `SegmentedControl` and the inline M3 `SelectionMenu` render with Material 3 default colors, the M3 date and time pickers use a built-in Material 3 dialog theme, and the library logs one warning under the `PlatformComponents` tag. Give the app a Material 3 theme to have those components use your app's colors instead.
+No theme setup is required to avoid a crash. React Native and Expo templates ship an AppCompat app theme, and every component works with it. When the theme is not a Material theme, `SegmentedControl`, `Button`, `ButtonGroup`, `FloatingToolbar` and the inline M3 `SelectionMenu` render with Material 3 default colors, the M3 date and time pickers use a built-in Material 3 dialog theme, and the library logs one warning under the `PlatformComponents` tag. Give the app a Material 3 theme to have those components use your app's colors instead.
+
+Two different `android.material` props exist, because they answer different questions:
+
+- **DatePicker** and **SelectionMenu**: `'system'` (the platform widget, the default) or `'m3'` (the Material one).
+- **SegmentedControl**, **Button** and **ButtonGroup**: `'expressive'` (Material 3 Expressive, the default) or `'m3'` (classic Material 3). These are always Material widgets; the choice is the design generation. `FloatingToolbar` only exists in Expressive.
+
+The Expressive styles are applied as a theme overlay over your app theme, so your colors (and `useNativeTheme`) apply to both generations.
 
 > Releases before 1.0.0 crashed on mount in these cases (`Cannot find theme attribute materialButtonOutlinedStyle`, `You need to use a Theme.AppCompat theme`). Upgrade to get the fallback behavior.
 
@@ -11,7 +18,9 @@ No theme setup is required to avoid a crash. React Native and Expo templates shi
 
 | Component            | Mode                         | Uses your colors with | Without it                                           |
 | -------------------- | ---------------------------- | --------------------- | ---------------------------------------------------- |
-| **SegmentedControl** | (always M3)                  | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
+| **SegmentedControl** | (always Material; `android.material: 'expressive'` or `'m3'`) | `Theme.Material3.*` | Material 3 default colors, one warning logged |
+| **Button**, **ButtonGroup** | (always Material; `android.material: 'expressive'` or `'m3'`) | `Theme.Material3.*` | Material 3 default colors, one warning logged |
+| **FloatingToolbar**  | (always Material 3 Expressive) | `Theme.Material3.*` | Material 3 default colors, one warning logged        |
 | **DatePicker**       | `android.material: 'm3'`     | `Theme.Material3.*`   | Built-in Material 3 dialog theme, one warning logged |
 | **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*`   | Built-in AppCompat dialog theme, one warning logged  |
 | **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
@@ -61,12 +70,14 @@ Choose the mode that matches your app's theme:
 // If your app uses Theme.Material3.* (recommended)
 <DatePicker android={{ material: 'm3' }} />
 <SelectionMenu android={{ material: 'm3' }} />
-<SegmentedControl /> // Always M3
+<SegmentedControl /> // Material 3 Expressive; android={{ material: 'm3' }} for classic
+<Button label="Save" /> // Material 3 Expressive; android={{ material: 'm3' }} for classic
 
 // If your app uses Theme.AppCompat.* (the React Native default)
 <DatePicker android={{ material: 'system' }} />
 <SelectionMenu android={{ material: 'system' }} />
 <SegmentedControl /> // Renders with Material 3 default colors
+<Button label="Save" /> // Renders with Material 3 default colors
 ```
 
 ### Expo Configuration

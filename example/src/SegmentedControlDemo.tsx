@@ -104,6 +104,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
   const [momentary, setMomentary] = useState(false);
   const [proportional, setProportional] = useState(false);
   const [selectionRequired, setSelectionRequired] = useState(true);
+  const [expressive, setExpressive] = useState(true);
 
   return (
     <>
@@ -120,7 +121,10 @@ export function SegmentedControlDemo(): React.JSX.Element {
               momentary,
               apportionsSegmentWidthsByContent: proportional,
             }}
-            android={{ selectionRequired }}
+            android={{
+              selectionRequired,
+              material: expressive ? 'expressive' : 'm3',
+            }}
           />
         </ControlRow>
         <Divider />
@@ -246,6 +250,15 @@ export function SegmentedControlDemo(): React.JSX.Element {
                 testID="selection-required-switch"
                 value={selectionRequired}
                 onValueChange={setSelectionRequired}
+              />
+            </Row>
+            <Divider />
+            <Row label="Expressive">
+              <Switch
+                style={ui.alignEnd}
+                testID="expressive-switch"
+                value={expressive}
+                onValueChange={setExpressive}
               />
             </Row>
           </>

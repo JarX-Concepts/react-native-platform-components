@@ -146,7 +146,12 @@ class PCSegmentedControlViewManager :
     } else {
       true
     }
-    view.applyAndroidProps(selectionRequired)
+    // Spec sentinel: "expressive" (default) | "m3"
+    val expressive = !(
+      value != null && value.hasKey("material") && !value.isNull("material") &&
+        value.getString("material") == "m3"
+      )
+    view.applyAndroidProps(selectionRequired, expressive)
   }
 
   override fun setIos(view: PCSegmentedControlView, value: ReadableMap?) {

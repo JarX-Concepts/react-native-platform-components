@@ -43,7 +43,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 - **DatePicker** – native date & time pickers with modal and embedded presentations
 - **ContextMenu** – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)
 - **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
-- **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, MaterialButtonToggleGroup on Android)
+- **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, Material 3 Expressive connected buttons on Android, classic Material 3 on request)
 - **Button** – Material 3 Expressive buttons on Android (five sizes, round or square, shape morphing on press), UIButton on iOS
 - **ButtonGroup** – Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection
 - **FloatingToolbar** – Material 3 Expressive floating toolbar on Android, a Liquid Glass capsule on iOS 26

@@ -19,6 +19,7 @@ import {
   type PlatformIconSource,
 } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { AndroidMaterialStyle } from './sharedTypes';
 
 // Android: Minimum height to ensure visibility.
 // Fabric's shadow node measurement isn't being called on initial render,
@@ -172,6 +173,12 @@ export interface SegmentedControlProps extends ViewProps {
 
     /** Outline color of the segments. */
     strokeColor?: ColorValue;
+
+    /**
+     * Material style: the Material 3 Expressive connected buttons (default),
+     * or the classic Material 3 segmented buttons.
+     */
+    material?: AndroidMaterialStyle;
   };
 
   /** Test identifier */
@@ -264,6 +271,7 @@ export function SegmentedControl(
     if (!android) return undefined;
     return {
       selectionRequired: android.selectionRequired === false ? 'false' : 'true',
+      material: android.material ?? 'expressive',
     };
   }, [android]);
 

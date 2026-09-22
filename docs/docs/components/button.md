@@ -42,10 +42,11 @@ import { Button } from 'react-native-platform-components';
 
 ### Android Props (`android`)
 
-| Prop          | Type         | Description                       |
-| ------------- | ------------ | --------------------------------- |
-| `rippleColor` | `ColorValue` | Ripple shown while pressing       |
-| `strokeColor` | `ColorValue` | Outline color (`outlined` variant) |
+| Prop          | Type                     | Description                                                                                               |
+| ------------- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `rippleColor` | `ColorValue`             | Ripple shown while pressing                                                                               |
+| `strokeColor` | `ColorValue`             | Outline color (`outlined` variant)                                                                        |
+| `material`    | `'m3' \| 'expressive'`  | Material style: Material 3 Expressive (default) or the classic Material 3 button. See [Material style](#material-style) |
 
 ### Variants
 
@@ -129,6 +130,10 @@ Without these props the button takes its colors from the theme: the app's Materi
 ### Inside a FloatingToolbar
 
 Buttons placed in a [FloatingToolbar](/components/floatingtoolbar) pick up the toolbar's button styles on Android, as Material's own toolbar children do: `filled` and `text` buttons become the toolbar's flat buttons, icon-only `text` buttons become the toolbar's icon buttons, and `tonal` keeps its container for an emphasized action.
+
+### Material style
+
+`android.material` picks the Android design generation: `'expressive'` (default) gives the Material 3 Expressive styles with their five sizes, two shapes and press morph; `'m3'` gives the classic Material 3 button, which has one size and shape, so `size` and `shape` are ignored. Use `'m3'` on screens that keep the older Material 3 look. Buttons inside a [FloatingToolbar](/components/floatingtoolbar) always take the toolbar's Expressive styles. [SegmentedControl](/components/segmentedcontrol#material-style) and [ButtonGroup](/components/buttongroup) take the same prop.
 
 ### Android theme
 

@@ -152,9 +152,10 @@ class PCButtonGroupViewManager :
     )
   }
 
-  // android: {overflow}
+  // android: {overflow, material}
   override fun setAndroid(view: PCButtonGroupView, value: ReadableMap?) {
     view.applyOverflow(value?.stringOr("overflow", "none"))
+    view.applyMaterial(value?.stringOr("material", "expressive"))
   }
 
   // --- Events ---

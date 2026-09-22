@@ -5,6 +5,7 @@ import type { ColorValue, ViewProps } from 'react-native';
 import NativeButton from './ButtonNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
  * Emphasis of the button, from highest to lowest.
@@ -81,6 +82,13 @@ export interface ButtonProps extends ViewProps {
 
     /** Outline color (outlined variant). */
     strokeColor?: ColorValue;
+
+    /**
+     * Material style: Material 3 Expressive (default), or the classic
+     * Material 3 button, which has one size and shape (`size` and `shape`
+     * are ignored).
+     */
+    material?: AndroidMaterialStyle;
   };
 
   /** Test identifier */
@@ -126,6 +134,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       foregroundColor={tintColor}
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
+      androidMaterial={android?.material ?? 'expressive'}
       labelStyle={nativeLabelStyle}
       spokenLabel={accessibilityLabel ?? ''}
       onButtonPress={onPress ? handlePress : undefined}

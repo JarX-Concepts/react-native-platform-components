@@ -10,6 +10,7 @@ import NativeButtonGroup, {
 } from './ButtonGroupNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
  * Selection behavior of the group.
@@ -119,6 +120,13 @@ export interface ButtonGroupProps extends ViewProps {
 
     /** Outline color (outlined variant). */
     strokeColor?: ColorValue;
+
+    /**
+     * Material style: Material 3 Expressive (default), or the classic
+     * Material 3 group, which has one size and shape (`size` and `shape`
+     * are ignored).
+     */
+    material?: AndroidMaterialStyle;
   };
 
   /** Test identifier */
@@ -185,10 +193,13 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     [onSelectionChange]
   );
 
-  const nativeAndroid = useMemo(() => {
-    if (!android) return undefined;
-    return { overflow: android.overflow ?? 'none' };
-  }, [android]);
+  const nativeAndroid = useMemo(
+    () => ({
+      overflow: android?.overflow ?? 'none',
+      material: android?.material ?? 'expressive',
+    }),
+    [android]
+  );
 
   const isConnected = connected ?? selectionMode !== 'none';
   const isSelectionRequired =

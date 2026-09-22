@@ -209,6 +209,17 @@
     <item name="materialButtonToggleGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup</item>
   </style>
 
+  <!--
+    Classic Material 3 (android.material: 'm3'): the theme's own button styles,
+    plus the group variants Material only names as styles.
+  -->
+  <style name="PCM3Overlay.ConnectedGroup" parent="">
+    <item name="materialButtonGroupStyle">@style/Widget.Material3.MaterialButtonGroup.Connected</item>
+  </style>
+  <style name="PCM3Overlay.StandardToggleGroup" parent="">
+    <item name="materialButtonToggleGroupStyle">@style/Widget.Material3.MaterialButtonGroup</item>
+  </style>
+
   <style name="PCButton.Filled" parent="Widget.Material3Expressive.Button">
     <item name="materialSizeOverlay">?attr/pcButtonSizeOverlay</item>
   </style>

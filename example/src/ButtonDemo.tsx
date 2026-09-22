@@ -1,6 +1,6 @@
 // ButtonDemo.tsx
 import React, { useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   Button,
   ButtonGroup,
@@ -91,9 +91,15 @@ export function ButtonDemo(): React.JSX.Element {
   const [range, setRange] = useState<string[]>(['week']);
   const [format, setFormat] = useState<string[]>(['bold']);
   const [styled, setStyled] = useState(true);
+  const [expressive, setExpressive] = useState(true);
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
-  const common = { size, shape, disabled };
+  const common = {
+    size,
+    shape,
+    disabled,
+    android: { material: expressive ? 'expressive' : 'm3' } as const,
+  };
 
   return (
     <>
@@ -262,6 +268,19 @@ export function ButtonDemo(): React.JSX.Element {
             onValueChange={setDisabled}
           />
         </Row>
+        {Platform.OS === 'android' && (
+          <>
+            <Divider />
+            <Row label="Expressive">
+              <Switch
+                style={ui.alignEnd}
+                testID="expressive-switch"
+                value={expressive}
+                onValueChange={setExpressive}
+              />
+            </Row>
+          </>
+        )}
       </Section>
     </>
   );

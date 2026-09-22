@@ -55,6 +55,9 @@ export interface ButtonNativeProps extends ViewProps {
   /** Android: outline color (outlined variant). */
   androidStrokeColor?: ColorValue;
 
+  /** Android: Material style, 'm3' | 'expressive' */
+  androidMaterial?: string;
+
   /** Label font. */
   labelStyle?: ButtonLabelStyleProps;
 

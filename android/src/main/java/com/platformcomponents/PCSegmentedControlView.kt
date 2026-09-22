@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.text.TextUtils
 import android.util.TypedValue
+import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -66,6 +67,8 @@ class PCSegmentedControlView(context: Context) :
   var labelVisibility: String = "auto" // "auto" | "labeled" | "unlabeled"
   // Matches iOS, where a UISegmentedControl selection cannot be cleared by tapping.
   var selectionRequired: Boolean = true
+  // android.material: "expressive" (the Material 3 Expressive connected buttons) | "m3"
+  var expressive: Boolean = true
 
   // --- Styling (null / empty = Material theme default) ---
   var selectedSegmentColor: Int? = null
@@ -140,9 +143,10 @@ class PCSegmentedControlView(context: Context) :
     rebuildUI()
   }
 
-  fun applyAndroidProps(required: Boolean) {
-    if (selectionRequired != required) {
+  fun applyAndroidProps(required: Boolean, expressiveStyle: Boolean) {
+    if (selectionRequired != required || expressive != expressiveStyle) {
       selectionRequired = required
+      expressive = expressiveStyle
       rebuildUI()
     }
   }
@@ -224,7 +228,11 @@ class PCSegmentedControlView(context: Context) :
     val generation = rebuildGeneration
 
     // Material widgets need a Material theme; fall back to Material 3 defaults instead of crashing.
-    val themedContext = PCThemeSupport.materialContext(context, "SegmentedControl")
+    val materialContext = PCThemeSupport.materialContext(context, "SegmentedControl")
+    // Expressive: the connected button group styles (2dp gaps, small inner
+    // corners, the selected segment a pill) in place of the classic segmented buttons.
+    val themedContext =
+      if (expressive) ContextThemeWrapper(materialContext, R.style.PCExpressiveOverlay) else materialContext
     val group = MaterialButtonToggleGroup(themedContext).apply {
       layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
       isSingleSelection = true
