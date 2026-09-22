@@ -1,5 +1,16 @@
 # Changelog
 
+# [1.3.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.2.0...v1.3.0) (2026-09-22)
+
+### Bug Fixes
+
+* **expo:** resolve the config plugin by bare package name ([c1c51fc](https://github.com/JarX-Concepts/react-native-platform-components/commit/c1c51fcf2300511983a5ed8623b1672fe2eb8442))
+* verify the supported floor in CI, and make the native code portable to 0.76 ([1504f05](https://github.com/JarX-Concepts/react-native-platform-components/commit/1504f0539e2297a9860804f0b4f699a6d75eb4e8))
+
+### Features
+
+* **ios:** build without Xcode 26, falling back for Liquid Glass ([2d41c2d](https://github.com/JarX-Concepts/react-native-platform-components/commit/2d41c2d16dba8d49c4d47e13025daa1caf7a58da)), closes [#if](https://github.com/JarX-Concepts/react-native-platform-components/issues/if) [#31](https://github.com/JarX-Concepts/react-native-platform-components/issues/31)
+
 # [1.2.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.1.0...v1.2.0) (2026-09-16)
 
 ### Bug Fixes

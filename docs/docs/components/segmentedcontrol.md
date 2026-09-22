@@ -68,7 +68,7 @@ On Android the control is a `MaterialButtonToggleGroup`. By default it uses the 
 <SegmentedControl segments={segments} selectedValue={selected} onSelect={setSelected} android={{ material: 'm3' }} />
 ```
 
-> Before 1.3.0 the classic look was the only one; set `material: 'm3'` to keep it.
+> Before 1.4.0 the classic look was the only one; set `material: 'm3'` to keep it.
 
 ### Icon Support
 
