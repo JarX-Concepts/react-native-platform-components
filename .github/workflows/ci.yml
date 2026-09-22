@@ -152,6 +152,11 @@ jobs:
               -c 2048M
           fi
           $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd | grep "Pixel_9_API_35"
+          # A hardware keyboard, as the development AVDs have: the soft keyboard
+          # then stays down and the demos' buttons below a focused field remain
+          # tappable in the e2e flows
+          config="$HOME/.config/.android/avd/Pixel_9_API_35.avd/config.ini"
+          grep -q "^hw.keyboard=yes" "$config" || echo "hw.keyboard=yes" >> "$config"
           echo "ANDROID_AVD_HOME=$HOME/.config/.android/avd" >> $GITHUB_ENV
           echo "ANDROID_EMULATOR_EXTRA_ARGS=-no-window -no-snapshot -partition-size 2048 -gpu swiftshader_indirect" >> $GITHUB_ENV
 
@@ -166,6 +171,14 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: |
           yarn workspace react-native-platform-components-example test:e2e:android:ci
+
+      - name: Upload Detox artifacts (Android)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: detox-android-artifacts
+          path: example/artifacts
+          if-no-files-found: ignore
 
   test-ios:
     runs-on: macos-latest
