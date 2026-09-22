@@ -152,6 +152,8 @@ export function ButtonDemo(): React.JSX.Element {
         </View>
       </Section>
 
+      {/* The selection groups keep the small size: three labels at the large
+          sizes don't fit a phone's width. */}
       <Section title="Button Group">
         <View style={styles.groupRow}>
           <ButtonGroup
@@ -172,7 +174,8 @@ export function ButtonDemo(): React.JSX.Element {
             selection="single"
             selectedValues={range}
             onSelectionChange={setRange}
-            {...common}
+            shape={shape}
+            disabled={disabled}
           />
         </View>
         <Divider />
@@ -184,7 +187,8 @@ export function ButtonDemo(): React.JSX.Element {
             selection="multiple"
             selectedValues={format}
             onSelectionChange={setFormat}
-            {...common}
+            shape={shape}
+            disabled={disabled}
           />
         </View>
         <Divider />
