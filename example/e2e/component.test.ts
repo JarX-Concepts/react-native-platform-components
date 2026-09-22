@@ -105,10 +105,20 @@ const typeInto = async (fieldId: string, text: string, multiline = false) => {
 const pressReturn = async (fieldId: string) => {
   if (isAndroid()) {
     await element(by.id('demo-scroll')).scroll(60, 'down');
+    // The drag ends in a fling that a following tap would only stop; on the
+    // CI emulator it takes a while to settle
+    await pause(1200);
   } else {
     await inputOf(fieldId).tapReturnKey();
+    await pause(700);
   }
-  await pause(700);
+};
+
+// Text assertions after an action poll, so a slow CI emulator gets its time
+const expectText = async (testID: string, text: string) => {
+  await waitFor(element(by.id(testID)))
+    .toHaveText(text)
+    .withTimeout(5000);
 };
 
 export const ensureModalMode = async (enabled: boolean) => {
@@ -808,26 +818,26 @@ describe('Platform Components Example', () => {
     // covers the buttons below, so every field is left through its return
     // key, which submits and blurs a single-line field.
     await typeInto('field-name', 'Ada');
-    await expect(element(by.id('field-name-value'))).toHaveText('Ada');
-    await expect(element(by.id('field-last-event'))).toHaveText('focus: name');
+    await expectText('field-name-value', 'Ada');
+    await expectText('field-last-event', 'focus: name');
     await pressReturn('field-name');
-    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
+    await expectText('field-last-event', 'blur: name');
 
     // A controlled value from JS reaches the native field
+    await scrollToId('field-set');
     await element(by.id('field-set')).tap();
-    await pause(500);
-    await expect(element(by.id('field-name-value'))).toHaveText('Grace Hopper');
+    await expectText('field-name-value', 'Grace Hopper');
     await expect(inputOf('field-name')).toHaveText('Grace Hopper');
 
     // Ref methods: focus, then clear
     await element(by.id('field-focus')).tap();
     await pause(700);
-    await expect(element(by.id('field-last-event'))).toHaveText('focus: name');
+    await expectText('field-last-event', 'focus: name');
     await pressReturn('field-name');
-    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
+    await expectText('field-last-event', 'blur: name');
     await element(by.id('field-clear')).tap();
     await pause(500);
-    await expect(element(by.id('field-name-value'))).toHaveText('(empty)');
+    await expectText('field-name-value', '(empty)');
 
     // Validation: the error appears once the email field is left
     await typeInto('field-email', 'not-an-email');
@@ -894,7 +904,7 @@ describe('Platform Components Example', () => {
     await scrollToId('field-name', 'up');
     await inputOf('field-name').tap();
     await pause(500);
-    await expect(element(by.id('field-last-event'))).toHaveText('blur: name');
+    await expectText('field-last-event', 'blur: name');
   });
 
   it('should test Theme functionality', async () => {
