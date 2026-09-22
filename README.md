@@ -13,6 +13,8 @@ Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**,
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu">ContextMenu</a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu">SelectionMenu</a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol">SegmentedControl</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/button">Button</a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/floatingtoolbar">FloatingToolbar</a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass">LiquidGlass</a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/guides/theming">Theme</a></td>
   </tr>
@@ -21,6 +23,8 @@ Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**,
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" width="100" alt="ContextMenu on iOS" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" width="100" alt="SelectionMenu on iOS" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" width="100" alt="SegmentedControl on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/button"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-button.gif" width="100" alt="Button on iOS" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/floatingtoolbar"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-floatingtoolbar.gif" width="100" alt="FloatingToolbar on iOS" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-liquidglass.gif" width="100" alt="LiquidGlass on iOS" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/guides/theming"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-theme.gif" width="100" alt="Brand color and dark mode on iOS" /></a></td>
   </tr>
@@ -29,6 +33,8 @@ Native **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**,
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" width="100" alt="ContextMenu on Android" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/selectionmenu"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" width="100" alt="SelectionMenu on Android" /></a></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" width="100" alt="SegmentedControl on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/button"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-button.gif" width="100" alt="Button on Android" /></a></td>
+    <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/components/floatingtoolbar"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-floatingtoolbar.gif" width="100" alt="FloatingToolbar on Android" /></a></td>
     <td align="center" valign="middle"><sub>iOS 26+ only.<br/>Plain View on Android.</sub></td>
     <td align="center"><a href="https://jarx-concepts.github.io/react-native-platform-components/guides/theming"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-theme.gif" width="100" alt="Brand color and dark mode on Android" /></a></td>
   </tr>

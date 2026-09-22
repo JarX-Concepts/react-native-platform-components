@@ -6,11 +6,14 @@ const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Scroll the demo screen until an element is visible
-const scrollToId = async (testID: string) => {
+const scrollToId = async (
+  testID: string,
+  direction: 'down' | 'up' = 'down'
+) => {
   await waitFor(element(by.id(testID)))
     .toBeVisible()
     .whileElement(by.id('demo-scroll'))
-    .scroll(200, 'down');
+    .scroll(200, direction);
 };
 
 // Tap a segment by its spoken label, which works for text and icon segments.
@@ -581,22 +584,24 @@ describe('Platform Components Example', () => {
       'month · italic'
     );
 
-    // Sizes and shapes: cycle the size picker, then square corners
-    await scrollToId('size-picker');
+    // Sizes and shapes: cycle the size picker, then square corners. Larger
+    // buttons push the picker down, so bring it back before every tap.
     for (const size of ['M', 'L', 'XL', 'XS', 'S']) {
+      await scrollToId('size-picker');
       await element(by.text(size)).atIndex(0).tap();
       await pause(700);
     }
+    await scrollToId('square-switch');
     await element(by.id('square-switch')).tap();
     await pause(900);
     await element(by.id('square-switch')).tap();
     await pause(600);
 
     // Disabled buttons don't report presses
+    await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
-    await scrollToId('button-filled');
-    await element(by.id('button-last-pressed')).tap();
+    await scrollToId('button-filled', 'up');
     await element(by.id('button-filled')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('copy');

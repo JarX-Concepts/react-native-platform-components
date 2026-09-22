@@ -3,6 +3,17 @@ title: "FloatingToolbar"
 description: "Native floating toolbar for React Native: Material 3 Expressive FloatingToolbarLayout on Android, a Liquid Glass capsule on iOS 26."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-floatingtoolbar.gif" height="480" alt="FloatingToolbar on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-floatingtoolbar.gif" height="480" alt="FloatingToolbar on Android" /></td>
+  </tr>
+</table>
+
 A toolbar that floats above the content, using **FloatingToolbarLayout** (Material 3 Expressive) on Android and a capsule of **UIGlassEffect** on iOS 26 (a blur material with a soft shadow on earlier versions). The toolbar is a container: put [Button](/components/button)s, or anything else, inside it and position it with a style.
 
 ```tsx

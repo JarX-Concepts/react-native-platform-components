@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.TextUtils
 import android.view.ContextThemeWrapper
 import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
@@ -380,6 +381,33 @@ class PCButtonGroupView(context: Context) :
 
   // ---- Measurement ----
 
+  private val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+
+  /**
+   * The group's natural width: every button on one row. MaterialButtonGroup
+   * answers that itself, except in the "wrap" overflow mode, which refuses an
+   * AT_MOST width and lays every button on its own row for UNSPECIFIED; there
+   * the buttons are summed instead.
+   */
+  private fun naturalWidth(child: MaterialButtonGroup): Int {
+    if (overflow != "wrap") {
+      child.measure(unspecified, unspecified)
+      return child.measuredWidth
+    }
+    var total = child.paddingLeft + child.paddingRight
+    var visible = 0
+    for (i in 0 until child.childCount) {
+      val button = child.getChildAt(i)
+      if (button.visibility == View.GONE) continue
+      button.measure(unspecified, unspecified)
+      val params = button.layoutParams as? MarginLayoutParams
+      total += button.measuredWidth + (params?.leftMargin ?: 0) + (params?.rightMargin ?: 0)
+      visible++
+    }
+    if (visible > 1) total += child.spacing * (visible - 1)
+    return total
+  }
+
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     val child = group
     if (child == null) {
@@ -387,9 +415,9 @@ class PCButtonGroupView(context: Context) :
       return
     }
 
-    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    child.measure(unspecified, unspecified)
-    val width = resolveDimension(widthMeasureSpec, child.measuredWidth)
+    val natural = naturalWidth(child)
+    val width = resolveDimension(widthMeasureSpec, natural)
+    child.measure(MeasureSpec.makeMeasureSpec(minOf(width, natural), MeasureSpec.EXACTLY), unspecified)
     val height = resolveDimension(heightMeasureSpec, child.measuredHeight)
 
     child.measure(
@@ -427,9 +455,7 @@ class PCButtonGroupView(context: Context) :
 
     // The natural width, and the height at the width we actually have when
     // that is narrower (an overflow "wrap" group grows taller then).
-    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    child.measure(unspecified, unspecified)
-    val naturalWidth = child.measuredWidth
+    val naturalWidth = naturalWidth(child)
     val fittedWidth = if (width in 1 until naturalWidth) width else naturalWidth
     child.measure(MeasureSpec.makeMeasureSpec(fittedWidth, MeasureSpec.EXACTLY), unspecified)
     val widthDp = PixelUtil.toDIPFromPixel(naturalWidth.toFloat())

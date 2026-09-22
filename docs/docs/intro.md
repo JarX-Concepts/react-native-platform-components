@@ -83,6 +83,22 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
     <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="550" /></td>
   </tr>
   <tr>
+    <td align="center"><strong>iOS Button</strong></td>
+    <td align="center"><strong>Android Button</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-button.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-button.gif" height="550" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>iOS FloatingToolbar</strong></td>
+    <td align="center"><strong>Android FloatingToolbar</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-floatingtoolbar.gif" height="550" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-floatingtoolbar.gif" height="550" /></td>
+  </tr>
+  <tr>
     <td align="center"><strong>iOS LiquidGlass</strong></td>
     <td align="center"><strong>Android LiquidGlass</strong></td>
   </tr>

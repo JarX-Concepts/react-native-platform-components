@@ -3,6 +3,17 @@ title: "Button"
 description: "Native button for React Native: Material 3 Expressive on Android (five sizes, round or square, shape morphing on press), UIButton on iOS."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-button.gif" height="480" alt="Button on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-button.gif" height="480" alt="Button on Android" /></td>
+  </tr>
+</table>
+
 Native button using **MaterialButton** with the Material 3 Expressive styles on Android and **UIButton** with a `UIButton.Configuration` on iOS. Each platform draws its own button: Android gets the Expressive shapes, sizes and press morph, iOS gets the system button of the iOS version it runs on.
 
 ```tsx

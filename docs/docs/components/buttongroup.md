@@ -3,6 +3,17 @@ title: "ButtonGroup"
 description: "Native button group for React Native: Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-button.gif" height="480" alt="ButtonGroup on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-button.gif" height="480" alt="ButtonGroup on Android" /></td>
+  </tr>
+</table>
+
 A row of related buttons using **MaterialButtonGroup** and **MaterialButtonToggleGroup** (Material 3 Expressive) on Android and a row of **UIButton**s on iOS. Use it for a set of actions, or for single / multiple selection.
 
 ```tsx
