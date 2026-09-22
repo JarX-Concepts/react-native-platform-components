@@ -98,16 +98,20 @@ const typeInto = async (fieldId: string, text: string, multiline = false) => {
 };
 
 // Leaves a field. iOS presses the return key, which submits and blurs a
-// single-line field. Espresso's key injection is unreliable on the emulator,
-// so Android drags the scroll view instead: keyboardDismissMode="on-drag"
-// dismisses the keyboard through React Native's focus registry, which blurs
-// the field as it would a TextInput.
+// single-line field. Espresso's key injection is unreliable on the emulator
+// and a drag is not reliably a drag on the CI one, so Android moves the focus
+// to the Name field and blurs that through its ref, which the demo's Blur
+// button does.
 const pressReturn = async (fieldId: string) => {
   if (isAndroid()) {
-    await element(by.id('demo-scroll')).scroll(60, 'down');
-    // The drag ends in a fling that a following tap would only stop; on the
-    // CI emulator it takes a while to settle
-    await pause(1200);
+    if (fieldId !== 'field-name') {
+      await scrollToId('field-name', 'up');
+      await inputOf('field-name').tap();
+      await pause(500);
+    }
+    await scrollToId('field-blur');
+    await element(by.id('field-blur')).tap();
+    await pause(700);
   } else {
     await inputOf(fieldId).tapReturnKey();
     await pause(700);
@@ -863,15 +867,15 @@ describe('Platform Components Example', () => {
     await typeInto('field-notes', 'First line\nSecond line', true);
     await pause(700);
 
-    // Leaving a multi-line field: a drag on the scroll view, which dismisses
-    // the keyboard (and blurs the field) as it does for a TextInput. On iOS
+    // Leaving a multi-line field: on iOS a drag on the scroll view, which
+    // dismisses the keyboard (and blurs the field) as it does for a TextInput;
     // the swipe starts near the top, above the keyboard.
     if (isAndroid()) {
-      await element(by.id('demo-scroll')).scroll(60, 'down');
+      await pressReturn('field-notes');
     } else {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
+      await pause(700);
     }
-    await pause(700);
     await scrollToId('editable-switch');
 
     if (isAndroid()) {
