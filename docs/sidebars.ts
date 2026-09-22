@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
       label: 'Components',
       collapsed: false,
       items: [
+        'components/textfield',
         'components/datepicker',
         'components/contextmenu',
         'components/selectionmenu',

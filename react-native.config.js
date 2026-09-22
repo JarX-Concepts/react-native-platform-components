@@ -8,6 +8,7 @@ module.exports = {
           'MeasuringPCSegmentedControlComponentDescriptor',
           'MeasuringPCButtonComponentDescriptor',
           'MeasuringPCButtonGroupComponentDescriptor',
+          'MeasuringPCTextFieldComponentDescriptor',
         ],
         cmakeListsPath: 'src/main/jni/CMakeLists.txt',
       },

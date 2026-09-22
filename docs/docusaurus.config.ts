@@ -49,7 +49,7 @@ const config: Config = {
     ],
   ],
   themeConfig: {
-    image: 'https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif',
+    image: 'https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-textfield.gif',
     metadata: [
       {
         name: 'keywords',

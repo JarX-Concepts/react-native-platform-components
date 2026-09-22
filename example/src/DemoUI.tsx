@@ -46,6 +46,8 @@ export function Screen(props: {
       testID="demo-scroll"
       // iOS insets the content below the status bar / Dynamic Island
       contentInsetAdjustmentBehavior="automatic"
+      // A drag puts the keyboard away, as iOS forms do
+      keyboardDismissMode="on-drag"
       style={[ui.container, { backgroundColor: colors.background }]}
     >
       {props.children}

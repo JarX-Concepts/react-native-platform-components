@@ -6,6 +6,7 @@ export * from './Button';
 export * from './ButtonGroup';
 export * from './FloatingToolbar';
 export * from './LiquidGlass';
+export * from './TextField';
 export * from './icons';
 export * from './labelStyle';
 export * from './sharedTypes';

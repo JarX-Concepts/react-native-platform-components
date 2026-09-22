@@ -334,4 +334,21 @@
   <style name="PCToolbarButton.Icon.Vibrant" parent="Widget.Material3.FloatingToolbar.IconButton.Vibrant">
     <item name="materialSizeOverlay">?attr/pcIconButtonSizeOverlay</item>
   </style>
+  <!--
+    TextField: theme overlays that select the Material 3 text field style. A
+    TextInputLayout takes its style from the textInputStyle theme attribute, so
+    the variant is chosen by wrapping the context (see PCTextFieldView).
+  -->
+  <style name="PCTextField.Outlined" parent="">
+    <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
+  </style>
+  <style name="PCTextField.Outlined.Dense">
+    <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense</item>
+  </style>
+  <style name="PCTextField.Filled" parent="">
+    <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.FilledBox</item>
+  </style>
+  <style name="PCTextField.Filled.Dense">
+    <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.FilledBox.Dense</item>
+  </style>
 </resources>

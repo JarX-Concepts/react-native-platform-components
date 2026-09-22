@@ -6,6 +6,11 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 ASSETS_DIR="$PROJECT_DIR/assets"
 ARTIFACTS_DIR="$PROJECT_DIR/example/artifacts"
 
+# Output size: 560px wide is crisp at the height the docs show the GIFs on a
+# retina display; override for a quick low-resolution pass
+GIF_WIDTH="${GIF_WIDTH:-560}"
+GIF_FPS="${GIF_FPS:-20}"
+
 echo "=== README GIF Generator ==="
 echo ""
 
@@ -23,51 +28,44 @@ else
 fi
 
 echo ""
-echo "Step 3: Finding latest videos..."
+echo "Step 3: Finding the newest recording of each flow..."
 
-# Find the latest iOS artifacts folder (sort by name since timestamps are ISO-formatted)
-IOS_ARTIFACTS=$(ls -d "$ARTIFACTS_DIR"/ios.sim.release.* 2>/dev/null | sort -r | head -1)
-if [ -z "$IOS_ARTIFACTS" ]; then
-    echo "Error: No iOS artifacts found"
-    exit 1
-fi
+# The newest passing recording of a flow across every artifacts run, so a
+# single-flow run (see CONTRIBUTING) refreshes just that component's GIFs
+newest_recording() {
+    local config_prefix="$1" test_name="$2"
+    find "$ARTIFACTS_DIR" -type f -path "*/${config_prefix}.*/✓ Platform Components Example should test ${test_name} functionality/test.mp4" -print0 2>/dev/null \
+        | xargs -0 ls -t 2>/dev/null | head -1
+}
 
-# Find the latest Android artifacts folder (sort by name since timestamps are ISO-formatted)
-ANDROID_ARTIFACTS=$(ls -d "$ARTIFACTS_DIR"/android.emu.release.* 2>/dev/null | sort -r | head -1)
-if [ -z "$ANDROID_ARTIFACTS" ]; then
-    echo "Error: No Android artifacts found"
-    exit 1
-fi
-
-echo "iOS artifacts: $IOS_ARTIFACTS"
-echo "Android artifacts: $ANDROID_ARTIFACTS"
-
-# Locate the 15 video files (LiquidGlass is iOS-only)
-IOS_DATEPICKER="$IOS_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
-IOS_SELECTIONMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
-IOS_CONTEXTMENU="$IOS_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
-IOS_SEGMENTEDCONTROL="$IOS_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
-IOS_BUTTON="$IOS_ARTIFACTS/✓ Platform Components Example should test Button functionality/test.mp4"
-IOS_FLOATINGTOOLBAR="$IOS_ARTIFACTS/✓ Platform Components Example should test Floating Toolbar functionality/test.mp4"
-IOS_LIQUIDGLASS="$IOS_ARTIFACTS/✓ Platform Components Example should test Liquid Glass functionality/test.mp4"
-IOS_THEME="$IOS_ARTIFACTS/✓ Platform Components Example should test Theme functionality/test.mp4"
-ANDROID_DATEPICKER="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Date Picker functionality/test.mp4"
-ANDROID_SELECTIONMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Selection Menu functionality/test.mp4"
-ANDROID_CONTEXTMENU="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Context Menu functionality/test.mp4"
-ANDROID_SEGMENTEDCONTROL="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Segmented Control functionality/test.mp4"
-ANDROID_BUTTON="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Button functionality/test.mp4"
-ANDROID_FLOATINGTOOLBAR="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Floating Toolbar functionality/test.mp4"
-ANDROID_THEME="$ANDROID_ARTIFACTS/✓ Platform Components Example should test Theme functionality/test.mp4"
+# Locate the 17 video files (LiquidGlass is iOS-only)
+IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
+IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
+IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
+IOS_CONTEXTMENU=$(newest_recording ios.sim.release "Context Menu")
+IOS_SEGMENTEDCONTROL=$(newest_recording ios.sim.release "Segmented Control")
+IOS_BUTTON=$(newest_recording ios.sim.release "Button")
+IOS_FLOATINGTOOLBAR=$(newest_recording ios.sim.release "Floating Toolbar")
+IOS_LIQUIDGLASS=$(newest_recording ios.sim.release "Liquid Glass")
+IOS_THEME=$(newest_recording ios.sim.release "Theme")
+ANDROID_TEXTFIELD=$(newest_recording android.emu.release "Text Field")
+ANDROID_DATEPICKER=$(newest_recording android.emu.release "Date Picker")
+ANDROID_SELECTIONMENU=$(newest_recording android.emu.release "Selection Menu")
+ANDROID_CONTEXTMENU=$(newest_recording android.emu.release "Context Menu")
+ANDROID_SEGMENTEDCONTROL=$(newest_recording android.emu.release "Segmented Control")
+ANDROID_BUTTON=$(newest_recording android.emu.release "Button")
+ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar")
+ANDROID_THEME=$(newest_recording android.emu.release "Theme")
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_BUTTON" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_BUTTON" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
-    if [ ! -f "$f" ]; then
-        echo "Error: Video file not found: $f"
+for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_BUTTON" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_BUTTON" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
+    if [ -z "$f" ] || [ ! -f "$f" ]; then
+        echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 15 videos found!"
+echo "All 17 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -81,6 +79,7 @@ convert_to_gif() {
     local input="$1"
     local output="$2"
     local trim_start="$3"
+    local fps="${4:-$GIF_FPS}"
 
     local trimmed_input="$input"
 
@@ -91,12 +90,14 @@ convert_to_gif() {
         ffmpeg -y -ss "$trim_start" -i "$input" -c copy "$trimmed_input" 2>/dev/null
     fi
 
+    # The palette is built from the differences between frames and applied
+    # with error diffusion, which keeps text edges clean.
     echo "  Generating palette for $(basename "$output")..."
-    ffmpeg -y -i "$trimmed_input" -vf "fps=15,scale=480:-1:flags=lanczos,palettegen" "$TEMP_DIR/palette.png" 2>/dev/null
+    ffmpeg -y -i "$trimmed_input" -vf "fps=$fps,scale=$GIF_WIDTH:-1:flags=lanczos,palettegen=stats_mode=diff" "$TEMP_DIR/palette.png" 2>/dev/null
 
     echo "  Creating GIF: $(basename "$output")..."
     ffmpeg -y -i "$trimmed_input" -i "$TEMP_DIR/palette.png" \
-        -filter_complex "fps=15,scale=480:-1:flags=lanczos[x];[x][1:v]paletteuse" \
+        -filter_complex "fps=$fps,scale=$GIF_WIDTH:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle" \
         "$output" 2>/dev/null
 
     local size=$(du -h "$output" | cut -f1)
@@ -115,14 +116,16 @@ navigation_trim() {
     echo "${trim:-3}"
 }
 
-# Convert all 15 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 17 videos to GIFs (LiquidGlass is iOS-only)
+convert_to_gif "$IOS_TEXTFIELD" "$ASSETS_DIR/ios-textfield.gif" "$(navigation_trim "$IOS_TEXTFIELD")"
+convert_to_gif "$ANDROID_TEXTFIELD" "$ASSETS_DIR/android-textfield.gif" "$(navigation_trim "$ANDROID_TEXTFIELD")"
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
 convert_to_gif "$IOS_SELECTIONMENU" "$ASSETS_DIR/ios-selectionmenu.gif" "$(navigation_trim "$IOS_SELECTIONMENU")"
 convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "$(navigation_trim "$IOS_CONTEXTMENU")"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "$(navigation_trim "$IOS_SEGMENTEDCONTROL")"
 convert_to_gif "$IOS_BUTTON" "$ASSETS_DIR/ios-button.gif" "$(navigation_trim "$IOS_BUTTON")"
 convert_to_gif "$IOS_FLOATINGTOOLBAR" "$ASSETS_DIR/ios-floatingtoolbar.gif" "$(navigation_trim "$IOS_FLOATINGTOOLBAR")"
-convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")"
+convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")" 15
 convert_to_gif "$IOS_THEME" "$ASSETS_DIR/ios-theme.gif" "$(navigation_trim "$IOS_THEME")"
 convert_to_gif "$ANDROID_DATEPICKER" "$ASSETS_DIR/android-datepicker.gif" ""
 convert_to_gif "$ANDROID_SELECTIONMENU" "$ASSETS_DIR/android-selectionmenu.gif" "$(navigation_trim "$ANDROID_SELECTIONMENU")"

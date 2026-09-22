@@ -1,6 +1,56 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+---
+
+### TextField
+
+```tsx
+import React, { useState } from 'react';
+import { View } from 'react-native';
+import { TextField } from 'react-native-platform-components';
+
+export function SignUpForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const emailError =
+    email.length > 0 && !email.includes('@') ? 'Enter a valid email' : undefined;
+
+  return (
+    <View style={{ padding: 16, gap: 12 }}>
+      <TextField
+        label="Email"
+        placeholder="you@example.com"
+        supportingText="We never share it"
+        value={email}
+        onChangeText={setEmail}
+        error={emailError}
+        keyboardType="email-address"
+        autoComplete="email"
+        autoCapitalize="none"
+        clearButtonMode="while-editing"
+      />
+      <TextField
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        passwordToggle
+        autoComplete="new-password"
+        supportingText="At least 8 characters"
+      />
+      <TextField
+        label="Notes"
+        multiline
+        maxLength={200}
+        showCharacterCount
+        android={{ variant: 'filled' }}
+      />
+    </View>
+  );
+}
+```
+
 ---
 
 ### DatePicker (Modal)
