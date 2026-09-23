@@ -25,7 +25,12 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Guides',
       collapsed: false,
-      items: ['guides/android-theme', 'guides/icons', 'guides/theming'],
+      items: [
+        'guides/android-theme',
+        'guides/icons',
+        'guides/theming',
+        'guides/web',
+      ],
     },
   ],
 };

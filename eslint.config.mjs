@@ -36,6 +36,19 @@ export default defineConfig([
     },
   },
   {
+    // The web implementations style DOM elements with CSS objects, which
+    // StyleSheet can't hold, and drop the native-only props by destructuring
+    // them out of the view props.
+    files: ['src/web/**'],
+    rules: {
+      'react-native/no-inline-styles': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { ignoreRestSiblings: true },
+      ],
+    },
+  },
+  {
     ignores: ['node_modules/', 'lib/', 'coverage/', '**/build/', 'docs/'],
   },
 ]);

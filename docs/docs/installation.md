@@ -1,6 +1,6 @@
 ---
-title: "Installation"
-description: "Install react-native-platform-components in a bare React Native or Expo app (New Architecture, dev client, config plugin)."
+title: 'Installation'
+description: 'Install react-native-platform-components in a bare React Native or Expo app (New Architecture, dev client, config plugin).'
 ---
 
 ```sh
@@ -23,6 +23,10 @@ pod install
 - Uses native Android Views with Material Design (including `PopupMenu` for context menus)
 - Supports **Material 3** styling
 - Works with the default React Native and Expo AppCompat theme. To have the Material 3 components use your app's colors, see [Android Theme Configuration](/guides/android-theme)
+
+### Web
+
+With [react-native-web](https://necolas.github.io/react-native-web/), including Expo web, the components render the browser's own controls with the same props. No setup is needed; see [Web](/guides/web).
 
 ### Expo (Managed Workflow)
 
@@ -65,7 +69,6 @@ Add to your `app.json`. The `android.theme` option re-parents Expo's generated `
 Either form of the reference works: `react-native-platform-components/app.plugin`
 as above, or the bare package name.
 
-
 For a complete working example, see the [`example-expo/`](https://github.com/JarX-Concepts/react-native-platform-components/tree/main/example-expo) directory.
 
 ## React Native New Architecture
@@ -93,7 +96,6 @@ iOS sets that minimum. LiquidGlass uses iOS 26 APIs, so the library has to be
 built with Xcode 26, and React Native's bundled `fmt` only compiles under Xcode
 26 from 0.81 on. The Android code itself builds against React Native 0.76, and
 CI keeps it that way.
-
 
 **Requirements:**
 
