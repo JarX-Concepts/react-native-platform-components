@@ -41,6 +41,12 @@ using namespace facebook::react;
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
+    // Fabric views seed _props with their own defaults: RCTViewComponentView
+    // asserts on it in debug builds of React Native core, and the first
+    // updateProps would otherwise read the base ViewProps as PCDatePickerProps.
+    static const auto defaultProps = std::make_shared<const PCDatePickerProps>();
+    _props = defaultProps;
+
     _datePickerView = [PCDatePickerView new];
     _datePickerView.translatesAutoresizingMaskIntoConstraints = NO;
 
