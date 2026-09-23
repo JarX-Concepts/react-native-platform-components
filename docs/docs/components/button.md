@@ -42,6 +42,7 @@ import { Button } from 'react-native-platform-components';
 | `disabledColor`      | `ColorValue`                                             | Container color while disabled. Unset keeps the platform's disabled look                 |
 | `disabledTintColor`  | `ColorValue`                                             | Label and icon color while disabled. Unset keeps the platform's disabled look            |
 | `labelStyle`         | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font. See [Styling](#styling)                                                      |
+| `maxFontSizeMultiplier` | `number`                                              | Cap on the label's text-size scaling, as on `Text`. `0` / unset = no cap. See [Styling](#styling) |
 | `accessibilityLabel` | `string`                                                 | Screen-reader label. Defaults to `label`; give icon-only buttons one                     |
 | `onPress`            | `() => void`                                             | Called when the button is pressed                                                        |
 
@@ -170,8 +171,15 @@ Colors take any React Native `ColorValue`. Fonts follow the `Text` style convent
 | `disabledColor`       | Disabled state of `backgroundTint` | Background color while `!isEnabled` (`configurationUpdateHandler`) |
 | `disabledTintColor`   | Disabled state of the text color and `iconTint` | Title and image color while `!isEnabled` |
 | `labelStyle`          | Typeface and size              | Title font            |
+| `maxFontSizeMultiplier` | Scaled sp size capped at the multiplier | Dynamic Type size capped at the multiplier |
 | `android.rippleColor` | Press ripple                   | —                     |
 | `android.strokeColor` | Outline (`outlined` variant)   | —                     |
+
+The label grows with the system text size (Dynamic Type on iOS, font scale on Android). `maxFontSizeMultiplier` caps that growth with the `Text` semantics: `2` lets the label reach twice its default size and no more; unset or `0` means no cap. On iOS the cap applies to the system title font and to a `labelStyle` without a `fontSize` (which follows the body text style); a fixed `labelStyle.fontSize` doesn't scale on iOS, so there is nothing to cap.
+
+```tsx
+<Button label="Continue" maxFontSizeMultiplier={1.5} />
+```
 
 A disabled button keeps the platform's disabled look (Material's disabled colors on Android, UIKit's on iOS) unless you set `disabledColor` / `disabledTintColor`, for example to keep the brand color at reduced opacity:
 

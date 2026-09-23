@@ -80,6 +80,12 @@ public final class PCButtonView: UIView {
         didSet { applyConfiguration() }
     }
 
+    /// Cap on the default title font's Dynamic Type scaling; below 1 = no cap.
+    /// (A labelStyle font is capped when it is built, in PCButton.mm.)
+    public var maxFontSizeMultiplier: CGFloat = 0 {
+        didSet { if oldValue != maxFontSizeMultiplier { applyConfiguration() } }
+    }
+
     /// Screen-reader label; empty uses the label
     public var spokenLabel: String = "" {
         didSet { updateAccessibilityLabel() }
@@ -206,7 +212,9 @@ public final class PCButtonView: UIView {
             foregroundColor: foregroundColor,
             font: labelFont,
             imagePlacement: iconPosition == "trailing" ? .trailing : .leading,
-            cornerRadius: cornerRadius >= 0 ? cornerRadius : nil
+            cornerRadius: cornerRadius >= 0 ? cornerRadius : nil,
+            maxFontSizeMultiplier: maxFontSizeMultiplier,
+            traits: traitCollection
         )
         if !configuredEnabled {
             applyDisabledColors(to: &config)
@@ -240,6 +248,16 @@ public final class PCButtonView: UIView {
             }
             config.imageColorTransformer = UIConfigurationColorTransformer { _ in color }
         }
+    }
+
+    // A capped title font is fixed, so it is rebuilt when the text size changes
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard maxFontSizeMultiplier >= 1,
+              previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
+        applyConfiguration()
+        onNeedsRemeasure?()
     }
 
     // MARK: - Sizing

@@ -38,6 +38,8 @@ export function Button(props: ButtonProps): React.ReactElement {
     disabledColor,
     disabledTintColor,
     labelStyle,
+    // Browsers scale text with page zoom, which has no cap
+    maxFontSizeMultiplier: _maxFontSizeMultiplier,
     accessibilityLabel,
     onPress,
     android,

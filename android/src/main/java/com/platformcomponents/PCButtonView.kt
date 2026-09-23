@@ -59,6 +59,7 @@ class PCButtonView(context: Context) :
   var labelFontSize: Float = 0f
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
+  var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
 
   // --- Events ---
   var onPress: (() -> Unit)? = null
@@ -190,6 +191,12 @@ class PCButtonView(context: Context) :
     rebuildUI()
   }
 
+  fun applyMaxFontSizeMultiplier(value: Float) {
+    if (maxFontSizeMultiplier == value) return
+    maxFontSizeMultiplier = value
+    rebuildUI()
+  }
+
   /** Called by the enclosing FloatingToolbar when its variant changes. */
   fun refreshToolbarStyle() {
     if (toolbarOverlay() != builtToolbarOverlay) rebuildUI()
@@ -270,6 +277,7 @@ class PCButtonView(context: Context) :
     val showsSpinner = loading
     PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration && !showsSpinner }) { requestLayout() }
     PCButtonSupport.applyFont(b, labelFontFamily, labelFontSize, labelFontWeight, labelFontStyle)
+    PCButtonSupport.applyMaxFontSizeMultiplier(b, maxFontSizeMultiplier)
     PCButtonSupport.applyColors(
       b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted,
       disabledContainerColor, disabledForegroundColor

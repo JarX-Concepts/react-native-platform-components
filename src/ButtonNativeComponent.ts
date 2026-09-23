@@ -76,6 +76,9 @@ export interface ButtonNativeProps extends ViewProps {
   /** Label font. */
   labelStyle?: ButtonLabelStyleProps;
 
+  /** Cap on the label's font scaling; 0 (or below 1) = no cap. */
+  maxFontSizeMultiplier?: Double;
+
   /**
    * Screen-reader label, applied to the native button rather than the host
    * view. Empty means "use the label".

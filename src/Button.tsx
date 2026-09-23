@@ -116,6 +116,13 @@ export interface ButtonProps extends ViewProps {
   /** Label font. */
   labelStyle?: LabelStyle;
 
+  /**
+   * Largest scale the label's font can reach with the system text size
+   * (Dynamic Type / font scale), as on `Text`: `undefined` or `0` means no
+   * cap; values of 1 or more cap it.
+   */
+  maxFontSizeMultiplier?: number;
+
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
 
@@ -160,6 +167,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     disabledColor,
     disabledTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     accessibilityLabel,
     onPress,
     android,
@@ -203,6 +211,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       androidStrokeColor={android?.strokeColor}
       androidMaterial={android?.material ?? 'expressive'}
       labelStyle={nativeLabelStyle}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       spokenLabel={accessibilityLabel ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       accessibilityState={mergedAccessibilityState}

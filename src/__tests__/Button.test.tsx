@@ -97,6 +97,14 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it('passes maxFontSizeMultiplier; unset means no cap (0)', () => {
+    const tree = render(<Button label="Save" />);
+    expect(lastNativeProps().maxFontSizeMultiplier).toBe(0);
+    act(() => tree.update(<Button label="Save" maxFontSizeMultiplier={1.5} />));
+    expect(lastNativeProps().maxFontSizeMultiplier).toBe(1.5);
+    act(() => tree.unmount());
+  });
+
   it('is not loading by default', () => {
     const tree = render(<Button label="Save" />);
     expect(lastNativeProps().loading).toBe('false');

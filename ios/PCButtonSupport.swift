@@ -112,7 +112,9 @@ enum PCButtonSupport {
         foregroundColor: UIColor?,
         font: UIFont?,
         imagePlacement: NSDirectionalRectEdge = .leading,
-        cornerRadius: CGFloat? = nil
+        cornerRadius: CGFloat? = nil,
+        maxFontSizeMultiplier: CGFloat = 0,
+        traits: UITraitCollection? = nil
     ) -> UIButton.Configuration {
         var config = configuration(variant: variant, selected: selected)
         config.title = label.isEmpty ? nil : label
@@ -134,14 +136,50 @@ enum PCButtonSupport {
         if let foregroundColor {
             config.baseForegroundColor = foregroundColor
         }
-        if let font {
+        var titleFont = font
+        if titleFont == nil, maxFontSizeMultiplier >= 1, !label.isEmpty, let traits,
+           let systemFont = defaultTitleFont(for: config) {
+            titleFont = cappedFont(systemFont, maxFontSizeMultiplier: maxFontSizeMultiplier, traits: traits)
+        }
+        if let titleFont {
             config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
                 var outgoing = incoming
-                outgoing.font = font
+                outgoing.font = titleFont
                 return outgoing
             }
         }
         return config
+    }
+
+    /// The title font UIKit picks for a configuration, read from a throwaway
+    /// button.
+    private static func defaultTitleFont(for config: UIButton.Configuration) -> UIFont? {
+        let probe = UIButton(configuration: config)
+        probe.updateConfiguration()
+        probe.layoutIfNeeded()
+        return probe.titleLabel?.font
+    }
+
+    /// Caps a Dynamic Type font at `maxFontSizeMultiplier` times its size at
+    /// the default content size category, as React Native's `Text` does. The
+    /// size is read for `traits`, so the probe's own traits don't matter.
+    /// nil when the cap doesn't bind, or the font has no text style (it
+    /// doesn't scale), so UIKit keeps its own font.
+    static func cappedFont(_ font: UIFont, maxFontSizeMultiplier: CGFloat, traits: UITraitCollection) -> UIFont? {
+        guard maxFontSizeMultiplier >= 1,
+              let style = font.fontDescriptor.object(forKey: .textStyle) as? String
+        else { return nil }
+        let textStyle = UIFont.TextStyle(rawValue: style)
+        let defaultTraits = UITraitCollection(preferredContentSizeCategory: .large)
+        let base = UIFont.preferredFont(forTextStyle: textStyle, compatibleWith: defaultTraits).pointSize
+        let current = UIFont.preferredFont(forTextStyle: textStyle, compatibleWith: traits).pointSize
+        let cap = base * maxFontSizeMultiplier
+        guard current > cap else { return nil }
+        // A plain system font at the capped size: a font that keeps its text
+        // style could be scaled again by the label.
+        let fontTraits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
+        let weight = (fontTraits?[.weight] as? CGFloat).map { UIFont.Weight($0) } ?? .regular
+        return UIFont.systemFont(ofSize: cap, weight: weight)
     }
 
     /// Resolves the icon's image. SF Symbols resolve synchronously; images

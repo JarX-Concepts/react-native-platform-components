@@ -130,6 +130,11 @@ class PCButtonViewManager :
     )
   }
 
+  // 0 (or below 1) = no cap
+  override fun setMaxFontSizeMultiplier(view: PCButtonView, value: Double) {
+    view.applyMaxFontSizeMultiplier(value.toFloat())
+  }
+
   override fun setSpokenLabel(view: PCButtonView, value: String?) {
     view.applySpokenLabel(value ?: "")
   }

@@ -3,6 +3,7 @@ package com.platformcomponents
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.util.TypedValue
 import android.widget.TextView
 import com.facebook.react.bridge.ReadableMap
@@ -87,6 +88,26 @@ object PCButtonSupport {
         family.ifEmpty { null },
         button.context.assets
       )
+    }
+  }
+
+  /**
+   * Caps the label's font scaling at [maxMultiplier] times its unscaled size,
+   * as React Native's maxFontSizeMultiplier does; below 1 means no cap. Call
+   * after the font size is set.
+   */
+  fun applyMaxFontSizeMultiplier(button: TextView, maxMultiplier: Float) {
+    if (maxMultiplier < 1f) return
+    val metrics = button.resources.displayMetrics
+    // The sp size back from pixels; Android 14+ scales large text non-linearly
+    val sp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, button.textSize, metrics)
+    } else {
+      button.textSize / (metrics.density * button.resources.configuration.fontScale)
+    }
+    val cap = sp * metrics.density * maxMultiplier
+    if (button.textSize > cap) {
+      button.setTextSize(TypedValue.COMPLEX_UNIT_PX, cap)
     }
   }
 
