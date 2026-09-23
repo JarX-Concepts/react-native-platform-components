@@ -154,6 +154,14 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
     _view.foregroundColor = RCTUIColorFromSharedColor(newProps.foregroundColor);
   }
 
+  if (!prevProps || newProps.disabledColor != prevProps->disabledColor) {
+    _view.disabledContainerColor = RCTUIColorFromSharedColor(newProps.disabledColor);
+  }
+
+  if (!prevProps || newProps.disabledForegroundColor != prevProps->disabledForegroundColor) {
+    _view.disabledForegroundColor = RCTUIColorFromSharedColor(newProps.disabledForegroundColor);
+  }
+
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
   if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
     _view.labelFont = FontFromLabelStyle(newProps.labelStyle);

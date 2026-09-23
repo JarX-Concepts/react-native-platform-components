@@ -97,6 +97,21 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it('passes the disabled colors through', () => {
+    const tree = render(
+      <Button
+        label="Save"
+        disabled
+        disabledColor="#FF000066"
+        disabledTintColor="white"
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.disabledColor).toBe('#FF000066');
+    expect(props.disabledForegroundColor).toBe('white');
+    act(() => tree.unmount());
+  });
+
   it('passes the Liquid Glass variants through', () => {
     const tree = render(<Button label="Glass" variant="glass" />);
     expect(lastNativeProps().variant).toBe('glass');

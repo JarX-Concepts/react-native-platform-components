@@ -68,6 +68,21 @@ describe('Button (web)', () => {
     expect(tree.root.findByType('button').props.disabled).toBe(true);
   });
 
+  it('uses custom disabled colors instead of fading', () => {
+    const tree = render(
+      <Button
+        label="Save"
+        disabled
+        disabledColor="#cccccc"
+        disabledTintColor="#333333"
+      />
+    );
+    const style = tree.root.findByType('button').props.style;
+    expect(style.backgroundColor).toBe('#cccccc');
+    expect(style.color).toBe('#333333');
+    expect(style.opacity).toBe(1);
+  });
+
   it('places a trailing icon and applies a numeric corner radius', () => {
     const tree = render(
       <Button label="Next" iconPosition="trailing" cornerRadius={6} />

@@ -282,6 +282,20 @@ export function ButtonDemo(): React.JSX.Element {
           />
         </View>
         <Divider />
+        <View style={styles.wrap}>
+          <Button
+            testID="button-disabled-colors"
+            label="Brand disabled"
+            color="#FF6B35"
+            tintColor="white"
+            disabledColor="rgba(255, 107, 53, 0.4)"
+            disabledTintColor="rgba(255, 255, 255, 0.8)"
+            {...common}
+            disabled
+          />
+          <Button label="Default disabled" {...common} disabled />
+        </View>
+        <Divider />
         <Row label="Custom style">
           <Switch
             style={ui.alignEnd}

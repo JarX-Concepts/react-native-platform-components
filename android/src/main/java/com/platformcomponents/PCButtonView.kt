@@ -49,6 +49,8 @@ class PCButtonView(context: Context) :
   var foregroundColor: Int? = null
   var rippleColor: Int? = null
   var strokeColor: Int? = null
+  var disabledContainerColor: Int? = null
+  var disabledForegroundColor: Int? = null
   var labelFontFamily: String = ""
   var labelFontSize: Float = 0f
   var labelFontWeight: String = ""
@@ -160,6 +162,13 @@ class PCButtonView(context: Context) :
     rebuildUI()
   }
 
+  fun applyDisabledColors(container: Int?, foreground: Int?) {
+    if (disabledContainerColor == container && disabledForegroundColor == foreground) return
+    disabledContainerColor = container
+    disabledForegroundColor = foreground
+    rebuildUI()
+  }
+
   fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
     if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
       labelFontWeight == fontWeight && labelFontStyle == fontStyle
@@ -249,7 +258,10 @@ class PCButtonView(context: Context) :
 
     PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration }) { requestLayout() }
     PCButtonSupport.applyFont(b, labelFontFamily, labelFontSize, labelFontWeight, labelFontStyle)
-    PCButtonSupport.applyColors(b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted)
+    PCButtonSupport.applyColors(
+      b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted,
+      disabledContainerColor, disabledForegroundColor
+    )
 
     addView(b, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
     button = b

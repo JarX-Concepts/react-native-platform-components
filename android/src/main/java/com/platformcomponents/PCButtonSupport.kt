@@ -91,8 +91,8 @@ object PCButtonSupport {
   }
 
   /**
-   * Applies the color props on top of the style's colors, keeping the style's
-   * disabled colors.
+   * Applies the color props on top of the style's colors. Unset disabled
+   * colors keep the style's; unset enabled colors keep the style's too.
    */
   fun applyColors(
     button: MaterialButton,
@@ -100,21 +100,30 @@ object PCButtonSupport {
     foreground: Int?,
     ripple: Int?,
     stroke: Int?,
-    iconTinted: Boolean
+    iconTinted: Boolean,
+    disabledContainer: Int? = null,
+    disabledForeground: Int? = null
   ) {
     val disabledState = intArrayOf(-android.R.attr.state_enabled)
+    val enabledState = intArrayOf(android.R.attr.state_enabled)
     val states = arrayOf(disabledState, intArrayOf())
 
-    container?.let { color ->
+    if (container != null || disabledContainer != null) {
       val theme = button.backgroundTintList
-      val disabled = theme?.getColorForState(disabledState, theme.defaultColor) ?: Color.TRANSPARENT
-      button.backgroundTintList = ColorStateList(states, intArrayOf(disabled, color))
+      val disabled = disabledContainer
+        ?: theme?.getColorForState(disabledState, theme.defaultColor)
+        ?: Color.TRANSPARENT
+      val enabled = container
+        ?: theme?.getColorForState(enabledState, theme.defaultColor)
+        ?: Color.TRANSPARENT
+      button.backgroundTintList = ColorStateList(states, intArrayOf(disabled, enabled))
     }
 
-    foreground?.let { color ->
+    if (foreground != null || disabledForeground != null) {
       val theme = button.textColors
-      val disabled = theme.getColorForState(disabledState, theme.defaultColor)
-      val tint = ColorStateList(states, intArrayOf(disabled, color))
+      val disabled = disabledForeground ?: theme.getColorForState(disabledState, theme.defaultColor)
+      val enabled = foreground ?: theme.getColorForState(enabledState, theme.defaultColor)
+      val tint = ColorStateList(states, intArrayOf(disabled, enabled))
       button.setTextColor(tint)
       if (iconTinted) {
         button.iconTint = tint

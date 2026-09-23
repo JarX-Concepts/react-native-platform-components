@@ -38,6 +38,8 @@ import { Button } from 'react-native-platform-components';
 | `disabled`           | `boolean`                                                | Disables the button                                                                      |
 | `color`              | `ColorValue`                                             | Container (background) color                                                             |
 | `tintColor`          | `ColorValue`                                             | Label and icon color                                                                     |
+| `disabledColor`      | `ColorValue`                                             | Container color while disabled. Unset keeps the platform's disabled look                 |
+| `disabledTintColor`  | `ColorValue`                                             | Label and icon color while disabled. Unset keeps the platform's disabled look            |
 | `labelStyle`         | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font. See [Styling](#styling)                                                      |
 | `accessibilityLabel` | `string`                                                 | Screen-reader label. Defaults to `label`; give icon-only buttons one                     |
 | `onPress`            | `() => void`                                             | Called when the button is pressed                                                        |
@@ -151,9 +153,24 @@ Colors take any React Native `ColorValue`. Fonts follow the `Text` style convent
 | --------------------- | ------------------------------ | --------------------- |
 | `color`               | `backgroundTint`               | `baseBackgroundColor` |
 | `tintColor`           | Text color and `iconTint`      | `baseForegroundColor` |
+| `disabledColor`       | Disabled state of `backgroundTint` | Background color while `!isEnabled` (`configurationUpdateHandler`) |
+| `disabledTintColor`   | Disabled state of the text color and `iconTint` | Title and image color while `!isEnabled` |
 | `labelStyle`          | Typeface and size              | Title font            |
 | `android.rippleColor` | Press ripple                   | —                     |
 | `android.strokeColor` | Outline (`outlined` variant)   | —                     |
+
+A disabled button keeps the platform's disabled look (Material's disabled colors on Android, UIKit's on iOS) unless you set `disabledColor` / `disabledTintColor`, for example to keep the brand color at reduced opacity:
+
+```tsx
+<Button
+  label="Brand"
+  color="#FF6B35"
+  tintColor="white"
+  disabledColor="rgba(255, 107, 53, 0.4)"
+  disabledTintColor="rgba(255, 255, 255, 0.8)"
+  disabled
+/>
+```
 
 Without these props the button takes its colors from the theme: the app's Material 3 theme or the brand color set with [`useNativeTheme`](/guides/theming) on Android, the tint color on iOS.
 

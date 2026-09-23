@@ -107,6 +107,14 @@ class PCButtonViewManager :
     view.applyColors(view.containerColor, view.foregroundColor, view.rippleColor, value)
   }
 
+  override fun setDisabledColor(view: PCButtonView, value: Int?) {
+    view.applyDisabledColors(value, view.disabledForegroundColor)
+  }
+
+  override fun setDisabledForegroundColor(view: PCButtonView, value: Int?) {
+    view.applyDisabledColors(view.disabledContainerColor, value)
+  }
+
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
   override fun setLabelStyle(view: PCButtonView, value: ReadableMap?) {
     view.applyLabelStyle(

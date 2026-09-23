@@ -50,6 +50,16 @@ public final class PCButtonView: UIView {
         didSet { applyConfiguration() }
     }
 
+    /// Container color while disabled; nil keeps the system disabled look
+    public var disabledContainerColor: UIColor? {
+        didSet { applyConfiguration() }
+    }
+
+    /// Label and icon color while disabled; nil keeps the system disabled look
+    public var disabledForegroundColor: UIColor? {
+        didSet { applyConfiguration() }
+    }
+
     /// Label font; nil keeps the configuration's font
     public var labelFont: UIFont? {
         didSet { applyConfiguration() }
@@ -77,6 +87,13 @@ public final class PCButtonView: UIView {
     /// Bumped on every icon change so late image loads can't apply a stale icon.
     private var iconGeneration = 0
 
+    /// The enabled state the current configuration was built for.
+    private var configuredEnabled = true
+
+    private var hasDisabledColors: Bool {
+        disabledContainerColor != nil || disabledForegroundColor != nil
+    }
+
     // MARK: - Init
 
     public override init(frame: CGRect) {
@@ -101,6 +118,11 @@ public final class PCButtonView: UIView {
         ])
 
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
+        // Custom disabled colors: rebuild the configuration when isEnabled flips
+        button.configurationUpdateHandler = { [weak self] button in
+            guard let self, self.hasDisabledColors, self.configuredEnabled != button.isEnabled else { return }
+            button.configuration = self.makeConfiguration()
+        }
         applyConfiguration()
     }
 
@@ -129,7 +151,13 @@ public final class PCButtonView: UIView {
     }
 
     private func applyConfiguration() {
-        button.configuration = PCButtonSupport.makeConfiguration(
+        button.configuration = makeConfiguration()
+        invalidateIntrinsicContentSize()
+    }
+
+    private func makeConfiguration() -> UIButton.Configuration {
+        configuredEnabled = button.isEnabled
+        var config = PCButtonSupport.makeConfiguration(
             variant: variant,
             selected: false,
             size: size,
@@ -142,7 +170,27 @@ public final class PCButtonView: UIView {
             imagePlacement: iconPosition == "trailing" ? .trailing : .leading,
             cornerRadius: cornerRadius >= 0 ? cornerRadius : nil
         )
-        invalidateIntrinsicContentSize()
+        if !configuredEnabled {
+            applyDisabledColors(to: &config)
+        }
+        return config
+    }
+
+    /// Replaces the system's disabled colors with the custom ones. The
+    /// transformers run last, after UIKit's own state handling.
+    private func applyDisabledColors(to config: inout UIButton.Configuration) {
+        if let color = disabledContainerColor {
+            config.background.backgroundColorTransformer = UIConfigurationColorTransformer { _ in color }
+        }
+        if let color = disabledForegroundColor {
+            let font = config.titleTextAttributesTransformer
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = font?(incoming) ?? incoming
+                outgoing.foregroundColor = color
+                return outgoing
+            }
+            config.imageColorTransformer = UIConfigurationColorTransformer { _ in color }
+        }
     }
 
     // MARK: - Sizing

@@ -26,6 +26,8 @@ export function Button(props: ButtonProps): React.ReactElement {
     disabled,
     color,
     tintColor,
+    disabledColor,
+    disabledTintColor,
     labelStyle,
     accessibilityLabel,
     onPress,
@@ -42,6 +44,18 @@ export function Button(props: ButtonProps): React.ReactElement {
     cssColor(color),
     cssColor(tintColor)
   );
+  // Custom disabled colors replace the default faded look.
+  const customDisabled =
+    disabled &&
+    (disabledColor !== undefined || disabledTintColor !== undefined);
+  if (disabled) {
+    if (disabledColor !== undefined) {
+      colors.backgroundColor = cssColor(disabledColor);
+    }
+    if (disabledTintColor !== undefined) {
+      colors.color = cssColor(disabledTintColor);
+    }
+  }
 
   return (
     <View {...viewProps} style={[{ alignSelf: 'flex-start' }, style]}>
@@ -60,7 +74,7 @@ export function Button(props: ButtonProps): React.ReactElement {
           borderRadius:
             cornerRadius ?? (shape === 'square' ? 12 : metrics.height / 2),
           fontSize: metrics.fontSize,
-          opacity: disabled ? 0.38 : 1,
+          opacity: disabled && !customDisabled ? 0.38 : 1,
           cursor: disabled ? 'default' : 'pointer',
           ...cssFont(labelStyle),
         }}

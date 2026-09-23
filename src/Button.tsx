@@ -91,6 +91,20 @@ export interface ButtonProps extends ViewProps {
    */
   tintColor?: ColorValue;
 
+  /**
+   * Container color while disabled. Unset keeps the platform's disabled look.
+   * iOS: a `configurationUpdateHandler` on `isEnabled`. Android: the disabled
+   * state of the `backgroundTint` color state list.
+   */
+  disabledColor?: ColorValue;
+
+  /**
+   * Label and icon color while disabled. Unset keeps the platform's disabled
+   * look. iOS: a `configurationUpdateHandler` on `isEnabled`. Android: the
+   * disabled state of the text color and `iconTint` color state lists.
+   */
+  disabledTintColor?: ColorValue;
+
   /** Label font. */
   labelStyle?: LabelStyle;
 
@@ -134,6 +148,8 @@ export function Button(props: ButtonProps): React.ReactElement {
     disabled,
     color,
     tintColor,
+    disabledColor,
+    disabledTintColor,
     labelStyle,
     accessibilityLabel,
     onPress,
@@ -163,6 +179,8 @@ export function Button(props: ButtonProps): React.ReactElement {
       interactivity={disabled ? 'disabled' : 'enabled'}
       color={color}
       foregroundColor={tintColor}
+      disabledColor={disabledColor}
+      disabledForegroundColor={disabledTintColor}
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
       androidMaterial={android?.material ?? 'expressive'}

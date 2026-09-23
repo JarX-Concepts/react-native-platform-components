@@ -55,6 +55,12 @@ export interface ButtonNativeProps extends ViewProps {
   /** Label and icon color. */
   foregroundColor?: ColorValue;
 
+  /** Container color while disabled; unset = platform disabled look. */
+  disabledColor?: ColorValue;
+
+  /** Label and icon color while disabled; unset = platform disabled look. */
+  disabledForegroundColor?: ColorValue;
+
   /** Android: ripple color shown while pressing. */
   androidRippleColor?: ColorValue;
 
