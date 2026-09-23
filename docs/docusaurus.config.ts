@@ -7,7 +7,7 @@ const repo = 'https://github.com/JarX-Concepts/react-native-platform-components'
 const config: Config = {
   title: 'react-native-platform-components',
   tagline:
-    'Native DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass for React Native. Native on Android too.',
+    'Native TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass for React Native. Native on Android too.',
   url: 'https://jarx-concepts.github.io',
   baseUrl: '/react-native-platform-components/',
   organizationName: 'JarX-Concepts',
@@ -49,7 +49,7 @@ const config: Config = {
     ],
   ],
   themeConfig: {
-    image: 'https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-textfield.gif',
+    image: 'img/social-card.png',
     metadata: [
       {
         name: 'keywords',
