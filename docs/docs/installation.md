@@ -28,6 +28,18 @@ pod install
 
 With [react-native-web](https://necolas.github.io/react-native-web/), including Expo web, the components render the browser's own controls with the same props. No setup is needed; see [Web](/guides/web).
 
+### Jest
+
+The native views can't render under Jest. Mock the package with the interactive stand-ins it ships, in your Jest setup file:
+
+```js
+jest.mock('react-native-platform-components', () =>
+  require('react-native-platform-components/jest')
+);
+```
+
+See [Testing with Jest](/guides/testing) for what each mock renders.
+
 ### Expo (Managed Workflow)
 
 > **Note:** This library is **not supported in Expo Go**. It requires native code and must be used with [Expo Dev Client](https://docs.expo.dev/develop/development-builds/introduction/) or EAS Build.

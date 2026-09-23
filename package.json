@@ -27,6 +27,17 @@
         "default": "./lib/commonjs/index.js"
       }
     },
+    "./jest": {
+      "source": "./src/jest.tsx",
+      "import": {
+        "types": "./lib/typescript/module/src/jest.d.ts",
+        "default": "./lib/module/jest.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/src/jest.d.ts",
+        "default": "./lib/commonjs/jest.js"
+      }
+    },
     "./package.json": "./package.json",
     "./app.plugin": "./app.plugin.js",
     "./app.plugin.js": "./app.plugin.js"

@@ -49,6 +49,17 @@ export default defineConfig([
     },
   },
   {
+    // The Jest mock drops the native-only props by destructuring them out of
+    // the view props, like the web implementations.
+    files: ['src/jest.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { ignoreRestSiblings: true, argsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
     ignores: ['node_modules/', 'lib/', 'coverage/', '**/build/', 'docs/'],
   },
 ]);
