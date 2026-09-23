@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Native UI components for React Native, the real platform widgets on both iOS and Android: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass. UIKit and SwiftUI on iOS, Material 3 Expressive on Android. Fabric, TypeScript, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",

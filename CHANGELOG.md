@@ -1,5 +1,16 @@
 # Changelog
 
+# [1.4.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.3.0...v1.4.0) (2026-09-23)
+
+### Features
+
+* add Material 3 Expressive Button, ButtonGroup and FloatingToolbar ([8df86cd](https://github.com/JarX-Concepts/react-native-platform-components/commit/8df86cd38434ca5661988e986013544334e1ce10))
+* add README GIFs and Detox flows for Button and FloatingToolbar ([44a1bfd](https://github.com/JarX-Concepts/react-native-platform-components/commit/44a1bfde4c96630cb05811c20e648b296ca5bda4))
+* add TextField, a native text field on both platforms ([f2ccb1b](https://github.com/JarX-Concepts/react-native-platform-components/commit/f2ccb1b503837a19ddaa5411bf935cf6edea0fa5))
+* **android:** material style for SegmentedControl, Button and ButtonGroup, and a README showreel ([d176ebb](https://github.com/JarX-Concepts/react-native-platform-components/commit/d176ebbdea3a15d21bc3ad3d6045107fa0c9b005))
+* **example:** a view switcher in the FloatingToolbar demo, docs and GIFs ([b2b29c1](https://github.com/JarX-Concepts/react-native-platform-components/commit/b2b29c12e80a444a7daad3f11655a1b140f04d94))
+* put TextField first, sharper GIFs, codegen floor fix ([5e1f48f](https://github.com/JarX-Concepts/react-native-platform-components/commit/5e1f48f3e0ac7913291760d43c51da0580e149e5))
+
 # [1.3.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.2.0...v1.3.0) (2026-09-22)
 
 ### Bug Fixes
