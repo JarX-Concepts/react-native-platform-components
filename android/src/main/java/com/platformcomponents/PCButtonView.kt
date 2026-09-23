@@ -282,9 +282,10 @@ class PCButtonView(context: Context) :
       b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted,
       disabledContainerColor, disabledForegroundColor
     )
-    if (showsSpinner) showSpinner(b)
-
+    // Added before the spinner goes in: once measured, a TextView reads its
+    // layout params when its text changes
     addView(b, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
+    if (showsSpinner) showSpinner(b)
     button = b
     requestLayout()
   }
