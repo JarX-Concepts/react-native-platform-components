@@ -15,6 +15,11 @@ Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **Segm
 </p>
 <p align="center"><sub>Every tile is the platform's own widget, captured from the example app. Each component page has full recordings on both platforms; <a href="/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
 
+<p align="center">
+  <video src="/react-native-platform-components/video/showreel.mp4" poster="/react-native-platform-components/video/showreel.jpg" width="100%" autoplay loop muted playsinline controls></video>
+</p>
+<p align="center"><sub>iOS on the left, Android on the right: the native theme changing brand color and switching to dark mode, then each component in use. Recorded by the Detox suite in <code>example/</code>.</sub></p>
+
 ```sh
 npm install react-native-platform-components
 ```
@@ -57,11 +62,6 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 - **ButtonGroup** – Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection
 - **FloatingToolbar** – Material 3 Expressive floating toolbar on Android, a Liquid Glass capsule on iOS 26
 - **LiquidGlass** – iOS 26+ glass morphism effects (UIGlassEffect on iOS, fallback View on Android)
-
-<p align="center">
-  <video src="/react-native-platform-components/video/showreel.mp4" poster="/react-native-platform-components/video/showreel.jpg" width="100%" autoplay loop muted playsinline controls></video>
-</p>
-<p align="center"><sub>iOS on the left, Android on the right: the native theme changing brand color and switching to dark mode, then each component in use. Recorded by the Detox suite in <code>example/</code>.</sub></p>
 
 **Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
 

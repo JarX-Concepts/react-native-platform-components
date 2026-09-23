@@ -12,7 +12,7 @@
 // the captions and panel frames. Run the flows first (see
 // scripts/generate-readme-gifs.sh), then:
 //   node scripts/visuals/showreel.mjs
-// CLIP_SECONDS (default 4.5) is the length of a component's clip; the Theme
+// CLIP_SECONDS (default 4) is the length of a component's clip; the Theme
 // clip sets its own. GIF_WIDTH (default 928) sets the GIF's width; the README
 // shows it at half that, so it stays crisp on a retina display.
 import fs from 'node:fs';
@@ -35,7 +35,7 @@ const W = 1160;
 const H = 760;
 const FPS = 30;
 const GIF_FPS = 12;
-const CLIP_SECONDS = parseFloat(process.env.CLIP_SECONDS || '4.5');
+const CLIP_SECONDS = parseFloat(process.env.CLIP_SECONDS || '4.0');
 const XFADE = 0.45;
 const BG = '#f6f8fa';
 const PANEL_TOP = 134;

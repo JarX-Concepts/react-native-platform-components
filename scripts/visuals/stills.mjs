@@ -97,7 +97,8 @@ const ROWS = [
     ],
   },
   {
-    height: 340,
+    // The view-switcher capsules are wide and short, so this row is shallow
+    height: 210,
     tiles: [
       { key: 'floatingtoolbar', platform: 'ios', span: 6, position: 'center' },
       { key: 'floatingtoolbar', platform: 'android', span: 6, position: 'center' },

@@ -111,13 +111,21 @@ export const COMPONENTS = [
     name: 'FloatingToolbar',
     test: 'Floating Toolbar',
     native: { ios: 'UIGlassEffect capsule', android: 'FloatingToolbarLayout' },
+    // iOS shows the view switcher: a segmented control sharing a floating
+    // capsule with a button, the arrangement iOS 26 uses for a bottom bar.
+    // Android shows the Expressive FloatingToolbarLayout instead, because the
+    // segmented control inside the toolbar there renders as plain Material 3.
+    // The demo's tint toggle turns the toolbar orange between 13-15s on iOS
+    // and 17-18s on Android, so the clips stay clear of those windows.
     still: {
-      ios: { time: 14.5, crop: { x: 0.03, y: 0.34, w: 0.94, h: 0.22 } },
-      android: { time: 18.5, crop: { x: 0.03, y: 0.34, w: 0.94, h: 0.22 } },
+      // Both crops are cut to the tile's own aspect, so the capsule keeps its
+      // ends when the tile fills
+      ios: { time: 6.5, crop: { x: 0.115, y: 0.8375, w: 0.8, h: 0.099 } },
+      android: { time: 11.5, crop: { x: 0.1, y: 0.46, w: 0.8, h: 0.096 } },
     },
     clip: {
-      ios: { start: 10.5, crop: { x: 0.03, y: 0.15, w: 0.94, h: 0.45 } },
-      android: { start: 14.5, crop: { x: 0.03, y: 0.15, w: 0.94, h: 0.45 } },
+      ios: { start: 4.0, crop: { x: 0.03, y: 0.42, w: 0.94, h: 0.55 } },
+      android: { start: 9.5, crop: { x: 0.03, y: 0.42, w: 0.94, h: 0.55 } },
     },
   },
   {
