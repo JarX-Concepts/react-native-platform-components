@@ -59,7 +59,7 @@ class PCSegmentedControlViewManager :
     if (hasKey(key) && !isNull(key)) getDouble(key) else fallback
 
   // segments: array of {label, value, disabled, iconType, iconName, iconUri,
-  //                     iconScale, iconTinted, accessibilityLabel}
+  //                     iconScale, iconTinted, accessibilityLabel, testID}
   override fun setSegments(view: PCSegmentedControlView, value: ReadableArray?) {
     val out = ArrayList<PCSegmentedControlView.Segment>()
     if (value != null) {
@@ -77,7 +77,8 @@ class PCSegmentedControlViewManager :
             iconScale = if (scale > 0) scale.toFloat() else 1f,
             iconTinted = m.stringOr("iconTinted", "true") != "false",
             badge = m.stringOr("badge", ""),
-            accessibilityLabel = m.stringOr("accessibilityLabel", "")
+            accessibilityLabel = m.stringOr("accessibilityLabel", ""),
+            testID = m.stringOr("testID", "")
           )
         )
       }
@@ -116,6 +117,10 @@ class PCSegmentedControlViewManager :
 
   override fun setBadgeTextColor(view: PCSegmentedControlView, value: Int?) {
     view.applyBadgeColors(view.badgeBackgroundColor, value)
+  }
+
+  override fun setMaxFontSizeMultiplier(view: PCSegmentedControlView, value: Double) {
+    view.applyMaxFontSizeMultiplier(value.toFloat())
   }
 
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default

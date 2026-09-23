@@ -42,17 +42,28 @@ static inline bool LabelStyleEqual(
 }
 
 /// Builds the label font from RN-style font props, or nil when every field is
-/// unset so the button keeps the configuration's font.
-static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
+/// unset so the button keeps the configuration's font. Without a fontSize the
+/// size follows Dynamic Type (the body style), capped at maxFontSizeMultiplier
+/// times its default size when that is 1 or more.
+static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double maxFontSizeMultiplier) {
   if (style.fontFamily.empty() && style.fontSize <= 0 &&
       style.fontWeight.empty() && style.fontStyle.empty()) {
     return nil;
   }
   // UIButton titles default to the body text style; start there so a lone
   // fontWeight or fontStyle doesn't change the size.
-  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody]
+  UIFont *body = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+  NSNumber *size = style.fontSize > 0 ? @(style.fontSize) : nil;
+  if (!size && maxFontSizeMultiplier >= 1) {
+    UITraitCollection *defaultTraits =
+        [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
+    CGFloat baseSize = [UIFont preferredFontForTextStyle:UIFontTextStyleBody
+                           compatibleWithTraitCollection:defaultTraits].pointSize;
+    size = @(MIN(body.pointSize, baseSize * maxFontSizeMultiplier));
+  }
+  return [RCTFont updateFont:body
                   withFamily:NSStringFromStd(style.fontFamily, nil)
-                        size:style.fontSize > 0 ? @(style.fontSize) : nil
+                        size:size
                       weight:NSStringFromStd(style.fontWeight, nil)
                        style:NSStringFromStd(style.fontStyle, nil)
                      variant:nil
@@ -121,6 +132,10 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
                     tinted:(icon.iconTinted != "false")];
   }
 
+  if (!prevProps || newProps.iconPosition != prevProps->iconPosition) {
+    _view.iconPosition = NSStringFromStd(newProps.iconPosition, @"leading");
+  }
+
   if (!prevProps || newProps.variant != prevProps->variant) {
     _view.variant = NSStringFromStd(newProps.variant, @"filled");
   }
@@ -133,8 +148,16 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
     _view.shape = NSStringFromStd(newProps.shape, @"");
   }
 
+  if (!prevProps || newProps.cornerRadius != prevProps->cornerRadius) {
+    _view.cornerRadius = newProps.cornerRadius;
+  }
+
   if (!prevProps || newProps.interactivity != prevProps->interactivity) {
     _view.interactivity = NSStringFromStd(newProps.interactivity, @"enabled");
+  }
+
+  if (!prevProps || newProps.loading != prevProps->loading) {
+    _view.loading = newProps.loading == "true";
   }
 
   // Colors arrive as SharedColor (already processed by React Native)
@@ -146,9 +169,22 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
     _view.foregroundColor = RCTUIColorFromSharedColor(newProps.foregroundColor);
   }
 
+  if (!prevProps || newProps.disabledColor != prevProps->disabledColor) {
+    _view.disabledContainerColor = RCTUIColorFromSharedColor(newProps.disabledColor);
+  }
+
+  if (!prevProps || newProps.disabledForegroundColor != prevProps->disabledForegroundColor) {
+    _view.disabledForegroundColor = RCTUIColorFromSharedColor(newProps.disabledForegroundColor);
+  }
+
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
-  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
-    _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle) ||
+      newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
+    _view.labelFont = FontFromLabelStyle(newProps.labelStyle, newProps.maxFontSizeMultiplier);
+  }
+
+  if (!prevProps || newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
+    _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
   }
 
   if (!prevProps || newProps.spokenLabel != prevProps->spokenLabel) {

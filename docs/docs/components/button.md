@@ -29,14 +29,20 @@ import { Button } from 'react-native-platform-components';
 | Prop                 | Type                                                     | Description                                                                              |
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `label`              | `string`                                                 | Button text. Omit for an icon-only button                                                |
-| `icon`               | `PlatformIcon`                                           | Icon before the label, or alone. See [Icons](#icons)                                     |
-| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
+| `icon`               | `PlatformIcon`                                           | Icon next to the label, or alone. See [Icons](#icons)                                    |
+| `iconPosition`       | `'leading' \| 'trailing'`                                | Side of the label the icon sits on. See [Icons](#icons). Default: `'leading'`            |
+| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
 | `size`               | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size. See [Sizes](#sizes). Default: `'small'`                                            |
 | `shape`              | `'round' \| 'square'`                                    | Corner shape. See [Shape](#shape). Default: platform default                             |
+| `cornerRadius`       | `number`                                                 | Corner radius in points (dp). Overrides `shape`. See [Shape](#shape)                     |
 | `disabled`           | `boolean`                                                | Disables the button                                                                      |
+| `loading`            | `boolean`                                                | Shows a spinner in place of the label and icon and ignores presses. See [Loading](#loading) |
 | `color`              | `ColorValue`                                             | Container (background) color                                                             |
 | `tintColor`          | `ColorValue`                                             | Label and icon color                                                                     |
+| `disabledColor`      | `ColorValue`                                             | Container color while disabled. Unset keeps the platform's disabled look                 |
+| `disabledTintColor`  | `ColorValue`                                             | Label and icon color while disabled. Unset keeps the platform's disabled look            |
 | `labelStyle`         | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font. See [Styling](#styling)                                                      |
+| `maxFontSizeMultiplier` | `number`                                              | Cap on the label's text-size scaling, as on `Text`. `0` / unset = no cap. See [Styling](#styling) |
 | `accessibilityLabel` | `string`                                                 | Screen-reader label. Defaults to `label`; give icon-only buttons one                     |
 | `onPress`            | `() => void`                                             | Called when the button is pressed                                                        |
 
@@ -59,6 +65,22 @@ Five levels of emphasis, from highest to lowest. Android uses the Material 3 Exp
 | `outlined` | Outlined button (`materialButtonOutlinedStyle`)                     | `.bordered()` |
 | `text`     | Text button (`borderlessButtonStyle`)                               | `.plain()`    |
 | `elevated` | Elevated button (`materialButtonElevatedStyle`)                     | `.gray()`     |
+
+#### Liquid Glass
+
+Two more variants give the iOS 26 Liquid Glass buttons. Earlier iOS versions and Android fall back to the closest regular style, so the same code works everywhere.
+
+| Variant          | iOS 26+              | Before iOS 26 | Android |
+| ---------------- | -------------------- | ------------- | ------- |
+| `glass`          | `.glass()`           | `.gray()`     | Tonal   |
+| `prominentGlass` | `.prominentGlass()`  | `.filled()`   | Filled  |
+
+`color` tints the prominent glass (`baseBackgroundColor`) and `tintColor` colors the label and icon, as for `filled`. Pressed and disabled states follow the system glass behavior. In a [ButtonGroup](/components/buttongroup), selected glass buttons use the prominent glass style.
+
+```tsx
+<Button label="Done" variant="prominentGlass" color="#0A84FF" tintColor="white" />
+<Button icon="xmark" variant="glass" accessibilityLabel="Close" />
+```
 
 ### Sizes
 
@@ -83,6 +105,25 @@ Material 3 Expressive buttons come in two shapes: `round` (a pill, the default) 
 <Button label="Square" shape="square" size="medium" />
 ```
 
+When a design specifies a radius, set `cornerRadius` (points on iOS, dp on Android). It overrides `shape`: iOS uses the fixed corner style with `background.cornerRadius`, Android sets the corner size on the button's `shapeAppearanceModel`, which turns off the Expressive press morph.
+
+```tsx
+<Button label="Radius 6" cornerRadius={6} />
+```
+
+### Loading
+
+`loading` swaps the label and icon for the platform's spinner while a request is in flight. The button keeps its size, so the layout doesn't jump, keeps its enabled colors, and ignores presses. It also sets `accessibilityState.busy`, merged with any `accessibilityState` you pass.
+
+```tsx
+<Button label="Save" loading={saving} onPress={save} />
+```
+
+| Platform | Spinner |
+| -------- | ------- |
+| iOS      | `UIButton.Configuration.showsActivityIndicator`, centred in the button's idle size |
+| Android  | A Material circular progress indicator (`IndeterminateDrawable`) at the icon size, drawn as the button icon in the label color; the label is hidden and the width kept |
+
 ### Icons
 
 `icon` accepts the same shapes as [SegmentedControl](/components/segmentedcontrol#icon-support): an SF Symbol or drawable name, an image asset, or an `{ ios, android }` pair.
@@ -99,6 +140,12 @@ Material 3 Expressive buttons come in two shapes: `round` (a pill, the default) 
 
 // One image asset for both, drawn as a tinted template
 <Button label="Alerts" icon={{ type: 'image', source: require('./bell.png') }} />
+```
+
+The icon sits before the label by default. `iconPosition="trailing"` puts it after the label (iOS `imagePlacement = .trailing`, Android `iconGravity = textEnd`):
+
+```tsx
+<Button label="Next" icon="chevron.right" iconPosition="trailing" />
 ```
 
 A button with an icon and no label is an **icon button**: on Android it uses the Material 3 Expressive icon button styles (a square container that keeps the `variant`), on iOS an image-only `UIButton`. Always give it an `accessibilityLabel`.
@@ -121,9 +168,31 @@ Colors take any React Native `ColorValue`. Fonts follow the `Text` style convent
 | --------------------- | ------------------------------ | --------------------- |
 | `color`               | `backgroundTint`               | `baseBackgroundColor` |
 | `tintColor`           | Text color and `iconTint`      | `baseForegroundColor` |
+| `disabledColor`       | Disabled state of `backgroundTint` | Background color while `!isEnabled` (`configurationUpdateHandler`) |
+| `disabledTintColor`   | Disabled state of the text color and `iconTint` | Title and image color while `!isEnabled` |
 | `labelStyle`          | Typeface and size              | Title font            |
+| `maxFontSizeMultiplier` | Scaled sp size capped at the multiplier | Dynamic Type size capped at the multiplier |
 | `android.rippleColor` | Press ripple                   | —                     |
 | `android.strokeColor` | Outline (`outlined` variant)   | —                     |
+
+The label grows with the system text size (Dynamic Type on iOS, font scale on Android). `maxFontSizeMultiplier` caps that growth with the `Text` semantics: `2` lets the label reach twice its default size and no more; unset or `0` means no cap. On iOS the cap applies to the system title font and to a `labelStyle` without a `fontSize` (which follows the body text style); a fixed `labelStyle.fontSize` doesn't scale on iOS, so there is nothing to cap.
+
+```tsx
+<Button label="Continue" maxFontSizeMultiplier={1.5} />
+```
+
+A disabled button keeps the platform's disabled look (Material's disabled colors on Android, UIKit's on iOS) unless you set `disabledColor` / `disabledTintColor`, for example to keep the brand color at reduced opacity:
+
+```tsx
+<Button
+  label="Brand"
+  color="#FF6B35"
+  tintColor="white"
+  disabledColor="rgba(255, 107, 53, 0.4)"
+  disabledTintColor="rgba(255, 255, 255, 0.8)"
+  disabled
+/>
+```
 
 Without these props the button takes its colors from the theme: the app's Material 3 theme or the brand color set with [`useNativeTheme`](/guides/theming) on Android, the tint color on iOS.
 

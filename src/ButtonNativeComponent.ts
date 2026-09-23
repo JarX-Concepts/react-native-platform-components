@@ -1,7 +1,7 @@
 // ButtonNativeComponent.ts
 import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler, Double } from './codegenTypes';
+import type { BubblingEventHandler, Double, WithDefault } from './codegenTypes';
 
 /**
  * Icon fields, pre-resolved on the JS side (see icons.ts).
@@ -28,10 +28,13 @@ export interface ButtonNativeProps extends ViewProps {
   /** Button text. Empty for an icon-only button. */
   label?: string;
 
-  /** Icon shown before the label, or alone when there is no label. */
+  /** Icon shown next to the label, or alone when there is no label. */
   icon?: ButtonIconProps;
 
-  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' */
+  /** 'leading' | 'trailing' */
+  iconPosition?: string;
+
+  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' | 'prominentGlass' */
   variant?: string;
 
   /** 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge' */
@@ -40,14 +43,26 @@ export interface ButtonNativeProps extends ViewProps {
   /** '' (platform default) | 'round' | 'square' */
   shape?: string;
 
+  /** Corner radius in points; negative = use `shape`. */
+  cornerRadius?: WithDefault<Double, -1>;
+
   /** 'enabled' | 'disabled' */
   interactivity?: string;
+
+  /** 'true' | 'false': spinner in place of the label and icon, presses ignored. */
+  loading?: string;
 
   /** Container (background) color. */
   color?: ColorValue;
 
   /** Label and icon color. */
   foregroundColor?: ColorValue;
+
+  /** Container color while disabled; unset = platform disabled look. */
+  disabledColor?: ColorValue;
+
+  /** Label and icon color while disabled; unset = platform disabled look. */
+  disabledForegroundColor?: ColorValue;
 
   /** Android: ripple color shown while pressing. */
   androidRippleColor?: ColorValue;
@@ -60,6 +75,9 @@ export interface ButtonNativeProps extends ViewProps {
 
   /** Label font. */
   labelStyle?: ButtonLabelStyleProps;
+
+  /** Cap on the label's font scaling; 0 (or below 1) = no cap. */
+  maxFontSizeMultiplier?: Double;
 
   /**
    * Screen-reader label, applied to the native button rather than the host

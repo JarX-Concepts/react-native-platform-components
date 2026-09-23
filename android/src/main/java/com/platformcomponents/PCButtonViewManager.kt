@@ -76,8 +76,23 @@ class PCButtonViewManager :
     view.applyShape(value)
   }
 
+  // "leading" (default) | "trailing"
+  override fun setIconPosition(view: PCButtonView, value: String?) {
+    view.applyIconPosition(value)
+  }
+
+  // Negative = use shape
+  override fun setCornerRadius(view: PCButtonView, value: Double) {
+    view.applyCornerRadius(value.toFloat())
+  }
+
   override fun setInteractivity(view: PCButtonView, value: String?) {
     view.applyInteractivity(value)
+  }
+
+  // "true" | "false"
+  override fun setLoading(view: PCButtonView, value: String?) {
+    view.applyLoading(value == "true")
   }
 
   // Colors arrive already processed by React Native (ARGB ints)
@@ -97,6 +112,14 @@ class PCButtonViewManager :
     view.applyColors(view.containerColor, view.foregroundColor, view.rippleColor, value)
   }
 
+  override fun setDisabledColor(view: PCButtonView, value: Int?) {
+    view.applyDisabledColors(value, view.disabledForegroundColor)
+  }
+
+  override fun setDisabledForegroundColor(view: PCButtonView, value: Int?) {
+    view.applyDisabledColors(view.disabledContainerColor, value)
+  }
+
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
   override fun setLabelStyle(view: PCButtonView, value: ReadableMap?) {
     view.applyLabelStyle(
@@ -105,6 +128,11 @@ class PCButtonViewManager :
       fontWeight = value?.stringOr("fontWeight", "") ?: "",
       fontStyle = value?.stringOr("fontStyle", "") ?: ""
     )
+  }
+
+  // 0 (or below 1) = no cap
+  override fun setMaxFontSizeMultiplier(view: PCButtonView, value: Double) {
+    view.applyMaxFontSizeMultiplier(value.toFloat())
   }
 
   override fun setSpokenLabel(view: PCButtonView, value: String?) {

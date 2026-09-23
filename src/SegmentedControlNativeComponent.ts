@@ -26,6 +26,7 @@ export type SegmentedControlSegment = Readonly<{
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
   badge: string; // Badge text, empty = no badge
   accessibilityLabel: string; // Screen-reader label, empty = use label
+  testID: string; // E2E identifier of the segment, empty = none
 }>;
 
 /**
@@ -116,6 +117,9 @@ export interface SegmentedControlProps extends ViewProps {
 
   /** Label font. */
   labelStyle?: LabelStyleProps;
+
+  /** Largest font scale the labels may reach; 0 = no cap. */
+  maxFontSizeMultiplier?: Double;
 
   /** Badge background (default: system red). */
   badgeBackgroundColor?: ColorValue;

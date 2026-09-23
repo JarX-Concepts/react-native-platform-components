@@ -17,9 +17,20 @@ import type { AndroidMaterialStyle } from './sharedTypes';
  * | `outlined` | Outlined button                 | `.bordered()`                  |
  * | `text`     | Text button                     | `.plain()`                     |
  * | `elevated` | Elevated button                 | `.gray()`                      |
+ * | `glass`    | Filled tonal button             | `.glass()` (iOS 26+), else `.gray()` |
+ * | `prominentGlass` | Filled button             | `.prominentGlass()` (iOS 26+), else `.filled()` |
+ *
+ * The glass variants are the iOS 26 Liquid Glass buttons; `color` tints
+ * the prominent glass and `tintColor` colors the label and icon.
  */
 export type ButtonVariant =
-  'filled' | 'tonal' | 'outlined' | 'text' | 'elevated';
+  | 'filled'
+  | 'tonal'
+  | 'outlined'
+  | 'text'
+  | 'elevated'
+  | 'glass'
+  | 'prominentGlass';
 
 /**
  * Button size. Material 3 Expressive defines five sizes; iOS maps them onto
@@ -33,12 +44,21 @@ export type ButtonSize = 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge';
  */
 export type ButtonShape = 'round' | 'square';
 
+/** Which side of the label the icon sits on. */
+export type ButtonIconPosition = 'leading' | 'trailing';
+
 export interface ButtonProps extends ViewProps {
   /** Button text. Omit for an icon-only button. */
   label?: string;
 
-  /** Icon shown before the label, or alone when there is no label. */
+  /** Icon shown next to the label, or alone when there is no label. */
   icon?: PlatformIcon;
+
+  /**
+   * Which side of the label the icon sits on. Default: `'leading'`.
+   * iOS: `imagePlacement`. Android: `iconGravity` (`textEnd` for trailing).
+   */
+  iconPosition?: ButtonIconPosition;
 
   /** Emphasis. Default: `'filled'`. See {@link ButtonVariant}. */
   variant?: ButtonVariant;
@@ -49,8 +69,23 @@ export interface ButtonProps extends ViewProps {
   /** Corner shape. Default: platform default. */
   shape?: ButtonShape;
 
+  /**
+   * Corner radius in points (dp). Overrides `shape` when set.
+   * iOS: `background.cornerRadius` with the fixed corner style. Android: the
+   * `shapeAppearanceModel` corner size (the press morph is turned off).
+   */
+  cornerRadius?: number;
+
   /** Whether the button is disabled. */
   disabled?: boolean;
+
+  /**
+   * Shows a native spinner in place of the label and icon, keeping the
+   * button's size, and ignores presses. Sets `accessibilityState.busy`.
+   * iOS: `UIButton.Configuration.showsActivityIndicator`. Android: a Material
+   * circular progress indicator drawn as the button icon.
+   */
+  loading?: boolean;
 
   /**
    * Container (background) color.
@@ -64,8 +99,29 @@ export interface ButtonProps extends ViewProps {
    */
   tintColor?: ColorValue;
 
+  /**
+   * Container color while disabled. Unset keeps the platform's disabled look.
+   * iOS: a `configurationUpdateHandler` on `isEnabled`. Android: the disabled
+   * state of the `backgroundTint` color state list.
+   */
+  disabledColor?: ColorValue;
+
+  /**
+   * Label and icon color while disabled. Unset keeps the platform's disabled
+   * look. iOS: a `configurationUpdateHandler` on `isEnabled`. Android: the
+   * disabled state of the text color and `iconTint` color state lists.
+   */
+  disabledTintColor?: ColorValue;
+
   /** Label font. */
   labelStyle?: LabelStyle;
+
+  /**
+   * Largest scale the label's font can reach with the system text size
+   * (Dynamic Type / font scale), as on `Text`: `undefined` or `0` means no
+   * cap; values of 1 or more cap it.
+   */
+  maxFontSizeMultiplier?: number;
 
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
@@ -99,16 +155,23 @@ export function Button(props: ButtonProps): React.ReactElement {
   const {
     label,
     icon,
+    iconPosition,
     variant,
     size,
     shape,
+    cornerRadius,
     disabled,
+    loading,
     color,
     tintColor,
+    disabledColor,
+    disabledTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     accessibilityLabel,
     onPress,
     android,
+    accessibilityState,
     ...viewProps
   } = props;
 
@@ -119,25 +182,39 @@ export function Button(props: ButtonProps): React.ReactElement {
   );
 
   const handlePress = useCallback(() => {
+    if (loading) return;
     onPress?.();
-  }, [onPress]);
+  }, [onPress, loading]);
+
+  const mergedAccessibilityState = useMemo(
+    () =>
+      loading ? { ...accessibilityState, busy: true } : accessibilityState,
+    [loading, accessibilityState]
+  );
 
   return (
     <NativeButton
       label={label ?? ''}
       icon={nativeIcon}
+      iconPosition={iconPosition ?? 'leading'}
       variant={variant ?? 'filled'}
       size={size ?? 'small'}
       shape={shape ?? ''}
+      cornerRadius={cornerRadius ?? -1}
       interactivity={disabled ? 'disabled' : 'enabled'}
+      loading={loading ? 'true' : 'false'}
       color={color}
       foregroundColor={tintColor}
+      disabledColor={disabledColor}
+      disabledForegroundColor={disabledTintColor}
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
       androidMaterial={android?.material ?? 'expressive'}
       labelStyle={nativeLabelStyle}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       spokenLabel={accessibilityLabel ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
+      accessibilityState={mergedAccessibilityState}
       {...viewProps}
     />
   );

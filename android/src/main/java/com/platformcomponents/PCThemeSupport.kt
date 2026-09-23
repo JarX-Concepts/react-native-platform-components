@@ -1,12 +1,14 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.os.Build
 import android.content.res.Resources
 import android.util.Log
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.appcompat.R as AppCompatR
 import androidx.core.content.res.ResourcesCompat
@@ -27,6 +29,41 @@ internal object PCThemeSupport {
 
   @Volatile private var warnedMaterial = false
   @Volatile private var warnedAppCompat = false
+
+  /**
+   * Caps [view]'s text size at [maxMultiplier] times its size at the default
+   * font scale (React Native's maxFontSizeMultiplier); no-op below 1 or when
+   * the system scale is within the cap. The capped size is remembered on the
+   * view, so repeated calls leave it alone until something else sets a size.
+   */
+  fun capTextSize(view: TextView, maxMultiplier: Float) {
+    val resources = view.resources
+    val fontScale = resources.configuration.fontScale
+    val capped = view.getTag(R.id.pc_capped_text_size) as? Float
+    val px = view.textSize
+    if (capped != null && capped == px) return
+    if (maxMultiplier < 1f || fontScale <= maxMultiplier) return
+    val metrics = resources.displayMetrics
+    // The size in sp the view was given, undoing the (possibly non-linear) scale
+    val sp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, px, metrics)
+    } else {
+      px / (metrics.density * fontScale)
+    }
+    val max = sp * metrics.density * maxMultiplier
+    if (px <= max) return
+    view.setTextSize(TypedValue.COMPLEX_UNIT_PX, max)
+    view.setTag(R.id.pc_capped_text_size, view.textSize)
+  }
+
+  /** [capTextSize] for every TextView under [root]. */
+  fun capTextSizes(root: View, maxMultiplier: Float) {
+    if (maxMultiplier < 1f || root.resources.configuration.fontScale <= maxMultiplier) return
+    if (root is TextView) capTextSize(root, maxMultiplier)
+    if (root is ViewGroup) {
+      for (i in 0 until root.childCount) capTextSizes(root.getChildAt(i), maxMultiplier)
+    }
+  }
 
   /** True for Theme.MaterialComponents.* and Theme.Material3.* (and descendants). */
   fun hasMaterialTheme(context: Context): Boolean =

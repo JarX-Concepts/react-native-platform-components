@@ -29,6 +29,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `inactiveTintColor`    | `ColorValue`                                          | Text and icon color of unselected segments                                                                                           |
 | `labelStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                     |
 | `badgeStyle`           | `{ backgroundColor?, color? }`                        | Colors for segment badges. See [Badges](#badges)                                                                                     |
+| `maxFontSizeMultiplier` | `number`                                             | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                       |
 | `onSelect`             | `(value: string, index: number) => void`              | Called when user selects a segment                                                                                                   |
 | `onDeselect`           | `() => void`                                          | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
 
@@ -42,6 +43,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](https://github.com/JarX-Concepts/react-native-platform-components#icon-support-1)                                                               |
 | `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                             |
 | `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title |
+| `testID`             | `string`               | Test identifier of the segment. See [Testing](#testing)                                                          |
 
 ### iOS Props (`ios`)
 
@@ -106,6 +108,28 @@ Image icons render at their point size, so ship `@2x` / `@3x` variants sized aro
 | `'unlabeled'`      | Icon when the segment has one, else label | Icon only, else label |
 
 Screen readers announce the label (or `accessibilityLabel`) in every mode on both platforms.
+
+iOS has no mode with both icon and label: the Human Interface Guidelines give a segment either text or an image, and `UISegmentedControl` draws one. For tab-bar-style navigation with labeled icons, use labels on iOS (`labelVisibility: 'labeled'`) or a tab bar.
+
+### Testing
+
+A segment's `testID` goes on the segment itself: the segment's accessibility element on iOS, its button on Android. E2E tests can tap a segment by id; the control's own `testID` stays on the control.
+
+```tsx
+<SegmentedControl
+  testID="tabs"
+  segments={[
+    { label: 'Home', value: 'home', testID: 'tab-home' },
+    { label: 'Invest', value: 'invest', testID: 'tab-invest' },
+  ]}
+  selectedValue={tab}
+  onSelect={setTab}
+/>
+```
+
+```ts
+await element(by.id('tab-invest')).tap();
+```
 
 ### Styling
 

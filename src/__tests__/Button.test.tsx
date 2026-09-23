@@ -81,6 +81,82 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it("defaults to a leading icon and the shape's corners", () => {
+    const tree = render(<Button label="Next" />);
+    expect(lastNativeProps().iconPosition).toBe('leading');
+    expect(lastNativeProps().cornerRadius).toBe(-1);
+    act(() => tree.unmount());
+  });
+
+  it('passes iconPosition and cornerRadius through', () => {
+    const tree = render(
+      <Button label="Next" iconPosition="trailing" cornerRadius={0} />
+    );
+    expect(lastNativeProps().iconPosition).toBe('trailing');
+    expect(lastNativeProps().cornerRadius).toBe(0);
+    act(() => tree.unmount());
+  });
+
+  it('passes maxFontSizeMultiplier; unset means no cap (0)', () => {
+    const tree = render(<Button label="Save" />);
+    expect(lastNativeProps().maxFontSizeMultiplier).toBe(0);
+    act(() => tree.update(<Button label="Save" maxFontSizeMultiplier={1.5} />));
+    expect(lastNativeProps().maxFontSizeMultiplier).toBe(1.5);
+    act(() => tree.unmount());
+  });
+
+  it('is not loading by default', () => {
+    const tree = render(<Button label="Save" />);
+    expect(lastNativeProps().loading).toBe('false');
+    expect(lastNativeProps().accessibilityState).toBeUndefined();
+    act(() => tree.unmount());
+  });
+
+  it('marks a loading button busy, merged with accessibilityState', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        label="Save"
+        loading
+        onPress={onPress}
+        accessibilityState={{ selected: true }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.loading).toBe('true');
+    expect(props.accessibilityState).toEqual({ selected: true, busy: true });
+
+    // Presses that slip through while loading are ignored
+    act(() => {
+      props.onButtonPress({ nativeEvent: {} });
+    });
+    expect(onPress).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('passes the disabled colors through', () => {
+    const tree = render(
+      <Button
+        label="Save"
+        disabled
+        disabledColor="#FF000066"
+        disabledTintColor="white"
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.disabledColor).toBe('#FF000066');
+    expect(props.disabledForegroundColor).toBe('white');
+    act(() => tree.unmount());
+  });
+
+  it('passes the Liquid Glass variants through', () => {
+    const tree = render(<Button label="Glass" variant="glass" />);
+    expect(lastNativeProps().variant).toBe('glass');
+    act(() => tree.update(<Button label="Glass" variant="prominentGlass" />));
+    expect(lastNativeProps().variant).toBe('prominentGlass');
+    act(() => tree.unmount());
+  });
+
   it('passes the classic Material 3 style through', () => {
     const tree = render(<Button label="Plain" android={{ material: 'm3' }} />);
     expect(lastNativeProps().androidMaterial).toBe('m3');
