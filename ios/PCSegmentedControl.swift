@@ -282,7 +282,7 @@ public final class PCSegmentedControlView: UIControl {
 
         switch segment.iconType {
         case "sfSymbol":
-            return UIImage(systemName: segment.iconName).map { decorate($0, for: segment) }
+            return PCImageLoader.symbol(named: segment.iconName).map { decorate($0, for: segment) }
 
         case "image":
             let cached = PCImageLoader.shared.image(uri: segment.iconUri, scale: segment.iconScale) { [weak self] image in

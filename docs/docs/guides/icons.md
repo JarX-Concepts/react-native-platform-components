@@ -1,9 +1,9 @@
 ---
 title: "Icons"
-description: "SF Symbols on iOS and drawables or images on Android for ContextMenu, SegmentedControl, Button and ButtonGroup icons."
+description: "SF Symbols on iOS and drawables or images on Android for ContextMenu, SegmentedControl, Button, ButtonGroup and TextField icons, including your own SVG icons."
 ---
 
-ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl, Button and ButtonGroup accept the same names, plus image assets and per-platform pairs (the `PlatformIcon` type); see [SegmentedControl Icon Support](/components/segmentedcontrol#icon-support).
+ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl, Button, ButtonGroup and TextField accept the same names, plus image assets and per-platform pairs (the `PlatformIcon` type); see [SegmentedControl Icon Support](/components/segmentedcontrol#icon-support).
 
 ### iOS
 
@@ -50,6 +50,20 @@ Example vector drawable (`res/drawable/content_copy.xml`):
       android:pathData="M16,1L4,1c-1.1,0 -2,0.9 -2,2v14h2L4,3h12L16,1zM19,5L8,5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2L21,7c0,-1.1 -0.9,-2 -2,-2zM19,21L8,21L8,7h11v14z"/>
 </vector>
 ```
+
+### Your own SVG icons
+
+An icon set that lives as SVG files can reach every native control through one string name, with no mapping table in JS, by adding each icon once per platform under the same name:
+
+- **iOS:** open the SVG in Apple's [SF Symbols app](https://developer.apple.com/sf-symbols/) (File → New Symbol from Template, or drag the SVG into a custom symbol template), export it, and drag the exported `.svg` into your app's asset catalog as a Symbol Image Set. Symbol names that iOS doesn't ship are looked up in the asset catalog, so `'my.icon'` finds a custom symbol named `my.icon`. Custom symbols scale and weight with the text like the built-in ones. A plain image set (PDF or SVG with "Preserve Vector Data") works too, drawn as a tinted template.
+- **Android:** import the SVG with Android Studio's Vector Asset Studio (File → New → Vector Asset → Local file), or convert it with a tool such as `svg2vectordrawable`, into `res/drawable/my_icon.xml`. Drawable names are the file name, so use a name that is valid on both platforms (lowercase and underscores, `my_icon`).
+
+```tsx
+<Button label="Deposit" icon="my_icon" />
+<TextField trailingIcon="my_icon" />
+```
+
+The library doesn't parse SVG at runtime, and it doesn't bundle Material Symbols: both would add weight and a second rendering path to every app, while the platform formats above are the ones the system renders, tints and scales natively.
 
 ### Cross-platform pattern
 
