@@ -113,7 +113,9 @@ export function buttonColors(
   tintColor: string | undefined
 ): CSSStyle {
   switch (variant) {
+    // Glass is an iOS 26 material; browsers get the Android mapping.
     case 'tonal':
+    case 'glass':
       return {
         backgroundColor: color ?? `color-mix(in srgb, ${primary} 18%, Canvas)`,
         color: tintColor ?? 'CanvasText',

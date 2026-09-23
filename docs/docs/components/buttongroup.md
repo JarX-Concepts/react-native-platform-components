@@ -46,7 +46,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | Prop                | Type                                                     | Description                                                                                                  |
 | ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `buttons`           | `ButtonGroupButton[]`                                    | Buttons to display                                                                                           |
-| `variant`           | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated'` | Emphasis of every button. See [Button variants](/components/button#variants). Default: `'outlined'`          |
+| `variant`           | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis of every button. See [Button variants](/components/button#variants). Default: `'outlined'`          |
 | `size`              | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size of every button. Default: `'small'`                                                                     |
 | `shape`             | `'round' \| 'square'`                                    | Corner shape of every button. Default: platform default                                                      |
 | `connected`         | `boolean`                                                | Connected group. See [Standard and connected](#standard-and-connected). Default: `true` when selecting       |

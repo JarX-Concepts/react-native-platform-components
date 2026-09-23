@@ -30,7 +30,7 @@ import { Button } from 'react-native-platform-components';
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `label`              | `string`                                                 | Button text. Omit for an icon-only button                                                |
 | `icon`               | `PlatformIcon`                                           | Icon before the label, or alone. See [Icons](#icons)                                     |
-| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
+| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
 | `size`               | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size. See [Sizes](#sizes). Default: `'small'`                                            |
 | `shape`              | `'round' \| 'square'`                                    | Corner shape. See [Shape](#shape). Default: platform default                             |
 | `disabled`           | `boolean`                                                | Disables the button                                                                      |
@@ -59,6 +59,22 @@ Five levels of emphasis, from highest to lowest. Android uses the Material 3 Exp
 | `outlined` | Outlined button (`materialButtonOutlinedStyle`)                     | `.bordered()` |
 | `text`     | Text button (`borderlessButtonStyle`)                               | `.plain()`    |
 | `elevated` | Elevated button (`materialButtonElevatedStyle`)                     | `.gray()`     |
+
+#### Liquid Glass
+
+Two more variants give the iOS 26 Liquid Glass buttons. Earlier iOS versions and Android fall back to the closest regular style, so the same code works everywhere.
+
+| Variant          | iOS 26+              | Before iOS 26 | Android |
+| ---------------- | -------------------- | ------------- | ------- |
+| `glass`          | `.glass()`           | `.gray()`     | Tonal   |
+| `prominentGlass` | `.prominentGlass()`  | `.filled()`   | Filled  |
+
+`color` tints the prominent glass (`baseBackgroundColor`) and `tintColor` colors the label and icon, as for `filled`. Pressed and disabled states follow the system glass behavior. In a [ButtonGroup](/components/buttongroup), selected glass buttons use the prominent glass style.
+
+```tsx
+<Button label="Done" variant="prominentGlass" color="#0A84FF" tintColor="white" />
+<Button icon="xmark" variant="glass" accessibilityLabel="Close" />
+```
 
 ### Sizes
 

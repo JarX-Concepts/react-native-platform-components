@@ -158,6 +158,40 @@ export function ButtonDemo(): React.JSX.Element {
         </View>
       </Section>
 
+      <Section title="Liquid Glass">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-glass"
+            label="Glass"
+            variant="glass"
+            onPress={() => setLastPressed('glass')}
+            {...common}
+          />
+          <Button
+            testID="button-prominent-glass"
+            label="Prominent"
+            variant="prominentGlass"
+            onPress={() => setLastPressed('prominent glass')}
+            {...common}
+          />
+          <Button
+            label="Tinted"
+            variant="prominentGlass"
+            color="#FF6B35"
+            tintColor="white"
+            onPress={() => setLastPressed('tinted glass')}
+            {...common}
+          />
+          <Button
+            icon={SHARE_ICON}
+            variant="glass"
+            accessibilityLabel="Share, glass"
+            onPress={() => setLastPressed('share (glass)')}
+            {...common}
+          />
+        </View>
+      </Section>
+
       {/* The selection groups keep the small size: three labels at the large
           sizes don't fit a phone's width. */}
       <Section title="Button Group">

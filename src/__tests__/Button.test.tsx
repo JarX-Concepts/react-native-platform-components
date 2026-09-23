@@ -81,6 +81,14 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it('passes the Liquid Glass variants through', () => {
+    const tree = render(<Button label="Glass" variant="glass" />);
+    expect(lastNativeProps().variant).toBe('glass');
+    act(() => tree.update(<Button label="Glass" variant="prominentGlass" />));
+    expect(lastNativeProps().variant).toBe('prominentGlass');
+    act(() => tree.unmount());
+  });
+
   it('passes the classic Material 3 style through', () => {
     const tree = render(<Button label="Plain" android={{ material: 'm3' }} />);
     expect(lastNativeProps().androidMaterial).toBe('m3');

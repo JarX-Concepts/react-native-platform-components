@@ -31,7 +31,7 @@ export interface ButtonNativeProps extends ViewProps {
   /** Icon shown before the label, or alone when there is no label. */
   icon?: ButtonIconProps;
 
-  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' */
+  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' | 'prominentGlass' */
   variant?: string;
 
   /** 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge' */

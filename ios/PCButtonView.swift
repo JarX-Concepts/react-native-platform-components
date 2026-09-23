@@ -10,7 +10,7 @@ public final class PCButtonView: UIView {
         didSet { if oldValue != label { applyConfiguration() } }
     }
 
-    /// "filled" | "tonal" | "outlined" | "text" | "elevated"
+    /// "filled" | "tonal" | "outlined" | "text" | "elevated" | "glass" | "prominentGlass"
     public var variant: String = "filled" {
         didSet { if oldValue != variant { applyConfiguration() } }
     }

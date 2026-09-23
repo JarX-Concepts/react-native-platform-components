@@ -17,9 +17,20 @@ import type { AndroidMaterialStyle } from './sharedTypes';
  * | `outlined` | Outlined button                 | `.bordered()`                  |
  * | `text`     | Text button                     | `.plain()`                     |
  * | `elevated` | Elevated button                 | `.gray()`                      |
+ * | `glass`    | Filled tonal button             | `.glass()` (iOS 26+), else `.gray()` |
+ * | `prominentGlass` | Filled button             | `.prominentGlass()` (iOS 26+), else `.filled()` |
+ *
+ * The glass variants are the iOS 26 Liquid Glass buttons; `color` tints
+ * the prominent glass and `tintColor` colors the label and icon.
  */
 export type ButtonVariant =
-  'filled' | 'tonal' | 'outlined' | 'text' | 'elevated';
+  | 'filled'
+  | 'tonal'
+  | 'outlined'
+  | 'text'
+  | 'elevated'
+  | 'glass'
+  | 'prominentGlass';
 
 /**
  * Button size. Material 3 Expressive defines five sizes; iOS maps them onto

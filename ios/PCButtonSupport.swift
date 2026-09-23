@@ -48,15 +48,38 @@ enum PCButtonSupport {
     /// | outlined | .bordered()   |
     /// | text     | .plain()      |
     /// | elevated | .gray()       |
+    /// | glass          | .glass() on iOS 26+, .gray() before          |
+    /// | prominentGlass | .prominentGlass() on iOS 26+, .filled() before |
+    ///
+    /// Selected glass buttons use the prominent glass style.
     static func configuration(variant: String, selected: Bool) -> UIButton.Configuration {
-        if selected { return .filled() }
+        let glass = variant == "glass" || variant == "prominentGlass"
+        if selected { return glass ? prominentGlass() : .filled() }
         switch variant {
         case "tonal": return .tinted()
         case "outlined": return .bordered()
         case "text": return .plain()
         case "elevated": return .gray()
+        case "glass": return glassConfiguration()
+        case "prominentGlass": return prominentGlass()
         default: return .filled()
         }
+    }
+
+    /// `.glass()` needs the iOS 26 SDK and runtime; `.gray()` otherwise.
+    private static func glassConfiguration() -> UIButton.Configuration {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return .glass() }
+        #endif
+        return .gray()
+    }
+
+    /// `.prominentGlass()` needs the iOS 26 SDK and runtime; `.filled()` otherwise.
+    private static func prominentGlass() -> UIButton.Configuration {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return .prominentGlass() }
+        #endif
+        return .filled()
     }
 
     /// Material's five sizes onto UIKit's four.
