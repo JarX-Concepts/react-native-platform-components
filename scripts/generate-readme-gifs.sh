@@ -17,6 +17,9 @@ echo ""
 # Steps 1-2: Run e2e tests. Set SKIP_E2E=1 to convert the latest recorded
 # artifacts instead (e.g. after running Jest directly with DETOX_CONFIGURATION).
 if [ -z "$SKIP_E2E" ]; then
+    # A fixed clock, full battery and signal in the recordings' status bars
+    export E2E_CLEAN_STATUS_BAR=1
+
     echo "Step 1: Running iOS e2e tests..."
     yarn test:e2e:ios
 
@@ -136,8 +139,9 @@ convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.g
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME")"
 
 echo ""
-echo "Step 5: README showreel..."
-"$SCRIPT_DIR/generate-readme-showreel.sh"
+echo "Step 5: README hero, social card and showreel..."
+node "$SCRIPT_DIR/visuals/stills.mjs"
+node "$SCRIPT_DIR/visuals/showreel.mjs"
 
 echo ""
 echo "=== Complete! ==="

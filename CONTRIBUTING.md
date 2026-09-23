@@ -71,6 +71,7 @@ Re-run `prebuild` after changing the config plugin or `example-expo/app.json`.
 | `docs/docs/`                                                               | Documentation site content (Docusaurus). The README stays short and links here; document props and behavior on the component pages          |
 | `example/e2e/`                                                             | Detox flows for all components                                                                                                              |
 | `scripts/generate-readme-gifs.sh`                                          | Regenerates the README GIFs from Detox recordings                                                                                           |
+| `scripts/visuals/`                                                         | Builds the README hero grid, social card and showreel from those recordings (ffmpeg + headless Chrome); `yarn generate:visuals` runs it alone |
 
 ### Editing native code
 
@@ -103,6 +104,7 @@ Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurr
 | `yarn example <cmd>`      | Run a script in the bare example app                                     |
 | `yarn example-expo <cmd>` | Run a script in the Expo example app                                     |
 | `yarn generate:gifs`      | Regenerate the README GIFs (runs the full Detox suite on both platforms) |
+| `yarn generate:visuals`   | Rebuild the README hero, social card and showreel from the newest recordings |
 | `yarn clean`              | Clean build artifacts                                                    |
 
 ### E2E testing (Detox)
