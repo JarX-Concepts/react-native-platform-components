@@ -32,6 +32,10 @@ const EDIT_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'pencil' },
   android: { type: 'drawable', name: 'edit' },
 };
+const SEND_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'paperplane' },
+  android: { type: 'drawable', name: 'send' },
+};
 const SHARE_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'square.and.arrow.up' },
   android: { type: 'drawable', name: 'share' },
@@ -139,6 +143,25 @@ export function ButtonDemo(): React.JSX.Element {
             icon={BELL_ICON}
             variant="outlined"
             onPress={() => setLastPressed('alerts')}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <View style={styles.wrap}>
+          <Button
+            testID="button-icon-trailing"
+            label="Send"
+            icon={SEND_ICON}
+            iconPosition="trailing"
+            onPress={() => setLastPressed('send')}
+            {...common}
+          />
+          <Button
+            testID="button-corner-radius"
+            label="Radius 6"
+            variant="tonal"
+            cornerRadius={6}
+            onPress={() => setLastPressed('radius 6')}
             {...common}
           />
         </View>

@@ -44,12 +44,21 @@ export type ButtonSize = 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge';
  */
 export type ButtonShape = 'round' | 'square';
 
+/** Which side of the label the icon sits on. */
+export type ButtonIconPosition = 'leading' | 'trailing';
+
 export interface ButtonProps extends ViewProps {
   /** Button text. Omit for an icon-only button. */
   label?: string;
 
-  /** Icon shown before the label, or alone when there is no label. */
+  /** Icon shown next to the label, or alone when there is no label. */
   icon?: PlatformIcon;
+
+  /**
+   * Which side of the label the icon sits on. Default: `'leading'`.
+   * iOS: `imagePlacement`. Android: `iconGravity` (`textEnd` for trailing).
+   */
+  iconPosition?: ButtonIconPosition;
 
   /** Emphasis. Default: `'filled'`. See {@link ButtonVariant}. */
   variant?: ButtonVariant;
@@ -59,6 +68,13 @@ export interface ButtonProps extends ViewProps {
 
   /** Corner shape. Default: platform default. */
   shape?: ButtonShape;
+
+  /**
+   * Corner radius in points (dp). Overrides `shape` when set.
+   * iOS: `background.cornerRadius` with the fixed corner style. Android: the
+   * `shapeAppearanceModel` corner size (the press morph is turned off).
+   */
+  cornerRadius?: number;
 
   /** Whether the button is disabled. */
   disabled?: boolean;
@@ -110,9 +126,11 @@ export function Button(props: ButtonProps): React.ReactElement {
   const {
     label,
     icon,
+    iconPosition,
     variant,
     size,
     shape,
+    cornerRadius,
     disabled,
     color,
     tintColor,
@@ -137,9 +155,11 @@ export function Button(props: ButtonProps): React.ReactElement {
     <NativeButton
       label={label ?? ''}
       icon={nativeIcon}
+      iconPosition={iconPosition ?? 'leading'}
       variant={variant ?? 'filled'}
       size={size ?? 'small'}
       shape={shape ?? ''}
+      cornerRadius={cornerRadius ?? -1}
       interactivity={disabled ? 'disabled' : 'enabled'}
       color={color}
       foregroundColor={tintColor}

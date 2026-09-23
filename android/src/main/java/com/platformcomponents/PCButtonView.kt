@@ -38,6 +38,8 @@ class PCButtonView(context: Context) :
   var variant: PCExpressive.Variant = PCExpressive.Variant.FILLED
   var size: String = "small"
   var shape: String = "round"
+  var iconPosition: String = "leading" // "leading" | "trailing"
+  var cornerRadius: Float = -1f // dp; negative = use shape
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var spokenLabel: String = ""
   var expressive: Boolean = true // android.material: "expressive" | "m3"
@@ -111,6 +113,19 @@ class PCButtonView(context: Context) :
     val parsed = PCExpressive.parseShape(value)
     if (shape == parsed) return
     shape = parsed
+    rebuildUI()
+  }
+
+  fun applyIconPosition(value: String?) {
+    val newValue = if (value == "trailing") "trailing" else "leading"
+    if (iconPosition == newValue) return
+    iconPosition = newValue
+    rebuildUI()
+  }
+
+  fun applyCornerRadius(value: Float) {
+    if (cornerRadius == value) return
+    cornerRadius = value
     rebuildUI()
   }
 
@@ -221,6 +236,13 @@ class PCButtonView(context: Context) :
       if (iconOnly) {
         // Centre the icon instead of leaving it at the start edge
         iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+      } else if (iconPosition == "trailing") {
+        iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
+      }
+      val radius = this@PCButtonView.cornerRadius // MaterialButton has its own cornerRadius
+      if (radius >= 0) {
+        // A numeric radius overrides the shape (and its press morph)
+        shapeAppearanceModel = shapeAppearanceModel.withCornerSize(PixelUtil.toPixelFromDIP(radius))
       }
       setOnClickListener { onPress?.invoke() }
     }

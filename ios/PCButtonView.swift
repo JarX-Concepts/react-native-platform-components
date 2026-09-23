@@ -25,6 +25,16 @@ public final class PCButtonView: UIView {
         didSet { if oldValue != shape { applyConfiguration() } }
     }
 
+    /// "leading" | "trailing"
+    public var iconPosition: String = "leading" {
+        didSet { if oldValue != iconPosition { applyConfiguration() } }
+    }
+
+    /// Corner radius in points; negative uses `shape`
+    public var cornerRadius: CGFloat = -1 {
+        didSet { if oldValue != cornerRadius { applyConfiguration() } }
+    }
+
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
         didSet { button.isEnabled = interactivity != "disabled" }
@@ -128,7 +138,9 @@ public final class PCButtonView: UIView {
             image: iconImage,
             containerColor: containerColor,
             foregroundColor: foregroundColor,
-            font: labelFont
+            font: labelFont,
+            imagePlacement: iconPosition == "trailing" ? .trailing : .leading,
+            cornerRadius: cornerRadius >= 0 ? cornerRadius : nil
         )
         invalidateIntrinsicContentSize()
     }

@@ -29,10 +29,12 @@ import { Button } from 'react-native-platform-components';
 | Prop                 | Type                                                     | Description                                                                              |
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `label`              | `string`                                                 | Button text. Omit for an icon-only button                                                |
-| `icon`               | `PlatformIcon`                                           | Icon before the label, or alone. See [Icons](#icons)                                     |
+| `icon`               | `PlatformIcon`                                           | Icon next to the label, or alone. See [Icons](#icons)                                    |
+| `iconPosition`       | `'leading' \| 'trailing'`                                | Side of the label the icon sits on. See [Icons](#icons). Default: `'leading'`            |
 | `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
 | `size`               | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size. See [Sizes](#sizes). Default: `'small'`                                            |
 | `shape`              | `'round' \| 'square'`                                    | Corner shape. See [Shape](#shape). Default: platform default                             |
+| `cornerRadius`       | `number`                                                 | Corner radius in points (dp). Overrides `shape`. See [Shape](#shape)                     |
 | `disabled`           | `boolean`                                                | Disables the button                                                                      |
 | `color`              | `ColorValue`                                             | Container (background) color                                                             |
 | `tintColor`          | `ColorValue`                                             | Label and icon color                                                                     |
@@ -99,6 +101,12 @@ Material 3 Expressive buttons come in two shapes: `round` (a pill, the default) 
 <Button label="Square" shape="square" size="medium" />
 ```
 
+When a design specifies a radius, set `cornerRadius` (points on iOS, dp on Android). It overrides `shape`: iOS uses the fixed corner style with `background.cornerRadius`, Android sets the corner size on the button's `shapeAppearanceModel`, which turns off the Expressive press morph.
+
+```tsx
+<Button label="Radius 6" cornerRadius={6} />
+```
+
 ### Icons
 
 `icon` accepts the same shapes as [SegmentedControl](/components/segmentedcontrol#icon-support): an SF Symbol or drawable name, an image asset, or an `{ ios, android }` pair.
@@ -115,6 +123,12 @@ Material 3 Expressive buttons come in two shapes: `round` (a pill, the default) 
 
 // One image asset for both, drawn as a tinted template
 <Button label="Alerts" icon={{ type: 'image', source: require('./bell.png') }} />
+```
+
+The icon sits before the label by default. `iconPosition="trailing"` puts it after the label (iOS `imagePlacement = .trailing`, Android `iconGravity = textEnd`):
+
+```tsx
+<Button label="Next" icon="chevron.right" iconPosition="trailing" />
 ```
 
 A button with an icon and no label is an **icon button**: on Android it uses the Material 3 Expressive icon button styles (a square container that keeps the `variant`), on iOS an image-only `UIButton`. Always give it an `accessibilityLabel`.

@@ -76,6 +76,16 @@ class PCButtonViewManager :
     view.applyShape(value)
   }
 
+  // "leading" (default) | "trailing"
+  override fun setIconPosition(view: PCButtonView, value: String?) {
+    view.applyIconPosition(value)
+  }
+
+  // Negative = use shape
+  override fun setCornerRadius(view: PCButtonView, value: Double) {
+    view.applyCornerRadius(value.toFloat())
+  }
+
   override fun setInteractivity(view: PCButtonView, value: String?) {
     view.applyInteractivity(value)
   }

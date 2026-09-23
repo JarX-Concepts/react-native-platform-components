@@ -1,7 +1,7 @@
 // ButtonNativeComponent.ts
 import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler, Double } from './codegenTypes';
+import type { BubblingEventHandler, Double, WithDefault } from './codegenTypes';
 
 /**
  * Icon fields, pre-resolved on the JS side (see icons.ts).
@@ -28,8 +28,11 @@ export interface ButtonNativeProps extends ViewProps {
   /** Button text. Empty for an icon-only button. */
   label?: string;
 
-  /** Icon shown before the label, or alone when there is no label. */
+  /** Icon shown next to the label, or alone when there is no label. */
   icon?: ButtonIconProps;
+
+  /** 'leading' | 'trailing' */
+  iconPosition?: string;
 
   /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' | 'prominentGlass' */
   variant?: string;
@@ -39,6 +42,9 @@ export interface ButtonNativeProps extends ViewProps {
 
   /** '' (platform default) | 'round' | 'square' */
   shape?: string;
+
+  /** Corner radius in points; negative = use `shape`. */
+  cornerRadius?: WithDefault<Double, -1>;
 
   /** 'enabled' | 'disabled' */
   interactivity?: string;

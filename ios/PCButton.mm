@@ -121,6 +121,10 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
                     tinted:(icon.iconTinted != "false")];
   }
 
+  if (!prevProps || newProps.iconPosition != prevProps->iconPosition) {
+    _view.iconPosition = NSStringFromStd(newProps.iconPosition, @"leading");
+  }
+
   if (!prevProps || newProps.variant != prevProps->variant) {
     _view.variant = NSStringFromStd(newProps.variant, @"filled");
   }
@@ -131,6 +135,10 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
 
   if (!prevProps || newProps.shape != prevProps->shape) {
     _view.shape = NSStringFromStd(newProps.shape, @"");
+  }
+
+  if (!prevProps || newProps.cornerRadius != prevProps->cornerRadius) {
+    _view.cornerRadius = newProps.cornerRadius;
   }
 
   if (!prevProps || newProps.interactivity != prevProps->interactivity) {

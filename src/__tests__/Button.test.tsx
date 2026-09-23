@@ -81,6 +81,22 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it("defaults to a leading icon and the shape's corners", () => {
+    const tree = render(<Button label="Next" />);
+    expect(lastNativeProps().iconPosition).toBe('leading');
+    expect(lastNativeProps().cornerRadius).toBe(-1);
+    act(() => tree.unmount());
+  });
+
+  it('passes iconPosition and cornerRadius through', () => {
+    const tree = render(
+      <Button label="Next" iconPosition="trailing" cornerRadius={0} />
+    );
+    expect(lastNativeProps().iconPosition).toBe('trailing');
+    expect(lastNativeProps().cornerRadius).toBe(0);
+    act(() => tree.unmount());
+  });
+
   it('passes the Liquid Glass variants through', () => {
     const tree = render(<Button label="Glass" variant="glass" />);
     expect(lastNativeProps().variant).toBe('glass');

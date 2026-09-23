@@ -18,9 +18,11 @@ export function Button(props: ButtonProps): React.ReactElement {
   const {
     label,
     icon,
+    iconPosition = 'leading',
     variant = 'filled',
     size = 'small',
     shape = 'round',
+    cornerRadius,
     disabled,
     color,
     tintColor,
@@ -54,7 +56,9 @@ export function Button(props: ButtonProps): React.ReactElement {
           height: metrics.height,
           minWidth: metrics.height,
           padding: label ? `0 ${metrics.padding}px` : 0,
-          borderRadius: shape === 'square' ? 12 : metrics.height / 2,
+          flexDirection: iconPosition === 'trailing' ? 'row-reverse' : 'row',
+          borderRadius:
+            cornerRadius ?? (shape === 'square' ? 12 : metrics.height / 2),
           fontSize: metrics.fontSize,
           opacity: disabled ? 0.38 : 1,
           cursor: disabled ? 'default' : 'pointer',

@@ -68,6 +68,15 @@ describe('Button (web)', () => {
     expect(tree.root.findByType('button').props.disabled).toBe(true);
   });
 
+  it('places a trailing icon and applies a numeric corner radius', () => {
+    const tree = render(
+      <Button label="Next" iconPosition="trailing" cornerRadius={6} />
+    );
+    const style = tree.root.findByType('button').props.style;
+    expect(style.flexDirection).toBe('row-reverse');
+    expect(style.borderRadius).toBe(6);
+  });
+
   it('uses the theme color for filled buttons', () => {
     function App() {
       useNativeTheme({ colors: { primary: '#123456' } });

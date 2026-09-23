@@ -110,15 +110,22 @@ enum PCButtonSupport {
         image: UIImage?,
         containerColor: UIColor?,
         foregroundColor: UIColor?,
-        font: UIFont?
+        font: UIFont?,
+        imagePlacement: NSDirectionalRectEdge = .leading,
+        cornerRadius: CGFloat? = nil
     ) -> UIButton.Configuration {
         var config = configuration(variant: variant, selected: selected)
         config.title = label.isEmpty ? nil : label
         config.image = image
         config.imagePadding = (image != nil && !label.isEmpty) ? 8 : 0
+        config.imagePlacement = imagePlacement
         config.buttonSize = buttonSize(size)
         config.titleLineBreakMode = .byTruncatingTail
-        if let corner = cornerStyle(shape) {
+        if let cornerRadius {
+            // A numeric radius overrides the shape
+            config.cornerStyle = .fixed
+            config.background.cornerRadius = cornerRadius
+        } else if let corner = cornerStyle(shape) {
             config.cornerStyle = corner
         }
         if let containerColor {
