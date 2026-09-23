@@ -152,18 +152,54 @@ export const ensureModalMode = async (enabled: boolean) => {
   }
 };
 
+const adbPath = () =>
+  process.env.ANDROID_HOME
+    ? `${process.env.ANDROID_HOME}/platform-tools/adb`
+    : 'adb';
+
+// A fixed clock, full battery and signal, no notification icons: the status
+// bars of recordings made for the README (E2E_CLEAN_STATUS_BAR=1, set by
+// scripts/generate-readme-gifs.sh) then match across flows and platforms.
+const cleanStatusBar = async () => {
+  if (isAndroid()) {
+    const adb = adbPath();
+    for (const command of [
+      'settings put global sysui_demo_allowed 1',
+      'am broadcast -a com.android.systemui.demo -e command enter',
+      'am broadcast -a com.android.systemui.demo -e command clock -e hhmm 0941',
+      'am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false',
+      'am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4',
+      'am broadcast -a com.android.systemui.demo -e command network -e mobile show -e datatype none -e level 4',
+      'am broadcast -a com.android.systemui.demo -e command notifications -e visible false',
+    ]) {
+      execSync(`"${adb}" -s ${device.id} shell ${command}`);
+    }
+  } else {
+    await device.setStatusBar({
+      time: '9:41',
+      dataNetwork: 'wifi',
+      wifiMode: 'active',
+      wifiBars: '3',
+      cellularMode: 'active',
+      cellularBars: '4',
+      batteryState: 'charged',
+      batteryLevel: '100',
+    });
+  }
+};
+
 describe('Platform Components Example', () => {
   beforeAll(async () => {
     if (isAndroid()) {
       // Text is entered with replaceText (see typeInto), so the soft keyboard
       // has no part in the flows; keep it down so it never covers the demo's
       // buttons below a focused field, as it does on the CI emulator
-      const adb = process.env.ANDROID_HOME
-        ? `${process.env.ANDROID_HOME}/platform-tools/adb`
-        : 'adb';
       execSync(
-        `"${adb}" -s ${device.id} shell settings put secure show_ime_with_hard_keyboard 0`
+        `"${adbPath()}" -s ${device.id} shell settings put secure show_ime_with_hard_keyboard 0`
       );
+    }
+    if (process.env.E2E_CLEAN_STATUS_BAR) {
+      await cleanStatusBar();
     }
     await device.launchApp();
   });

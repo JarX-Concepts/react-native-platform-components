@@ -8,9 +8,14 @@
 Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
-  <a href="https://jarx-concepts.github.io/react-native-platform-components"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/showreel.gif" width="394" alt="TextField, DatePicker, SelectionMenu, ContextMenu, SegmentedControl, Button, FloatingToolbar and the native theme, iOS on the left and Android on the right" /></a>
+  <a href="https://jarx-concepts.github.io/react-native-platform-components">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-dark.webp" />
+      <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
+    </picture>
+  </a>
 </p>
-<p align="center"><sub>iOS on the left, Android on the right. Every component page on the <a href="https://jarx-concepts.github.io/react-native-platform-components">docs site</a> has full recordings for each platform; <a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
+<p align="center"><sub>Every tile is the platform's own widget, captured from the example app. The <a href="https://jarx-concepts.github.io/react-native-platform-components">docs site</a> has full recordings of each component on both platforms; <a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
 
 ```sh
 npm install react-native-platform-components
@@ -45,6 +50,11 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | All of the above      | One package, one API shape (platform-only props under `ios={{ }}` and `android={{ }}`), Fabric + Codegen typed bindings, Expo config plugin, TypeScript. | Four or five packages with different conventions, install steps and upgrade cadences.                                                                                                      |
 
 ## Components
+
+<p align="center">
+  <a href="https://jarx-concepts.github.io/react-native-platform-components"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/showreel.gif" width="640" alt="Showreel: the native theme changing brand color and switching to dark mode, then DatePicker, TextField, SegmentedControl, Button, ContextMenu, SelectionMenu, FloatingToolbar and LiquidGlass in use, iOS on the left and Android on the right" /></a>
+</p>
+<p align="center"><sub>iOS on the left, Android on the right. Recorded by the Detox suite in <code>example/</code>.</sub></p>
 
 | Component            | iOS                        | Android                                                          | Docs                                                                                                             |
 | -------------------- | -------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |

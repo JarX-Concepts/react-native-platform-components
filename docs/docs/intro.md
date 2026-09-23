@@ -7,6 +7,14 @@ description: "Native TextField, DatePicker, ContextMenu, SelectionMenu, Segmente
 
 Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-dark.webp" />
+    <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
+  </picture>
+</p>
+<p align="center"><sub>Every tile is the platform's own widget, captured from the example app. Each component page has full recordings on both platforms; <a href="/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
+
 ```sh
 npm install react-native-platform-components
 ```
@@ -50,72 +58,10 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 - **FloatingToolbar** – Material 3 Expressive floating toolbar on Android, a Liquid Glass capsule on iOS 26
 - **LiquidGlass** – iOS 26+ glass morphism effects (UIGlassEffect on iOS, fallback View on Android)
 
-<table>
-  <tr>
-    <td align="center"><strong>iOS TextField</strong></td>
-    <td align="center"><strong>Android TextField</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-textfield.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-textfield.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS ContextMenu</strong></td>
-    <td align="center"><strong>Android ContextMenu</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-contextmenu.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-contextmenu.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS SelectionMenu</strong></td>
-    <td align="center"><strong>Android SelectionMenu</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-selectionmenu.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-selectionmenu.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS SegmentedControl</strong></td>
-    <td align="center"><strong>Android SegmentedControl</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-segmentedcontrol.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-segmentedcontrol.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS Button</strong></td>
-    <td align="center"><strong>Android Button</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-button.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-button.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS FloatingToolbar</strong></td>
-    <td align="center"><strong>Android FloatingToolbar</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-floatingtoolbar.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-floatingtoolbar.gif" height="550" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS LiquidGlass</strong></td>
-    <td align="center"><strong>Android LiquidGlass</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-liquidglass.gif" height="550" /></td>
-    <td align="center"><em>iOS 26+ only</em><br/><br/>On Android, renders as a<br/>regular View with optional<br/>fallback background color.</td>
-  </tr>
-  <tr>
-    <td align="center"><strong>iOS Theme</strong></td>
-    <td align="center"><strong>Android Theme</strong></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-theme.gif" height="550" /></td>
-    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-theme.gif" height="550" /></td>
-  </tr>
-</table>
+<p align="center">
+  <video src="/react-native-platform-components/video/showreel.mp4" poster="/react-native-platform-components/video/showreel.jpg" width="100%" autoplay loop muted playsinline controls></video>
+</p>
+<p align="center"><sub>iOS on the left, Android on the right: the native theme changing brand color and switching to dark mode, then each component in use. Recorded by the Detox suite in <code>example/</code>.</sub></p>
 
 **Have a component request?** If there's a native UI component you'd like to see added, [open an issue](https://github.com/JarX-Concepts/react-native-platform-components/issues/new) describing the component and its native APIs on iOS and Android.
 

@@ -69,7 +69,8 @@
     "test": "jest",
     "upgrade:check": "yarn dlx npm-check-updates",
     "upgrade:apply": "yarn dlx npm-check-updates -u && rm -rf node_modules && rm -rf package-lock.json && yarn install",
-    "generate:gifs": "./scripts/generate-readme-gifs.sh"
+    "generate:gifs": "./scripts/generate-readme-gifs.sh",
+    "generate:visuals": "node scripts/visuals/stills.mjs && node scripts/visuals/showreel.mjs"
   },
   "keywords": [
     "react-native",
