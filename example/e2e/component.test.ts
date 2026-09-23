@@ -133,22 +133,27 @@ const expectText = async (testID: string, text: string) => {
 
 export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
+  const button = element(by.id('picker-toggle-button'));
 
+  // The switch mounts (or unmounts) the picker's Open/Close button, so that
+  // button's presence is what says which mode the demo is in
+  const inModalMode = async () => {
+    try {
+      await expect(button).toBeVisible();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if ((await inModalMode()) === enabled) return;
+  await toggle.tap();
+  // React re-renders before the button appears or goes, so poll for it rather
+  // than asserting straight after the tap
   if (enabled) {
-    try {
-      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-      return;
-    } catch {
-      await toggle.tap();
-      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-    }
+    await waitFor(button).toBeVisible().withTimeout(10000);
   } else {
-    try {
-      await expect(element(by.id('picker-toggle-button'))).toBeVisible();
-      await toggle.tap();
-    } catch {
-      // Already disabled.
-    }
+    await waitFor(button).not.toBeVisible().withTimeout(10000);
   }
 };
 
@@ -214,20 +219,20 @@ describe('Platform Components Example', () => {
 
   it('should test Date Picker functionality', async () => {
     const dismissModal = async () => {
-      try {
+      if (isAndroid()) {
+        // The demo titles the dialog's negative button
         await element(by.text('Custom Cancel')).atIndex(0).tap();
-        return;
-      } catch {
-        // Not Android or button not present.
+      } else {
+        // The picker presents in a popover, and the Cancel item of its own
+        // confirm toolbar is the only control above the overlay. A tap aimed
+        // at the demo behind it never lands: the app stops answering Detox,
+        // which waits on that one tap until the test times out.
+        await element(by.label('Cancel')).atIndex(0).tap();
       }
-
-      try {
-        // Tap outside the popover to dismiss it
-        await element(by.text('BASICS')).tap();
-        return;
-      } catch {
-        // Section title not reachable.
-      }
+      // The Open/Close button is hittable again only once the picker has gone
+      await waitFor(element(by.id('picker-toggle-button')))
+        .toBeVisible()
+        .withTimeout(10000);
     };
 
     // The app opens on the Date Picker demo (beforeEach waits for it)
@@ -239,18 +244,12 @@ describe('Platform Components Example', () => {
     // Set mode to "Date"
     await selectMenuOption('mode-menu', 'Date');
 
-    // Set iOS style to "Inline" (iOS only)
-    try {
-      await selectMenuOption('ios-style-menu', 'Inline');
-    } catch {
-      // Not on iOS.
-    }
-
-    // Set Android material to "M3" (Android only)
-    try {
+    // Each platform has its own menu here. Asking for the other one's and
+    // catching the failure costs a full matcher timeout on every run.
+    if (isAndroid()) {
       await selectMenuOption('android-material-menu', 'M3');
-    } catch {
-      // Not on Android.
+    } else {
+      await selectMenuOption('ios-style-menu', 'Inline');
     }
 
     // Open the modal (then pause)
@@ -263,11 +262,8 @@ describe('Platform Components Example', () => {
     // Disable the modal mode
     await ensureModalMode(false);
 
-    // Set iOS style to "Wheels" (iOS only)
-    try {
+    if (!isAndroid()) {
       await selectMenuOption('ios-style-menu', 'Wheels');
-    } catch {
-      // Not on iOS.
     }
 
     // Set mode to "Time" (then pause)
