@@ -68,6 +68,23 @@ describe('Button (web)', () => {
     expect(tree.root.findByType('button').props.disabled).toBe(true);
   });
 
+  it('shows a spinner while loading and ignores clicks', () => {
+    const onPress = jest.fn();
+    const tree = render(<Button label="Save" loading onPress={onPress} />);
+    const button = tree.root.findByType('button');
+
+    expect(button.props['aria-busy']).toBe(true);
+    expect(button.props.disabled).toBeFalsy();
+    expect(button.props.onClick).toBeUndefined();
+    // The label stays in the layout, hidden, so the width doesn't change
+    const hidden = tree.root.findAll(
+      (node) =>
+        node.type === 'span' && node.props.style?.visibility === 'hidden'
+    );
+    expect(hidden).toHaveLength(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it('uses custom disabled colors instead of fading', () => {
     const tree = render(
       <Button

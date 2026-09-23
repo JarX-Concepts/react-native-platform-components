@@ -145,6 +145,10 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
     _view.interactivity = NSStringFromStd(newProps.interactivity, @"enabled");
   }
 
+  if (!prevProps || newProps.loading != prevProps->loading) {
+    _view.loading = newProps.loading == "true";
+  }
+
   // Colors arrive as SharedColor (already processed by React Native)
   if (!prevProps || newProps.color != prevProps->color) {
     _view.containerColor = RCTUIColorFromSharedColor(newProps.color);

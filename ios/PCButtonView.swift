@@ -7,7 +7,11 @@ public final class PCButtonView: UIView {
     // MARK: - Props (set from ObjC++)
 
     public var label: String = "" {
-        didSet { if oldValue != label { applyConfiguration() } }
+        didSet {
+            guard oldValue != label else { return }
+            applyConfiguration()
+            updateAccessibilityLabel()
+        }
     }
 
     /// "filled" | "tonal" | "outlined" | "text" | "elevated" | "glass" | "prominentGlass"
@@ -40,6 +44,17 @@ public final class PCButtonView: UIView {
         didSet { button.isEnabled = interactivity != "disabled" }
     }
 
+    /// Spinner in place of the label and icon; presses are ignored
+    public var loading: Bool = false {
+        didSet {
+            guard oldValue != loading else { return }
+            // Not isEnabled, so the button keeps its enabled colors
+            button.isUserInteractionEnabled = !loading
+            applyConfiguration()
+            updateAccessibilityLabel()
+        }
+    }
+
     /// Container color; nil keeps the configuration's color
     public var containerColor: UIColor? {
         didSet { applyConfiguration() }
@@ -67,7 +82,7 @@ public final class PCButtonView: UIView {
 
     /// Screen-reader label; empty uses the label
     public var spokenLabel: String = "" {
-        didSet { button.accessibilityLabel = spokenLabel.isEmpty ? nil : spokenLabel }
+        didSet { updateAccessibilityLabel() }
     }
 
     // MARK: - Events back to ObjC++
@@ -81,6 +96,14 @@ public final class PCButtonView: UIView {
     // MARK: - Internal
 
     private let button = UIButton(type: .system)
+
+    /// Hidden twin with the idle configuration, measured while loading so the
+    /// spinner keeps the button's size.
+    private let sizingButton = UIButton(type: .system)
+
+    /// The button whose size the view reports.
+    private var measuredButton: UIButton { loading ? sizingButton : button }
+
     private var icon = PCButtonSupport.Icon.none
     private var iconImage: UIImage?
 
@@ -117,6 +140,11 @@ public final class PCButtonView: UIView {
             button.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
 
+        // Hidden, but in the hierarchy so it measures with the same traits
+        sizingButton.isHidden = true
+        sizingButton.isAccessibilityElement = false
+        addSubview(sizingButton)
+
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
         // Custom disabled colors: rebuild the configuration when isEnabled flips
         button.configurationUpdateHandler = { [weak self] button in
@@ -127,7 +155,17 @@ public final class PCButtonView: UIView {
     }
 
     @objc private func pressed() {
+        guard !loading else { return }
         onPress?()
+    }
+
+    /// The title is dropped while loading, so the label is kept explicitly.
+    private func updateAccessibilityLabel() {
+        if !spokenLabel.isEmpty {
+            button.accessibilityLabel = spokenLabel
+        } else {
+            button.accessibilityLabel = loading && !label.isEmpty ? label : nil
+        }
     }
 
     // MARK: - Props handling
@@ -173,6 +211,17 @@ public final class PCButtonView: UIView {
         if !configuredEnabled {
             applyDisabledColors(to: &config)
         }
+        if loading {
+            // The idle configuration sizes the button; the spinner alone is
+            // centred in it, as the image's replacement.
+            sizingButton.configuration = config
+            config.title = nil
+            config.image = nil
+            config.imagePadding = 0
+            config.showsActivityIndicator = true
+        } else {
+            sizingButton.configuration = nil
+        }
         return config
     }
 
@@ -196,17 +245,17 @@ public final class PCButtonView: UIView {
     // MARK: - Sizing
 
     public override var intrinsicContentSize: CGSize {
-        button.intrinsicContentSize
+        measuredButton.intrinsicContentSize
     }
 
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
-        button.sizeThatFits(size)
+        measuredButton.sizeThatFits(size)
     }
 
     /// Called by the measuring pipeline to get the size for Yoga layout: the
     /// button's natural size, or its height at the given width.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
-        let fitted = button.sizeThatFits(
+        let fitted = measuredButton.sizeThatFits(
             CGSize(width: constrainedSize.width > 0 ? constrainedSize.width : .greatestFiniteMagnitude,
                    height: .greatestFiniteMagnitude)
         )

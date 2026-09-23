@@ -90,6 +90,11 @@ class PCButtonViewManager :
     view.applyInteractivity(value)
   }
 
+  // "true" | "false"
+  override fun setLoading(view: PCButtonView, value: String?) {
+    view.applyLoading(value == "true")
+  }
+
   // Colors arrive already processed by React Native (ARGB ints)
   override fun setColor(view: PCButtonView, value: Int?) {
     view.applyColors(value, view.foregroundColor, view.rippleColor, view.strokeColor)

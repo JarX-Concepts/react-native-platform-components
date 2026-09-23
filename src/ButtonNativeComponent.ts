@@ -49,6 +49,9 @@ export interface ButtonNativeProps extends ViewProps {
   /** 'enabled' | 'disabled' */
   interactivity?: string;
 
+  /** 'true' | 'false': spinner in place of the label and icon, presses ignored. */
+  loading?: string;
+
   /** Container (background) color. */
   color?: ColorValue;
 

@@ -36,6 +36,7 @@ import { Button } from 'react-native-platform-components';
 | `shape`              | `'round' \| 'square'`                                    | Corner shape. See [Shape](#shape). Default: platform default                             |
 | `cornerRadius`       | `number`                                                 | Corner radius in points (dp). Overrides `shape`. See [Shape](#shape)                     |
 | `disabled`           | `boolean`                                                | Disables the button                                                                      |
+| `loading`            | `boolean`                                                | Shows a spinner in place of the label and icon and ignores presses. See [Loading](#loading) |
 | `color`              | `ColorValue`                                             | Container (background) color                                                             |
 | `tintColor`          | `ColorValue`                                             | Label and icon color                                                                     |
 | `disabledColor`      | `ColorValue`                                             | Container color while disabled. Unset keeps the platform's disabled look                 |
@@ -108,6 +109,19 @@ When a design specifies a radius, set `cornerRadius` (points on iOS, dp on Andro
 ```tsx
 <Button label="Radius 6" cornerRadius={6} />
 ```
+
+### Loading
+
+`loading` swaps the label and icon for the platform's spinner while a request is in flight. The button keeps its size, so the layout doesn't jump, keeps its enabled colors, and ignores presses. It also sets `accessibilityState.busy`, merged with any `accessibilityState` you pass.
+
+```tsx
+<Button label="Save" loading={saving} onPress={save} />
+```
+
+| Platform | Spinner |
+| -------- | ------- |
+| iOS      | `UIButton.Configuration.showsActivityIndicator`, centred in the button's idle size |
+| Android  | A Material circular progress indicator (`IndeterminateDrawable`) at the icon size, drawn as the button icon in the label color; the label is hidden and the width kept |
 
 ### Icons
 

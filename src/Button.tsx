@@ -80,6 +80,14 @@ export interface ButtonProps extends ViewProps {
   disabled?: boolean;
 
   /**
+   * Shows a native spinner in place of the label and icon, keeping the
+   * button's size, and ignores presses. Sets `accessibilityState.busy`.
+   * iOS: `UIButton.Configuration.showsActivityIndicator`. Android: a Material
+   * circular progress indicator drawn as the button icon.
+   */
+  loading?: boolean;
+
+  /**
    * Container (background) color.
    * Android: `backgroundTint`. iOS: `baseBackgroundColor`.
    */
@@ -146,6 +154,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     shape,
     cornerRadius,
     disabled,
+    loading,
     color,
     tintColor,
     disabledColor,
@@ -154,6 +163,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     accessibilityLabel,
     onPress,
     android,
+    accessibilityState,
     ...viewProps
   } = props;
 
@@ -164,8 +174,15 @@ export function Button(props: ButtonProps): React.ReactElement {
   );
 
   const handlePress = useCallback(() => {
+    if (loading) return;
     onPress?.();
-  }, [onPress]);
+  }, [onPress, loading]);
+
+  const mergedAccessibilityState = useMemo(
+    () =>
+      loading ? { ...accessibilityState, busy: true } : accessibilityState,
+    [loading, accessibilityState]
+  );
 
   return (
     <NativeButton
@@ -177,6 +194,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       shape={shape ?? ''}
       cornerRadius={cornerRadius ?? -1}
       interactivity={disabled ? 'disabled' : 'enabled'}
+      loading={loading ? 'true' : 'false'}
       color={color}
       foregroundColor={tintColor}
       disabledColor={disabledColor}
@@ -187,6 +205,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       labelStyle={nativeLabelStyle}
       spokenLabel={accessibilityLabel ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
+      accessibilityState={mergedAccessibilityState}
       {...viewProps}
     />
   );

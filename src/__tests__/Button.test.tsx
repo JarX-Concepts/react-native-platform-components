@@ -97,6 +97,35 @@ describe('Button', () => {
     act(() => tree.unmount());
   });
 
+  it('is not loading by default', () => {
+    const tree = render(<Button label="Save" />);
+    expect(lastNativeProps().loading).toBe('false');
+    expect(lastNativeProps().accessibilityState).toBeUndefined();
+    act(() => tree.unmount());
+  });
+
+  it('marks a loading button busy, merged with accessibilityState', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        label="Save"
+        loading
+        onPress={onPress}
+        accessibilityState={{ selected: true }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.loading).toBe('true');
+    expect(props.accessibilityState).toEqual({ selected: true, busy: true });
+
+    // Presses that slip through while loading are ignored
+    act(() => {
+      props.onButtonPress({ nativeEvent: {} });
+    });
+    expect(onPress).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
   it('passes the disabled colors through', () => {
     const tree = render(
       <Button

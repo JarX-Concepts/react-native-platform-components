@@ -96,6 +96,7 @@ export function ButtonDemo(): React.JSX.Element {
   const [format, setFormat] = useState<string[]>(['bold']);
   const [styled, setStyled] = useState(true);
   const [expressive, setExpressive] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
   const common = {
@@ -179,6 +180,43 @@ export function ButtonDemo(): React.JSX.Element {
             />
           ))}
         </View>
+      </Section>
+
+      <Section title="Loading">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-loading"
+            label="Save"
+            loading={loading}
+            onPress={() => setLastPressed('save')}
+            {...common}
+          />
+          <Button
+            label="Share"
+            icon={SHARE_ICON}
+            variant="tonal"
+            loading={loading}
+            onPress={() => setLastPressed('share (loading)')}
+            {...common}
+          />
+          <Button
+            icon={EDIT_ICON}
+            variant="outlined"
+            accessibilityLabel="Edit"
+            loading={loading}
+            onPress={() => setLastPressed('edit (loading)')}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <Row label="Loading">
+          <Switch
+            style={ui.alignEnd}
+            testID="loading-switch"
+            value={loading}
+            onValueChange={setLoading}
+          />
+        </Row>
       </Section>
 
       <Section title="Liquid Glass">

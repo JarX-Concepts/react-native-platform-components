@@ -10,7 +10,10 @@ import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
+import com.google.android.material.progressindicator.IndeterminateDrawable
 
 /**
  * A Material 3 Expressive button. Hosts a MaterialButton, rebuilt whenever a
@@ -41,6 +44,7 @@ class PCButtonView(context: Context) :
   var iconPosition: String = "leading" // "leading" | "trailing"
   var cornerRadius: Float = -1f // dp; negative = use shape
   var interactivity: String = "enabled" // "enabled" | "disabled"
+  var loading: Boolean = false
   var spokenLabel: String = ""
   var expressive: Boolean = true // android.material: "expressive" | "m3"
 
@@ -136,6 +140,12 @@ class PCButtonView(context: Context) :
     if (interactivity == newValue) return
     interactivity = newValue
     button?.isEnabled = newValue == "enabled"
+  }
+
+  fun applyLoading(value: Boolean) {
+    if (loading == value) return
+    loading = value
+    rebuildUI()
   }
 
   fun applyMaterial(value: String?) {
@@ -253,19 +263,53 @@ class PCButtonView(context: Context) :
         // A numeric radius overrides the shape (and its press morph)
         shapeAppearanceModel = shapeAppearanceModel.withCornerSize(PixelUtil.toPixelFromDIP(radius))
       }
-      setOnClickListener { onPress?.invoke() }
+      setOnClickListener { if (!loading) onPress?.invoke() }
     }
 
-    PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration }) { requestLayout() }
+    // While loading the spinner replaces the icon, so a late image load is dropped
+    val showsSpinner = loading
+    PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration && !showsSpinner }) { requestLayout() }
     PCButtonSupport.applyFont(b, labelFontFamily, labelFontSize, labelFontWeight, labelFontStyle)
     PCButtonSupport.applyColors(
       b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted,
       disabledContainerColor, disabledForegroundColor
     )
+    if (showsSpinner) showSpinner(b)
 
     addView(b, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
     button = b
     requestLayout()
+  }
+
+  /**
+   * Swaps the label and icon for an indeterminate circular progress indicator
+   * at the icon size, keeping the button at its idle size, and ignores presses
+   * without the disabled look.
+   */
+  private fun showSpinner(b: MaterialButton) {
+    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    b.measure(unspecified, unspecified)
+    val idleWidth = b.measuredWidth
+    val idleHeight = b.measuredHeight
+
+    val spec = CircularProgressIndicatorSpec(
+      b.context, null, 0, MaterialR.style.Widget_Material3_CircularProgressIndicator_ExtraSmall
+    )
+    if (b.iconSize > 0) spec.indicatorSize = b.iconSize
+    spec.indicatorInset = 0
+    spec.indicatorColors = intArrayOf(b.currentTextColor)
+
+    b.contentDescription = spokenLabel.ifEmpty { label }.ifEmpty { null }
+    b.text = ""
+    b.iconTint = null
+    b.icon = IndeterminateDrawable.createCircularDrawable(b.context, spec)
+    b.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+    b.iconPadding = 0
+    b.minWidth = idleWidth
+    b.minimumWidth = idleWidth
+    b.minHeight = idleHeight
+    b.minimumHeight = idleHeight
+    b.isClickable = false
   }
 
   // ---- Layout ----
