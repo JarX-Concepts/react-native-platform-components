@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- The text size a view was capped at (maxFontSizeMultiplier); see PCThemeSupport.capTextSize -->
+  <item name="pc_capped_text_size" type="id" />
+</resources>

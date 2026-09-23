@@ -82,6 +82,12 @@ export interface SegmentedControlSegmentProps {
    * announced by their title.
    */
   accessibilityLabel?: string;
+
+  /**
+   * Test identifier of the segment, for E2E taps. iOS: the segment's
+   * accessibility element. Android: the segment's button.
+   */
+  testID?: string;
 }
 
 export interface SegmentedControlProps extends ViewProps {
@@ -131,6 +137,12 @@ export interface SegmentedControlProps extends ViewProps {
 
   /** Font for segment labels. See {@link SegmentedControlLabelStyle}. */
   labelStyle?: SegmentedControlLabelStyle;
+
+  /**
+   * Largest scale the labels may reach with the system text size (Dynamic
+   * Type / font scale), as on React Native `Text`. Unset or `0`: no cap.
+   */
+  maxFontSizeMultiplier?: number;
 
   /** Colors for segment badges. See {@link SegmentedControlBadgeStyle}. */
   badgeStyle?: SegmentedControlBadgeStyle;
@@ -205,6 +217,7 @@ export function SegmentedControl(
     activeTintColor,
     inactiveTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     badgeStyle,
     onSelect,
     onDeselect,
@@ -222,6 +235,7 @@ export function SegmentedControl(
       badge:
         seg.badge === undefined || seg.badge === null ? '' : String(seg.badge),
       accessibilityLabel: seg.accessibilityLabel ?? '',
+      testID: seg.testID ?? '',
       ...resolveSegmentIcon(seg.icon),
     }));
   }, [segments]);
@@ -296,6 +310,7 @@ export function SegmentedControl(
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       badgeBackgroundColor={badgeStyle?.backgroundColor}
       badgeTextColor={badgeStyle?.color}
       onSelect={onSelect || onDeselect ? handleSelect : undefined}
