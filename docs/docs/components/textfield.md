@@ -290,6 +290,8 @@ await element(by.id('email')).typeText('ada@example.com');
 await element(by.id('dob-picker')).tap(); // trailingIconTestID="dob-picker"
 ```
 
+For Jest, see [Testing](/guides/testing).
+
 ### Android theme
 
 The field is a Material 3 widget, so it works with a `Theme.Material3` app theme and with the library's Material 3 fallback; see [Android Theme Configuration](/guides/android-theme).

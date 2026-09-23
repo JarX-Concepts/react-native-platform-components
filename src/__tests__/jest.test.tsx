@@ -133,6 +133,27 @@ describe('TextField (mock)', () => {
     press(byTestID(tree, 'search-trailing-icon'));
     expect(onTrailingIconPress).toHaveBeenCalledTimes(1);
   });
+
+  it('uses the icon test IDs and presses a read-only field', () => {
+    const onPress = jest.fn();
+    const onTrailingIconPress = jest.fn();
+    const tree = render(
+      <TextField
+        testID="due"
+        editable={false}
+        onPress={onPress}
+        leadingIconTestID="due-leading"
+        trailingIcon="calendar"
+        trailingIconTestID="due-picker"
+        onTrailingIconPress={onTrailingIconPress}
+      />
+    );
+    expect(byTestID(tree, 'due-leading')).toBeTruthy();
+    press(byTestID(tree, 'due-picker'));
+    expect(onTrailingIconPress).toHaveBeenCalledTimes(1);
+    press(byTestID(tree, 'due'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Button (mock)', () => {
@@ -154,9 +175,33 @@ describe('Button (mock)', () => {
     const button = byTestID(tree, 'save');
     expect(button.props.accessibilityState).toMatchObject({ disabled: true });
   });
+
+  it('reports busy while loading', () => {
+    const tree = render(<Button testID="save" label="Save" loading />);
+    const button = byTestID(tree, 'save');
+    expect(button.props.accessibilityState).toMatchObject({ busy: true });
+  });
 });
 
 describe('SegmentedControl (mock)', () => {
+  it('uses a segment testID when given', () => {
+    const onSelect = jest.fn();
+    const tree = render(
+      <SegmentedControl
+        testID="tabs"
+        segments={[
+          { label: 'Home', value: 'home', testID: 'tab-home' },
+          { label: 'Invest', value: 'invest' },
+        ]}
+        selectedValue="invest"
+        onSelect={onSelect}
+      />
+    );
+    press(byTestID(tree, 'tab-home'));
+    expect(onSelect).toHaveBeenCalledWith('home', 0);
+    expect(byTestID(tree, 'tabs-invest')).toBeTruthy();
+  });
+
   const segments = [
     { label: 'One', value: '1' },
     { label: 'Two', value: '2' },

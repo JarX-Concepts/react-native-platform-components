@@ -97,7 +97,10 @@ function withText<E extends { nativeEvent: object }>(
 /**
  * A `TextInput` carrying `testID`, with the label, prefix, suffix, supporting
  * or error text and character count as `Text`. A trailing icon renders as a
- * button with the test ID `${testID}-trailing-icon`.
+ * button with the test ID `trailingIconTestID`, else
+ * `${testID}-trailing-icon`; a leading icon with `leadingIconTestID` renders
+ * as a view with that ID. A non-editable field with `onPress` calls it when
+ * the input is pressed.
  */
 export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
   function TextFieldMock(props, ref): React.ReactElement {
@@ -118,6 +121,21 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       leadingIcon,
       trailingIcon,
       onTrailingIconPress,
+      leadingIconTestID,
+      leadingIconAccessibilityLabel,
+      trailingIconTestID,
+      trailingIconAccessibilityLabel,
+      onPress,
+      activeColor,
+      outlineColor,
+      errorColor,
+      containerColor,
+      textColor,
+      placeholderTextColor,
+      maxFontSizeMultiplier,
+      textAlign,
+      minLines,
+      maxLines,
       clearButtonMode,
       passwordToggle,
       showCharacterCount,
@@ -196,6 +214,12 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
     return (
       <View {...viewProps}>
         {label ? <Text>{label}</Text> : null}
+        {leadingIconTestID ? (
+          <View
+            testID={leadingIconTestID}
+            accessibilityLabel={leadingIconAccessibilityLabel}
+          />
+        ) : null}
         {prefix ? <Text>{prefix}</Text> : null}
         <TextInput
           ref={inputRef}
@@ -207,6 +231,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
           onSubmitEditing={handleSubmit}
           placeholder={placeholder}
           editable={editable}
+          onPress={editable === false ? onPress : undefined}
           multiline={multiline}
           secureTextEntry={secureTextEntry}
           maxLength={maxLength}
@@ -225,7 +250,11 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         {suffix ? <Text>{suffix}</Text> : null}
         {trailingIcon || onTrailingIconPress ? (
           <Pressable
-            testID={testID ? `${testID}-trailing-icon` : undefined}
+            testID={
+              trailingIconTestID ??
+              (testID ? `${testID}-trailing-icon` : undefined)
+            }
+            accessibilityLabel={trailingIconAccessibilityLabel}
             accessibilityRole="button"
             onPress={() => onTrailingIconPress?.()}
           />
@@ -246,19 +275,29 @@ TextField.displayName = 'TextField';
 // ---------------------------------------------------------------------------
 // Button, ButtonGroup, SegmentedControl
 
-/** A `Pressable` with the button role and the label as `Text`. */
+/**
+ * A `Pressable` with the button role and the label as `Text`. While
+ * `loading` it ignores presses and reports `busy`.
+ */
 export function Button(props: ButtonProps): React.ReactElement {
   const {
     label,
     icon,
+    iconPosition,
     variant,
     size,
     shape,
+    cornerRadius,
     disabled,
+    loading,
     color,
     tintColor,
+    disabledColor,
+    disabledTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     accessibilityLabel,
+    accessibilityState,
     onPress,
     android,
     ...viewProps
@@ -269,8 +308,12 @@ export function Button(props: ButtonProps): React.ReactElement {
       {...viewProps}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled}
+      accessibilityState={{
+        ...accessibilityState,
+        disabled: !!disabled,
+        busy: loading ? true : accessibilityState?.busy,
+      }}
+      disabled={disabled || loading}
       onPress={() => onPress?.()}
     >
       {label ? <Text>{label}</Text> : null}
@@ -372,6 +415,7 @@ export function SegmentedControl(
     activeTintColor,
     inactiveTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     badgeStyle,
     ...viewProps
   } = props;
@@ -391,7 +435,10 @@ export function SegmentedControl(
         return (
           <Pressable
             key={segment.value}
-            testID={testID ? `${testID}-${segment.value}` : undefined}
+            testID={
+              segment.testID ??
+              (testID ? `${testID}-${segment.value}` : undefined)
+            }
             accessibilityRole="tab"
             accessibilityLabel={segment.accessibilityLabel ?? segment.label}
             accessibilityState={{
