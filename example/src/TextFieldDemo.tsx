@@ -21,6 +21,12 @@ const SEND_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'paperplane' },
   android: { type: 'drawable', name: 'send' },
 };
+const CALENDAR_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'calendar' },
+  android: { type: 'drawable', name: 'calendar' },
+};
+const DUE_DATES = ['Today', 'Tomorrow', 'Next week'];
+const BIG_AMOUNT_STYLE = { fontSize: 36, fontWeight: '600' } as const;
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -37,6 +43,9 @@ export function TextFieldDemo(): React.JSX.Element {
   const [amount, setAmount] = useState('');
   const [query, setQuery] = useState('');
   const [notes, setNotes] = useState('');
+  const [dueIndex, setDueIndex] = useState(0);
+  const [brand, setBrand] = useState('');
+  const [bigAmount, setBigAmount] = useState('');
   const [lastEvent, setLastEvent] = useState('(none)');
   const [editable, setEditable] = useState(true);
   const [filled, setFilled] = useState(false);
@@ -208,6 +217,8 @@ export function TextFieldDemo(): React.JSX.Element {
             onChangeText={setQuery}
             leadingIcon={SEARCH_ICON}
             trailingIcon={SEND_ICON}
+            trailingIconTestID="field-search-send"
+            trailingIconAccessibilityLabel="Search"
             onTrailingIconPress={() => setLastEvent(`search: ${query}`)}
             returnKeyType="search"
             onSubmitEditing={() => setLastEvent(`search: ${query}`)}
@@ -220,10 +231,60 @@ export function TextFieldDemo(): React.JSX.Element {
             value={notes}
             onChangeText={setNotes}
             multiline
+            minLines={2}
+            maxLines={5}
             maxLength={120}
             showCharacterCount
             ios={{ writingTools: writingTools ? 'default' : 'none' }}
             {...common}
+          />
+        </View>
+      </Section>
+
+      <Section title="Pickers and colors">
+        <View style={styles.fields}>
+          {/* A read-only field as a picker's anchor: presses, no keyboard */}
+          <TextField
+            testID="field-due"
+            label="Due"
+            value={DUE_DATES[dueIndex]}
+            editable={false}
+            onPress={() => {
+              setDueIndex((i) => (i + 1) % DUE_DATES.length);
+              setLastEvent('press: due');
+            }}
+            trailingIcon={CALENDAR_ICON}
+            trailingIconTestID="field-due-icon"
+            trailingIconAccessibilityLabel="Pick a date"
+            onTrailingIconPress={() => setLastEvent('icon: due')}
+          />
+          <TextField
+            testID="field-brand"
+            label="Brand colors"
+            placeholder="Focus me"
+            value={brand}
+            onChangeText={setBrand}
+            error={brand.length > 12 ? 'Twelve characters at most' : undefined}
+            activeColor="#7B1FA2"
+            outlineColor="#CE93D8"
+            errorColor="#E65100"
+            containerColor="rgba(123, 31, 162, 0.06)"
+            textColor="#4A148C"
+            placeholderTextColor="#BA68C8"
+            {...common}
+          />
+          <TextField
+            testID="field-big-amount"
+            placeholder="0.00"
+            value={bigAmount}
+            onChangeText={setBigAmount}
+            keyboardType="decimal-pad"
+            textAlign="center"
+            textStyle={BIG_AMOUNT_STYLE}
+            maxFontSizeMultiplier={1.3}
+            ios={{ borderStyle: 'none' }}
+            android={{ ...android, variant: 'plain' }}
+            editable={editable}
           />
         </View>
       </Section>

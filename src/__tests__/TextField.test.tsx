@@ -137,6 +137,17 @@ describe('TextField', () => {
     });
     expect(props.onFieldSubmit).toBeUndefined();
     expect(props.onTrailingIconPress).toBeUndefined();
+    expect(props.leadingIconTestID).toBe('');
+    expect(props.trailingIconTestID).toBe('');
+    expect(props.leadingIconSpokenLabel).toBe('');
+    expect(props.trailingIconSpokenLabel).toBe('');
+    expect(props.maxFontSizeMultiplier).toBe(0);
+    expect(props.textAlign).toBe('');
+    expect(props.minLines).toBe(0);
+    expect(props.maxLines).toBe(0);
+    expect(props.pressMode).toBe('none');
+    expect(props.onFieldPress).toBeUndefined();
+    expect(props.activeColor).toBeUndefined();
     expect(Commands.setText).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });
@@ -379,6 +390,72 @@ describe('TextField', () => {
       lastNativeProps().onTrailingIconPress({ nativeEvent: {} });
     });
     expect(onTrailingIconPress).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('passes the icon ids, colors, alignment, line bounds and font cap', () => {
+    const tree = render(
+      <TextField
+        testID="email"
+        leadingIconTestID="email-icon"
+        leadingIconAccessibilityLabel="Email"
+        trailingIconTestID="email-action"
+        trailingIconAccessibilityLabel="Send"
+        activeColor="purple"
+        outlineColor="gray"
+        errorColor="orange"
+        containerColor="white"
+        textColor="black"
+        placeholderTextColor="silver"
+        textAlign="center"
+        multiline
+        minLines={2}
+        maxLines={5}
+        maxFontSizeMultiplier={1.5}
+        autoComplete="address-line1"
+        android={{ variant: 'plain' }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props).toMatchObject({
+      testID: 'email',
+      leadingIconTestID: 'email-icon',
+      leadingIconSpokenLabel: 'Email',
+      trailingIconTestID: 'email-action',
+      trailingIconSpokenLabel: 'Send',
+      activeColor: 'purple',
+      outlineColor: 'gray',
+      errorColor: 'orange',
+      containerColor: 'white',
+      textColor: 'black',
+      placeholderTextColor: 'silver',
+      textAlign: 'center',
+      lines: 'multiline',
+      minLines: 2,
+      maxLines: 5,
+      maxFontSizeMultiplier: 1.5,
+      autoComplete: 'address-line1',
+    });
+    expect(props.android.variant).toBe('plain');
+    act(() => tree.unmount());
+  });
+
+  it('turns a read-only field with onPress into a button', () => {
+    const onPress = jest.fn();
+    const tree = render(<TextField editable={false} onPress={onPress} />);
+    expect(lastNativeProps().pressMode).toBe('button');
+    expect(lastNativeProps().interactivity).toBe('disabled');
+    act(() => {
+      lastNativeProps().onFieldPress({ nativeEvent: {} });
+    });
+    expect(onPress).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('ignores onPress while the field is editable', () => {
+    const tree = render(<TextField onPress={jest.fn()} />);
+    expect(lastNativeProps().pressMode).toBe('none');
+    expect(lastNativeProps().onFieldPress).toBeUndefined();
     act(() => tree.unmount());
   });
 });

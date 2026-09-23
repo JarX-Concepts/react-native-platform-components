@@ -53,6 +53,9 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `leadingIcon`         | `PlatformIcon`                                           | Icon at the start of the field. See [Icons](#icons)                                             |
 | `trailingIcon`        | `PlatformIcon`                                           | Icon at the end of the field; pressing it calls `onTrailingIconPress`                           |
 | `onTrailingIconPress` | `() => void`                                             | The trailing icon was pressed                                                                   |
+| `leadingIconTestID`, `trailingIconTestID` | `string`                             | Test identifiers of the icons. See [Testing](#testing)                                          |
+| `leadingIconAccessibilityLabel`, `trailingIconAccessibilityLabel` | `string`     | Screen-reader labels of the icons                                                               |
+| `onPress`             | `() => void`                                             | Called when a non-editable field is pressed. See [Read-only fields that open something](#read-only-fields-that-open-something) |
 | `clearButtonMode`     | `'never' \| 'while-editing' \| 'unless-editing' \| 'always'` | A clear button inside the field. Default: `'never'`                                          |
 | `passwordToggle`      | `boolean`                                                | A button that shows and hides the text of a `secureTextEntry` field                             |
 | `showCharacterCount`  | `boolean`                                                | Character count below the field, `12 / 100` with `maxLength`                                    |
@@ -63,13 +66,18 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `autoCorrect`         | `boolean`                                                | Auto-correction and suggestions. Default: `true`                                                |
 | `secureTextEntry`     | `boolean`                                                | Obscures the text                                                                               |
 | `multiline`           | `boolean`                                                | A field that grows with its text. Return inserts a newline                                      |
-| `editable`            | `boolean`                                                | Default: `true`. A non-editable field is drawn disabled                                         |
+| `minLines`, `maxLines` | `number`                                                | Multi-line height bounds, in lines. See [Multi-line text](#multi-line-text)                    |
+| `editable`            | `boolean`                                                | Default: `true`. A non-editable field is drawn disabled, unless it has `onPress`                |
 | `autoFocus`           | `boolean`                                                | Focuses the field when it mounts                                                                |
 | `selectTextOnFocus`   | `boolean`                                                | Selects all text on focus                                                                       |
-| `autoComplete`        | `'email' \| 'password' \| 'one-time-code' \| ...`        | Autofill hint. See [Autofill](#autofill)                                                        |
+| `autoComplete`        | `TextInput` values                                       | Autofill hint. See [Autofill](#autofill)                                                        |
 | `keyboardAppearance`  | `'default' \| 'light' \| 'dark'`                         | iOS keyboard appearance                                                                         |
 | `textStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Font of the input text                                                                          |
+| `textAlign`           | `'left' \| 'center' \| 'right'`                           | Text alignment. Default: natural (leading)                                                      |
+| `maxFontSizeMultiplier` | `number`                                               | Cap on the system text size scale, as on `Text`. See [Styling](#styling)                        |
+| `activeColor`, `outlineColor`, `errorColor`, `containerColor`, `textColor`, `placeholderTextColor` | `ColorValue` | Field colors. See [Colors](#colors) |
 | `accessibilityLabel`  | `string`                                                 | Screen-reader label. Defaults to `label`                                                        |
+| `testID`              | `string`                                                 | Set on the inner text input. See [Testing](#testing)                                            |
 
 ### Ref
 
@@ -107,7 +115,7 @@ The text traits, each `'default'` unless set. They apply on the iOS version that
 | Prop       | Type                       | Description                                                             |
 | ---------- | -------------------------- | ----------------------------------------------------------------------- |
 | `material` | `'m3' \| 'system'`         | The Material 3 text field (default) or the platform `EditText`. See [Material style](#material-style) |
-| `variant`  | `'outlined' \| 'filled'`   | Material 3 text field style. Default: `'outlined'`. See [Variants](#variants) |
+| `variant`  | `'outlined' \| 'filled' \| 'plain'` | Material 3 text field style. Default: `'outlined'`. See [Variants](#variants) |
 | `dense`    | `boolean`                  | The dense variant, a shorter field                                      |
 
 ### Controlled text
@@ -162,7 +170,7 @@ A field without a `label` has the placeholder as its only hint and, on Android, 
 />
 ```
 
-The end of the field holds one thing: a `trailingIcon`, else the `passwordToggle`, else the clear button. On Android the clear button is the Material clear icon, shown while the focused field has text, whatever `clearButtonMode` says beyond `'never'`. Multi-line fields have no icons, prefix or suffix on iOS, where a `UITextView` has no accessory slots.
+The end of the field holds one thing: a `trailingIcon`, else the `passwordToggle`, else the clear button. On Android the clear button is the Material clear icon, shown while the focused field has text, whatever `clearButtonMode` says beyond `'never'`. Clearing calls `onChange` and `onChangeText('')` on both platforms, so a search filter resets with it. Multi-line fields have no icons, prefix or suffix on iOS, where a `UITextView` has no accessory slots.
 
 ### Passwords
 
@@ -181,7 +189,7 @@ The end of the field holds one thing: a `trailingIcon`, else the `passwordToggle
 
 ### Autofill
 
-`autoComplete` maps to Android autofill hints and to `textContentType` on iOS: `off`, `username`, `password`, `new-password`, `one-time-code`, `email`, `name`, `given-name`, `family-name`, `tel`, `street-address`, `postal-code`, `country`, `cc-number`, `cc-exp`, `cc-csc`, `url`.
+`autoComplete` takes the React Native `TextInput` values, which include the HTML autocomplete names (`email`, `new-password`, `one-time-code`, `sms-otp`, `address-line1`, `postal-address-locality`, `birthdate-day`, `cc-exp-month`, `organization`, ...). Android maps them to autofill hints, as the core `TextInput` does; iOS maps them to `textContentType` (the credit card and birth date types need iOS 17). A value a platform has no equivalent for, such as `gift-card-pin` on iOS or `nickname` on Android, is ignored there, so a form schema's hints can be passed straight through.
 
 ### Multi-line text
 
@@ -189,7 +197,11 @@ The end of the field holds one thing: a `trailingIcon`, else the `passwordToggle
 <TextField label="Notes" multiline maxLength={200} showCharacterCount />
 ```
 
-A multi-line field grows with its text; give it a `minHeight` style for a taller box. The return key inserts a newline, so `onSubmitEditing` is not called.
+A multi-line field grows with its text. `minLines` sets the height it starts at (a feedback box), and `maxLines` the height it stops growing at and scrolls its text instead (a chat composer). The field reports its height through `onLayout` as it grows. The return key inserts a newline, so `onSubmitEditing` is not called.
+
+```tsx
+<TextField placeholder="Message" multiline minLines={1} maxLines={5} />
+```
 
 ### Grouped forms on iOS
 
@@ -209,11 +221,20 @@ const row = { ios: { labelPlacement: 'leading', borderStyle: 'none' } } as const
 
 ### Variants
 
-Material 3 has two text field styles, both on `android.variant`: `'outlined'` (the default) draws a stroke around the box, `'filled'` a tinted container with a bottom line. `android.dense` picks the shorter, dense version of either. iOS has one field; `ios.borderStyle` chooses between the rounded rectangle and the other `UITextField` borders.
+Material 3 has two text field styles, both on `android.variant`: `'outlined'` (the default) draws a stroke around the box, `'filled'` a tinted container with a bottom line. `'plain'` drops the box and the line, for a large standalone input such as an amount; the label still floats. `android.dense` picks the shorter, dense version of any of them. iOS has one field; `ios.borderStyle` chooses between the rounded rectangle and the other `UITextField` borders, and `'none'` is the borderless field.
 
 ```tsx
 <TextField label="Filled" android={{ variant: 'filled' }} />
 <TextField label="Dense" android={{ dense: true }} />
+<TextField
+  value={amount}
+  onChangeText={setAmount}
+  keyboardType="decimal-pad"
+  textAlign="center"
+  textStyle={{ fontSize: 40, fontWeight: '600' }}
+  android={{ variant: 'plain' }}
+  ios={{ borderStyle: 'none' }}
+/>
 ```
 
 ### Material style
@@ -224,9 +245,50 @@ Material 3 has two text field styles, both on `android.variant`: `'outlined'` (t
 <TextField label="Email" supportingText="Work address" android={{ material: 'system' }} />
 ```
 
+### Read-only fields that open something
+
+A field that opens a menu, a date picker or a search screen is a non-editable field with `onPress`. It keeps its enabled look, never focuses or shows the keyboard, and is announced as a button. Without `onPress`, `editable={false}` draws the field disabled.
+
+```tsx
+<TextField
+  label="Date of birth"
+  value={formatted}
+  editable={false}
+  onPress={() => setPickerVisible(true)}
+  trailingIcon={{ ios: 'calendar', android: 'ic_calendar' }}
+  onTrailingIconPress={() => setPickerVisible(true)}
+/>
+```
+
 ### Styling
 
-`textStyle` sets the input font with the `Text` style conventions; the label, supporting text and counter keep the platform's typography (Dynamic Type on iOS). Colors come from the theme: the app's Material 3 theme or the brand color set with [`useNativeTheme`](/guides/theming) on Android, the tint color on iOS.
+`textStyle` sets the input font with the `Text` style conventions; the label, supporting text and counter keep the platform's typography. Every text follows the system text size (Dynamic Type on iOS, the font scale on Android), the `textStyle` font included. `maxFontSizeMultiplier` caps that scale as it does on `Text`: with `1.5`, a 17pt input stops at 25.5pt however large the system setting.
+
+`textAlign` aligns the typed text and the placeholder; the natural alignment (leading) is the default.
+
+### Colors
+
+By default the colors come from the theme: the app's Material 3 theme or the brand color set with [`useNativeTheme`](/guides/theming) on Android, the tint color on iOS. The color props override it for one field:
+
+| Prop | Android (`TextInputLayout`) | iOS |
+| --- | --- | --- |
+| `activeColor` | Focused stroke or underline, floating label, cursor | Focused border, focused label, cursor |
+| `outlineColor` | Unfocused stroke or underline | Unfocused border |
+| `errorColor` | Error stroke, label, message and icon | Error label and message, error border |
+| `containerColor` | Box background | Field background |
+| `textColor` | Input text | Input text |
+| `placeholderTextColor` | Placeholder | Placeholder |
+
+`UITextField`'s rounded rectangle can't be recolored, so on iOS the field draws the same rounded rectangle itself when `activeColor`, `outlineColor` or `containerColor` is set. The host view's `style.backgroundColor` paints the whole component, label and supporting text included; `containerColor` is only the box.
+
+### Testing
+
+`testID` is set on the inner text input, the `UITextField` / `UITextView` on iOS and the `EditText` on Android, not on the host view. E2E drivers can then type into and clear the field by id (Detox `typeText`, `replaceText`, `clearText`). `leadingIconTestID` and `trailingIconTestID` identify the icons, so a test can tap a trailing icon that opens a picker. On Android they apply to the Material field; the `material: 'system'` field draws its icons as compound drawables, which have no view to carry an id.
+
+```ts
+await element(by.id('email')).typeText('ada@example.com');
+await element(by.id('dob-picker')).tap(); // trailingIconTestID="dob-picker"
+```
 
 ### Android theme
 

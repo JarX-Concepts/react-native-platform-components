@@ -1,6 +1,6 @@
 // TextFieldNativeComponent.ts
 import type * as React from 'react';
-import type { HostComponent, ViewProps } from 'react-native';
+import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeCommands, codegenNativeComponent } from 'react-native';
 import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 
@@ -70,7 +70,7 @@ export type TextFieldIOSProps = Readonly<{
 export type TextFieldAndroidProps = Readonly<{
   /** 'm3' | 'system' (AndroidMaterialMode) */
   material?: string;
-  /** 'outlined' | 'filled' */
+  /** 'outlined' | 'filled' | 'plain' */
   variant?: string;
   /** 'standard' | 'dense' */
   density?: string;
@@ -164,6 +164,49 @@ export interface TextFieldNativeProps extends ViewProps {
    */
   spokenLabel?: string;
 
+  /** E2E identifier of the leading icon. */
+  leadingIconTestID?: string;
+
+  /** Screen-reader label of the leading icon. */
+  leadingIconSpokenLabel?: string;
+
+  /** E2E identifier of the trailing icon. */
+  trailingIconTestID?: string;
+
+  /** Screen-reader label of the trailing icon. */
+  trailingIconSpokenLabel?: string;
+
+  /** Focused outline, focused label and cursor color. */
+  activeColor?: ColorValue;
+
+  /** Unfocused outline (underline for the filled variant) color. */
+  outlineColor?: ColorValue;
+
+  /** Error outline, label and message color. */
+  errorColor?: ColorValue;
+
+  /** Background of the field's box. */
+  containerColor?: ColorValue;
+
+  /** Input text color. */
+  textColor?: ColorValue;
+
+  /** Placeholder color. */
+  placeholderTextColor?: ColorValue;
+
+  /** Largest font scale the text may reach; 0 = no cap. */
+  maxFontSizeMultiplier?: Double;
+
+  /** '' (natural) | 'left' | 'center' | 'right' */
+  textAlign?: string;
+
+  /** Multi-line: minimum and maximum visible lines; 0 = unset. */
+  minLines?: Int32;
+  maxLines?: Int32;
+
+  /** 'none' | 'button': a non-editable field that fires onFieldPress. */
+  pressMode?: string;
+
   ios?: TextFieldIOSProps;
   android?: TextFieldAndroidProps;
 
@@ -181,6 +224,9 @@ export interface TextFieldNativeProps extends ViewProps {
 
   /** Fired when the trailing icon is pressed. */
   onTrailingIconPress?: BubblingEventHandler<Readonly<{}>>;
+
+  /** Fired when a field with pressMode 'button' is pressed. */
+  onFieldPress?: BubblingEventHandler<Readonly<{}>>;
 }
 
 type NativeTextFieldComponent = HostComponent<TextFieldNativeProps>;

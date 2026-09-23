@@ -20,6 +20,8 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.content.res.ColorStateList
+import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.Button
 import android.util.TypedValue
 import android.view.MotionEvent
 import androidx.core.widget.TextViewCompat
@@ -32,6 +34,7 @@ import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.R as MaterialR
 
 /**
  * A Material 3 text field: a TextInputLayout (floating label, box, icons,
@@ -92,15 +95,32 @@ class PCTextFieldView(context: Context) :
   var fontSize: Float = 0f
   var fontWeight: String = ""
   var fontStyle: String = ""
-  var variant: String = "outlined" // "outlined" | "filled"
+  var variant: String = "outlined" // "outlined" | "filled" | "plain"
   var dense: Boolean = false
   var materialMode: String = "m3" // "m3" | "system"
+  var inputTestID: String = ""
+  var leadingIconTestID: String = ""
+  var leadingIconSpokenLabel: String = ""
+  var trailingIconTestID: String = ""
+  var trailingIconSpokenLabel: String = ""
+  var activeColor: Int? = null
+  var outlineColor: Int? = null
+  var errorColor: Int? = null
+  var containerColor: Int? = null
+  var textColor: Int? = null
+  var placeholderTextColor: Int? = null
+  var maxFontSizeMultiplier: Float = 0f
+  var textAlign: String = "" // "" | "left" | "center" | "right"
+  var minLines: Int = 0
+  var maxLines: Int = 0
+  var pressable: Boolean = false
 
   // --- Events ---
   var onChange: ((text: String, eventCount: Int) -> Unit)? = null
   var onFocusChange: ((focused: Boolean, text: String) -> Unit)? = null
   var onSubmit: ((text: String) -> Unit)? = null
   var onTrailingIconPress: (() -> Unit)? = null
+  var onPress: (() -> Unit)? = null
 
   // --- Text state (survives rebuilds) ---
   private var text: String = ""
@@ -283,8 +303,7 @@ class PCTextFieldView(context: Context) :
     val next = value != "disabled"
     if (fieldEnabled == next) return
     fieldEnabled = next
-    layout?.isEnabled = next
-    if (layout == null) editText?.isEnabled = next
+    applyPressMode()
   }
 
   fun applyAutoFocus(value: Boolean) {
@@ -321,7 +340,10 @@ class PCTextFieldView(context: Context) :
   }
 
   fun applyVariant(value: String?) {
-    val next = if (value == "filled") "filled" else "outlined"
+    val next = when (value) {
+      "filled", "plain" -> value
+      else -> "outlined"
+    }
     if (variant == next) return
     variant = next
     rebuildUI()
@@ -339,6 +361,66 @@ class PCTextFieldView(context: Context) :
     if (materialMode == next) return
     materialMode = next
     rebuildUI()
+  }
+
+  fun applyInputTestID(value: String) {
+    if (inputTestID == value) return
+    inputTestID = value
+    applyTestIDs()
+  }
+
+  fun applyIconAccessibility(leadingID: String, leadingLabel: String, trailingID: String, trailingLabel: String) {
+    if (leadingIconTestID == leadingID && leadingIconSpokenLabel == leadingLabel &&
+      trailingIconTestID == trailingID && trailingIconSpokenLabel == trailingLabel
+    ) return
+    leadingIconTestID = leadingID
+    leadingIconSpokenLabel = leadingLabel
+    trailingIconTestID = trailingID
+    trailingIconSpokenLabel = trailingLabel
+    applyTestIDs()
+  }
+
+  fun applyColors(active: Int?, outline: Int?, error: Int?, container: Int?, textValue: Int?, placeholderValue: Int?) {
+    if (activeColor == active && outlineColor == outline && errorColor == error &&
+      containerColor == container && textColor == textValue && placeholderTextColor == placeholderValue
+    ) return
+    // A color going back to the default needs fresh widgets; the rest applies live
+    val cleared = (activeColor != null && active == null) || (outlineColor != null && outline == null) ||
+      (errorColor != null && error == null) || (containerColor != null && container == null) ||
+      (textColor != null && textValue == null) || (placeholderTextColor != null && placeholderValue == null)
+    activeColor = active
+    outlineColor = outline
+    errorColor = error
+    containerColor = container
+    textColor = textValue
+    placeholderTextColor = placeholderValue
+    if (cleared) rebuildUI() else applyColors()
+  }
+
+  fun applyMaxFontSizeMultiplier(value: Float) {
+    if (maxFontSizeMultiplier == value) return
+    maxFontSizeMultiplier = value
+    // Fresh widgets start from their uncapped sizes
+    rebuildUI()
+  }
+
+  fun applyTextAlign(value: String) {
+    if (textAlign == value) return
+    textAlign = value
+    applyInputType()
+  }
+
+  fun applyLineBounds(min: Int, max: Int) {
+    if (minLines == min && maxLines == max) return
+    minLines = min
+    maxLines = max
+    applyInputType()
+  }
+
+  fun applyPressable(value: Boolean) {
+    if (pressable == value) return
+    pressable = value
+    applyPressMode()
   }
 
   // ---- Commands ----
@@ -453,8 +535,8 @@ class PCTextFieldView(context: Context) :
       // Material widgets need a Material theme; fall back to Material 3 defaults instead of crashing.
       val base = PCThemeSupport.materialContext(context, "TextField")
       val styleOverlay = when {
-        variant == "filled" && dense -> R.style.PCTextField_Filled_Dense
-        variant == "filled" -> R.style.PCTextField_Filled
+        variant != "outlined" && dense -> R.style.PCTextField_Filled_Dense
+        variant != "outlined" -> R.style.PCTextField_Filled
         dense -> R.style.PCTextField_Outlined_Dense
         else -> R.style.PCTextField_Outlined
       }
@@ -473,6 +555,14 @@ class PCTextFieldView(context: Context) :
         setSelectAllOnFocus(selectTextOnFocus)
         contentDescription = spokenLabel.ifEmpty { null }
       }
+      // Before it joins the layout, which sizes the resting label from it
+      applyFont(edit)
+      // The plain variant is the filled field without its box or underline;
+      // the mode must be set before the layout gives the edit text its box
+      if (variant == "plain") {
+        til.boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_NONE
+        edit.background = null
+      }
 
       til.addView(edit)
       addView(til)
@@ -482,7 +572,6 @@ class PCTextFieldView(context: Context) :
       defaultErrorIcon = til.errorIconDrawable
       til.prefixText = prefix.ifEmpty { null }
       til.suffixText = suffix.ifEmpty { null }
-      til.isEnabled = fieldEnabled
     }
 
     applyInputType()
@@ -492,6 +581,9 @@ class PCTextFieldView(context: Context) :
     applyEndIcon()
     applyCounterAndLength()
     applyAutofill()
+    applyColors()
+    applyPressMode()
+    applyTestIDs()
 
     // Restore the text without reporting it as an edit
     settingTextInternally = true
@@ -596,7 +688,7 @@ class PCTextFieldView(context: Context) :
     helper.text = message
     helper.visibility = if (message.isEmpty()) View.GONE else View.VISIBLE
     val color = if (showsError) {
-      themeColor(AppCompatR.attr.colorError, 0xFFB3261E.toInt())
+      errorColor ?: themeColor(AppCompatR.attr.colorError, 0xFFB3261E.toInt())
     } else {
       themeColor(android.R.attr.textColorSecondary, 0xFF757575.toInt())
     }
@@ -671,6 +763,7 @@ class PCTextFieldView(context: Context) :
       if (generation != startIconGeneration || layout !== til) return@loadIcon
       if (!leadingIcon.tinted) til.setStartIconTintList(null)
       til.startIconDrawable = drawable
+      applyTestIDs()
       requestLayout()
     }
   }
@@ -704,6 +797,7 @@ class PCTextFieldView(context: Context) :
           if (generation != endIconGeneration || layout !== til) return@loadIcon
           if (!trailingIcon.tinted) til.setEndIconTintList(null)
           til.endIconDrawable = drawable
+          applyTestIDs()
           requestLayout()
         }
       }
@@ -714,7 +808,119 @@ class PCTextFieldView(context: Context) :
     // Material replaces the end icon with its error icon while an error shows;
     // a password toggle or a custom icon stays, since the user still needs it
     til.errorIconDrawable = if (trailingIcon.isPresent || passwordToggle) null else defaultErrorIcon
+    applyTestIDs()
     requestLayout()
+  }
+
+  // ---- Test ids, colors, font scale, press ----
+
+  /**
+   * testID sits on the EditText, where Espresso's typeText / clearText work
+   * (Detox matches the view tag); the icon ids on the Material icon buttons.
+   * The system field's icons are compound drawables and can't carry one.
+   */
+  private fun applyTestIDs() {
+    val edit = editText ?: return
+    edit.tag = inputTestID.ifEmpty { null }
+    val til = layout ?: return
+    til.findViewById<View>(MaterialR.id.text_input_start_icon)?.tag = leadingIconTestID.ifEmpty { null }
+    til.startIconContentDescription = leadingIconSpokenLabel.ifEmpty { null }
+    // The password toggle and clear button keep Material's own descriptions
+    if (trailingIcon.isPresent) {
+      til.findViewById<View>(MaterialR.id.text_input_end_icon)?.tag = trailingIconTestID.ifEmpty { null }
+      til.endIconContentDescription = trailingIconSpokenLabel.ifEmpty { null }
+    } else {
+      til.findViewById<View>(MaterialR.id.text_input_end_icon)?.tag = null
+    }
+  }
+
+  /** Applies the color props over the style's colors; unset ones keep them. */
+  private fun applyColors() {
+    val edit = editText ?: return
+    textColor?.let { edit.setTextColor(it) }
+    placeholderTextColor?.let { edit.setHintTextColor(it) }
+    val til = layout
+    if (til == null) {
+      // The platform field: the underline follows the focus state
+      if (activeColor != null || outlineColor != null) {
+        val normal = outlineColor ?: themeColor(android.R.attr.colorControlNormal, 0xFF757575.toInt())
+        val focused = activeColor ?: themeColor(android.R.attr.colorControlActivated, normal)
+        edit.backgroundTintList = ColorStateList(
+          arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+          intArrayOf(focused, normal)
+        )
+      }
+      applySystemHelper()
+      return
+    }
+    if (activeColor != null || outlineColor != null) {
+      // The Material 3 stroke colors: outline (filled: on-surface-variant),
+      // on-surface while hovered, on-surface at 38% while disabled
+      fun attr(id: Int, fallback: Int): Int {
+        val value = TypedValue()
+        if (!til.context.theme.resolveAttribute(id, value, true)) return fallback
+        return if (value.resourceId != 0) til.context.getColor(value.resourceId) else value.data
+      }
+      val onSurface = attr(MaterialR.attr.colorOnSurface, 0xFF1D1B20.toInt())
+      val baseNormal = if (variant == "outlined") {
+        attr(MaterialR.attr.colorOutline, 0xFF79747E.toInt())
+      } else {
+        attr(MaterialR.attr.colorOnSurfaceVariant, 0xFF49454F.toInt())
+      }
+      val normal = outlineColor ?: baseNormal
+      val focused = activeColor ?: til.boxStrokeColor
+      val hovered = outlineColor ?: onSurface
+      val disabled = (onSurface and 0x00FFFFFF) or (0x61 shl 24)
+      til.setBoxStrokeColorStateList(
+        ColorStateList(
+          arrayOf(
+            intArrayOf(-android.R.attr.state_enabled),
+            intArrayOf(android.R.attr.state_focused),
+            intArrayOf(android.R.attr.state_hovered),
+            intArrayOf()
+          ),
+          intArrayOf(disabled, focused, hovered, normal)
+        )
+      )
+    }
+    activeColor?.let {
+      til.hintTextColor = ColorStateList.valueOf(it)
+      til.cursorColor = ColorStateList.valueOf(it)
+    }
+    errorColor?.let {
+      val list = ColorStateList.valueOf(it)
+      til.setErrorTextColor(list)
+      til.setBoxStrokeErrorColor(list)
+      til.setErrorIconTintList(list)
+      til.cursorErrorColor = list
+    }
+    containerColor?.let { if (til.boxBackgroundMode != TextInputLayout.BOX_BACKGROUND_NONE) til.boxBackgroundColor = it }
+    placeholderTextColor?.let { til.placeholderTextColor = ColorStateList.valueOf(it) }
+  }
+
+  private val actsAsButton: Boolean
+    get() = pressable && !fieldEnabled
+
+  /**
+   * Enabled state, or a non-editable field that acts as a button: enabled
+   * look, no focus or keyboard, presses reported through onPress.
+   */
+  private fun applyPressMode() {
+    val edit = editText ?: return
+    val button = actsAsButton
+    val enabled = fieldEnabled || button
+    layout?.isEnabled = enabled
+    if (layout == null) edit.isEnabled = enabled
+    edit.isFocusable = !button
+    edit.isFocusableInTouchMode = !button
+    edit.isCursorVisible = !button
+    edit.isLongClickable = !button
+    if (button) {
+      if (edit.isFocused) clearFocusAndMaybeRefocus(edit)
+      edit.setOnClickListener { onPress?.invoke() }
+    } else {
+      edit.setOnClickListener(null)
+    }
   }
 
   private fun applyCounterAndLength() {
@@ -785,11 +991,18 @@ class PCTextFieldView(context: Context) :
       else -> EditorInfo.IME_ACTION_UNSPECIFIED
     }
 
+    val horizontal = when (textAlign) {
+      "left" -> Gravity.LEFT
+      "center" -> Gravity.CENTER_HORIZONTAL
+      "right" -> Gravity.RIGHT
+      else -> Gravity.START
+    }
     if (multiline) {
-      edit.gravity = Gravity.TOP or Gravity.START
-      edit.minLines = 1
+      edit.gravity = Gravity.TOP or horizontal
+      edit.minLines = if (minLines > 0) minLines else 1
+      edit.maxLines = if (maxLines > 0) maxLines else Int.MAX_VALUE
     } else {
-      edit.gravity = Gravity.CENTER_VERTICAL or Gravity.START
+      edit.gravity = Gravity.CENTER_VERTICAL or horizontal
     }
 
     applyFont(edit)
@@ -798,6 +1011,8 @@ class PCTextFieldView(context: Context) :
 
   private fun applyFont(edit: TextInputEditText) {
     PCButtonSupport.applyFont(edit, fontFamily, fontSize, fontWeight, fontStyle)
+    edit.setTag(R.id.pc_capped_text_size, null)
+    PCThemeSupport.capTextSize(edit, maxFontSizeMultiplier)
   }
 
   private fun applyAutofill() {
@@ -820,23 +1035,61 @@ class PCTextFieldView(context: Context) :
     }
   }
 
-  /** React Native autoComplete values onto the Android autofill hints. */
+  /**
+   * React Native autoComplete values onto the Android autofill hints: the
+   * core TextInput's map, plus the HTML names it leaves out. The values are
+   * androidx.autofill HintConstants, spelled out because the React Native
+   * floor ships an older androidx.autofill. Unknown values give no hint.
+   */
   private fun autofillHint(value: String): String? = when (value) {
-    "username" -> View.AUTOFILL_HINT_USERNAME
-    "password" -> View.AUTOFILL_HINT_PASSWORD
-    "new-password" -> "newPassword" // HintConstants.AUTOFILL_HINT_NEW_PASSWORD
-    "one-time-code" -> "smsOTPCode" // HintConstants.AUTOFILL_HINT_SMS_OTP
-    "email" -> View.AUTOFILL_HINT_EMAIL_ADDRESS
-    "name" -> View.AUTOFILL_HINT_NAME
-    "given-name" -> "personGivenName" // HintConstants.AUTOFILL_HINT_PERSON_NAME_GIVEN
-    "family-name" -> "personFamilyName" // HintConstants.AUTOFILL_HINT_PERSON_NAME_FAMILY
-    "tel" -> View.AUTOFILL_HINT_PHONE
-    "street-address" -> View.AUTOFILL_HINT_POSTAL_ADDRESS
-    "postal-code" -> View.AUTOFILL_HINT_POSTAL_CODE
-    "country" -> "addressCountry" // HintConstants.AUTOFILL_HINT_POSTAL_ADDRESS_COUNTRY
-    "cc-number" -> View.AUTOFILL_HINT_CREDIT_CARD_NUMBER
-    "cc-exp" -> View.AUTOFILL_HINT_CREDIT_CARD_EXPIRATION_DATE
-    "cc-csc" -> View.AUTOFILL_HINT_CREDIT_CARD_SECURITY_CODE
+    "username" -> "username"
+    "username-new" -> "newUsername"
+    "password", "current-password" -> "password"
+    "new-password", "password-new" -> "newPassword"
+    "one-time-code", "sms-otp" -> "smsOTPCode"
+    "email-otp" -> "emailOTPCode"
+    "2fa-app-otp" -> "2faAppOTPCode"
+    "email" -> "emailAddress"
+    "name" -> "personName"
+    "given-name", "name-given" -> "personGivenName"
+    "family-name", "name-family" -> "personFamilyName"
+    "additional-name", "name-middle" -> "personMiddleName"
+    "name-middle-initial" -> "personMiddleInitial"
+    "honorific-prefix", "name-prefix" -> "personNamePrefix"
+    "honorific-suffix", "name-suffix" -> "personNameSuffix"
+    "tel" -> "phoneNumber"
+    "tel-country-code" -> "phoneCountryCode"
+    "tel-national" -> "phoneNational"
+    "tel-device" -> "phoneNumberDevice"
+    "street-address", "address-line1" -> "streetAddress"
+    "address-line2", "postal-address-extended" -> "extendedAddress"
+    "postal-address" -> "postalAddress"
+    "postal-address-country", "country" -> "addressCountry"
+    "postal-address-extended-postal-code" -> "extendedPostalCode"
+    "postal-address-locality" -> "addressLocality"
+    "postal-address-region" -> "addressRegion"
+    "postal-address-dependent-locality" -> "dependentLocality"
+    "postal-address-unit" -> "aptNumber"
+    "postal-code" -> "postalCode"
+    "birthdate-full" -> "birthDateFull"
+    "birthdate-day" -> "birthDateDay"
+    "birthdate-month" -> "birthDateMonth"
+    "birthdate-year" -> "birthDateYear"
+    "gender" -> "gender"
+    "cc-number" -> "creditCardNumber"
+    "cc-exp" -> "creditCardExpirationDate"
+    "cc-exp-day" -> "creditCardExpirationDay"
+    "cc-exp-month" -> "creditCardExpirationMonth"
+    "cc-exp-year" -> "creditCardExpirationYear"
+    "cc-csc" -> "creditCardSecurityCode"
+    "flight-number" -> "flightNumber"
+    "flight-confirmation-code" -> "flightConfirmationCode"
+    "gift-card-number" -> "giftCardNumber"
+    "gift-card-pin" -> "giftCardPIN"
+    "loyalty-account-number" -> "loyaltyAccountNumber"
+    "promo-code" -> "promoCode"
+    "upi-vpa" -> "upiVirtualPaymentAddress"
+    "wifi-password" -> "wifiPassword"
     else -> null
   }
 
@@ -904,6 +1157,24 @@ class PCTextFieldView(context: Context) :
     override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
       super.onFocusChanged(focused, direction, previouslyFocusedRect)
       onFocusChange?.invoke(focused, this@PCTextFieldView.text)
+    }
+
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+      super.onInitializeAccessibilityNodeInfo(info)
+      if (actsAsButton) {
+        info.className = Button::class.java.name
+        info.isEditable = false
+      }
+    }
+
+    /** A multi-line field capped at maxLines scrolls itself, not the ScrollView around it. */
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+      if (multiline && maxLines > 0 && (canScrollVertically(1) || canScrollVertically(-1))) {
+        when (event.actionMasked) {
+          MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> parent?.requestDisallowInterceptTouchEvent(true)
+        }
+      }
+      return super.onTouchEvent(event)
     }
 
     override fun onKeyPreIme(keyCode: Int, event: KeyEvent): Boolean {
@@ -983,6 +1254,9 @@ class PCTextFieldView(context: Context) :
     val child = widget ?: return
     // Keep the widget at its natural height even when Yoga hasn't caught up
     child.layout(0, 0, right - left, child.measuredHeight)
+    // Material creates the helper, error, counter and placeholder views as
+    // they are needed; cap the new ones (a changed size asks for a new pass)
+    PCThemeSupport.capTextSizes(child, maxFontSizeMultiplier)
     // TextInputLayout makes room for its start icon and prefix (invisible
     // compound drawables on the edit text) from a ViewTreeObserver global
     // layout callback, which only a window traversal delivers. React Native's

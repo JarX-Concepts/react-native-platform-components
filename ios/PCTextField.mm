@@ -48,13 +48,17 @@ static inline bool TextStyleEqual(
 }
 
 /// Builds the input font from RN-style font props, or nil when every field is
-/// unset so the field keeps the body text style.
+/// unset so the field keeps the body text style. The font is built at the
+/// default text size; the view scales it with Dynamic Type.
 static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
   if (style.fontFamily.empty() && style.fontSize <= 0 &&
       style.fontWeight.empty() && style.fontStyle.empty()) {
     return nil;
   }
-  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody]
+  UITraitCollection *defaultSize =
+      [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
+  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody
+                                 compatibleWithTraitCollection:defaultSize]
                   withFamily:NSStringFromStd(style.fontFamily, nil)
                         size:style.fontSize > 0 ? @(style.fontSize) : nil
                       weight:NSStringFromStd(style.fontWeight, nil)
@@ -142,6 +146,17 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
       if (!eventEmitter) return;
 
       eventEmitter->onTrailingIconPress({});
+    };
+
+    _view.onPress = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCTextFieldEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onFieldPress({});
     };
 
     _view.onNeedsRemeasure = ^{
@@ -275,6 +290,55 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
     _view.spokenLabel = NSStringFromStd(newProps.spokenLabel, @"");
   }
 
+  if (!prevProps || newProps.leadingIconTestID != prevProps->leadingIconTestID) {
+    _view.leadingIconTestID = NSStringFromStd(newProps.leadingIconTestID, @"");
+  }
+  if (!prevProps || newProps.leadingIconSpokenLabel != prevProps->leadingIconSpokenLabel) {
+    _view.leadingIconSpokenLabel = NSStringFromStd(newProps.leadingIconSpokenLabel, @"");
+  }
+  if (!prevProps || newProps.trailingIconTestID != prevProps->trailingIconTestID) {
+    _view.trailingIconTestID = NSStringFromStd(newProps.trailingIconTestID, @"");
+  }
+  if (!prevProps || newProps.trailingIconSpokenLabel != prevProps->trailingIconSpokenLabel) {
+    _view.trailingIconSpokenLabel = NSStringFromStd(newProps.trailingIconSpokenLabel, @"");
+  }
+
+  // Colors arrive as SharedColor (already processed by React Native)
+  if (!prevProps || newProps.activeColor != prevProps->activeColor) {
+    _view.activeColor = RCTUIColorFromSharedColor(newProps.activeColor);
+  }
+  if (!prevProps || newProps.outlineColor != prevProps->outlineColor) {
+    _view.outlineColor = RCTUIColorFromSharedColor(newProps.outlineColor);
+  }
+  if (!prevProps || newProps.errorColor != prevProps->errorColor) {
+    _view.errorColor = RCTUIColorFromSharedColor(newProps.errorColor);
+  }
+  if (!prevProps || newProps.containerColor != prevProps->containerColor) {
+    _view.containerColor = RCTUIColorFromSharedColor(newProps.containerColor);
+  }
+  if (!prevProps || newProps.textColor != prevProps->textColor) {
+    _view.textColor = RCTUIColorFromSharedColor(newProps.textColor);
+  }
+  if (!prevProps || newProps.placeholderTextColor != prevProps->placeholderTextColor) {
+    _view.placeholderTextColor = RCTUIColorFromSharedColor(newProps.placeholderTextColor);
+  }
+
+  if (!prevProps || newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
+    _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
+  }
+  if (!prevProps || newProps.textAlign != prevProps->textAlign) {
+    _view.textAlign = NSStringFromStd(newProps.textAlign, @"");
+  }
+  if (!prevProps || newProps.minLines != prevProps->minLines) {
+    _view.minLines = newProps.minLines;
+  }
+  if (!prevProps || newProps.maxLines != prevProps->maxLines) {
+    _view.maxLines = newProps.maxLines;
+  }
+  if (!prevProps || newProps.pressMode != prevProps->pressMode) {
+    _view.pressable = newProps.pressMode == "button";
+  }
+
   // ios: the text traits
   const auto &newIOS = newProps.ios;
   const auto &oldIOS = prevProps ? prevProps->ios : PCTextFieldIosStruct{};
@@ -313,7 +377,16 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
 
   // android: Android only
 
+  const bool testIdChanged = !prevProps || newProps.testId != prevProps->testId;
+
   [super updateProps:props oldProps:oldProps];
+
+  // testID belongs on the inner input: Detox types into and clears a
+  // UITextField / UITextView, and two views with one id would be ambiguous
+  if (testIdChanged) {
+    _view.inputTestID = NSStringFromStd(newProps.testId, @"");
+    self.accessibilityIdentifier = nil;
+  }
 
   // Update measurements when props change that affect layout
   [self updateMeasurements];

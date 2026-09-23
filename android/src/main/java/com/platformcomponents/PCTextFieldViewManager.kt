@@ -60,7 +60,10 @@ class PCTextFieldViewManager :
       dispatcher?.dispatchEvent(TextEvent(view.id, "topFieldSubmit", text))
     }
     view.onTrailingIconPress = {
-      dispatcher?.dispatchEvent(TrailingIconPressEvent(view.id))
+      dispatcher?.dispatchEvent(EmptyEvent(view.id, "topTrailingIconPress"))
+    }
+    view.onPress = {
+      dispatcher?.dispatchEvent(EmptyEvent(view.id, "topFieldPress"))
     }
   }
 
@@ -181,6 +184,77 @@ class PCTextFieldViewManager :
     view.applySpokenLabel(value ?: "")
   }
 
+  /**
+   * testID goes on the EditText, where Espresso types (Detox matches the view
+   * tag); the host keeps only React Native's own test-id key, so one id never
+   * matches two views.
+   */
+  override fun setTestId(view: PCTextFieldView, testId: String?) {
+    view.setTag(com.facebook.react.R.id.react_test_id, testId)
+    view.applyInputTestID(testId ?: "")
+  }
+
+  override fun setLeadingIconTestID(view: PCTextFieldView, value: String?) {
+    view.applyIconAccessibility(value ?: "", view.leadingIconSpokenLabel, view.trailingIconTestID, view.trailingIconSpokenLabel)
+  }
+
+  override fun setLeadingIconSpokenLabel(view: PCTextFieldView, value: String?) {
+    view.applyIconAccessibility(view.leadingIconTestID, value ?: "", view.trailingIconTestID, view.trailingIconSpokenLabel)
+  }
+
+  override fun setTrailingIconTestID(view: PCTextFieldView, value: String?) {
+    view.applyIconAccessibility(view.leadingIconTestID, view.leadingIconSpokenLabel, value ?: "", view.trailingIconSpokenLabel)
+  }
+
+  override fun setTrailingIconSpokenLabel(view: PCTextFieldView, value: String?) {
+    view.applyIconAccessibility(view.leadingIconTestID, view.leadingIconSpokenLabel, view.trailingIconTestID, value ?: "")
+  }
+
+  // Colors: processed color ints, null when unset
+  override fun setActiveColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(value, view.outlineColor, view.errorColor, view.containerColor, view.textColor, view.placeholderTextColor)
+  }
+
+  override fun setOutlineColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(view.activeColor, value, view.errorColor, view.containerColor, view.textColor, view.placeholderTextColor)
+  }
+
+  override fun setErrorColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(view.activeColor, view.outlineColor, value, view.containerColor, view.textColor, view.placeholderTextColor)
+  }
+
+  override fun setContainerColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(view.activeColor, view.outlineColor, view.errorColor, value, view.textColor, view.placeholderTextColor)
+  }
+
+  override fun setTextColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(view.activeColor, view.outlineColor, view.errorColor, view.containerColor, value, view.placeholderTextColor)
+  }
+
+  override fun setPlaceholderTextColor(view: PCTextFieldView, value: Int?) {
+    view.applyColors(view.activeColor, view.outlineColor, view.errorColor, view.containerColor, view.textColor, value)
+  }
+
+  override fun setMaxFontSizeMultiplier(view: PCTextFieldView, value: Double) {
+    view.applyMaxFontSizeMultiplier(value.toFloat())
+  }
+
+  override fun setTextAlign(view: PCTextFieldView, value: String?) {
+    view.applyTextAlign(value ?: "")
+  }
+
+  override fun setMinLines(view: PCTextFieldView, value: Int) {
+    view.applyLineBounds(value, view.maxLines)
+  }
+
+  override fun setMaxLines(view: PCTextFieldView, value: Int) {
+    view.applyLineBounds(view.minLines, value)
+  }
+
+  override fun setPressMode(view: PCTextFieldView, value: String?) {
+    view.applyPressable(value == "button")
+  }
+
   override fun setIos(view: PCTextFieldView, value: ReadableMap?) {
     // Android ignores iOS config
   }
@@ -239,8 +313,8 @@ class PCTextFieldViewManager :
     }
   }
 
-  private class TrailingIconPressEvent(surfaceId: Int) : Event<TrailingIconPressEvent>(surfaceId) {
-    override fun getEventName(): String = "topTrailingIconPress"
+  private class EmptyEvent(surfaceId: Int, private val name: String) : Event<EmptyEvent>(surfaceId) {
+    override fun getEventName(): String = name
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
       rctEventEmitter.receiveEvent(viewTag, eventName, Arguments.createMap())
     }

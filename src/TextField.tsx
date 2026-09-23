@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import type { NativeSyntheticEvent, ViewProps } from 'react-native';
+import type { ColorValue, NativeSyntheticEvent, ViewProps } from 'react-native';
 
 import NativeTextField, {
   Commands,
@@ -40,25 +40,82 @@ export type TextFieldKeyboardType =
 export type TextFieldReturnKeyType =
   'default' | 'done' | 'go' | 'next' | 'search' | 'send' | 'none' | 'previous';
 
-/** Autofill hint; a cross-platform subset of the React Native `TextInput` values. */
+/**
+ * Autofill hint: the React Native `TextInput` `autoComplete` values, which
+ * include the HTML autocomplete names. iOS maps them to `textContentType`,
+ * Android to autofill hints. A value one platform has no equivalent for is
+ * ignored there.
+ */
 export type TextFieldAutoComplete =
   | 'off'
   | 'username'
+  | 'username-new'
   | 'password'
+  | 'current-password'
   | 'new-password'
+  | 'password-new'
   | 'one-time-code'
+  | 'sms-otp'
+  | 'email-otp'
+  | '2fa-app-otp'
   | 'email'
   | 'name'
   | 'given-name'
   | 'family-name'
+  | 'additional-name'
+  | 'name-given'
+  | 'name-family'
+  | 'name-middle'
+  | 'name-middle-initial'
+  | 'name-prefix'
+  | 'name-suffix'
+  | 'honorific-prefix'
+  | 'honorific-suffix'
+  | 'nickname'
+  | 'organization'
+  | 'organization-title'
   | 'tel'
+  | 'tel-country-code'
+  | 'tel-national'
+  | 'tel-device'
   | 'street-address'
+  | 'address-line1'
+  | 'address-line2'
+  | 'postal-address'
+  | 'postal-address-country'
+  | 'postal-address-extended'
+  | 'postal-address-extended-postal-code'
+  | 'postal-address-locality'
+  | 'postal-address-region'
+  | 'postal-address-dependent-locality'
+  | 'postal-address-unit'
   | 'postal-code'
   | 'country'
+  | 'birthdate-full'
+  | 'birthdate-day'
+  | 'birthdate-month'
+  | 'birthdate-year'
+  | 'gender'
   | 'cc-number'
   | 'cc-exp'
+  | 'cc-exp-day'
+  | 'cc-exp-month'
+  | 'cc-exp-year'
   | 'cc-csc'
-  | 'url';
+  | 'cc-name'
+  | 'cc-given-name'
+  | 'cc-middle-name'
+  | 'cc-family-name'
+  | 'cc-type'
+  | 'url'
+  | 'flight-number'
+  | 'flight-confirmation-code'
+  | 'gift-card-number'
+  | 'gift-card-pin'
+  | 'loyalty-account-number'
+  | 'promo-code'
+  | 'upi-vpa'
+  | 'wifi-password';
 
 export type TextFieldAutoCapitalize =
   'none' | 'sentences' | 'words' | 'characters';
@@ -153,9 +210,72 @@ export interface TextFieldProps extends Omit<
   /** Called when the trailing icon is pressed. */
   onTrailingIconPress?: () => void;
 
+  /** Test identifier of the leading icon (Android: Material fields only). */
+  leadingIconTestID?: string;
+
+  /** Screen-reader label of the leading icon, which is decorative without one. */
+  leadingIconAccessibilityLabel?: string;
+
+  /** Test identifier of the trailing icon (Android: Material fields only). */
+  trailingIconTestID?: string;
+
+  /** Screen-reader label of the trailing icon. */
+  trailingIconAccessibilityLabel?: string;
+
+  /**
+   * Called when a field with `editable={false}` is pressed, for a field that
+   * opens a menu, a date picker or another screen. The field doesn't focus
+   * or show the keyboard, keeps its enabled look, and is announced as a
+   * button. Ignored while the field is editable.
+   */
+  onPress?: () => void;
+
+  /**
+   * Color of the focused outline (underline for filled fields), the focused
+   * label and the cursor. Default: the tint / Material primary color.
+   */
+  activeColor?: ColorValue;
+
+  /**
+   * Color of the unfocused outline (underline for filled fields). iOS draws
+   * the rounded-rect border itself when this, `activeColor` or
+   * `containerColor` is set.
+   */
+  outlineColor?: ColorValue;
+
+  /** Color of the outline, label and message in the error state. */
+  errorColor?: ColorValue;
+
+  /** Background of the field's box. The host `style.backgroundColor` paints the whole view. */
+  containerColor?: ColorValue;
+
+  /** Color of the typed text. */
+  textColor?: ColorValue;
+
+  /** Color of the placeholder. */
+  placeholderTextColor?: ColorValue;
+
+  /**
+   * Largest scale the field's text may reach with the system text size
+   * (Dynamic Type / font scale), as on React Native `Text`: `2` caps a 17pt
+   * font at 34pt. Unset or `0`: no cap. Applies to the input, label,
+   * placeholder, prefix, suffix and supporting text.
+   */
+  maxFontSizeMultiplier?: number;
+
+  /** Horizontal alignment of the text. Default: the natural (leading) alignment. */
+  textAlign?: 'left' | 'center' | 'right';
+
+  /** Multi-line fields: the height in lines the field starts at. */
+  minLines?: number;
+
+  /** Multi-line fields: the lines the field grows to before it scrolls. */
+  maxLines?: number;
+
   /**
    * When to show a clear button inside the field. Default: `'never'`.
    * Android shows the Material clear icon while the field has text.
+   * Clearing fires `onChange` and `onChangeText('')` on both platforms.
    */
   clearButtonMode?: TextFieldClearButtonMode;
 
@@ -186,7 +306,10 @@ export interface TextFieldProps extends Omit<
   /** Obscures the text, for passwords. */
   secureTextEntry?: boolean;
 
-  /** Multi-line field that grows with its content. Return inserts a newline. */
+  /**
+   * Multi-line field that grows with its content, between `minLines` and
+   * `maxLines`. Return inserts a newline.
+   */
   multiline?: boolean;
 
   /** Whether the text can be edited. Default: `true`. */
@@ -265,14 +388,22 @@ export interface TextFieldProps extends Omit<
      */
     material?: AndroidMaterialMode;
 
-    /** Material 3 text field style. Default: `'outlined'`. */
-    variant?: 'outlined' | 'filled';
+    /**
+     * Material 3 text field style. Default: `'outlined'`. `'plain'` has no
+     * box or underline (the label still floats), for a large standalone
+     * input such as an amount; the iOS equivalent is `ios.borderStyle: 'none'`.
+     */
+    variant?: 'outlined' | 'filled' | 'plain';
 
     /** The dense variant, a shorter field. */
     dense?: boolean;
   };
 
-  /** Test identifier */
+  /**
+   * Test identifier. It is set on the inner text input (the `UITextField` /
+   * `UITextView` on iOS, the `EditText` on Android) rather than the host
+   * view, so E2E drivers such as Detox can type into and clear the field.
+   */
   testID?: string;
 }
 
@@ -297,6 +428,21 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       leadingIcon,
       trailingIcon,
       onTrailingIconPress,
+      leadingIconTestID,
+      leadingIconAccessibilityLabel,
+      trailingIconTestID,
+      trailingIconAccessibilityLabel,
+      onPress,
+      activeColor,
+      outlineColor,
+      errorColor,
+      containerColor,
+      textColor,
+      placeholderTextColor,
+      maxFontSizeMultiplier,
+      textAlign,
+      minLines,
+      maxLines,
       clearButtonMode,
       passwordToggle,
       showCharacterCount,
@@ -409,6 +555,13 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       onTrailingIconPress?.();
     }, [onTrailingIconPress]);
 
+    const handlePress = useCallback(() => {
+      onPress?.();
+    }, [onPress]);
+
+    // A read-only field with onPress acts as a button
+    const pressable = editable === false && onPress != null;
+
     const nativeLeadingIcon = useMemo(
       () => resolveIcon(leadingIcon),
       [leadingIcon]
@@ -476,6 +629,21 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         keyboardAppearance={keyboardAppearance ?? 'default'}
         textStyle={nativeTextStyle}
         spokenLabel={accessibilityLabel ?? ''}
+        leadingIconTestID={leadingIconTestID ?? ''}
+        leadingIconSpokenLabel={leadingIconAccessibilityLabel ?? ''}
+        trailingIconTestID={trailingIconTestID ?? ''}
+        trailingIconSpokenLabel={trailingIconAccessibilityLabel ?? ''}
+        activeColor={activeColor}
+        outlineColor={outlineColor}
+        errorColor={errorColor}
+        containerColor={containerColor}
+        textColor={textColor}
+        placeholderTextColor={placeholderTextColor}
+        maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
+        textAlign={textAlign ?? ''}
+        minLines={minLines ?? 0}
+        maxLines={maxLines ?? 0}
+        pressMode={pressable ? 'button' : 'none'}
         ios={nativeIOS}
         android={nativeAndroid}
         onFieldChange={handleChange}
@@ -485,6 +653,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         onTrailingIconPress={
           onTrailingIconPress ? handleTrailingIconPress : undefined
         }
+        onFieldPress={pressable ? handlePress : undefined}
         {...viewProps}
       />
     );
