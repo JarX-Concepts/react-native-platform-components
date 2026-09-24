@@ -141,25 +141,32 @@ export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
   const button = element(by.id('picker-toggle-button'));
 
-  // The switch mounts (or unmounts) the picker's Open/Close button, so that
-  // button's presence is what says which mode the demo is in
-  const inModalMode = async () => {
+  // The switch's own value says which mode the demo is in. The Open/Close
+  // button it mounts can be there but covered (by a popover or menu that is
+  // still going away), which a visibility check reads as "not modal".
+  const isOn = async () => {
     try {
-      await expect(button).toBeVisible();
+      await expect(toggle).toHaveToggleValue(true);
       return true;
     } catch {
       return false;
     }
   };
 
-  if ((await inModalMode()) === enabled) return;
+  if ((await isOn()) === enabled) return;
   await toggle.tap();
+  // A tap that lands while the screen is still settling can be dropped;
+  // the switch shows it, so tap once more
+  if ((await isOn()) !== enabled) {
+    await pause(500);
+    if ((await isOn()) !== enabled) await toggle.tap();
+  }
   // React re-renders before the button appears or goes, so poll for it rather
   // than asserting straight after the tap
   if (enabled) {
     await waitFor(button).toBeVisible().withTimeout(10000);
   } else {
-    await waitFor(button).not.toBeVisible().withTimeout(10000);
+    await waitFor(button).not.toExist().withTimeout(10000);
   }
 };
 
@@ -224,17 +231,24 @@ describe('Platform Components Example', () => {
   });
 
   it('should test Date Picker functionality', async () => {
+    // The demo titles the Android dialogs' negative button. On iOS the
+    // picker presents in a popover, and the Cancel item of its own confirm
+    // toolbar is the only control above the overlay. A tap aimed at the demo
+    // behind it never lands: the app stops answering Detox, which waits on
+    // that one tap until the test times out.
+    const cancelControl = () =>
+      isAndroid()
+        ? element(by.text('Custom Cancel')).atIndex(0)
+        : element(by.label('Cancel')).atIndex(0);
+
+    // Opens the modal and waits for it, rather than for a fixed time
+    const openModal = async () => {
+      await element(by.id('picker-toggle-button')).tap();
+      await waitFor(cancelControl()).toBeVisible().withTimeout(10000);
+    };
+
     const dismissModal = async () => {
-      if (isAndroid()) {
-        // The demo titles the dialog's negative button
-        await element(by.text('Custom Cancel')).atIndex(0).tap();
-      } else {
-        // The picker presents in a popover, and the Cancel item of its own
-        // confirm toolbar is the only control above the overlay. A tap aimed
-        // at the demo behind it never lands: the app stops answering Detox,
-        // which waits on that one tap until the test times out.
-        await element(by.label('Cancel')).atIndex(0).tap();
-      }
+      await cancelControl().tap();
       // The Open/Close button is hittable again only once the picker has gone
       await waitFor(element(by.id('picker-toggle-button')))
         .toBeVisible()
@@ -260,9 +274,8 @@ describe('Platform Components Example', () => {
       await selectMenuOption('ios-style-menu', 'Inline');
     }
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    // Open the modal
+    await openModal();
 
     if (isAndroid()) {
       await expect(
@@ -282,9 +295,8 @@ describe('Platform Components Example', () => {
       await selectMenuOption('ios-style-menu', 'Wheels');
     }
 
-    // Set mode to "Time" (then pause)
+    // Set mode to "Time"
     await selectMenuOption('mode-menu', 'Time');
-    await pause(1000);
 
     // Enable the modal mode
     await ensureModalMode(true);
@@ -294,9 +306,8 @@ describe('Platform Components Example', () => {
       await selectMenuOption('hour-format-menu', '24-hour');
     }
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    // Open the modal
+    await openModal();
 
     if (isAndroid()) {
       await expect(element(by.text('AM'))).not.toBeVisible();
@@ -318,28 +329,57 @@ describe('Platform Components Example', () => {
         .not.toHaveText('—')
         .withTimeout(8000);
     }
+  });
 
-    if (!isAndroid()) {
-      // Countdown from the inline style (UIKit only has countdown wheels),
-      // reporting the duration
-      await ensureModalMode(false);
-      await selectMenuOption('ios-style-menu', 'Inline');
-      await selectMenuOption('mode-menu', 'Countdown');
-      await pause(800);
-      await scrollToId('date-picker');
+  // UIDatePicker's wheels-only modes (iOS): their own flow, which keeps the
+  // Date Picker flow well under the time limit on CI's slower iOS runner
+  it('should test Date Picker wheels', async () => {
+    // Android has no countdown or month-and-year picker
+    if (isAndroid()) return;
+
+    // The app opens on the Date Picker demo, embedded with the inline style
+    // (beforeEach waits for it). Countdown from there (UIKit only has
+    // countdown wheels), reporting the duration
+    await selectMenuOption('mode-menu', 'Countdown');
+    await pause(800);
+    await scrollToId('date-picker');
+
+    // A swiped wheel can leave a run loop block pending that Detox keeps
+    // waiting on after the app has gone idle (the flow then stalled until
+    // it timed out), so the wheel steps run unsynchronized and their checks
+    // poll
+    await device.disableSynchronization();
+    try {
       await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.7, 0.5);
-      await pause(1500);
-      await expect(element(by.id('countdown-duration'))).not.toHaveText(
-        '(none)'
-      );
+      await waitFor(element(by.id('countdown-duration')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
 
       // Month and year wheels (iOS 17.4+), reporting the month picked
-      await selectMenuOption('mode-menu', 'Year & Month');
-      await scrollToId('date-picker');
+      await element(by.id('mode-menu')).tap();
+      const yearAndMonth = element(
+        by
+          .text('Year & Month')
+          .withAncestor(by.type('_UIContextMenuContainerView'))
+      ).atIndex(0);
+      await waitFor(yearAndMonth).toBeVisible().withTimeout(5000);
+      await yearAndMonth.tap();
+      await waitFor(element(by.id('year-month-value')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await pause(800);
       await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.3, 0.5);
       await waitFor(element(by.id('year-month-value')))
         .not.toHaveText('(none)')
         .withTimeout(5000);
+      // The pending block belongs to the touch-tracking run loop mode; a
+      // drag on the list runs that mode again and lets it go
+      await element(by.id('demo-scroll'))
+        .scroll(40, 'down', NaN, 0.15)
+        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15));
+      await pause(500);
+    } finally {
+      await device.enableSynchronization();
     }
   });
 
