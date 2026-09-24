@@ -41,12 +41,13 @@ newest_recording() {
         | xargs -0 ls -t 2>/dev/null | head -1
 }
 
-# Locate the 17 video files (LiquidGlass is iOS-only)
+# Locate the 19 video files (LiquidGlass is iOS-only)
 IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
 IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
 IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
 IOS_CONTEXTMENU=$(newest_recording ios.sim.release "Context Menu")
 IOS_SEGMENTEDCONTROL=$(newest_recording ios.sim.release "Segmented Control")
+IOS_TABBAR=$(newest_recording ios.sim.release "Tab Bar")
 IOS_BUTTON=$(newest_recording ios.sim.release "Button")
 IOS_FLOATINGTOOLBAR=$(newest_recording ios.sim.release "Floating Toolbar")
 IOS_LIQUIDGLASS=$(newest_recording ios.sim.release "Liquid Glass")
@@ -56,19 +57,20 @@ ANDROID_DATEPICKER=$(newest_recording android.emu.release "Date Picker")
 ANDROID_SELECTIONMENU=$(newest_recording android.emu.release "Selection Menu")
 ANDROID_CONTEXTMENU=$(newest_recording android.emu.release "Context Menu")
 ANDROID_SEGMENTEDCONTROL=$(newest_recording android.emu.release "Segmented Control")
+ANDROID_TABBAR=$(newest_recording android.emu.release "Tab Bar")
 ANDROID_BUTTON=$(newest_recording android.emu.release "Button")
 ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar")
 ANDROID_THEME=$(newest_recording android.emu.release "Theme")
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_BUTTON" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_BUTTON" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
+for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_BUTTON" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_BUTTON" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
     if [ -z "$f" ] || [ ! -f "$f" ]; then
         echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 17 videos found!"
+echo "All 19 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -119,13 +121,14 @@ navigation_trim() {
     echo "${trim:-3}"
 }
 
-# Convert all 17 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 19 videos to GIFs (LiquidGlass is iOS-only)
 convert_to_gif "$IOS_TEXTFIELD" "$ASSETS_DIR/ios-textfield.gif" "$(navigation_trim "$IOS_TEXTFIELD")"
 convert_to_gif "$ANDROID_TEXTFIELD" "$ASSETS_DIR/android-textfield.gif" "$(navigation_trim "$ANDROID_TEXTFIELD")"
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
 convert_to_gif "$IOS_SELECTIONMENU" "$ASSETS_DIR/ios-selectionmenu.gif" "$(navigation_trim "$IOS_SELECTIONMENU")"
 convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "$(navigation_trim "$IOS_CONTEXTMENU")"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "$(navigation_trim "$IOS_SEGMENTEDCONTROL")"
+convert_to_gif "$IOS_TABBAR" "$ASSETS_DIR/ios-tabbar.gif" "$(navigation_trim "$IOS_TABBAR")"
 convert_to_gif "$IOS_BUTTON" "$ASSETS_DIR/ios-button.gif" "$(navigation_trim "$IOS_BUTTON")"
 convert_to_gif "$IOS_FLOATINGTOOLBAR" "$ASSETS_DIR/ios-floatingtoolbar.gif" "$(navigation_trim "$IOS_FLOATINGTOOLBAR")"
 convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")" 15
@@ -134,6 +137,7 @@ convert_to_gif "$ANDROID_DATEPICKER" "$ASSETS_DIR/android-datepicker.gif" ""
 convert_to_gif "$ANDROID_SELECTIONMENU" "$ASSETS_DIR/android-selectionmenu.gif" "$(navigation_trim "$ANDROID_SELECTIONMENU")"
 convert_to_gif "$ANDROID_CONTEXTMENU" "$ASSETS_DIR/android-contextmenu.gif" "$(navigation_trim "$ANDROID_CONTEXTMENU")"
 convert_to_gif "$ANDROID_SEGMENTEDCONTROL" "$ASSETS_DIR/android-segmentedcontrol.gif" "$(navigation_trim "$ANDROID_SEGMENTEDCONTROL")"
+convert_to_gif "$ANDROID_TABBAR" "$ASSETS_DIR/android-tabbar.gif" "$(navigation_trim "$ANDROID_TABBAR")"
 convert_to_gif "$ANDROID_BUTTON" "$ASSETS_DIR/android-button.gif" "$(navigation_trim "$ANDROID_BUTTON")"
 convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.gif" "$(navigation_trim "$ANDROID_FLOATINGTOOLBAR")"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME")"

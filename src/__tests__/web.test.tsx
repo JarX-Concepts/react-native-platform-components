@@ -15,6 +15,7 @@ import {
   DatePicker,
   SegmentedControl,
   SelectionMenu,
+  TabBar,
   TextField,
   setNativeTheme,
   useNativeTheme,
@@ -120,6 +121,34 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('TabBar (web)', () => {
+  it('selects and reselects tabs on click', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <TabBar
+        items={[
+          { label: 'Home', value: 'home', testID: 'tab-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+      />
+    );
+    const [home, inbox] = tree.root.findAllByType('button');
+    expect(home!.props.role).toBe('tab');
+    expect(home!.props['aria-selected']).toBe(true);
+    expect(home!.props['data-testid']).toBe('tab-home');
+    expect(inbox!.props['aria-selected']).toBe(false);
+
+    click(inbox!);
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    click(home!);
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
   });
 });
 

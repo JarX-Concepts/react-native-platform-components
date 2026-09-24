@@ -1,0 +1,191 @@
+// TabBarDemo.tsx
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  FloatingToolbar,
+  TabBar,
+  isLiquidGlassSupported,
+  type TabBarItemProps,
+  type TabBarLabelVisibility,
+} from 'react-native-platform-components';
+import { ChipTabs, Divider, Row, Section, ui, useDemoColors } from './DemoUI';
+
+// A native symbol per platform; iOS shows the filled symbol when selected,
+// as the system apps do.
+function tabs(unread: number, dot: boolean): TabBarItemProps[] {
+  return [
+    {
+      label: 'Home',
+      value: 'home',
+      testID: 'tab-home',
+      icon: { ios: 'house', android: 'home' },
+      selectedIcon: { ios: 'house.fill' },
+    },
+    {
+      label: 'Search',
+      value: 'search',
+      testID: 'tab-search',
+      icon: { ios: 'magnifyingglass', android: 'search' },
+    },
+    {
+      label: 'Inbox',
+      value: 'inbox',
+      testID: 'tab-inbox',
+      icon: { ios: 'bell', android: 'notifications' },
+      selectedIcon: { ios: 'bell.fill' },
+      badge: dot ? '' : unread > 0 ? unread : undefined,
+    },
+    {
+      label: 'Profile',
+      value: 'profile',
+      testID: 'tab-profile',
+      icon: { ios: 'person', android: 'person' },
+      selectedIcon: { ios: 'person.fill' },
+    },
+  ];
+}
+
+const LABEL_VISIBILITY_OPTIONS: {
+  label: string;
+  value: TabBarLabelVisibility;
+}[] = [
+  { label: 'Auto', value: 'auto' },
+  { label: 'Labeled', value: 'labeled' },
+  { label: 'Selected', value: 'selected' },
+  { label: 'Unlabeled', value: 'unlabeled' },
+];
+
+const BRAND = '#FF6B35';
+const STYLED_BADGE = { backgroundColor: '#1E88E5' };
+const STYLED_ANDROID = { indicatorColor: '#FFE0D1' };
+
+export function TabBarDemo(): React.JSX.Element {
+  const colors = useDemoColors();
+  const [tab, setTab] = useState('home');
+  const [lastEvent, setLastEvent] = useState('(none)');
+  const [unread, setUnread] = useState(3);
+  const [dot, setDot] = useState(false);
+  const [styled, setStyled] = useState(false);
+  const [labelVisibility, setLabelVisibility] =
+    useState<TabBarLabelVisibility>('auto');
+  const items = useMemo(() => tabs(unread, dot), [unread, dot]);
+  const select = (value: string) => {
+    setTab(value);
+    setLastEvent(`select: ${value}`);
+    if (value === 'inbox') setUnread(0);
+  };
+
+  // The same tabs, with their own ids, for the floating bar
+  const floatingItems = useMemo(
+    () =>
+      items
+        .slice(0, 3)
+        .map((item) => ({ ...item, testID: `${item.testID}-floating` })),
+    [items]
+  );
+  const floatingBar = (
+    <TabBar
+      testID="tab-bar-floating"
+      style={styles.floatingTabs}
+      items={floatingItems}
+      selectedValue={tab}
+      onSelect={select}
+      labelVisibility="labeled"
+      barColor="transparent"
+    />
+  );
+
+  return (
+    <>
+      <Section title="Tab Bar">
+        <TabBar
+          testID="tab-bar"
+          items={items}
+          selectedValue={tab}
+          onSelect={select}
+          onReselect={(value) => setLastEvent(`reselect: ${value}`)}
+          labelVisibility={labelVisibility}
+          activeTintColor={styled ? BRAND : undefined}
+          android={styled ? STYLED_ANDROID : undefined}
+          badgeStyle={styled ? STYLED_BADGE : undefined}
+        />
+        <Divider />
+        <Row label="Selected">
+          <Text testID="tab-bar-value" style={ui.valueText}>
+            {tab}
+          </Text>
+        </Row>
+        <Divider />
+        <Row label="Last event">
+          <Text testID="tab-bar-last-event" style={ui.valueText}>
+            {lastEvent}
+          </Text>
+        </Row>
+      </Section>
+
+      <Section title="Floating">
+        {/* Tabs floating over the content. The iOS 26 tab bar is a floating
+            Liquid Glass bar of its own; elsewhere a FloatingToolbar carries it */}
+        <View style={[styles.canvas, { backgroundColor: colors.fill }]}>
+          {isLiquidGlassSupported ? (
+            floatingBar
+          ) : (
+            <FloatingToolbar style={styles.toolbar}>
+              {floatingBar}
+            </FloatingToolbar>
+          )}
+        </View>
+      </Section>
+
+      <Section title="Controls">
+        <View style={styles.chips}>
+          <ChipTabs
+            testID="tab-labels"
+            value={labelVisibility}
+            options={LABEL_VISIBILITY_OPTIONS}
+            onChange={setLabelVisibility}
+          />
+        </View>
+        <Divider />
+        <Row label="Unread">
+          <Switch
+            style={ui.alignEnd}
+            testID="tab-unread-switch"
+            value={unread > 0}
+            onValueChange={(on) => setUnread(on ? 3 : 0)}
+          />
+        </Row>
+        <Divider />
+        <Row label="Dot badge">
+          <Switch
+            style={ui.alignEnd}
+            testID="tab-dot-switch"
+            value={dot}
+            onValueChange={setDot}
+          />
+        </Row>
+        <Divider />
+        <Row label="Custom style">
+          <Switch
+            style={ui.alignEnd}
+            testID="tab-styled-switch"
+            value={styled}
+            onValueChange={setStyled}
+          />
+        </Row>
+      </Section>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  canvas: {
+    height: 150,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    padding: 16,
+  },
+  toolbar: { alignSelf: 'stretch' },
+  floatingTabs: { flex: 1, alignSelf: 'stretch' },
+  chips: { padding: 10 },
+});

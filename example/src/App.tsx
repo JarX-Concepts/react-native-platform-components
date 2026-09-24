@@ -19,6 +19,7 @@ import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
+import { TabBarDemo } from './TabBarDemo';
 import { TextFieldDemo } from './TextFieldDemo';
 import { Screen, useDemoColors } from './DemoUI';
 import {
@@ -33,6 +34,7 @@ type DemoKey =
   | 'selectionMenu'
   | 'contextMenu'
   | 'segmentedControl'
+  | 'tabBar'
   | 'button'
   | 'floatingToolbar'
   | 'textField'
@@ -45,6 +47,7 @@ const COMPONENT_DEMOS = [
   { label: 'Selection Menu', data: 'selectionMenu' },
   { label: 'Context Menu', data: 'contextMenu' },
   { label: 'Segmented Control', data: 'segmentedControl' },
+  { label: 'Tab Bar', data: 'tabBar' },
   { label: 'Button', data: 'button' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
 ];
@@ -126,6 +129,7 @@ export default function App(): React.ReactElement {
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
       {demo === 'contextMenu' && <ContextMenuDemo />}
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
+      {demo === 'tabBar' && <TabBarDemo />}
       {demo === 'button' && <ButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'textField' && <TextFieldDemo />}
