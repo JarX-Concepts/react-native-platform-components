@@ -10,8 +10,9 @@ type ResourceXML = AndroidConfig.Resources.ResourceXML;
  * Parent theme for the Android `AppTheme` style.
  *
  * - `'material3'`: re-parent `AppTheme` onto `Theme.Material3.DayNight.NoActionBar`.
- *   Required for `SegmentedControl` and for `DatePicker` / `SelectionMenu` in
- *   `android={{ material: 'm3' }}` mode to pick up your app's Material colors.
+ *   Required for `SegmentedControl`, `TabBar`, `Button`, `ButtonGroup`,
+ *   `FloatingToolbar`, and for `DatePicker` / `SelectionMenu` in
+ *   `android={{ material: 'm3' }}` mode, to pick up your app's Material colors.
  * - `'appcompat'` (default): leave Expo's `Theme.AppCompat.DayNight.NoActionBar` as is.
  */
 export type AndroidTheme = 'material3' | 'appcompat';

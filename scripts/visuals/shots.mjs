@@ -43,7 +43,7 @@ export const COMPONENTS = [
     native: { ios: 'UITextField', android: 'TextInputLayout' },
     still: {
       ios: { time: 26.5, crop: { x: 0.03, y: 0.06, w: 0.94, h: 0.72 } },
-      android: { time: 40.5, crop: { x: 0.03, y: 0.045, w: 0.94, h: 0.68 } },
+      android: { time: 25.0, crop: { x: 0.03, y: 0.23, w: 0.94, h: 0.6 } },
     },
     clip: {
       ios: { start: 15.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
