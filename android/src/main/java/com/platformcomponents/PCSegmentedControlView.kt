@@ -38,7 +38,8 @@ class PCSegmentedControlView(context: Context) :
     val iconScale: Float,
     val iconTinted: Boolean,
     val badge: String,
-    val accessibilityLabel: String
+    val accessibilityLabel: String,
+    val testID: String = ""
   ) {
     val hasIcon: Boolean get() = iconType == "drawable" || iconType == "image"
 
@@ -82,6 +83,7 @@ class PCSegmentedControlView(context: Context) :
   var labelFontStyle: String = ""
   var badgeBackgroundColor: Int? = null
   var badgeTextColor: Int? = null
+  var maxFontSizeMultiplier: Float = 0f
 
   // --- Events ---
   /** index -1 with an empty value means the selection was cleared. */
@@ -188,6 +190,12 @@ class PCSegmentedControlView(context: Context) :
     rebuildUI()
   }
 
+  fun applyMaxFontSizeMultiplier(value: Float) {
+    if (maxFontSizeMultiplier == value) return
+    maxFontSizeMultiplier = value
+    rebuildUI()
+  }
+
   fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
     if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
       labelFontWeight == fontWeight && labelFontStyle == fontStyle
@@ -256,6 +264,8 @@ class PCSegmentedControlView(context: Context) :
         isAllCaps = false  // Preserve original text casing
         // Screen readers (and Detox) always get the label, even when hidden
         contentDescription = segment.spokenLabel
+        // Detox matches the view tag
+        tag = segment.testID.ifEmpty { null }
         isEnabled = !segment.disabled && interactivity == "enabled"
 
         // Enable text truncation with ellipsis when space is limited
@@ -424,6 +434,8 @@ class PCSegmentedControlView(context: Context) :
         context.assets
       )
     }
+    button.setTag(R.id.pc_capped_text_size, null)
+    PCThemeSupport.capTextSize(button, maxFontSizeMultiplier)
   }
 
   private fun updateSelection() {

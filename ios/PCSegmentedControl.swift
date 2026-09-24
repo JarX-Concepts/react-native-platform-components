@@ -14,6 +14,7 @@ struct PCSegmentedControlSegment {
     let iconTinted: Bool
     let badge: String
     let accessibilityLabel: String
+    let testID: String
 
     var hasIcon: Bool { iconType == "sfSymbol" || iconType == "image" }
 
@@ -175,7 +176,8 @@ public final class PCSegmentedControlView: UIControl {
                 iconScale: scale > 0 ? scale : 1,
                 iconTinted: (dict["iconTinted"] as? String) != "false",
                 badge: (dict["badge"] as? String) ?? "",
-                accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? ""
+                accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? "",
+                testID: (dict["testID"] as? String) ?? ""
             )
         }
 
@@ -197,6 +199,7 @@ public final class PCSegmentedControlView: UIControl {
         rebuildBadges()
         updateSelection()
         invalidateIntrinsicContentSize()
+        setNeedsLayout()
     }
 
     // MARK: - Badges
@@ -231,16 +234,52 @@ public final class PCSegmentedControlView: UIControl {
         let count = control.numberOfSegments
         guard count > 0 else { return [] }
 
-        let segmentViews = control.subviews
-            .filter { NSStringFromClass(type(of: $0)) == "UISegment" }
-            .sorted { $0.frame.minX < $1.frame.minX }
+        let segmentViews = self.segmentViews()
         if segmentViews.count == count {
-            return segmentViews.map { $0.frame }
+            return segmentViews.map { control.convert($0.bounds, from: $0) }
         }
 
         let width = control.bounds.width / CGFloat(count)
         return (0..<count).map {
             CGRect(x: CGFloat($0) * width, y: 0, width: width, height: control.bounds.height)
+        }
+    }
+
+    /// The control's segment views in index order (right to left in RTL).
+    private func segmentViews() -> [UIView] {
+        // Direct subviews before iOS 26; inside a container view on iOS 26
+        var found: [UIView] = []
+        func collect(_ view: UIView) {
+            for sub in view.subviews {
+                if NSStringFromClass(type(of: sub)) == "UISegment" {
+                    found.append(sub)
+                } else {
+                    collect(sub)
+                }
+            }
+        }
+        collect(control)
+        let views = found.sorted {
+            control.convert($0.bounds, from: $0).minX < control.convert($1.bounds, from: $1).minX
+        }
+        return control.effectiveUserInterfaceLayoutDirection == .rightToLeft ? views.reversed() : views
+    }
+
+    /// Puts each segment's testID on the segment's title label or image view.
+    /// A UISegment hands its hit-tests to the control, so E2E drivers (Detox)
+    /// reject a tap on the segment itself as not hittable; its content view
+    /// passes. The views exist once laid out, and are replaced when a
+    /// segment's title or image changes.
+    private func applySegmentTestIDs() {
+        guard parsedSegments.contains(where: { !$0.testID.isEmpty }) else { return }
+        control.layoutIfNeeded()
+        let views = segmentViews()
+        guard views.count == parsedSegments.count else { return }
+        for (view, segment) in zip(views, parsedSegments) {
+            let content = view.subviews.first {
+                ($0 is UILabel || $0 is UIImageView) && !$0.isHidden
+            } ?? view
+            content.accessibilityIdentifier = segment.testID.isEmpty ? nil : segment.testID
         }
     }
 
@@ -269,6 +308,7 @@ public final class PCSegmentedControlView: UIControl {
     public override func layoutSubviews() {
         super.layoutSubviews()
         layoutBadges()
+        applySegmentTestIDs()
     }
 
     /// Resolves the image shown for a segment, or nil when the segment shows

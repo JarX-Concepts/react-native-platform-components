@@ -48,6 +48,21 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       leadingIcon,
       trailingIcon,
       onTrailingIconPress,
+      leadingIconTestID,
+      leadingIconAccessibilityLabel,
+      trailingIconTestID,
+      trailingIconAccessibilityLabel,
+      onPress,
+      activeColor,
+      outlineColor,
+      errorColor,
+      containerColor,
+      textColor,
+      placeholderTextColor,
+      maxFontSizeMultiplier,
+      textAlign,
+      minLines,
+      maxLines,
       clearButtonMode = 'never',
       passwordToggle,
       showCharacterCount,
@@ -68,6 +83,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       ios,
       android,
       style,
+      testID,
       ...viewProps
     } = props;
 
@@ -107,7 +123,15 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         (clearButtonMode === 'while-editing' && focused) ||
         (clearButtonMode === 'unless-editing' && !focused));
 
-    const accent = invalid ? ERROR_COLOR : focused ? primary : undefined;
+    const errorTint = errorColor ?? ERROR_COLOR;
+    const accent = invalid
+      ? errorTint
+      : focused
+        ? (activeColor ?? primary)
+        : undefined;
+    // A read-only field with onPress acts as a button
+    const actsAsButton = !editable && onPress != null;
+    const lineHeight = (textStyle?.fontSize ?? 16) * 1.25;
     const bottomText = errorText ?? supportingText;
     const counter = showCharacterCount
       ? maxLength !== undefined
@@ -122,7 +146,10 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             {label}
           </Text>
         ) : null}
-        <View
+        <Pressable
+          disabled={!actsAsButton}
+          onPress={onPress}
+          role={actsAsButton ? 'button' : undefined}
           style={{
             flexDirection: 'row',
             alignItems: multiline ? 'flex-start' : 'center',
@@ -131,14 +158,22 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             paddingHorizontal: 12,
             borderWidth: 1,
             borderRadius: 8,
-            borderColor: accent ?? OUTLINE_COLOR,
-            opacity: editable ? 1 : 0.6,
+            borderColor: accent ?? outlineColor ?? OUTLINE_COLOR,
+            backgroundColor: containerColor,
+            opacity: editable || actsAsButton ? 1 : 0.6,
+            cursor: actsAsButton ? 'pointer' : undefined,
           }}
         >
-          <Icon icon={leadingIcon} color={MUTED_COLOR} />
+          <View
+            testID={leadingIconTestID}
+            accessibilityLabel={leadingIconAccessibilityLabel}
+          >
+            <Icon icon={leadingIcon} color={MUTED_COLOR} />
+          </View>
           {prefix ? <Text style={{ color: MUTED_COLOR }}>{prefix}</Text> : null}
           <TextInput
             ref={inputRef}
+            testID={testID}
             value={text}
             onChangeText={changeText}
             onFocus={() => {
@@ -153,6 +188,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
               multiline ? undefined : () => onSubmitEditing?.(textEvent(text))
             }
             placeholder={placeholder}
+            placeholderTextColor={placeholderTextColor}
             maxLength={maxLength}
             keyboardType={keyboardType}
             returnKeyType={returnKeyType === 'none' ? undefined : returnKeyType}
@@ -160,7 +196,10 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             autoCorrect={autoCorrect}
             secureTextEntry={secureTextEntry && !revealed}
             multiline={multiline}
+            numberOfLines={multiline ? minLines : undefined}
             editable={editable}
+            pointerEvents={actsAsButton ? 'none' : undefined}
+            tabIndex={actsAsButton ? -1 : undefined}
             autoFocus={autoFocus}
             selectTextOnFocus={selectTextOnFocus}
             autoComplete={autoComplete}
@@ -170,6 +209,10 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
               flex: 1,
               minWidth: 0,
               paddingVertical: 8,
+              maxHeight:
+                multiline && maxLines ? lineHeight * maxLines + 16 : undefined,
+              textAlign,
+              color: textColor,
               fontSize: textStyle?.fontSize ?? 16,
               fontFamily: textStyle?.fontFamily,
               fontWeight: textStyle?.fontWeight,
@@ -195,23 +238,30 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             onTrailingIconPress ? (
               <Pressable
                 role="button"
+                testID={trailingIconTestID}
+                accessibilityLabel={trailingIconAccessibilityLabel}
                 onPress={onTrailingIconPress}
                 style={{ padding: 4 }}
               >
                 <Icon icon={trailingIcon} color={MUTED_COLOR} />
               </Pressable>
             ) : (
-              <Icon icon={trailingIcon} color={MUTED_COLOR} />
+              <View
+                testID={trailingIconTestID}
+                accessibilityLabel={trailingIconAccessibilityLabel}
+              >
+                <Icon icon={trailingIcon} color={MUTED_COLOR} />
+              </View>
             )
           ) : null}
-        </View>
+        </Pressable>
         {bottomText || counter ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Text
               style={{
                 flex: 1,
                 fontSize: 12,
-                color: errorText ? ERROR_COLOR : MUTED_COLOR,
+                color: errorText ? errorTint : MUTED_COLOR,
               }}
             >
               {bottomText ?? ''}

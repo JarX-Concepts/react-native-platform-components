@@ -57,6 +57,28 @@ describe('SegmentedControl', () => {
       disabled: 'disabled',
     });
     expect(props.onSelect).toBeUndefined();
+    expect(props.segments[0].testID).toBe('');
+    expect(props.maxFontSizeMultiplier).toBe(0);
+    act(() => tree.unmount());
+  });
+
+  it('passes segment testIDs and the font cap through', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={[
+          { label: 'Day', value: 'day', testID: 'tab-day' },
+          { label: 'Week', value: 'week' },
+        ]}
+        selectedValue="day"
+        maxFontSizeMultiplier={1.2}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.segments.map((s: { testID: string }) => s.testID)).toEqual([
+      'tab-day',
+      '',
+    ]);
+    expect(props.maxFontSizeMultiplier).toBe(1.2);
     act(() => tree.unmount());
   });
 

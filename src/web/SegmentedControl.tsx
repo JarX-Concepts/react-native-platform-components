@@ -24,6 +24,7 @@ export function SegmentedControl(
     activeTintColor,
     inactiveTintColor,
     labelStyle,
+    maxFontSizeMultiplier,
     badgeStyle,
     ios,
     android,
@@ -61,6 +62,7 @@ export function SegmentedControl(
         return (
           <button
             key={segment.value}
+            data-testid={segment.testID}
             type="button"
             role="radio"
             aria-checked={isSelected}

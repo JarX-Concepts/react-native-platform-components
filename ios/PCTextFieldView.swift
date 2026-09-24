@@ -9,7 +9,7 @@ import UIKit
 /// saw, and a push older than the latest edit is dropped so a slow JS
 /// round-trip can't erase what was typed meanwhile.
 @objcMembers
-public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDelegate {
+public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate {
     // MARK: - Props (set from ObjC++)
 
     public var label: String = "" {
@@ -155,7 +155,86 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         didSet { if oldValue != labelWidth { setNeedsLayout(); onNeedsRemeasure?() } }
     }
 
+    /// Test id of the inner input, where E2E drivers type (see PCTextField.mm)
+    public var inputTestID: String = "" {
+        didSet { if oldValue != inputTestID { applyAccessibility() } }
+    }
+
+    public var leadingIconTestID: String = "" {
+        didSet { if oldValue != leadingIconTestID { applyAccessories() } }
+    }
+
+    public var leadingIconSpokenLabel: String = "" {
+        didSet { if oldValue != leadingIconSpokenLabel { applyAccessories() } }
+    }
+
+    public var trailingIconTestID: String = "" {
+        didSet { if oldValue != trailingIconTestID { applyAccessories() } }
+    }
+
+    public var trailingIconSpokenLabel: String = "" {
+        didSet { if oldValue != trailingIconSpokenLabel { applyAccessories() } }
+    }
+
+    // Colors; nil keeps the system color
+    public var activeColor: UIColor? {
+        didSet { if oldValue != activeColor { applyBorderStyle(); applyColors() } }
+    }
+
+    public var outlineColor: UIColor? {
+        didSet { if oldValue != outlineColor { applyBorderStyle(); applyColors() } }
+    }
+
+    public var errorColor: UIColor? {
+        didSet { if oldValue != errorColor { applyColors() } }
+    }
+
+    public var containerColor: UIColor? {
+        didSet { if oldValue != containerColor { applyBorderStyle(); applyColors() } }
+    }
+
+    public var textColor: UIColor? {
+        didSet { if oldValue != textColor { applyColors() } }
+    }
+
+    public var placeholderTextColor: UIColor? {
+        didSet { if oldValue != placeholderTextColor { applyPlaceholder() } }
+    }
+
+    /// Cap on the Dynamic Type scale of every text; values below 1 mean no cap
+    public var maxFontSizeMultiplier: CGFloat = 0 {
+        didSet { if oldValue != maxFontSizeMultiplier { applyFonts(); applyAccessories() } }
+    }
+
+    /// "" | "left" | "center" | "right"
+    public var textAlign: String = "" {
+        didSet { if oldValue != textAlign { applyAlignment() } }
+    }
+
+    /// Multi-line height bounds in lines; 0 = unset
+    public var minLines: Int = 0 {
+        didSet { if oldValue != minLines { setNeedsLayout(); onNeedsRemeasure?() } }
+    }
+
+    public var maxLines: Int = 0 {
+        didSet { if oldValue != maxLines { setNeedsLayout(); onNeedsRemeasure?() } }
+    }
+
+    /// A non-editable field that reports presses, as a picker's anchor
+    public var pressable: Bool = false {
+        didSet { if oldValue != pressable { applyEnabled() } }
+    }
+
     private var leadingLabel: Bool { labelPlacement == "leading" && !label.isEmpty }
+
+    /// Whether the field acts as a button: pressable and not editable
+    private var actsAsButton: Bool { pressable && interactivity == "disabled" }
+
+    /// The rounded rect drawn here instead of by UIKit, whose border can't be colored
+    private var drawsBox: Bool {
+        (borderStyle.isEmpty || borderStyle == "roundedRect")
+            && (activeColor != nil || outlineColor != nil || containerColor != nil)
+    }
     private var leadingColumnWidth: CGFloat { labelWidth > 0 ? labelWidth : 100 }
     private let leadingSpacing: CGFloat = 8
 
@@ -165,6 +244,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     public var onFocusChange: ((Bool, String) -> Void)?
     public var onSubmit: ((String) -> Void)?
     public var onTrailingIconPress: (() -> Void)?
+    public var onPress: (() -> Void)?
 
     /// Called when content changed in a way that affects the height (a
     /// multi-line edit, an error message appearing), so the Fabric
@@ -184,7 +264,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     // MARK: - Subviews
 
     private let captionLabel = UILabel()
-    private let textField = UITextField()
+    private let textField = PCInputTextField()
     private let textView = PCPlaceholderTextView()
     private let footerLabel = UILabel()
     private let counterLabel = UILabel()
@@ -243,6 +323,14 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         addSubview(footerLabel)
         addSubview(counterLabel)
 
+        // Presses of a field that acts as a button; accessory buttons keep their own
+        pressRecognizer.addTarget(self, action: #selector(handlePress))
+        pressRecognizer.delegate = self
+        pressRecognizer.isEnabled = false
+        addGestureRecognizer(pressRecognizer)
+        textField.onActivate = { [weak self] in self?.activateAsButton() ?? false }
+        textView.onActivate = { [weak self] in self?.activateAsButton() ?? false }
+
         applyFonts()
         applyColors()
         applyBorderStyle()
@@ -252,6 +340,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         applyFooter()
         applyAccessories()
         applyAccessibility()
+        applyAlignment()
     }
 
     // MARK: - Text
@@ -387,6 +476,20 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         onFocusChange?(false, text)
     }
 
+    public func textFieldShouldBeginEditing(_ field: UITextField) -> Bool {
+        !actsAsButton
+    }
+
+    /// The clear button doesn't send .editingChanged on every iOS version;
+    /// report the cleared text once UIKit has applied it, unless it did.
+    public func textFieldShouldClear(_ field: UITextField) -> Bool {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, (self.textField.text ?? "") != self.text else { return }
+            self.fieldEditingChanged()
+        }
+        return true
+    }
+
     public func textFieldShouldReturn(_ field: UITextField) -> Bool {
         onSubmit?(text)
         // Single-line fields blur on submit, as the core TextInput does by default
@@ -396,6 +499,40 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
     public func textField(_ field: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         allowsChange(current: field.text ?? "", range: range, replacement: string, input: field)
+    }
+
+    // MARK: - Press (a field acting as a button)
+
+    private let pressRecognizer = UITapGestureRecognizer()
+
+    @objc private func handlePress() {
+        guard actsAsButton else { return }
+        // Brief highlight, as a plain UIButton gives
+        activeInput.alpha = 0.5
+        UIView.animate(withDuration: 0.25, delay: 0.05, options: [.allowUserInteraction]) {
+            self.activeInput.alpha = 1
+        }
+        onPress?()
+    }
+
+    private func activateAsButton() -> Bool {
+        guard actsAsButton else { return false }
+        onPress?()
+        return true
+    }
+
+    public func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // The trailing icon and the password toggle handle their own taps
+        !(touch.view is PCAccessoryButton)
+    }
+
+    /// UITextField's own tap recognizers would otherwise take the tap (and
+    /// then find editing refused), leaving the press unreported
+    public func gestureRecognizer(
+        _ recognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
+    ) -> Bool {
+        recognizer === pressRecognizer
     }
 
     // MARK: - UITextView
@@ -456,6 +593,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         applyAccessories()
         applyEnabled()
         applyAccessibility()
+        applyAlignment()
         if focused { activeInput.becomeFirstResponder() }
         setNeedsLayout()
         onNeedsRemeasure?()
@@ -470,8 +608,18 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     private func applyPlaceholder() {
-        textField.placeholder = placeholder.isEmpty ? nil : placeholder
+        if placeholder.isEmpty {
+            textField.placeholder = nil
+        } else if let placeholderTextColor {
+            textField.attributedPlaceholder = NSAttributedString(
+                string: placeholder,
+                attributes: [.foregroundColor: placeholderTextColor]
+            )
+        } else {
+            textField.placeholder = placeholder
+        }
         textView.placeholder = placeholder
+        textView.placeholderLabel.textColor = placeholderTextColor ?? .placeholderText
     }
 
     /// Supporting text, error message and counter below the field.
@@ -494,11 +642,33 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         onNeedsRemeasure?()
     }
 
+    /// A text style's font at the current text size, capped at
+    /// `maxFontSizeMultiplier` times its size at the default text size.
+    /// `base` replaces the style's own font (the `textStyle` font, given at
+    /// its default-size point size), scaled along the style's curve.
+    private func scaledFont(_ style: UIFont.TextStyle, base: UIFont? = nil) -> UIFont {
+        let font = base ?? .preferredFont(
+            forTextStyle: style,
+            compatibleWith: UITraitCollection(preferredContentSizeCategory: .large)
+        )
+        let metrics = UIFontMetrics(forTextStyle: style)
+        if maxFontSizeMultiplier >= 1 {
+            return metrics.scaledFont(
+                for: font,
+                maximumPointSize: font.pointSize * maxFontSizeMultiplier,
+                compatibleWith: traitCollection
+            )
+        }
+        return metrics.scaledFont(for: font, compatibleWith: traitCollection)
+    }
+
+    private var inputFont: UIFont { scaledFont(.body, base: textFont) }
+
     private func applyFonts() {
-        captionLabel.font = .preferredFont(forTextStyle: leadingLabel ? .body : .subheadline)
-        footerLabel.font = .preferredFont(forTextStyle: .footnote)
-        counterLabel.font = .preferredFont(forTextStyle: .footnote)
-        let inputFont = textFont ?? .preferredFont(forTextStyle: .body)
+        captionLabel.font = scaledFont(leadingLabel ? .body : .subheadline)
+        footerLabel.font = scaledFont(.footnote)
+        counterLabel.font = scaledFont(.footnote)
+        let inputFont = self.inputFont
         textField.font = inputFont
         textView.font = inputFont
         textView.placeholderLabel.font = inputFont
@@ -509,14 +679,33 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     private func applyColors() {
         let showsError = errorState == "error"
         let focused = activeInput.isFirstResponder
+        let error = errorColor ?? .systemRed
         captionLabel.textColor = showsError
-            ? .systemRed
-            : (leadingLabel ? .label : (focused ? tintColor : .secondaryLabel))
-        footerLabel.textColor = showsError ? .systemRed : .secondaryLabel
+            ? error
+            : (leadingLabel ? .label : (focused ? (activeColor ?? tintColor) : .secondaryLabel))
+        footerLabel.textColor = showsError ? error : .secondaryLabel
         counterLabel.textColor = showsError && maxLength > 0 && (text as NSString).length > maxLength
-            ? .systemRed
+            ? error
             : .secondaryLabel
-        textView.layer.borderColor = (showsError ? UIColor.systemRed : UIColor.systemGray4).cgColor
+
+        // The outline of the text view and of a field whose box is drawn here
+        let outline: UIColor
+        if showsError {
+            outline = error
+        } else if focused {
+            outline = activeColor ?? outlineColor ?? .systemGray4
+        } else {
+            outline = outlineColor ?? .systemGray4
+        }
+        let resolved = outline.resolvedColor(with: traitCollection).cgColor
+        textView.layer.borderColor = resolved
+        textField.layer.borderColor = drawsBox ? resolved : nil
+
+        // Cursor and selection
+        textField.tintColor = activeColor
+        textView.tintColor = activeColor
+        textField.textColor = textColor ?? .label
+        textView.textColor = textColor ?? .label
     }
 
     private func applyBorderStyle() {
@@ -527,28 +716,69 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         case "bezel": style = .bezel
         default: style = .roundedRect
         }
-        textField.borderStyle = style
+        // UIKit's rounded rect can't take colors; draw its look instead
+        let drawsBox = self.drawsBox
+        textField.borderStyle = drawsBox ? .none : style
+        textField.layer.borderWidth = drawsBox ? 1 : 0
+        textField.layer.cornerRadius = drawsBox ? 5 : 0
+        textField.textInsets = drawsBox ? UIEdgeInsets(top: 0, left: 7, bottom: 0, right: 7) : .zero
+        if drawsBox {
+            textField.backgroundColor = containerColor ?? .systemBackground
+        } else {
+            textField.backgroundColor = style == .none ? containerColor : nil
+        }
         // The text view mirrors the rounded-rect field
         let bordered = style != .none
         textView.layer.borderWidth = bordered ? 1 : 0
         textView.layer.cornerRadius = style == .roundedRect ? 5 : 0
-        textView.backgroundColor = bordered ? .systemBackground : .clear
+        textView.backgroundColor = containerColor ?? (bordered ? .systemBackground : .clear)
+        applyColors()
         setNeedsLayout()
         onNeedsRemeasure?()
     }
 
     private func applyEnabled() {
         let enabled = interactivity != "disabled"
-        textField.isEnabled = enabled
+        let button = actsAsButton
+        // A field acting as a button keeps its enabled look; editing is
+        // refused in textFieldShouldBeginEditing and presses come from the
+        // gesture recognizer
+        textField.isEnabled = enabled || button
         textView.isEditable = enabled
         textView.isUserInteractionEnabled = enabled
-        textView.alpha = enabled ? 1 : 0.5
+        textView.alpha = enabled || button ? 1 : 0.5
+        pressRecognizer.isEnabled = button
+        if button, activeInput.isFirstResponder { blur() }
+        applyAccessibility()
     }
 
     private func applyAccessibility() {
         let spoken = spokenLabel.isEmpty ? (label.isEmpty ? nil : label) : spokenLabel
         textField.accessibilityLabel = spoken
         textView.accessibilityLabel = spoken
+        let id = inputTestID.isEmpty ? nil : inputTestID
+        textField.accessibilityIdentifier = id
+        textView.accessibilityIdentifier = id
+        for input in [textField as UIView, textView] {
+            if actsAsButton {
+                input.accessibilityTraits.insert(.button)
+            } else {
+                input.accessibilityTraits.remove(.button)
+            }
+        }
+    }
+
+    private func applyAlignment() {
+        let alignment: NSTextAlignment
+        switch textAlign {
+        case "left": alignment = .left
+        case "center": alignment = .center
+        case "right": alignment = .right
+        default: alignment = .natural
+        }
+        textField.textAlignment = alignment
+        textView.textAlignment = alignment
+        textView.placeholderLabel.textAlignment = alignment
     }
 
     private func applyTraits() {
@@ -612,7 +842,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         textField.leftViewMode = .never
         textField.rightViewMode = .never
 
-        if let leading = accessoryView(image: leadingImage, tinted: leadingIcon.tinted, text: prefix, action: nil) {
+        if let leading = accessoryView(
+            image: leadingImage, tinted: leadingIcon.tinted, text: prefix, action: nil,
+            testID: leadingIconTestID, spokenLabel: leadingIconSpokenLabel
+        ) {
             textField.leftView = leading
             textField.leftViewMode = .always
         }
@@ -630,7 +863,12 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
             trailingAction = nil
         }
         let trailingTinted = trailingImage != nil ? trailingIcon.tinted : true
-        if let trailing = accessoryView(image: trailingImageForSlot, tinted: trailingTinted, text: suffix, action: trailingAction) {
+        let customTrailing = trailingImage != nil
+        if let trailing = accessoryView(
+            image: trailingImageForSlot, tinted: trailingTinted, text: suffix, action: trailingAction,
+            testID: customTrailing ? trailingIconTestID : "",
+            spokenLabel: customTrailing ? trailingIconSpokenLabel : ""
+        ) {
             textField.rightView = trailing
             textField.rightViewMode = .always
         }
@@ -646,7 +884,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     /// A label and/or an image button for the field's left or right slot.
-    private func accessoryView(image: UIImage?, tinted: Bool, text: String, action: (() -> Void)?) -> UIView? {
+    private func accessoryView(
+        image: UIImage?, tinted: Bool, text: String, action: (() -> Void)?,
+        testID: String, spokenLabel: String
+    ) -> UIView? {
         guard image != nil || !text.isEmpty else { return nil }
         let stack = UIStackView()
         stack.axis = .horizontal
@@ -656,7 +897,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         stack.layoutMargins = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
 
         if let image {
-            let config = UIImage.SymbolConfiguration(textStyle: .body)
+            let config = UIImage.SymbolConfiguration(font: inputFont)
             if let action {
                 let button = PCAccessoryButton(type: .system)
                 button.setImage(image.applyingSymbolConfiguration(config) ?? image, for: .normal)
@@ -664,19 +905,25 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
                 button.action = action
                 button.accessibilityLabel = passwordToggle && trailingImage == nil
                     ? (revealed ? "Hide password" : "Show password")
-                    : nil
+                    : (spokenLabel.isEmpty ? nil : spokenLabel)
+                button.accessibilityIdentifier = testID.isEmpty ? nil : testID
                 stack.addArrangedSubview(button)
             } else {
                 let imageView = UIImageView(image: image.applyingSymbolConfiguration(config) ?? image)
                 imageView.tintColor = tinted ? .secondaryLabel : nil
                 imageView.contentMode = .scaleAspectFit
+                imageView.accessibilityIdentifier = testID.isEmpty ? nil : testID
+                if !spokenLabel.isEmpty {
+                    imageView.isAccessibilityElement = true
+                    imageView.accessibilityLabel = spokenLabel
+                }
                 stack.addArrangedSubview(imageView)
             }
         }
         if !text.isEmpty {
             let label = UILabel()
             label.text = text
-            label.font = textFont ?? .preferredFont(forTextStyle: .body)
+            label.font = inputFont
             label.textColor = .secondaryLabel
             label.adjustsFontForContentSizeCategory = true
             stack.addArrangedSubview(label)
@@ -718,6 +965,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         super.traitCollectionDidChange(previousTraitCollection)
         if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
             applyFonts()
+            applyAccessories()
         }
         if previousTraitCollection?.hasDifferentColorAppearance(comparedTo: traitCollection) == true {
             applyColors()
@@ -731,6 +979,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         var inputHeight: CGFloat
         var footerHeight: CGFloat
         var leading: Bool
+        /// A multi-line field past maxLines scrolls its text
+        var inputScrolls: Bool
         var total: CGFloat {
             var height = leading ? max(inputHeight, captionHeight) : inputHeight
             if captionHeight > 0 && !leading { height += captionHeight + 6 }
@@ -748,10 +998,21 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let captionHeight = label.isEmpty ? 0 : ceil(captionLabel.font.lineHeight)
         let fieldWidth = max(1, width - fieldOffset())
 
-        let inputHeight: CGFloat
+        var inputHeight: CGFloat
+        var inputScrolls = false
         if multiline {
-            let fitted = textView.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude))
-            inputHeight = max(singleLineMinHeight, ceil(fitted.height))
+            let fitted = ceil(textView.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude)).height)
+            inputHeight = max(singleLineMinHeight, fitted)
+            let lineHeight = inputFont.lineHeight
+            let chrome = textViewInsets.top + textViewInsets.bottom
+            if minLines > 0 {
+                inputHeight = max(inputHeight, ceil(lineHeight * CGFloat(minLines) + chrome))
+            }
+            if maxLines > 0 {
+                let cap = max(singleLineMinHeight, ceil(lineHeight * CGFloat(maxLines) + chrome))
+                inputScrolls = fitted > cap
+                inputHeight = min(inputHeight, cap)
+            }
         } else {
             let fitted = textField.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude))
             inputHeight = max(singleLineMinHeight, ceil(fitted.height))
@@ -769,7 +1030,13 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
             let counterHeight = counterLabel.isHidden ? 0 : ceil(counterLabel.font.lineHeight)
             footerHeight = max(messageHeight, counterHeight)
         }
-        return Metrics(captionHeight: captionHeight, inputHeight: inputHeight, footerHeight: footerHeight, leading: leadingLabel)
+        return Metrics(
+            captionHeight: captionHeight,
+            inputHeight: inputHeight,
+            footerHeight: footerHeight,
+            leading: leadingLabel,
+            inputScrolls: inputScrolls
+        )
     }
 
     public override func layoutSubviews() {
@@ -779,6 +1046,9 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let x = fieldOffset()
         let fieldWidth = max(0, width - x)
         var y: CGFloat = 0
+        if multiline, textView.isScrollEnabled != m.inputScrolls {
+            textView.isScrollEnabled = m.inputScrolls
+        }
 
         if m.leading {
             // Label column and field side by side, centred on the taller one
@@ -874,28 +1144,59 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         }
     }
 
+    /// React Native autoComplete values onto text content types, as the
+    /// core TextInput maps them, plus the names it leaves out. Values with no
+    /// iOS equivalent, and unknown ones, give no content type.
     private static func contentType(_ value: String) -> UITextContentType? {
         switch value {
-        case "username": return .username
-        case "password": return .password
-        case "new-password": return .newPassword
-        case "one-time-code": return .oneTimeCode
+        case "username", "username-new": return .username
+        case "password", "current-password": return .password
+        case "new-password", "password-new": return .newPassword
+        case "one-time-code", "sms-otp", "email-otp", "2fa-app-otp": return .oneTimeCode
         case "email": return .emailAddress
         case "name": return .name
-        case "given-name": return .givenName
-        case "family-name": return .familyName
-        case "tel": return .telephoneNumber
-        case "street-address": return .fullStreetAddress
+        case "given-name", "name-given": return .givenName
+        case "family-name", "name-family": return .familyName
+        case "additional-name", "name-middle": return .middleName
+        case "honorific-prefix", "name-prefix": return .namePrefix
+        case "honorific-suffix", "name-suffix": return .nameSuffix
+        case "nickname": return .nickname
+        case "organization": return .organizationName
+        case "organization-title": return .jobTitle
+        case "tel", "tel-national", "tel-device": return .telephoneNumber
+        case "street-address", "postal-address": return .fullStreetAddress
+        case "address-line1": return .streetAddressLine1
+        case "address-line2", "postal-address-extended": return .streetAddressLine2
+        case "postal-address-locality": return .addressCity
+        case "postal-address-region": return .addressState
+        case "postal-address-dependent-locality": return .sublocality
         case "postal-code": return .postalCode
-        case "country": return .countryName
+        case "country", "postal-address-country": return .countryName
         case "cc-number": return .creditCardNumber
-        case "cc-exp":
-            if #available(iOS 17.0, *) { return .creditCardExpiration }
-            return nil
-        case "cc-csc":
-            if #available(iOS 17.0, *) { return .creditCardSecurityCode }
-            return nil
         case "url": return .URL
+        case "flight-number": return .flightNumber
+        default:
+            if #available(iOS 17.0, *) { return contentType17(value) }
+            return nil
+        }
+    }
+
+    @available(iOS 17.0, *)
+    private static func contentType17(_ value: String) -> UITextContentType? {
+        switch value {
+        case "cc-exp": return .creditCardExpiration
+        case "cc-exp-month": return .creditCardExpirationMonth
+        case "cc-exp-year": return .creditCardExpirationYear
+        case "cc-csc": return .creditCardSecurityCode
+        case "cc-name": return .creditCardName
+        case "cc-given-name": return .creditCardGivenName
+        case "cc-middle-name": return .creditCardMiddleName
+        case "cc-family-name": return .creditCardFamilyName
+        case "cc-type": return .creditCardType
+        case "birthdate-full": return .birthdate
+        case "birthdate-day": return .birthdateDay
+        case "birthdate-month": return .birthdateMonth
+        case "birthdate-year": return .birthdateYear
         default: return nil
         }
     }
@@ -955,9 +1256,50 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
 // MARK: - Helpers
 
+/// The single-line input: insets for the box the field view draws, and
+/// VoiceOver activation for a field acting as a button.
+final class PCInputTextField: UITextField {
+    var textInsets: UIEdgeInsets = .zero {
+        didSet { if oldValue != textInsets { setNeedsLayout() } }
+    }
+
+    /// Returns true when it handled the activation
+    var onActivate: (() -> Bool)?
+
+    private func inset(_ rect: CGRect) -> CGRect {
+        // Accessory views bring their own margins
+        let left = leftView == nil ? textInsets.left : 0
+        let right = rightView == nil ? textInsets.right : 0
+        return rect.inset(by: UIEdgeInsets(top: textInsets.top, left: left, bottom: textInsets.bottom, right: right))
+    }
+
+    override func textRect(forBounds bounds: CGRect) -> CGRect {
+        inset(super.textRect(forBounds: bounds))
+    }
+
+    override func editingRect(forBounds bounds: CGRect) -> CGRect {
+        inset(super.editingRect(forBounds: bounds))
+    }
+
+    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+        inset(super.placeholderRect(forBounds: bounds))
+    }
+
+    override func accessibilityActivate() -> Bool {
+        onActivate?() == true || super.accessibilityActivate()
+    }
+}
+
 /// A `UITextView` with a placeholder, drawn where the text starts.
 final class PCPlaceholderTextView: UITextView {
     let placeholderLabel = UILabel()
+
+    /// Returns true when it handled the activation
+    var onActivate: (() -> Bool)?
+
+    override func accessibilityActivate() -> Bool {
+        onActivate?() == true || super.accessibilityActivate()
+    }
 
     var placeholder: String = "" {
         didSet {

@@ -40,6 +40,7 @@ static inline bool SegmentsEqual(
     if (a[i].iconTinted != b[i].iconTinted) return false;
     if (a[i].badge != b[i].badge) return false;
     if (a[i].accessibilityLabel != b[i].accessibilityLabel) return false;
+    if (a[i].testID != b[i].testID) return false;
   }
   return true;
 }
@@ -138,7 +139,7 @@ static UIFont *FontFromLabelStyle(
       std::static_pointer_cast<const PCSegmentedControlProps>(oldProps);
 
   // segments: [{label, value, disabled, iconType, iconName, iconUri, iconScale,
-  //             iconTinted, accessibilityLabel}]
+  //             iconTinted, accessibilityLabel, testID}]
   if (!prevProps || !SegmentsEqual(newProps.segments, prevProps->segments)) {
     NSMutableArray *arr = [NSMutableArray new];
     for (const auto &seg : newProps.segments) {
@@ -153,6 +154,7 @@ static UIFont *FontFromLabelStyle(
         @"iconTinted": NSStringFromStd(seg.iconTinted, @"true"),
         @"badge": NSStringFromStd(seg.badge, @""),
         @"accessibilityLabel": NSStringFromStd(seg.accessibilityLabel, @""),
+        @"testID": NSStringFromStd(seg.testID, @""),
       }];
     }
     _view.segments = arr;

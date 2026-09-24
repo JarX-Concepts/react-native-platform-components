@@ -75,21 +75,16 @@ export const selectMenuOption = async (menuId: string, optionLabel: string) => {
 };
 
 // The platform text input inside a TextField host view
-const inputOf = (fieldId: string, multiline = false) =>
-  isAndroid()
-    ? element(by.type('android.widget.EditText').withAncestor(by.id(fieldId)))
-    : element(
-        by
-          .type(multiline ? 'UITextView' : 'UITextField')
-          .withAncestor(by.id(fieldId))
-      );
+// A TextField's testID is on its inner input (UITextField / UITextView,
+// EditText), so the id alone finds the view to type into
+const inputOf = (fieldId: string) => element(by.id(fieldId));
 
 // Espresso's key injection doesn't reach the Material field on the emulator,
 // so Android sets the text directly: still a native edit, reported to JS
 // like typing, but without focusing the field or opening the keyboard.
 // Focus and blur are exercised through the demo's buttons there.
-const typeInto = async (fieldId: string, text: string, multiline = false) => {
-  const input = inputOf(fieldId, multiline);
+const typeInto = async (fieldId: string, text: string) => {
+  const input = inputOf(fieldId);
   if (isAndroid()) {
     await input.replaceText(text);
   } else {
@@ -531,6 +526,12 @@ describe('Platform Components Example', () => {
     await element(by.text('Week')).atIndex(0).tap();
     await pause(350);
 
+    // A segment's own testID
+    await element(by.id('segment-month')).tap();
+    await expectText('segment-basic-value', 'month');
+    await element(by.id('segment-week')).tap();
+    await expectText('segment-basic-value', 'week');
+
     // Icons: the same segments render SF Symbols, drawables, and a shared PNG
     await scrollToId('segment-icons');
     await tapSegment('Grid');
@@ -929,7 +930,7 @@ describe('Platform Components Example', () => {
       await pressReturn('field-amount');
     }
     await scrollToId('field-notes');
-    await typeInto('field-notes', 'First line\nSecond line', true);
+    await typeInto('field-notes', 'First line\nSecond line');
     await pause(700);
 
     // Leaving the multi-line field on iOS: a drag on the scroll view, which
@@ -965,13 +966,23 @@ describe('Platform Components Example', () => {
 
     await scrollToId('editable-switch');
 
+    // A read-only field with onPress acts as a button, and its trailing
+    // icon has its own testID
+    await scrollToId('field-due');
+    await element(by.id('field-due')).tap();
+    await expectText('field-last-event', 'press: due');
+    await expect(element(by.id('field-due'))).toHaveText('Tomorrow');
+    await element(by.id('field-due-icon')).tap();
+    await expectText('field-last-event', 'icon: due');
+
     // A non-editable field ignores taps
     await element(by.id('editable-switch')).tap();
     await pause(700);
     await scrollToId('field-name', 'up');
     await inputOf('field-name').tap();
     await pause(500);
-    await expectText('field-last-event', 'blur: name');
+    // No focus event: the last one is still the icon press above
+    await expectText('field-last-event', 'icon: due');
   });
 
   it('should test Theme functionality', async () => {

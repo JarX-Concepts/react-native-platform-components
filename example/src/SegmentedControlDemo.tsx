@@ -8,11 +8,12 @@ import {
 } from 'react-native-platform-components';
 import { Divider, PillButton, Row, Section, ui } from './DemoUI';
 
+// Each segment carries a testID, so E2E tests can tap it by id
 const TIME_SEGMENTS = [
-  { label: 'Day', value: 'day' },
-  { label: 'Week', value: 'week' },
-  { label: 'Month', value: 'month' },
-  { label: 'Year', value: 'year' },
+  { label: 'Day', value: 'day', testID: 'segment-day' },
+  { label: 'Week', value: 'week', testID: 'segment-week' },
+  { label: 'Month', value: 'month', testID: 'segment-month' },
+  { label: 'Year', value: 'year', testID: 'segment-year' },
 ];
 
 // Icons no longer need a Platform.OS branch: give each platform its native
