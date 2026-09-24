@@ -36,6 +36,7 @@ import type { LiquidGlassProps } from './LiquidGlass';
 import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
+import type { TabBarProps } from './TabBar';
 import type {
   TextFieldChangeEvent,
   TextFieldEvent,
@@ -53,6 +54,7 @@ export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './TextField';
+export type * from './TabBar';
 export type * from './sharedTypes';
 export type * from './NativeTheme';
 export type {
@@ -385,6 +387,60 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
             onPress={() => handlePress(button.value, index)}
           >
             {button.label ? <Text>{button.label}</Text> : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * A `tablist` view of `Pressable` tabs (at most five), each with its
+ * `testID`, else `${testID}-${value}`. Pressing a tab calls `onSelect`, or
+ * `onReselect` when it is the selected one.
+ */
+export function TabBar(props: TabBarProps): React.ReactElement {
+  const {
+    items,
+    selectedValue,
+    onSelect,
+    onReselect,
+    testID,
+    labelVisibility,
+    activeTintColor,
+    inactiveTintColor,
+    barColor,
+    badgeStyle,
+    labelStyle,
+    maxFontSizeMultiplier,
+    android,
+    ...viewProps
+  } = props;
+
+  return (
+    <View {...viewProps} testID={testID} accessibilityRole="tablist">
+      {items.slice(0, 5).map((item, index) => {
+        const selected = item.value === selectedValue;
+        return (
+          <Pressable
+            key={item.value}
+            testID={
+              item.testID ?? (testID ? `${testID}-${item.value}` : undefined)
+            }
+            accessibilityRole="tab"
+            accessibilityLabel={item.accessibilityLabel ?? item.label}
+            accessibilityState={{ selected, disabled: !!item.disabled }}
+            disabled={item.disabled}
+            onPress={() =>
+              selected
+                ? onReselect?.(item.value, index)
+                : onSelect?.(item.value, index)
+            }
+          >
+            <Text>{item.label}</Text>
+            {item.badge != null && item.badge !== '' ? (
+              <Text>{String(item.badge)}</Text>
+            ) : null}
           </Pressable>
         );
       })}

@@ -16,6 +16,7 @@ import {
   LiquidGlass,
   SegmentedControl,
   SelectionMenu,
+  TabBar,
   TextField,
   isLiquidGlassSupported,
   normalizeLabelStyle,
@@ -180,6 +181,30 @@ describe('Button (mock)', () => {
     const tree = render(<Button testID="save" label="Save" loading />);
     const button = byTestID(tree, 'save');
     expect(button.props.accessibilityState).toMatchObject({ busy: true });
+  });
+});
+
+describe('TabBar (mock)', () => {
+  it('selects and reselects tabs', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <TabBar
+        testID="tabs"
+        items={[
+          { label: 'Home', value: 'home', testID: 'tab-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+      />
+    );
+    press(byTestID(tree, 'tabs-inbox'));
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    press(byTestID(tree, 'tab-home'));
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
+    expect(texts(tree)).toContain('2');
   });
 });
 
