@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -398,6 +398,31 @@ export function Example() {
         onSelectionChange={setRange}
       />
     </>
+  );
+}
+```
+
+### FloatingActionButton
+
+```tsx
+import { FloatingActionButton } from 'react-native-platform-components';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export function Example() {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Your content */}
+      <FloatingActionButton
+        icon={{ ios: 'pencil', android: 'edit' }}
+        label="Compose"
+        onPress={() => console.log('Compose')}
+        // The app places the button: bottom end, clear of the safe area
+        style={{ position: 'absolute', right: 16, bottom: insets.bottom + 16 }}
+      />
+    </View>
   );
 }
 ```

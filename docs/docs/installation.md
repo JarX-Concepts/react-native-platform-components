@@ -63,7 +63,7 @@ eas build --platform android
 
 **Config Plugin:**
 
-Add to your `app.json`. The `android.theme` option re-parents Expo's generated `AppTheme` onto Material 3, which `SegmentedControl`, `TabBar`, `Button`, `ButtonGroup`, `FloatingToolbar` and the `material: 'm3'` modes use for their colors (see [Android Theme Configuration](/guides/android-theme)):
+Add to your `app.json`. The `android.theme` option re-parents Expo's generated `AppTheme` onto Material 3, which `SegmentedControl`, `TabBar`, `Button`, `ButtonGroup`, `FloatingActionButton`, `FloatingToolbar` and the `material: 'm3'` modes use for their colors (see [Android Theme Configuration](/guides/android-theme)):
 
 ```json
 {
