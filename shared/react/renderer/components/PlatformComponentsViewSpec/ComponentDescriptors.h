@@ -11,3 +11,4 @@
 #include "PCButtonComponentDescriptors-custom.h"
 #include "PCButtonGroupComponentDescriptors-custom.h"
 #include "PCTextFieldComponentDescriptors-custom.h"
+#include "PCTabBarComponentDescriptors-custom.h"

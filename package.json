@@ -231,6 +231,7 @@
         "PCDatePicker": "PCDatePicker",
         "PCContextMenu": "PCContextMenu",
         "PCSegmentedControl": "PCSegmentedControl",
+        "PCTabBar": "PCTabBar",
         "PCButton": "PCButton",
         "PCButtonGroup": "PCButtonGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
