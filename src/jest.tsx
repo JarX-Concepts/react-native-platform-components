@@ -279,7 +279,11 @@ TextField.displayName = 'TextField';
 
 /**
  * A `Pressable` with the button role and the label as `Text`. While
- * `loading` it ignores presses and reports `busy`.
+ * `loading` it ignores presses and reports `busy`. With `selected` it is a
+ * `togglebutton` (`accessibilityState.checked`) and a press calls
+ * `onSelectedChange(!selected)`. A button with a `menu` doesn't call
+ * `onPress`; `fireEvent(button, 'menuSelect', id, title)`, `'menuOpen'` and
+ * `'menuClose'` reach the menu callbacks.
  */
 export function Button(props: ButtonProps): React.ReactElement {
   const {
@@ -301,22 +305,38 @@ export function Button(props: ButtonProps): React.ReactElement {
     accessibilityLabel,
     accessibilityState,
     onPress,
+    selected,
+    onSelectedChange,
+    menu,
+    onMenuSelect,
+    onMenuOpen,
+    onMenuClose,
+    ios,
     android,
     ...viewProps
   } = props;
 
+  const isToggle = selected !== undefined;
+  const hasMenu = !!menu && menu.length > 0;
+
   return (
     <Pressable
       {...viewProps}
-      accessibilityRole="button"
+      {...handlers({ onMenuSelect, onMenuOpen, onMenuClose })}
+      accessibilityRole={isToggle && !hasMenu ? 'togglebutton' : 'button'}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{
         ...accessibilityState,
         disabled: !!disabled,
         busy: loading ? true : accessibilityState?.busy,
+        ...(isToggle ? { checked: selected } : null),
       }}
       disabled={disabled || loading}
-      onPress={() => onPress?.()}
+      onPress={() => {
+        if (hasMenu) return;
+        if (isToggle) onSelectedChange?.(!selected);
+        onPress?.();
+      }}
     >
       {label ? <Text>{label}</Text> : null}
     </Pressable>

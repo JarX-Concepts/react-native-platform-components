@@ -5,6 +5,7 @@ import android.text.TextUtils
 import android.view.View
 import android.view.ViewParent
 import android.widget.FrameLayout
+import androidx.appcompat.widget.PopupMenu
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
@@ -18,7 +19,8 @@ import com.google.android.material.progressindicator.IndeterminateDrawable
 /**
  * A Material 3 Expressive button. Hosts a MaterialButton, rebuilt whenever a
  * prop that the widget reads at construction changes, and reports its
- * intrinsic size to Fabric so the React view wraps its content.
+ * intrinsic size to Fabric so the React view wraps its content. It can be a
+ * toggle (a checkable MaterialButton) or open a PopupMenu anchored to itself.
  */
 class PCButtonView(context: Context) :
   FrameLayout(context),
@@ -41,12 +43,16 @@ class PCButtonView(context: Context) :
   var variant: PCExpressive.Variant = PCExpressive.Variant.FILLED
   var size: String = "small"
   var shape: String = "round"
-  var iconPosition: String = "leading" // "leading" | "trailing"
+  var iconPosition: String = "leading" // "leading" | "trailing" | "top" | "bottom"
   var cornerRadius: Float = -1f // dp; negative = use shape
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var loading: Boolean = false
   var spokenLabel: String = ""
   var expressive: Boolean = true // android.material: "expressive" | "m3"
+  var toggle: Boolean = false // a checkable button, controlled by `selected`
+  var controlledSelected: Boolean = false // the `selected` prop
+  /** The flattened menu items (see PCMenuSupport); empty = no menu */
+  var menuItems: List<PCMenuSupport.Item> = emptyList()
 
   // --- Styling (null / empty = Material theme default) ---
   var containerColor: Int? = null
@@ -63,9 +69,17 @@ class PCButtonView(context: Context) :
 
   // --- Events ---
   var onPress: (() -> Unit)? = null
+  var onSelectedChange: ((selected: Boolean) -> Unit)? = null
+  var onMenuSelect: ((id: String, title: String) -> Unit)? = null
+  var onMenuOpen: (() -> Unit)? = null
+  var onMenuClose: (() -> Unit)? = null
 
   // --- UI ---
   private var button: MaterialButton? = null
+  private var popupMenu: PopupMenu? = null
+
+  /** Set while the checked state follows `selected`, so it isn't reported. */
+  private var syncingChecked = false
 
   /** Bumped on every rebuild so late image loads can't touch a stale button. */
   private var rebuildGeneration = 0
@@ -124,7 +138,10 @@ class PCButtonView(context: Context) :
   }
 
   fun applyIconPosition(value: String?) {
-    val newValue = if (value == "trailing") "trailing" else "leading"
+    val newValue = when (value) {
+      "trailing", "top", "bottom" -> value
+      else -> "leading"
+    }
     if (iconPosition == newValue) return
     iconPosition = newValue
     rebuildUI()
@@ -154,6 +171,38 @@ class PCButtonView(context: Context) :
     if (expressive == parsed) return
     expressive = parsed
     rebuildUI()
+  }
+
+  /**
+   * "" (not a toggle) | "true" | "false". The checked state follows it in
+   * [syncChecked], once all props of an update are in.
+   */
+  fun applySelected(value: String) {
+    val newToggle = value.isNotEmpty()
+    controlledSelected = value == "true"
+    if (toggle == newToggle) return
+    toggle = newToggle
+    rebuildUI()
+  }
+
+  /**
+   * Shows the controlled state. Called after every props update, including
+   * the one that follows each onSelectedChange, so a toggle the parent
+   * didn't take goes back.
+   */
+  fun syncChecked() {
+    val b = button ?: return
+    if (!b.isCheckable || b.isChecked == controlledSelected) return
+    syncingChecked = true
+    b.isChecked = controlledSelected
+    syncingChecked = false
+  }
+
+  fun applyMenu(value: List<PCMenuSupport.Item>) {
+    val hadMenu = menuItems.isNotEmpty()
+    menuItems = value
+    // A button with a menu isn't checkable
+    if (hadMenu != value.isNotEmpty()) rebuildUI()
   }
 
   fun applySpokenLabel(value: String) {
@@ -224,6 +273,7 @@ class PCButtonView(context: Context) :
 
   override fun onDetachedFromWindow() {
     PCNativeTheme.removeListener(nativeThemeListener)
+    popupMenu?.dismiss()
     super.onDetachedFromWindow()
   }
 
@@ -262,15 +312,29 @@ class PCButtonView(context: Context) :
       if (iconOnly) {
         // Centre the icon instead of leaving it at the start edge
         iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
-      } else if (iconPosition == "trailing") {
-        iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
+      } else {
+        when (iconPosition) {
+          "trailing" -> iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
+          // Material has no bottom gravity, so bottom puts the icon on top too
+          "top", "bottom" -> iconGravity = MaterialButton.ICON_GRAVITY_TEXT_TOP
+        }
       }
       val radius = this@PCButtonView.cornerRadius // MaterialButton has its own cornerRadius
       if (radius >= 0) {
         // A numeric radius overrides the shape (and its press morph)
         shapeAppearanceModel = shapeAppearanceModel.withCornerSize(PixelUtil.toPixelFromDIP(radius))
       }
-      setOnClickListener { if (!loading) onPress?.invoke() }
+      // A toggle is a checkable button, which flips itself on click; with a
+      // menu the click opens the menu instead
+      isCheckable = this@PCButtonView.toggle && menuItems.isEmpty()
+      isChecked = isCheckable && controlledSelected
+      addOnCheckedChangeListener { _, checked ->
+        if (!syncingChecked) onSelectedChange?.invoke(checked)
+      }
+      setOnClickListener { anchor ->
+        if (loading) return@setOnClickListener
+        if (menuItems.isNotEmpty()) showMenu(anchor) else onPress?.invoke()
+      }
     }
 
     // While loading the spinner replaces the icon, so a late image load is dropped
@@ -319,6 +383,33 @@ class PCButtonView(context: Context) :
     b.minHeight = idleHeight
     b.minimumHeight = idleHeight
     b.isClickable = false
+  }
+
+  // ---- Menu ----
+
+  /** A PopupMenu anchored to the button, built like ContextMenu's. */
+  private fun showMenu(anchor: View) {
+    if (popupMenu != null) return
+    val items = menuItems
+    val popup = PopupMenu(context, anchor)
+    popupMenu = popup
+    val hasIcons = PCMenuSupport.populate(context, popup.menu, items) { popupMenu === popup }
+    popup.setForceShowIcon(hasIcons)
+
+    popup.setOnMenuItemClickListener { menuItem ->
+      // Submenu headers open their submenu; they aren't picks
+      val item = PCMenuSupport.itemFor(menuItem, items)
+      if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      onMenuSelect?.invoke(item.id, item.title)
+      true
+    }
+    popup.setOnDismissListener {
+      if (popupMenu === popup) popupMenu = null
+      onMenuClose?.invoke()
+    }
+
+    onMenuOpen?.invoke()
+    popup.show()
   }
 
   // ---- Layout ----
