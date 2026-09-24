@@ -11,6 +11,14 @@ import UIKit
 final class PCImageLoader {
     static let shared = PCImageLoader()
 
+    /// A symbol by name: an SF Symbol, else a custom symbol or image from the
+    /// app's asset catalog, so an app's own icons (custom symbols exported
+    /// from SVG with the SF Symbols app) work wherever SF Symbol names do.
+    static func symbol(named name: String) -> UIImage? {
+        guard !name.isEmpty else { return nil }
+        return UIImage(systemName: name) ?? UIImage(named: name)
+    }
+
     private var cache: [String: UIImage] = [:]
     private var pending: [String: [(UIImage?) -> Void]] = [:]
 

@@ -54,6 +54,12 @@ static inline bool OptionsEqual(
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
+    // Fabric views seed _props with their own defaults: RCTViewComponentView
+    // asserts on it in debug builds of React Native core, and the first
+    // updateProps would otherwise read the base ViewProps as PCSelectionMenuProps.
+    static const auto defaultProps = std::make_shared<const PCSelectionMenuProps>();
+    _props = defaultProps;
+
     _view = [PCSelectionMenuView new];
     self.contentView = _view;
 
