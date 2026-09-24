@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { TextInput } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import renderer, {
   act,
   type ReactTestInstance,
@@ -13,6 +13,8 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  LiquidGlass,
+  LiquidGlassContainer,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -458,5 +460,45 @@ describe('ContextMenu (web)', () => {
     expect(tree.root.findByType('button').props['aria-label']).toBe('Inside');
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+describe('LiquidGlass (web)', () => {
+  const host = (tree: ReactTestRenderer, testID: string) =>
+    tree.root.find(
+      (node) => typeof node.type === 'string' && node.props.testID === testID
+    );
+  const radiusOf = (tree: ReactTestRenderer) =>
+    StyleSheet.flatten(host(tree, 'glass').props.style)?.borderRadius;
+
+  it('rounds a capsule fully and uses the radius otherwise', () => {
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle="capsule" />))
+    ).toBe(9999);
+    expect(
+      radiusOf(
+        render(
+          <LiquidGlass
+            testID="glass"
+            cornerStyle="concentric"
+            cornerRadius={8}
+          />
+        )
+      )
+    ).toBe(8);
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle={20} />))
+    ).toBe(20);
+  });
+
+  it('renders the container as a plain view around its children', () => {
+    const tree = render(
+      <LiquidGlassContainer spacing={16} testID="group">
+        <LiquidGlass testID="glass" />
+      </LiquidGlassContainer>
+    );
+    const group = host(tree, 'group');
+    expect(group.props.spacing).toBeUndefined();
+    expect(host(tree, 'glass')).toBeDefined();
   });
 });

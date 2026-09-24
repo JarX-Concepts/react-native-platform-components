@@ -14,6 +14,7 @@ import {
   ContextMenu,
   DatePicker,
   LiquidGlass,
+  LiquidGlassContainer,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -333,10 +334,13 @@ describe('menus, pickers and containers (mock)', () => {
     const onConfirm = jest.fn();
     const onPress = jest.fn();
     const tree = render(
-      <LiquidGlass testID="glass" onPress={onPress}>
-        <DatePicker testID="date" date={null} onConfirm={onConfirm} />
-      </LiquidGlass>
+      <LiquidGlassContainer testID="group" spacing={20}>
+        <LiquidGlass testID="glass" cornerStyle="capsule" onPress={onPress}>
+          <DatePicker testID="date" date={null} onConfirm={onConfirm} />
+        </LiquidGlass>
+      </LiquidGlassContainer>
     );
+    expect(byTestID(tree, 'group').props.spacing).toBeUndefined();
     press(byTestID(tree, 'glass'));
     expect(onPress).toHaveBeenCalledWith({ x: 0, y: 0 });
     const date = new Date(2026, 8, 23);

@@ -14,6 +14,7 @@ export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
+export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
@@ -32,6 +33,7 @@ export {
   ContextMenu,
   FloatingToolbar,
   LiquidGlass,
+  LiquidGlassContainer,
   isLiquidGlassSupported,
 } from './web/containers';
 export { setNativeTheme, useNativeTheme } from './web/NativeTheme';
