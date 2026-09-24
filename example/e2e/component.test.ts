@@ -690,6 +690,25 @@ describe('Platform Components Example', () => {
     await expectText('tab-bar-value', 'home');
     await pause(600);
 
+    // Minimize on scroll: scrolling the feed down minimizes the bar over it
+    // (iOS 26: the system minimized bar; Android: the bar slides away), and
+    // scrolling back up restores it
+    await scrollToId('tab-feed');
+    await element(by.id('demo-scroll')).scroll(150, 'down');
+    await pause(400);
+    await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
+    await pause(1200);
+    if (isAndroid()) {
+      // Slid away. (iOS 26 keeps the expanded buttons in its hierarchy while
+      // minimized, and iOS before 26 has no minimized bar.)
+      await expect(element(by.id('tab-search-minimize'))).not.toBeVisible();
+    }
+    await element(by.id('tab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+    await pause(1200);
+    await element(by.id('tab-search-minimize')).tap();
+    await expectText('tab-bar-value', 'search');
+    await pause(600);
+
     // Label visibility, badges and custom colors
     await scrollToId('tab-labels-labeled');
     await element(by.id('tab-labels-labeled')).tap();
@@ -701,8 +720,10 @@ describe('Platform Components Example', () => {
     await scrollToId('tab-unread-switch');
     await element(by.id('tab-unread-switch')).tap();
     await pause(600);
+    await scrollToId('tab-dot-switch');
     await element(by.id('tab-dot-switch')).tap();
     await pause(600);
+    await scrollToId('tab-styled-switch');
     await element(by.id('tab-styled-switch')).tap();
     await pause(900);
     await scrollToId('tab-bar', 'up');

@@ -1,6 +1,6 @@
 // TabBarDemo.tsx
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   FloatingToolbar,
   TabBar,
@@ -56,6 +56,7 @@ const LABEL_VISIBILITY_OPTIONS: {
 ];
 
 const BRAND = '#FF6B35';
+const FEED = Array.from({ length: 30 }, (_, i) => `Post ${i + 1}`);
 const STYLED_BADGE = { backgroundColor: '#1E88E5' };
 const STYLED_ANDROID = { indicatorColor: '#FFE0D1' };
 
@@ -86,7 +87,9 @@ export function TabBarDemo(): React.JSX.Element {
   const floatingBar = (
     <TabBar
       testID="tab-bar-floating"
-      style={styles.floatingTabs}
+      style={
+        isLiquidGlassSupported ? styles.floatingAlone : styles.floatingTabs
+      }
       items={floatingItems}
       selectedValue={tab}
       onSelect={select}
@@ -134,6 +137,41 @@ export function TabBarDemo(): React.JSX.Element {
               {floatingBar}
             </FloatingToolbar>
           )}
+        </View>
+      </Section>
+
+      <Section title="Minimize on scroll">
+        {/* A feed with the bar over it; scrolling down minimizes the bar */}
+        <View style={styles.feed}>
+          <ScrollView
+            nativeID="tab-feed"
+            testID="tab-feed"
+            // Android scrolls a vertical ScrollView inside another only with this
+            nestedScrollEnabled
+            contentContainerStyle={styles.feedContent}
+          >
+            {FEED.map((line) => (
+              <View
+                key={line}
+                style={[styles.feedRow, { backgroundColor: colors.fill }]}
+              >
+                <Text style={{ color: colors.text }}>{line}</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <View style={styles.feedBar} pointerEvents="box-none">
+            <TabBar
+              testID="tab-bar-minimize"
+              items={floatingItems.map((item) => ({
+                ...item,
+                testID: item.testID?.replace('-floating', '-minimize'),
+              }))}
+              selectedValue={tab}
+              onSelect={select}
+              minimizeBehavior="onScrollDown"
+              scrollViewNativeID="tab-feed"
+            />
+          </View>
         </View>
       </Section>
 
@@ -186,6 +224,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   toolbar: { alignSelf: 'stretch' },
-  floatingTabs: { flex: 1, alignSelf: 'stretch' },
+  // In the toolbar (a row) the bar takes the width; alone (iOS 26) it
+  // spans the canvas and keeps its own height
+  floatingTabs: { flex: 1 },
+  floatingAlone: { alignSelf: 'stretch' },
   chips: { padding: 10 },
+  feed: { height: 360, overflow: 'hidden' },
+  feedContent: { padding: 12, gap: 8, paddingBottom: 110 },
+  feedRow: { padding: 14, borderRadius: 10 },
+  feedBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
 });

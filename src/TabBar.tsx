@@ -22,6 +22,18 @@ const MAX_ITEMS = 5;
  *   labels every tab.
  * - `unlabeled`: icons only. Screen readers still announce the labels.
  */
+/**
+ * When the bar gets out of the way of scrolling content, following the
+ * ScrollView named by `scrollViewNativeID`.
+ *
+ * - `onScrollDown`: minimize while scrolling down, come back scrolling up.
+ * - `onScrollUp`: the reverse.
+ * - `automatic`: the platform default (iOS 26: minimize on scroll down).
+ * - `never`: always full size.
+ */
+export type TabBarMinimizeBehavior =
+  'automatic' | 'never' | 'onScrollDown' | 'onScrollUp';
+
 export type TabBarLabelVisibility =
   'auto' | 'labeled' | 'selected' | 'unlabeled';
 
@@ -109,6 +121,19 @@ export interface TabBarProps extends ViewProps {
    */
   maxFontSizeMultiplier?: number;
 
+  /**
+   * Minimizes the bar as the content scrolls. iOS 26: the system tab bar
+   * minimization, the bar shrinking to the selected tab. Needs
+   * `scrollViewNativeID`.
+   */
+  minimizeBehavior?: TabBarMinimizeBehavior;
+
+  /**
+   * The `nativeID` of the ScrollView (or FlatList) whose scrolling drives
+   * `minimizeBehavior`.
+   */
+  scrollViewNativeID?: string;
+
   /** Android-specific configuration. */
   android?: {
     /** Color of the active indicator pill behind the selected icon. */
@@ -135,6 +160,8 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     badgeStyle,
     labelStyle,
     maxFontSizeMultiplier,
+    minimizeBehavior,
+    scrollViewNativeID,
     android,
     ...viewProps
   } = props;
@@ -199,6 +226,8 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       badgeTextColor={badgeStyle?.color}
       labelStyle={nativeLabelStyle}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
+      minimizeBehavior={minimizeBehavior ?? ''}
+      scrollViewNativeID={scrollViewNativeID ?? ''}
       androidIndicatorColor={android?.indicatorColor}
       androidRippleColor={android?.rippleColor}
       onTabPress={onSelect || onReselect ? handleTabPress : undefined}

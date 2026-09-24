@@ -57,6 +57,8 @@ describe('TabBar', () => {
     expect(props.labelVisibility).toBe('auto');
     expect(props.maxFontSizeMultiplier).toBe(0);
     expect(props.onTabPress).toBeUndefined();
+    expect(props.minimizeBehavior).toBe('');
+    expect(props.scrollViewNativeID).toBe('');
     act(() => tree.unmount());
   });
 
@@ -158,6 +160,8 @@ describe('TabBar', () => {
         badgeStyle={{ backgroundColor: 'blue', color: 'white' }}
         labelStyle={{ fontWeight: '600' }}
         maxFontSizeMultiplier={1.3}
+        minimizeBehavior="onScrollDown"
+        scrollViewNativeID="feed"
         android={{ indicatorColor: 'peachpuff', rippleColor: 'red' }}
       />
     );
@@ -170,6 +174,8 @@ describe('TabBar', () => {
       badgeTextColor: 'white',
       labelStyle: { fontWeight: '600', fontFamily: '', fontSize: 0 },
       maxFontSizeMultiplier: 1.3,
+      minimizeBehavior: 'onScrollDown',
+      scrollViewNativeID: 'feed',
       androidIndicatorColor: 'peachpuff',
       androidRippleColor: 'red',
     });

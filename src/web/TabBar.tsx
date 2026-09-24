@@ -23,6 +23,8 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     badgeStyle,
     labelStyle,
     maxFontSizeMultiplier,
+    minimizeBehavior,
+    scrollViewNativeID,
     android,
     style,
     ...viewProps

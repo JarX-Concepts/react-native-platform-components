@@ -18,7 +18,7 @@ struct PCTabBarTab {
 /// 26), without a `UITabBarController`. Selection is controlled from JS; a
 /// press reports the tab and whether it was already selected.
 @objcMembers
-public final class PCTabBarView: UIView, UITabBarDelegate {
+public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDelegate {
     // MARK: - Props (set from ObjC++)
 
     /// ObjC++ sets this as an array of dictionaries; see `rebuildItems` for keys.
@@ -41,6 +41,18 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
     /// Label font; nil keeps the system font
     public var labelFont: UIFont? { didSet { applyAppearance() } }
 
+    /// iOS 26: "" (a standalone bar) | "automatic" | "never" | "onScrollDown"
+    /// | "onScrollUp". Any value but "" hosts the bar in a UITabBarController,
+    /// which minimizes it as the content scroll view scrolls.
+    public var minimizeBehavior: String = "" {
+        didSet { if oldValue != minimizeBehavior { configureHost() } }
+    }
+
+    /// nativeID of the ScrollView whose scrolling minimizes the bar
+    public var scrollViewNativeID: String = "" {
+        didSet { if oldValue != scrollViewNativeID { attachedScrollView = nil; attachScrollView() } }
+    }
+
     // MARK: - Events back to ObjC++
 
     /// (index, value, reselected)
@@ -52,6 +64,13 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
     // MARK: - Internal
 
     private let tabBar = PCLayoutReportingTabBar()
+
+    /// The controller hosting the bar when it minimizes (iOS 26), else nil
+    private var host: UITabBarController?
+    private weak var attachedScrollView: UIScrollView?
+
+    /// The bar on screen: the hosted controller's, or the standalone one
+    private var activeBar: UITabBar { host?.tabBar ?? tabBar }
     private var tabs: [PCTabBarTab] = []
 
     /// Bumped on every rebuild so late image loads can't touch stale items.
@@ -129,7 +148,19 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
             item.accessibilityLabel = tab.badge.isEmpty || tab.badge == " " ? spoken : "\(spoken), \(tab.badge)"
             return item
         }
-        tabBar.setItems(barItems, animated: false)
+        if let host {
+            // A controller's bar takes its items from view controllers
+            host.setViewControllers(barItems.map { item in
+                let child = UIViewController()
+                child.view.backgroundColor = .clear
+                child.view.isUserInteractionEnabled = false
+                child.tabBarItem = item
+                return child
+            }, animated: false)
+            attachScrollView(force: true)
+        } else {
+            tabBar.setItems(barItems, animated: false)
+        }
         applyAppearance()
         updateSelection()
         invalidateIntrinsicContentSize()
@@ -144,6 +175,13 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
     }
 
     private func updateSelection() {
+        if let host {
+            if let index = tabs.firstIndex(where: { $0.value == selectedValue }),
+               index < (host.viewControllers?.count ?? 0) {
+                host.selectedIndex = index
+            }
+            return
+        }
         guard let barItems = tabBar.items else { return }
         if let index = tabs.firstIndex(where: { $0.value == selectedValue }), index < barItems.count {
             tabBar.selectedItem = barItems[index]
@@ -160,10 +198,10 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
         let customized = activeTintColor != nil || inactiveTintColor != nil || barColor != nil
             || badgeBackgroundColor != nil || badgeTextColor != nil || labelFont != nil
         guard customized else {
-            tabBar.standardAppearance = UITabBarAppearance()
-            tabBar.scrollEdgeAppearance = nil
-            tabBar.tintColor = nil
-            tabBar.unselectedItemTintColor = nil
+            activeBar.standardAppearance = UITabBarAppearance()
+            activeBar.scrollEdgeAppearance = nil
+            activeBar.tintColor = nil
+            activeBar.unselectedItemTintColor = nil
             onNeedsRemeasure?()
             return
         }
@@ -185,11 +223,11 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
             style(layout.disabled, color: nil)
         }
 
-        tabBar.standardAppearance = appearance
-        tabBar.scrollEdgeAppearance = appearance
+        activeBar.standardAppearance = appearance
+        activeBar.scrollEdgeAppearance = appearance
         // The selected tint also drives template images and the selection
-        tabBar.tintColor = activeTintColor
-        tabBar.unselectedItemTintColor = inactiveTintColor
+        activeBar.tintColor = activeTintColor
+        activeBar.unselectedItemTintColor = inactiveTintColor
         onNeedsRemeasure?()
     }
 
@@ -225,6 +263,118 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
         DispatchQueue.main.async { [weak self] in self?.updateSelection() }
     }
 
+    // MARK: - UITabBarControllerDelegate (hosted bar)
+
+    public func tabBarController(_ controller: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        guard let index = controller.viewControllers?.firstIndex(of: viewController), index < tabs.count else { return false }
+        onTabPress?(index, tabs[index].value, tabs[index].value == selectedValue)
+        // Controlled: the selection changes when selectedValue does
+        return false
+    }
+
+    // MARK: - Hosting (iOS 26 minimize)
+
+    private var wantsHost: Bool {
+        guard #available(iOS 26.0, *) else { return false }
+        return !minimizeBehavior.isEmpty
+    }
+
+    /// Moves the bar into a UITabBarController, or back to the standalone
+    /// bar, for the current minimizeBehavior.
+    private func configureHost() {
+        if wantsHost {
+            if host == nil {
+                let controller = PCHostTabBarController()
+                controller.delegate = self
+                // The bar rebuilds its buttons as it minimizes and expands
+                controller.onLayout = { [weak self] in
+                    DispatchQueue.main.async { self?.applyTestIDs() }
+                }
+                controller.view.backgroundColor = .clear
+                host = controller
+                tabBar.removeFromSuperview()
+                addSubview(controller.view)
+                attachHostToParent()
+                rebuildItems()
+            }
+            applyMinimizeBehavior()
+        } else if let controller = host {
+            controller.willMove(toParent: nil)
+            controller.view.removeFromSuperview()
+            controller.removeFromParent()
+            host = nil
+            addSubview(tabBar)
+            rebuildItems()
+        }
+        setNeedsLayout()
+    }
+
+    private func applyMinimizeBehavior() {
+        #if compiler(>=6.2)
+        guard #available(iOS 26.0, *), let host else { return }
+        switch minimizeBehavior {
+        case "never": host.tabBarMinimizeBehavior = .never
+        case "onScrollDown": host.tabBarMinimizeBehavior = .onScrollDown
+        case "onScrollUp": host.tabBarMinimizeBehavior = .onScrollUp
+        default: host.tabBarMinimizeBehavior = .automatic
+        }
+        #endif
+    }
+
+    /// A child view controller of the nearest view controller, so the host
+    /// gets appearance and trait updates.
+    private func attachHostToParent() {
+        guard let host, host.parent == nil, window != nil else { return }
+        var responder: UIResponder? = next
+        while let current = responder, !(current is UIViewController) { responder = current.next }
+        guard let parent = responder as? UIViewController else { return }
+        parent.addChild(host)
+        host.didMove(toParent: parent)
+    }
+
+    /// Hands the ScrollView with scrollViewNativeID to the hosted tabs as
+    /// their content scroll view, which drives the minimize behavior.
+    private func attachScrollView(force: Bool = false) {
+        guard let host, !scrollViewNativeID.isEmpty, let window else { return }
+        if !force, attachedScrollView != nil { return }
+        guard let scrollView = PCTabBarView.scrollView(nativeID: scrollViewNativeID, in: window) else { return }
+        attachedScrollView = scrollView
+        for child in host.viewControllers ?? [] {
+            child.setContentScrollView(scrollView, for: .bottom)
+        }
+    }
+
+    /// The UIScrollView of the React Native view with this nativeID.
+    private static func scrollView(nativeID: String, in root: UIView) -> UIScrollView? {
+        var match: UIView?
+        func find(_ view: UIView) {
+            guard match == nil else { return }
+            if view.responds(to: NSSelectorFromString("nativeId")),
+               view.value(forKey: "nativeId") as? String == nativeID {
+                match = view
+                return
+            }
+            view.subviews.forEach(find)
+        }
+        find(root)
+        guard let match else { return nil }
+        if let scroll = match as? UIScrollView { return scroll }
+        var scroll: UIScrollView?
+        func firstScroll(_ view: UIView) {
+            guard scroll == nil else { return }
+            if let s = view as? UIScrollView { scroll = s; return }
+            view.subviews.forEach(firstScroll)
+        }
+        firstScroll(match)
+        return scroll
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        attachHostToParent()
+        attachScrollView()
+    }
+
     // MARK: - Sizing
 
     public override var intrinsicContentSize: CGSize {
@@ -243,7 +393,19 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
         super.layoutSubviews()
         // Frame layout, as UITabBarController gives its bar: under Auto Layout
         // constraints the iOS 26 bar squeezes its tab labels out of view
-        tabBar.frame = bounds
+        // A bar given more height than it needs keeps its own height at the
+        // bottom of it, as the system places its bar; stretched, UITabBar
+        // spreads the icons and labels apart
+        let fitted = ceil(tabBar.sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude)).height)
+        let height = min(bounds.height, fitted)
+        let frame = CGRect(x: 0, y: bounds.height - height, width: bounds.width, height: height)
+        tabBar.frame = frame
+        host?.view.frame = frame
+        // The ScrollView may mount after the bar
+        attachScrollView()
+        if host != nil {
+            DispatchQueue.main.async { [weak self] in self?.applyTestIDs() }
+        }
     }
 
     /// Puts each tab's testID on its tab button, the view E2E drivers find
@@ -262,15 +424,26 @@ public final class PCTabBarView: UIView, UITabBarDelegate {
             }
             view.subviews.forEach(collect)
         }
-        collect(tabBar)
+        let bar = activeBar
+        collect(bar)
+        // The hosted iOS 26 bar keeps a hidden button for its minimized state
+        func shown(_ view: UIView) -> Bool {
+            var current: UIView? = view
+            while let v = current, v !== bar {
+                if v.isHidden || v.alpha < 0.01 { return false }
+                current = v.superview
+            }
+            return true
+        }
+        buttons = buttons.filter(shown)
         // One button per position, the frontmost (last collected) copy
         var byPosition: [Int: UIView] = [:]
         for button in buttons {
-            byPosition[Int(tabBar.convert(button.bounds, from: button).minX.rounded())] = button
+            byPosition[Int(bar.convert(button.bounds, from: button).minX.rounded())] = button
         }
         buttons = Array(byPosition.values)
-        buttons.sort { tabBar.convert($0.bounds, from: $0).minX < tabBar.convert($1.bounds, from: $1).minX }
-        if tabBar.effectiveUserInterfaceLayoutDirection == .rightToLeft { buttons.reverse() }
+        buttons.sort { bar.convert($0.bounds, from: $0).minX < bar.convert($1.bounds, from: $1).minX }
+        if bar.effectiveUserInterfaceLayoutDirection == .rightToLeft { buttons.reverse() }
         guard buttons.count == tabs.count else { return }
         for (button, tab) in zip(buttons, tabs) {
             button.accessibilityIdentifier = tab.testID.isEmpty ? nil : tab.testID
@@ -290,6 +463,17 @@ final class PCLayoutReportingTabBar: UITabBar {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        onLayout?()
+    }
+}
+
+/// The tab bar controller hosting a minimizing bar, reporting its layout
+/// passes (the bar lays its buttons out again as it minimizes and expands).
+final class PCHostTabBarController: UITabBarController {
+    var onLayout: (() -> Void)?
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
         onLayout?()
     }
 }

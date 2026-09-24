@@ -75,6 +75,12 @@ export interface TabBarNativeProps extends ViewProps {
   /** Largest font scale the labels may reach; 0 = no cap. */
   maxFontSizeMultiplier?: Double;
 
+  /** '' | 'automatic' | 'never' | 'onScrollDown' | 'onScrollUp' */
+  minimizeBehavior?: string;
+
+  /** nativeID of the ScrollView whose scrolling minimizes the bar. */
+  scrollViewNativeID?: string;
+
   /** Android: the active indicator pill behind the selected icon. */
   androidIndicatorColor?: ColorValue;
 

@@ -17,6 +17,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
+import com.facebook.react.uimanager.util.ReactFindViewUtil
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.facebook.react.views.text.ReactTypefaceUtils
@@ -69,6 +70,8 @@ class PCTabBarView(context: Context) :
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
   var maxFontSizeMultiplier: Float = 0f
+  var minimizeBehavior: String = "" // "" | "automatic" | "never" | "onScrollDown" | "onScrollUp"
+  var scrollViewNativeID: String = ""
 
   // --- Events ---
   var onTabPress: ((index: Int, value: String, reselected: Boolean) -> Unit)? = null
@@ -152,6 +155,73 @@ class PCTabBarView(context: Context) :
     rebuildUI()
   }
 
+  // ---- Hide on scroll ----
+  // Android has no minimized tab bar; the Material behavior is the bar
+  // sliding away while the content scrolls (HideBottomViewOnScrollBehavior),
+  // with its timings. The host view moves, so React Native's touch targeting
+  // follows it and the content underneath takes the touches.
+
+  private var watchedScrollView: View? = null
+  private var barHidden = false
+  private val scrollViewFinder = object : ReactFindViewUtil.OnViewFoundListener {
+    override fun getNativeId(): String = scrollViewNativeID
+    override fun onViewFound(view: View) = watch(view)
+  }
+
+  fun applyMinimize(behavior: String, nativeID: String) {
+    if (minimizeBehavior == behavior && scrollViewNativeID == nativeID) return
+    val targetChanged = scrollViewNativeID != nativeID
+    minimizeBehavior = behavior
+    scrollViewNativeID = nativeID
+    if (!hidesOnScroll) setBarHidden(false)
+    if (targetChanged || watchedScrollView == null) findScrollView()
+  }
+
+  private val hidesOnScroll: Boolean
+    get() = minimizeBehavior == "automatic" || minimizeBehavior == "onScrollDown" || minimizeBehavior == "onScrollUp"
+
+  /** The ScrollView with scrollViewNativeID, now or once it mounts. */
+  private fun findScrollView() {
+    unwatch()
+    ReactFindViewUtil.removeViewListener(scrollViewFinder)
+    if (scrollViewNativeID.isEmpty() || !isAttachedToWindow) return
+    val found = ReactFindViewUtil.findView(rootView, scrollViewNativeID)
+    if (found != null) watch(found) else ReactFindViewUtil.addViewListener(scrollViewFinder)
+  }
+
+  private fun watch(view: View) {
+    ReactFindViewUtil.removeViewListener(scrollViewFinder)
+    unwatch()
+    watchedScrollView = view
+    view.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY -> onContentScrolled(scrollY, scrollY - oldScrollY) }
+  }
+
+  private fun unwatch() {
+    watchedScrollView?.setOnScrollChangeListener(null)
+    watchedScrollView = null
+  }
+
+  private fun onContentScrolled(scrollY: Int, dy: Int) {
+    if (!hidesOnScroll || dy == 0) return
+    val scrollingDown = dy > 0
+    // Back at the top the bar always shows
+    val hide = scrollY > 0 && if (minimizeBehavior == "onScrollUp") !scrollingDown else scrollingDown
+    setBarHidden(hide)
+  }
+
+  private fun setBarHidden(hide: Boolean) {
+    if (barHidden == hide) return
+    barHidden = hide
+    animate().cancel()
+    animate()
+      .translationY(if (hide) height.toFloat() else 0f)
+      .setDuration(if (hide) 175L else 225L)
+      .setInterpolator(
+        if (hide) android.view.animation.AccelerateInterpolator() else android.view.animation.DecelerateInterpolator()
+      )
+      .start()
+  }
+
   // ---- Touch ----
 
   // The tab views carry the menu item ids, which React Native's touch handling
@@ -168,9 +238,12 @@ class PCTabBarView(context: Context) :
     PCNativeTheme.addListener(nativeThemeListener)
     PCNativeTheme.attach(context)
     if (builtThemeVersion != PCNativeTheme.version) nativeThemeListener.onNativeThemeChanged()
+    if (hidesOnScroll && watchedScrollView == null) findScrollView()
   }
 
   override fun onDetachedFromWindow() {
+    ReactFindViewUtil.removeViewListener(scrollViewFinder)
+    unwatch()
     PCNativeTheme.removeListener(nativeThemeListener)
     super.onDetachedFromWindow()
   }
