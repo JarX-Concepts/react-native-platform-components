@@ -88,6 +88,12 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
+    // Fabric views seed _props with their own defaults: RCTViewComponentView
+    // asserts on it in debug builds of React Native core, and the first
+    // updateProps would otherwise read the base ViewProps as PCButtonProps.
+    static const auto defaultProps = std::make_shared<const PCButtonProps>();
+    _props = defaultProps;
+
     _view = [PCButtonView new];
     self.contentView = _view;
 
