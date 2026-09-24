@@ -8,14 +8,30 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Sele
 struct PCSelectionMenuOption {
     let label: String
     let data: String
+    let subtitle: String
+    let icon: PCButtonSupport.Icon
 }
 
 @objcMembers
 public final class PCSelectionMenuView: UIControl {
     // MARK: - Props (set from ObjC++)
 
-    /// ObjC++ sets this as an array of dictionaries: [{label,data}]
-    public var options: [Any] = [] { didSet { sync() } }
+    /// ObjC++ sets this as an array of dictionaries:
+    /// [{label, data, subtitle, iconType, iconName, iconUri, iconScale, iconTinted}]
+    public var options: [Any] = [] {
+        didSet {
+            parsedOptions = options.compactMap { any in
+                guard let dict = any as? [String: Any] else { return nil }
+                return PCSelectionMenuOption(
+                    label: (dict["label"] as? String) ?? "",
+                    data: (dict["data"] as? String) ?? "",
+                    subtitle: (dict["subtitle"] as? String) ?? "",
+                    icon: PCButtonSupport.Icon(dictionary: dict)
+                )
+            }
+            sync()
+        }
+    }
 
     /// Controlled selection by data. "" = no selection.
     public var selectedData: String = "" { didSet { sync() } }
@@ -50,18 +66,16 @@ public final class PCSelectionMenuView: UIControl {
 
     // MARK: - Internal (headless)
 
-    private var headlessMenuView: UIView?
+    /// Invisible anchor of the headless menu. On iOS 17.4+ it presents the
+    /// system menu (`performPrimaryAction()`); before that it only marks the
+    /// spot for the popover fallback.
+    private var headlessMenuButton: PCMenuButton?
     private var headlessMenuVC: UIViewController?
     private var headlessPresentationToken: Int = 0
+    /// An option was picked while the headless system menu was open.
+    private var headlessSelectedWhileOpen = false
 
-    private var parsedOptions: [PCSelectionMenuOption] {
-        options.compactMap { any in
-            guard let dict = any as? [String: Any] else { return nil }
-            let label = (dict["label"] as? String) ?? ""
-            let data = (dict["data"] as? String) ?? ""
-            return PCSelectionMenuOption(label: label, data: data)
-        }
-    }
+    private var parsedOptions: [PCSelectionMenuOption] = []
 
     private var displayTitle: String {
         let opts = parsedOptions
@@ -119,10 +133,8 @@ public final class PCSelectionMenuView: UIControl {
         // Update the button title
         menuButton?.setTitle(displayTitle, for: .normal)
 
-        // Rebuild the UIMenu with current options
-        if anchorMode == "inline" {
-            rebuildMenu()
-        }
+        // Rebuild the UIMenu with current options (and update it if it's open)
+        rebuildMenu()
 
         invalidateIntrinsicContentSize()
         setNeedsLayout()
@@ -159,22 +171,42 @@ public final class PCSelectionMenuView: UIControl {
     }
 
     private func rebuildMenu() {
+        guard menuButton != nil || headlessMenuButton != nil else { return }
+        let menu = (interactivity == "disabled" || parsedOptions.isEmpty) ? nil : buildMenu()
+        menuButton?.menu = menu
+        headlessMenuButton?.setMenu(menu)
+    }
+
+    /// A single-selection system menu of the options, with their subtitles and
+    /// icons. The system draws its checkmark on the selected option. Selection
+    /// stays controlled by the `selected` prop: the menu is rebuilt when it
+    /// changes, so the button's changesSelectionAsPrimaryAction stays off.
+    private func buildMenu() -> UIMenu {
         let opts = parsedOptions
-        let disabled = (interactivity == "disabled") || opts.isEmpty
-        let actions = opts.enumerated().map { (idx, opt) in
-            UIAction(
+        let items = opts.enumerated().map { idx, opt in
+            PCMenuItem(
+                index: idx,
+                id: String(idx),
                 title: opt.label,
-                // The system draws its checkmark on the selected option. Selection
-                // stays controlled by the `selected` prop: the menu is rebuilt when it
-                // changes, so the button's changesSelectionAsPrimaryAction stays off.
-                state: (!self.selectedData.isEmpty && opt.data == self.selectedData) ? .on : .off
-            ) { [weak self] _ in
-                guard let self else { return }
-                self.selectedData = opt.data
-                self.onSelect?(idx, opt.label, opt.data)
-            }
+                subtitle: opt.subtitle,
+                icon: opt.icon,
+                state: (!selectedData.isEmpty && opt.data == selectedData) ? "on" : "off"
+            )
         }
-        menuButton?.menu = disabled ? nil : UIMenu(options: .singleSelection, children: actions)
+        return PCMenuSupport.menu(
+            title: "",
+            options: .singleSelection,
+            items: items,
+            onImageLoaded: { [weak self] in self?.rebuildMenu() },
+            handler: { [weak self] item in
+                guard let self, item.index < opts.count else { return }
+                let opt = opts[item.index]
+                // A pick from the headless system menu isn't a dismissal to report
+                if self.anchorMode != "inline" { self.headlessSelectedWhileOpen = true }
+                self.selectedData = opt.data
+                self.onSelect?(item.index, opt.label, opt.data)
+            }
+        )
     }
 
     override public func layoutSubviews() {
@@ -192,29 +224,59 @@ public final class PCSelectionMenuView: UIControl {
     // MARK: - Headless
 
     private func installHeadlessIfNeeded() {
-        guard headlessMenuView == nil else { return }
+        guard headlessMenuButton == nil else { return }
 
-        // Create an invisible anchor view
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .clear
-        view.isHidden = true
+        // An invisible button over the view's bounds anchors the system menu.
+        // Touches pass through the headless view (see hitTest), so only the
+        // `visible` prop opens it.
+        let button = PCMenuButton(type: .custom)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .clear
+        button.isAccessibilityElement = false
+        button.onMenuOpen = { [weak self] in
+            self?.headlessSelectedWhileOpen = false
+        }
+        button.onMenuClose = { [weak self] in
+            guard let self else { return }
+            let selected = self.headlessSelectedWhileOpen
+            self.headlessSelectedWhileOpen = false
+            // Dismissed without a pick while still meant to be open: ask to close.
+            // A close requested through `visible` isn't reported back.
+            if !selected && self.visible == "open" {
+                logger.debug("headless system menu dismissed -> requestClose")
+                self.onRequestClose?()
+            }
+        }
 
-        addSubview(view)
+        addSubview(button)
         NSLayoutConstraint.activate([
-            view.topAnchor.constraint(equalTo: topAnchor),
-            view.bottomAnchor.constraint(equalTo: bottomAnchor),
-            view.leadingAnchor.constraint(equalTo: leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: trailingAnchor),
+            button.topAnchor.constraint(equalTo: topAnchor),
+            button.bottomAnchor.constraint(equalTo: bottomAnchor),
+            button.leadingAnchor.constraint(equalTo: leadingAnchor),
+            button.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
 
-        headlessMenuView = view
+        headlessMenuButton = button
+        rebuildMenu()
     }
 
     private func uninstallHeadlessIfNeeded() {
-        guard let view = headlessMenuView else { return }
-        headlessMenuView = nil
-        view.removeFromSuperview()
+        guard let button = headlessMenuButton else { return }
+        headlessMenuButton = nil
+        button.dismissMenu()
+        button.removeFromSuperview()
+    }
+
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        // Headless: the view is only an anchor, never a touch target.
+        guard anchorMode == "inline" else { return nil }
+        return super.hitTest(point, with: event)
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        // A menu asked for before the view was on screen opens now.
+        if window != nil, visible == "open" { updatePresentation() }
     }
 
     private func nearestViewController() -> UIViewController? {
@@ -233,20 +295,49 @@ public final class PCSelectionMenuView: UIControl {
         headlessPresentationToken += 1
 
         if visible == "open" && interactivity != "disabled" {
-            presentHeadlessMenuIfNeeded(token: headlessPresentationToken)
+            if PCMenuButton.canPresentMenuProgrammatically {
+                presentSystemMenuIfNeeded(token: headlessPresentationToken)
+            } else {
+                presentHeadlessMenuIfNeeded(token: headlessPresentationToken)
+            }
         } else {
             dismissHeadlessIfNeeded()
         }
     }
 
     private func dismissHeadlessIfNeeded() {
+        if let button = headlessMenuButton, button.isMenuVisible {
+            button.dismissMenu()
+        }
         guard let vc = headlessMenuVC else { return }
         headlessMenuVC = nil
         vc.dismiss(animated: true)
     }
 
+    /// iOS 17.4+: the system menu, opened from the invisible anchor button with
+    /// `UIControl.performPrimaryAction()`.
+    private func presentSystemMenuIfNeeded(token: Int) {
+        guard let button = headlessMenuButton, !parsedOptions.isEmpty else { return }
+
+        // Next run loop turn, so the anchor has its final frame.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            guard self.headlessPresentationToken == token else { return }
+            guard self.visible == "open", self.anchorMode != "inline" else { return }
+            guard self.interactivity != "disabled" else { return }
+            guard self.window != nil, !button.isMenuVisible else { return }
+
+            logger.debug("presentSystemMenuIfNeeded: presenting \(self.parsedOptions.count) options")
+            self.layoutIfNeeded()
+            self.rebuildMenu()
+            button.presentMenu()
+        }
+    }
+
+    /// Before iOS 17.4 UIKit has no public way to open a menu without a touch,
+    /// so modal mode shows a popover styled like a system menu.
     private func presentHeadlessMenuIfNeeded(token: Int) {
-        guard headlessMenuView != nil else { return }
+        guard headlessMenuButton != nil else { return }
         guard let vc = nearestViewController() else { return }
 
         let opts = parsedOptions

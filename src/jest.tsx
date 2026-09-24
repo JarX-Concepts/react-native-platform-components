@@ -541,8 +541,8 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
  * A view carrying `testID` that shows the selected option's label (or the
  * placeholder). While the menu is open (embedded, or modal with `visible`),
  * each option is a `Pressable` with the test ID `${testID}-${data}` that calls
- * `onSelect`. `fireEvent(menu, 'select', data, label, index)` and
- * `fireEvent(menu, 'requestClose')` also work.
+ * `onSelect` and shows its label and subtitle. `fireEvent(menu, 'select',
+ * data, label, index)` and `fireEvent(menu, 'requestClose')` also work.
  */
 export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
@@ -583,6 +583,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
               onPress={() => onSelect?.(option.data, option.label, index)}
             >
               <Text>{option.label}</Text>
+              {option.subtitle ? <Text>{option.subtitle}</Text> : null}
             </Pressable>
           ))
         : null}

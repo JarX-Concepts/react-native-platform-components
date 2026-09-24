@@ -166,7 +166,7 @@ describe('SelectionMenu', () => {
     const props = NativeSelectionMenu.mock.calls[0][0];
     expect(props.anchorMode).toBe('headless');
     expect(props.visible).toBe('open');
-    expect(props.android).toEqual({ material: 'm3' });
+    expect(props.android).toEqual({ material: 'm3', searchable: 'false' });
     act(() => {
       tree.unmount();
     });
