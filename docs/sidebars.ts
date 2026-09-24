@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'guides/android-theme',
         'guides/icons',
         'guides/theming',
+        'guides/testing',
         'guides/web',
       ],
     },
