@@ -13,6 +13,7 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  DateRangePicker,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -304,6 +305,43 @@ describe('DatePicker (web)', () => {
 
     act(() => tree.root.findByType('dialog').props.onClose());
     expect(onClosed).toHaveBeenCalledTimes(2);
+  });
+
+  it('yearAndMonth: a month input that gives the first of the month', () => {
+    expect(inputTypeForMode('yearAndMonth')).toBe('month');
+    expect(formatInputValue(date, 'month')).toBe('2026-09');
+    expect(parseInputValue('2027-02', 'month', date)).toEqual(
+      new Date(2027, 1, 1, 14, 30)
+    );
+    expect(parseInputValue('2027-02-01', 'month', date)).toBeNull();
+  });
+
+  it('DateRangePicker: start and end inputs, Done reports the range', () => {
+    const onConfirm = jest.fn();
+    const onClosed = jest.fn();
+    const tree = render(
+      <DateRangePicker
+        visible
+        startDate={new Date(2026, 8, 24, 9, 0)}
+        endDate={null}
+        onConfirm={onConfirm}
+        onClosed={onClosed}
+      />
+    );
+    const [startInput, endInput] = tree.root.findAllByType('input');
+    expect(startInput!.props.value).toBe('2026-09-24');
+    expect(endInput!.props.min).toBe('2026-09-24');
+    const done = () => tree.root.findAllByType('button')[1]!;
+    // No end yet
+    expect(done().props.disabled).toBe(true);
+
+    act(() => endInput!.props.onChange({ target: { value: '2026-09-28' } }));
+    click(done());
+    expect(onConfirm).toHaveBeenCalledWith({
+      startDate: new Date(2026, 8, 24),
+      endDate: new Date(2026, 8, 28),
+    });
+    expect(onClosed).toHaveBeenCalledTimes(1);
   });
 
   it('countDownTimer: reports the time input as durationSeconds', () => {

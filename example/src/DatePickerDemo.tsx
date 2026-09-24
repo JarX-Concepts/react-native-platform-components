@@ -3,8 +3,12 @@ import React, { useMemo, useState } from 'react';
 import { Platform, Switch, Text, View } from 'react-native';
 import {
   DatePicker,
+  DateRangePicker,
   SelectionMenu,
+  isDateRangePickerSupported,
+  type AndroidDatePickerInputMode,
   type AndroidMaterialMode,
+  type DateRange,
 } from 'react-native-platform-components';
 
 import {
@@ -19,6 +23,10 @@ import {
 
 const prettyISO = (date?: Date | null) => (date ? date.toISOString() : '—');
 
+const pad = (n: number) => String(n).padStart(2, '0');
+const prettyDay = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
 export function DatePickerDemo(): React.JSX.Element {
   // ----- Presentation -----
   const [presentationModal, setPresentationModal] = useState(false);
@@ -29,9 +37,14 @@ export function DatePickerDemo(): React.JSX.Element {
 
   // ----- Core value -----
   const [mode, setMode] = useState<
-    'date' | 'time' | 'dateAndTime' | 'countDownTimer'
+    'date' | 'time' | 'dateAndTime' | 'countDownTimer' | 'yearAndMonth'
   >('date');
+  const [hourFormat, setHourFormat] = useState<'device' | '12' | '24'>(
+    'device'
+  );
   const [duration, setDuration] = useState<number | null>(null);
+  // The month picked in yearAndMonth mode
+  const [pickedMonth, setPickedMonth] = useState<string | null>(null);
   const [date, setDate] = useState<Date | null>(null);
 
   // ----- Min / Max -----
@@ -73,12 +86,26 @@ export function DatePickerDemo(): React.JSX.Element {
   const [androidMaterial, setAndroidMaterial] =
     useState<AndroidMaterialMode>('system');
 
+  const [androidInputMode, setAndroidInputMode] =
+    useState<AndroidDatePickerInputMode>('calendar');
   const [androidTitleEnabled, setAndroidTitleEnabled] = useState(true);
   const [androidButtonsEnabled, setAndroidButtonsEnabled] = useState(true);
 
   const dialogTitle = androidTitleEnabled ? 'Custom Title' : undefined;
   const positiveTitle = androidButtonsEnabled ? 'Custom OK' : undefined;
   const negativeTitle = androidButtonsEnabled ? 'Custom Cancel' : undefined;
+
+  // ----- Date range (Android) -----
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [range, setRange] = useState<DateRange | null>(null);
+  // The picker opens on today and the next four days until one is chosen
+  const suggestedRange = useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 4);
+    return { start, end };
+  }, []);
 
   // ----- SelectionMenu options -----
   const modeOptions = useMemo(
@@ -87,10 +114,33 @@ export function DatePickerDemo(): React.JSX.Element {
         { label: 'Date', data: 'date' },
         { label: 'Time', data: 'time' },
         { label: 'Date & Time', data: 'dateAndTime' },
-        // UIDatePicker's countdown mode; Android has no countdown picker
+        // UIDatePicker's countdown and month-and-year modes; Android has
+        // no countdown picker and shows the date picker for the other
         ...(Platform.OS === 'ios'
-          ? ([{ label: 'Countdown', data: 'countDownTimer' }] as const)
+          ? ([
+              { label: 'Countdown', data: 'countDownTimer' },
+              { label: 'Year & Month', data: 'yearAndMonth' },
+            ] as const)
           : []),
+      ] as const,
+    []
+  );
+
+  const hourFormatOptions = useMemo(
+    () =>
+      [
+        { label: 'Device', data: 'device' },
+        { label: '12-hour', data: '12' },
+        { label: '24-hour', data: '24' },
+      ] as const,
+    []
+  );
+
+  const androidInputModeOptions = useMemo(
+    () =>
+      [
+        { label: 'Calendar', data: 'calendar' },
+        { label: 'Text', data: 'text' },
       ] as const,
     []
   );
@@ -193,12 +243,37 @@ export function DatePickerDemo(): React.JSX.Element {
           />
         </Row>
 
+        <Divider />
+
+        <Row label="Clock">
+          <SelectionMenu
+            style={ui.alignEnd}
+            options={hourFormatOptions as any}
+            selected={hourFormat}
+            presentation="embedded"
+            placeholder="Clock"
+            testID="hour-format-menu"
+            onSelect={(data) => setHourFormat(data as any)}
+          />
+        </Row>
+
         {mode === 'countDownTimer' && (
           <>
             <Divider />
             <Row label="Duration">
               <Text testID="countdown-duration" style={ui.valueText}>
                 {duration === null ? '(none)' : `${duration}s`}
+              </Text>
+            </Row>
+          </>
+        )}
+
+        {mode === 'yearAndMonth' && (
+          <>
+            <Divider />
+            <Row label="Month">
+              <Text testID="year-month-value" style={ui.valueText}>
+                {pickedMonth ?? '(none)'}
               </Text>
             </Row>
           </>
@@ -307,6 +382,22 @@ export function DatePickerDemo(): React.JSX.Element {
 
           <Divider />
 
+          <Row label="Input">
+            <SelectionMenu
+              testID="android-input-mode-menu"
+              style={ui.alignEnd}
+              options={androidInputModeOptions as any}
+              selected={androidInputMode}
+              presentation="embedded"
+              placeholder="Input"
+              onSelect={(data) =>
+                setAndroidInputMode(data as AndroidDatePickerInputMode)
+              }
+            />
+          </Row>
+
+          <Divider />
+
           <RowGroup
             items={[
               {
@@ -367,6 +458,7 @@ export function DatePickerDemo(): React.JSX.Element {
             minDate={minDate ?? undefined}
             maxDate={maxDate ?? undefined}
             mode={mode}
+            is24Hour={hourFormat === 'device' ? undefined : hourFormat === '24'}
             // TODO: figure out why we need this on Android to force remounting
             //       when mode changes with embedded picker
             key={mode + presentation}
@@ -381,6 +473,7 @@ export function DatePickerDemo(): React.JSX.Element {
             }}
             android={{
               material: androidMaterial,
+              inputMode: androidInputMode,
               dialogTitle,
               positiveButtonTitle: positiveTitle,
               negativeButtonTitle: negativeTitle,
@@ -393,12 +486,58 @@ export function DatePickerDemo(): React.JSX.Element {
             ) => {
               setDate(newDate);
               if (mode === 'countDownTimer') setDuration(durationSeconds ?? 0);
+              if (mode === 'yearAndMonth') {
+                setPickedMonth(prettyDay(newDate).slice(0, 7));
+              }
               if (confirmed) {
                 setOpen(false);
               }
             }}
           />
         </View>
+      </Section>
+
+      <Section title="Date Range">
+        {isDateRangePickerSupported ? (
+          <>
+            <Row
+              label="Range"
+              right={
+                <PillButton
+                  testID="range-open-button"
+                  label="Pick"
+                  onPress={() => setRangeOpen(true)}
+                />
+              }
+            >
+              <Text testID="range-value" style={ui.valueText}>
+                {range
+                  ? `${prettyDay(range.startDate)} → ${prettyDay(range.endDate)}`
+                  : '—'}
+              </Text>
+            </Row>
+            <DateRangePicker
+              testID="date-range-picker"
+              visible={rangeOpen}
+              startDate={range?.startDate ?? suggestedRange.start}
+              endDate={range?.endDate ?? suggestedRange.end}
+              minDate={minDate ?? undefined}
+              maxDate={maxDate ?? undefined}
+              android={{
+                inputMode: androidInputMode,
+                dialogTitle: androidTitleEnabled ? 'Trip dates' : undefined,
+                positiveButtonTitle: positiveTitle,
+                negativeButtonTitle: negativeTitle,
+              }}
+              onConfirm={setRange}
+              onClosed={() => setRangeOpen(false)}
+            />
+          </>
+        ) : (
+          <Row label="Range">
+            <Text style={ui.valueText}>No native range picker on iOS</Text>
+          </Row>
+        )}
       </Section>
     </>
   );

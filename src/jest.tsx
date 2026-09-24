@@ -30,7 +30,7 @@ import {
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { ContextMenuProps } from './ContextMenu';
-import type { DatePickerProps } from './DatePicker';
+import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { NativeTheme } from './NativeTheme';
@@ -536,6 +536,26 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     />
   );
 }
+
+/**
+ * A view with `testID` that takes `onConfirm` (with `{ startDate, endDate }`)
+ * and `onClosed` through `fireEvent`. The mock renders on every platform.
+ */
+export function DateRangePicker(
+  props: DateRangePickerProps
+): React.ReactElement {
+  const { style, testID, onConfirm, onClosed } = props;
+  return (
+    <View
+      style={style}
+      testID={testID}
+      {...handlers({ onConfirm, onClosed })}
+    />
+  );
+}
+
+/** The mock renders `DateRangePicker` everywhere. */
+export const isDateRangePickerSupported: boolean = true;
 
 /**
  * A view carrying `testID` that shows the selected option's label (or the
