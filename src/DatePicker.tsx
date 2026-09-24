@@ -37,7 +37,16 @@ export type DatePickerProps = {
    */
   visible?: boolean;
 
-  onConfirm?: (dateTime: Date, confirmed: boolean) => void;
+  /**
+   * Called when the selection changes. `confirmed` is true for deliberate
+   * selections (see docs). `durationSeconds` is the selected duration in
+   * `countDownTimer` mode (iOS, and web's time input); 0 in other modes.
+   */
+  onConfirm?: (
+    dateTime: Date,
+    confirmed: boolean,
+    durationSeconds: number
+  ) => void;
   onClosed?: () => void;
 
   /** Test identifier */
@@ -108,7 +117,8 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
 
   const handleConfirm = useCallback(
     (e: NativeSyntheticEvent<DateChangeEvent>) => {
-      onConfirm?.(new Date(e.nativeEvent.timestampMs), e.nativeEvent.confirmed);
+      const { timestampMs, confirmed, durationSeconds } = e.nativeEvent;
+      onConfirm?.(new Date(timestampMs), confirmed, durationSeconds ?? 0);
     },
     [onConfirm]
   );

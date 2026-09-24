@@ -29,7 +29,8 @@ const INPUT_STYLE = {
  * and reports every change with `confirmed: true`. `modal` opens it in a
  * `<dialog>` with Cancel/Done buttons, like the iOS popover: changes report
  * `confirmed: false`, Done reports `confirmed: true`, and Cancel, Escape or a
- * click outside call `onClosed`.
+ * click outside call `onClosed`. In `countDownTimer` mode the input is a time
+ * input and `onConfirm`'s `durationSeconds` is its hours and minutes.
  */
 export function DatePicker(props: DatePickerProps): React.ReactElement {
   const {
@@ -50,6 +51,14 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
   const primary = usePrimaryColor();
   const type = inputTypeForMode(mode);
   const step = ios?.minuteInterval ? ios.minuteInterval * 60 : undefined;
+  const confirm = (next: Date, confirmed: boolean) =>
+    onConfirm?.(
+      next,
+      confirmed,
+      mode === 'countDownTimer'
+        ? next.getHours() * 3600 + next.getMinutes() * 60
+        : 0
+    );
 
   const renderInput = (
     value: Date | null,
@@ -75,7 +84,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
   if (presentation === 'embedded') {
     return (
       <View testID={testID} style={style}>
-        {renderInput(date, (next) => onConfirm?.(next, true), false)}
+        {renderInput(date, (next) => confirm(next, true), false)}
       </View>
     );
   }
@@ -87,7 +96,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
           date={date}
           primary={primary}
           renderInput={renderInput}
-          onConfirm={onConfirm}
+          onConfirm={confirm}
           onClosed={onClosed}
         />
       ) : null}
@@ -109,7 +118,7 @@ function ModalPicker({
     onValue: (next: Date) => void,
     autoFocus: boolean
   ) => React.ReactElement;
-  onConfirm: DatePickerProps['onConfirm'];
+  onConfirm: (next: Date, confirmed: boolean) => void;
   onClosed: DatePickerProps['onClosed'];
 }): React.ReactElement {
   const [draft, setDraft] = useState(date);
@@ -131,7 +140,7 @@ function ModalPicker({
         draft,
         (next) => {
           setDraft(next);
-          onConfirm?.(next, false);
+          onConfirm(next, false);
         },
         true
       )}
@@ -149,7 +158,7 @@ function ModalPicker({
         <button
           type="button"
           disabled={!draft}
-          onClick={() => draft && onConfirm?.(draft, true)}
+          onClick={() => draft && onConfirm(draft, true)}
           style={{ ...textButton, opacity: draft ? 1 : 0.38 }}
         >
           Done

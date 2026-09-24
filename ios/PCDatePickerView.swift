@@ -31,7 +31,9 @@ public final class PCDatePickerView: UIControl,
     }
 
     // MARK: - Events (wired from ObjC++)
-    public var onChangeHandler: ((NSNumber, Bool) -> Void)?
+    /// (timestampMs, confirmed, durationSeconds). `durationSeconds` is the
+    /// selected countdown duration in countDownTimer mode, 0 otherwise.
+    public var onChangeHandler: ((NSNumber, Bool, NSNumber) -> Void)?
     public var onCancelHandler: (() -> Void)?
 
     // MARK: - Props
@@ -430,19 +432,26 @@ public final class PCDatePickerView: UIControl,
         // Skip "programmatic/settle" changes
         if suppressChangeEvents { return }
 
-        let ms = picker.date.timeIntervalSince1970 * 1000.0
         // In modal mode, valueChanged is "user is still adjusting" —
         // confirmation only happens when the user taps Done. Embedded
         // presentation always confirms (there's no Done button to gate on).
         let isModal = presentation == "modal" && modalVC != nil
-        onChangeHandler?(NSNumber(value: ms), !isModal)
+        emitChange(confirmed: !isModal)
     }
 
     @objc private func handleDoneTap() {
         guard presentation == "modal", modalVC != nil else { return }
-        let ms = picker.date.timeIntervalSince1970 * 1000.0
-        onChangeHandler?(NSNumber(value: ms), true)
+        emitChange(confirmed: true)
         dismissIfNeeded(emitCancel: false)
+    }
+
+    /// In countDownTimer mode `picker.date` is meaningless for the caller;
+    /// the selection is `countDownDuration`, reported as `durationSeconds`.
+    private func emitChange(confirmed: Bool) {
+        let ms = picker.date.timeIntervalSince1970 * 1000.0
+        let duration =
+            picker.datePickerMode == .countDownTimer ? picker.countDownDuration : 0
+        onChangeHandler?(NSNumber(value: ms), confirmed, NSNumber(value: duration))
     }
 
     @objc private func handleCancelTap() {
@@ -505,6 +514,9 @@ public final class PCDatePickerView: UIControl,
         case "countDownTimer": picker.datePickerMode = .countDownTimer
         default: picker.datePickerMode = .date
         }
+        // countDownDuration is ignored outside countDownTimer mode, so apply it
+        // again in case the prop arrived before the mode did.
+        applyCountDownDuration()
     }
 
     private func applyPreferredStyle() {

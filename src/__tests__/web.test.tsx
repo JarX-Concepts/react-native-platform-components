@@ -260,7 +260,11 @@ describe('DatePicker (web)', () => {
     expect(input.props.min).toBe('2026-01-01');
 
     act(() => input.props.onChange({ target: { value: '2026-09-24' } }));
-    expect(onConfirm).toHaveBeenCalledWith(new Date(2026, 8, 24, 14, 30), true);
+    expect(onConfirm).toHaveBeenCalledWith(
+      new Date(2026, 8, 24, 14, 30),
+      true,
+      0
+    );
   });
 
   it('modal: opens a dialog while visible, with Cancel and Done', () => {
@@ -289,17 +293,37 @@ describe('DatePicker (web)', () => {
     const input = tree.root.findByType('input');
     act(() => input.props.onChange({ target: { value: '2026-12-25' } }));
     const picked = new Date(2026, 11, 25, 14, 30);
-    expect(onConfirm).toHaveBeenLastCalledWith(picked, false);
+    expect(onConfirm).toHaveBeenLastCalledWith(picked, false, 0);
 
     const [cancel, done] = tree.root.findAllByType('button');
     click(done!);
-    expect(onConfirm).toHaveBeenLastCalledWith(picked, true);
+    expect(onConfirm).toHaveBeenLastCalledWith(picked, true, 0);
 
     click(cancel!);
     expect(onClosed).toHaveBeenCalledTimes(1);
 
     act(() => tree.root.findByType('dialog').props.onClose());
     expect(onClosed).toHaveBeenCalledTimes(2);
+  });
+
+  it('countDownTimer: reports the time input as durationSeconds', () => {
+    const onConfirm = jest.fn();
+    const tree = render(
+      <DatePicker
+        presentation="embedded"
+        mode="countDownTimer"
+        date={date}
+        onConfirm={onConfirm}
+      />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.type).toBe('time');
+    act(() => input.props.onChange({ target: { value: '01:30' } }));
+    expect(onConfirm).toHaveBeenCalledWith(
+      new Date(2026, 8, 23, 1, 30),
+      true,
+      5400
+    );
   });
 });
 
