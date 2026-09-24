@@ -254,6 +254,8 @@ describe('Platform Components Example', () => {
     // catching the failure costs a full matcher timeout on every run.
     if (isAndroid()) {
       await selectMenuOption('android-material-menu', 'M3');
+      // The Material pickers open on their text fields
+      await selectMenuOption('android-input-mode-menu', 'Text');
     } else {
       await selectMenuOption('ios-style-menu', 'Inline');
     }
@@ -261,6 +263,14 @@ describe('Platform Components Example', () => {
     // Open the modal (then pause)
     await element(by.id('picker-toggle-button')).tap();
     await pause(1000);
+
+    if (isAndroid()) {
+      await expect(
+        element(
+          by.type('com.google.android.material.textfield.TextInputEditText')
+        ).atIndex(0)
+      ).toBeVisible();
+    }
 
     // Dismiss it
     await dismissModal();
@@ -279,12 +289,35 @@ describe('Platform Components Example', () => {
     // Enable the modal mode
     await ensureModalMode(true);
 
+    if (isAndroid()) {
+      // A 24-hour clock: the keyboard entry has no AM/PM toggle
+      await selectMenuOption('hour-format-menu', '24-hour');
+    }
+
     // Open the modal (then pause)
     await element(by.id('picker-toggle-button')).tap();
     await pause(1000);
 
+    if (isAndroid()) {
+      await expect(element(by.text('AM'))).not.toBeVisible();
+    }
+
     // Dismiss it
     await dismissModal();
+
+    if (isAndroid()) {
+      // The Material range picker opens on its suggested range; saving it
+      // reports both days
+      await scrollToId('range-open-button');
+      await element(by.id('range-open-button')).tap();
+      await waitFor(element(by.text('Custom OK')))
+        .toBeVisible()
+        .withTimeout(10000);
+      await element(by.text('Custom OK')).atIndex(0).tap();
+      await waitFor(element(by.id('range-value')))
+        .not.toHaveText('—')
+        .withTimeout(8000);
+    }
 
     if (!isAndroid()) {
       // Countdown from the inline style (UIKit only has countdown wheels),
@@ -299,6 +332,14 @@ describe('Platform Components Example', () => {
       await expect(element(by.id('countdown-duration'))).not.toHaveText(
         '(none)'
       );
+
+      // Month and year wheels (iOS 17.4+), reporting the month picked
+      await selectMenuOption('mode-menu', 'Year & Month');
+      await scrollToId('date-picker');
+      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.3, 0.5);
+      await waitFor(element(by.id('year-month-value')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
     }
   });
 
