@@ -432,6 +432,41 @@ describe('TextField (web)', () => {
     expect(onChangeText).toHaveBeenCalledWith('');
   });
 
+  it('maps submitBehavior onto the web TextInput', () => {
+    const onSubmitEditing = jest.fn();
+    let tree = render(<TextField onSubmitEditing={onSubmitEditing} />);
+    let input = tree.root.findByType(TextInput);
+    expect(input.props.submitBehavior).toBe('blurAndSubmit');
+    expect(input.props.blurOnSubmit).toBe(true);
+
+    tree = render(<TextField submitBehavior="submit" />);
+    expect(tree.root.findByType(TextInput).props.blurOnSubmit).toBe(false);
+
+    // A multi-line field that submits on Enter keeps Shift+Enter for newlines
+    tree = render(
+      <TextField
+        multiline
+        value="hi"
+        submitBehavior="submit"
+        onSubmitEditing={onSubmitEditing}
+      />
+    );
+    input = tree.root.findByType(TextInput);
+    const preventDefault = jest.fn();
+    act(() =>
+      input.props.onKeyPress({
+        nativeEvent: { key: 'Enter', shiftKey: true },
+        preventDefault,
+      })
+    );
+    expect(onSubmitEditing).not.toHaveBeenCalled();
+    act(() =>
+      input.props.onKeyPress({ nativeEvent: { key: 'Enter' }, preventDefault })
+    );
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(onSubmitEditing.mock.calls[0][0].nativeEvent.text).toBe('hi');
+  });
+
   it('toggles password visibility', () => {
     const tree = render(<TextField secureTextEntry passwordToggle />);
     expect(tree.root.findByType(TextInput).props.secureTextEntry).toBe(true);
