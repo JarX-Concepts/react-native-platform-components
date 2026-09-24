@@ -236,7 +236,7 @@ public final class PCSegmentedControlView: UIControl {
 
         let segmentViews = self.segmentViews()
         if segmentViews.count == count {
-            return segmentViews.map { $0.frame }
+            return segmentViews.map { control.convert($0.bounds, from: $0) }
         }
 
         let width = control.bounds.width / CGFloat(count)
@@ -247,9 +247,21 @@ public final class PCSegmentedControlView: UIControl {
 
     /// The control's segment views in index order (right to left in RTL).
     private func segmentViews() -> [UIView] {
-        let views = control.subviews
-            .filter { NSStringFromClass(type(of: $0)) == "UISegment" }
-            .sorted { $0.frame.minX < $1.frame.minX }
+        // Direct subviews before iOS 26; inside a container view on iOS 26
+        var found: [UIView] = []
+        func collect(_ view: UIView) {
+            for sub in view.subviews {
+                if NSStringFromClass(type(of: sub)) == "UISegment" {
+                    found.append(sub)
+                } else {
+                    collect(sub)
+                }
+            }
+        }
+        collect(control)
+        let views = found.sorted {
+            control.convert($0.bounds, from: $0).minX < control.convert($1.bounds, from: $1).minX
+        }
         return control.effectiveUserInterfaceLayoutDirection == .rightToLeft ? views.reversed() : views
     }
 

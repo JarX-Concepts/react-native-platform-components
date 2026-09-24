@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
         'components/contextmenu',
         'components/selectionmenu',
         'components/segmentedcontrol',
+        'components/tabbar',
         'components/button',
         'components/buttongroup',
         'components/floatingtoolbar',

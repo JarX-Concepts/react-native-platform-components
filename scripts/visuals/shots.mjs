@@ -65,6 +65,23 @@ export const COMPONENTS = [
     },
   },
   {
+    key: 'tabbar',
+    name: 'TabBar',
+    test: 'Tab Bar',
+    native: { ios: 'UITabBar', android: 'BottomNavigationView' },
+    // Stills: the bar and its selection rows, wide like the hero row. Clips
+    // also take in the floating bar below: the iOS 26 Liquid Glass capsule,
+    // the Material bar in a FloatingToolbar on Android.
+    still: {
+      ios: { time: 8.0, crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.2 } },
+      android: { time: 12.5, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.19 } },
+    },
+    clip: {
+      ios: { start: 5.0, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.36 } },
+      android: { start: 10.5, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
+    },
+  },
+  {
     key: 'button',
     name: 'Button',
     test: 'Button',

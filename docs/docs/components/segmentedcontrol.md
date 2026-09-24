@@ -109,7 +109,7 @@ Image icons render at their point size, so ship `@2x` / `@3x` variants sized aro
 
 Screen readers announce the label (or `accessibilityLabel`) in every mode on both platforms.
 
-iOS has no mode with both icon and label: the Human Interface Guidelines give a segment either text or an image, and `UISegmentedControl` draws one. For tab-bar-style navigation with labeled icons, use labels on iOS (`labelVisibility: 'labeled'`) or a tab bar.
+iOS has no mode with both icon and label: the Human Interface Guidelines give a segment either text or an image, and `UISegmentedControl` draws one. For navigation between sections with labeled icons, use a [TabBar](/components/tabbar), which shows icon and label on both platforms.
 
 ### Testing
 
