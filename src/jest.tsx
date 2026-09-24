@@ -592,8 +592,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
 
 /**
  * Its children in a view carrying `testID`. The menu itself isn't rendered;
- * `fireEvent(menu, 'pressAction', id, title)`, `'menuOpen'` and `'menuClose'`
- * reach the callbacks.
+ * `fireEvent(menu, 'pressAction', id, title)`, `'menuOpen'`, `'menuClose'`
+ * and `'previewPress'` reach the callbacks.
  */
 export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   const {
@@ -601,6 +601,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     onPressAction,
     onMenuOpen,
     onMenuClose,
+    onPreviewPress,
     title,
     actions,
     disabled,
@@ -613,7 +614,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   return (
     <View
       {...viewProps}
-      {...handlers({ onPressAction, onMenuOpen, onMenuClose })}
+      {...handlers({ onPressAction, onMenuOpen, onMenuClose, onPreviewPress })}
     >
       {children}
     </View>

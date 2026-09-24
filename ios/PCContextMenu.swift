@@ -3,49 +3,6 @@ import UIKit
 
 private let logger = Logger(subsystem: "com.platformcomponents", category: "ContextMenu")
 
-// MARK: - Action model (bridged from ObjC++ as dictionaries)
-
-struct PCContextMenuAction {
-    let id: String
-    let title: String
-    let subtitle: String?
-    let image: String?
-    let imageColor: String?
-    let destructive: Bool
-    let disabled: Bool
-    let hidden: Bool
-    let state: String? // "off" | "on" | "mixed"
-    let subactions: [PCContextMenuAction]
-
-    init(from dict: [String: Any]) {
-        self.id = (dict["id"] as? String) ?? ""
-        self.title = (dict["title"] as? String) ?? ""
-        self.subtitle = dict["subtitle"] as? String
-        self.image = dict["image"] as? String
-        self.imageColor = dict["imageColor"] as? String
-
-        // Parse attributes
-        if let attrs = dict["attributes"] as? [String: Any] {
-            self.destructive = (attrs["destructive"] as? String) == "true"
-            self.disabled = (attrs["disabled"] as? String) == "true"
-            self.hidden = (attrs["hidden"] as? String) == "true"
-        } else {
-            self.destructive = false
-            self.disabled = false
-            self.hidden = false
-        }
-
-        self.state = dict["state"] as? String
-
-        // Parse subactions recursively
-        if let subs = dict["subactions"] as? [[String: Any]] {
-            self.subactions = subs.map { PCContextMenuAction(from: $0) }
-        } else {
-            self.subactions = []
-        }
-    }
-}
-
 // MARK: - Main View
 
 @objcMembers
@@ -55,8 +12,13 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     /// Menu title (shown as header on iOS)
     public var menuTitle: String? { didSet { sync() } }
 
-    /// ObjC++ sets this as an array of dictionaries
-    public var actions: [Any] = [] { didSet { sync() } }
+    /// ObjC++ sets this as an array of dictionaries: the flattened menu items
+    public var actions: [Any] = [] {
+        didSet {
+            items = PCMenuSupport.items(from: actions)
+            sync()
+        }
+    }
 
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
@@ -77,16 +39,17 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     public var onPressAction: ((String, String) -> Void)?  // (id, title)
     public var onMenuOpen: (() -> Void)?
     public var onMenuClose: (() -> Void)?
+    public var onPreviewPress: (() -> Void)?
 
     // MARK: - Internal
 
+    private var items: [PCMenuItem] = []
     private var contextMenuInteraction: UIContextMenuInteraction?
-    private var parsedActions: [PCContextMenuAction] {
-        (actions as? [[String: Any]])?.map { PCContextMenuAction(from: $0) } ?? []
-    }
+    /// Whether the long-press menu is showing, so new actions update it in place.
+    private var isMenuVisible = false
 
     // Tap mode: UIButton with UIMenu for tap-to-show
-    private var tapMenuButton: UIButton?
+    private var tapMenuButton: PCMenuButton?
 
     // MARK: - Init
 
@@ -129,6 +92,15 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         // Update tap menu content if in tap mode
         if trigger == "tap" {
             updateTapMenuButton()
+        } else if isMenuVisible, let interaction = contextMenuInteraction {
+            // An action that keeps the menu presented changed a title or state.
+            let menu = buildMenu()
+            interaction.updateVisibleMenu { visible in
+                PCMenuSupport.updatedVisibleMenu(visible, in: menu)
+            }
+        } else {
+            // Start loading image icons now, so they are ready when the menu opens.
+            _ = buildMenu()
         }
     }
 
@@ -173,12 +145,13 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
             return
         }
 
-        let button = UIButton(type: .system)
+        let button = PCMenuButton(type: .system)
         button.backgroundColor = .clear
-        button.showsMenuAsPrimaryAction = true
         button.translatesAutoresizingMaskIntoConstraints = false
         // Make button invisible but still tappable
         button.tintColor = .clear
+        button.onMenuOpen = { [weak self] in self?.onMenuOpen?() }
+        button.onMenuClose = { [weak self] in self?.onMenuClose?() }
 
         addSubview(button)
         NSLayoutConstraint.activate([
@@ -200,15 +173,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
 
     private func updateTapMenuButton() {
         guard let button = tapMenuButton else { return }
-
-        let actions = parsedActions.filter { !$0.hidden }
-        guard !actions.isEmpty else {
-            button.menu = nil
-            return
-        }
-
-        let menu = buildMenu(from: actions, title: menuTitle)
-        button.menu = menu
+        button.setMenu(items.isEmpty ? nil : buildMenu())
     }
 
     // MARK: - UIContextMenuInteractionDelegate
@@ -219,19 +184,16 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     ) -> UIContextMenuConfiguration? {
         guard interactivity != "disabled" else { return nil }
 
-        let actions = parsedActions.filter { !$0.hidden }
-        guard !actions.isEmpty else { return nil }
+        guard !items.isEmpty else { return nil }
 
-        let actionCountStr = String(actions.count)
-        logger.debug("contextMenuInteraction: creating configuration with \(actionCountStr) actions")
+        logger.debug("contextMenuInteraction: creating configuration with \(self.items.count) items")
 
         // Use nil previewProvider - we'll use UITargetedPreview via delegate instead
         return UIContextMenuConfiguration(
             identifier: nil,
             previewProvider: nil,
-            actionProvider: { [weak self] suggestedActions in
-                guard let self else { return nil }
-                return self.buildMenu(from: actions, title: self.menuTitle)
+            actionProvider: { [weak self] _ in
+                self?.buildMenu()
             }
         )
     }
@@ -305,6 +267,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         animator: UIContextMenuInteractionAnimating?
     ) {
         logger.debug("contextMenuInteraction: willDisplayMenu")
+        isMenuVisible = true
         onMenuOpen?()
     }
 
@@ -314,88 +277,35 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         animator: UIContextMenuInteractionAnimating?
     ) {
         logger.debug("contextMenuInteraction: willEnd")
+        isMenuVisible = false
         onMenuClose?()
+    }
+
+    /// The user tapped the preview. The menu dismisses back to the content,
+    /// then `onPreviewPress` fires so the app can open the item.
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration,
+        animator: UIContextMenuInteractionCommitAnimating
+    ) {
+        logger.debug("contextMenuInteraction: willPerformPreviewAction")
+        animator.preferredCommitStyle = .dismiss
+        animator.addCompletion { [weak self] in
+            self?.onPreviewPress?()
+        }
     }
 
     // MARK: - Menu Building
 
-    private func buildMenu(from actions: [PCContextMenuAction], title: String?) -> UIMenu {
-        let menuElements = actions.compactMap { buildMenuElement(from: $0) }
-
-        return UIMenu(
-            title: title ?? "",
-            children: menuElements
+    private func buildMenu() -> UIMenu {
+        PCMenuSupport.menu(
+            title: menuTitle ?? "",
+            items: items,
+            onImageLoaded: { [weak self] in self?.sync() },
+            handler: { [weak self] item in
+                logger.debug("UIAction selected: id=\(item.id), title=\(item.title)")
+                self?.onPressAction?(item.id, item.title)
+            }
         )
-    }
-
-    private func buildMenuElement(from action: PCContextMenuAction) -> UIMenuElement? {
-        guard !action.hidden else { return nil }
-
-        // If has subactions, create a submenu
-        if !action.subactions.isEmpty {
-            let children = action.subactions.compactMap { buildMenuElement(from: $0) }
-            return UIMenu(
-                title: action.title,
-                image: imageForAction(action),
-                children: children
-            )
-        }
-
-        // Build action attributes
-        var attributes: UIMenuElement.Attributes = []
-        if action.destructive { attributes.insert(.destructive) }
-        if action.disabled { attributes.insert(.disabled) }
-
-        // Build state
-        let state: UIMenuElement.State
-        switch action.state {
-        case "on": state = .on
-        case "mixed": state = .mixed
-        default: state = .off
-        }
-
-        let uiAction = UIAction(
-            title: action.title,
-            subtitle: action.subtitle,
-            image: imageForAction(action),
-            attributes: attributes,
-            state: state
-        ) { [weak self] _ in
-            logger.debug("UIAction selected: id=\(action.id), title=\(action.title)")
-            self?.onPressAction?(action.id, action.title)
-        }
-
-        return uiAction
-    }
-
-    private func imageForAction(_ action: PCContextMenuAction) -> UIImage? {
-        guard let imageName = action.image, !imageName.isEmpty else { return nil }
-
-        var image = PCImageLoader.symbol(named: imageName)
-
-        // Apply tint color if specified
-        if let colorStr = action.imageColor, !colorStr.isEmpty, let color = colorFromString(colorStr) {
-            image = image?.withTintColor(color, renderingMode: .alwaysOriginal)
-        }
-
-        return image
-    }
-
-    private func colorFromString(_ str: String) -> UIColor? {
-        // Support hex colors like "#FF0000" or "FF0000"
-        var hex = str.trimmingCharacters(in: .whitespacesAndNewlines)
-        if hex.hasPrefix("#") {
-            hex = String(hex.dropFirst())
-        }
-
-        guard hex.count == 6, let rgbValue = UInt64(hex, radix: 16) else {
-            return nil
-        }
-
-        let r = CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0
-        let g = CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0
-        let b = CGFloat(rgbValue & 0x0000FF) / 255.0
-
-        return UIColor(red: r, green: g, blue: b, alpha: 1.0)
     }
 }
