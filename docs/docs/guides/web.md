@@ -15,6 +15,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `Button`           | A `<button>` in the Material 3 variants and sizes                                                                                                                              |
 | `ButtonGroup`      | A row of `<button>`s, with toggle semantics (`aria-pressed`, or radios for single selection) when `selection` is set                                                           |
 | `SegmentedControl` | A radio group of `<button>`s in a track, like the iOS control                                                                                                                  |
+| `TabBar`           | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                   |
 | `FloatingToolbar`  | A pill-shaped surface that lays out its children                                                                                                                               |
 | `LiquidGlass`      | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                               |
 | `ContextMenu`      | Its children, without a menu (see below)                                                                                                                                       |
@@ -26,6 +27,7 @@ Events and controlled props work the way they do on native:
 - **`DatePicker`**: `embedded` reports every change with `confirmed: true`. `modal` works like the iOS popover: changes report `confirmed: false`, **Done** reports `confirmed: true`, and **Cancel**, Escape or a click outside the dialog call `onClosed`. Close the dialog by setting `visible` to `false`. `minDate`, `maxDate` and `ios.minuteInterval` apply to the input. Dates are in the browser's local time zone; `timeZoneName` is ignored.
 - **`SelectionMenu`**: `modal` stays headless. While `visible`, picking an option calls `onSelect`, and Escape or a click outside calls `onRequestClose`.
 - **`SegmentedControl`**: as on iOS, clicking the selected segment keeps it selected. `labelVisibility: 'auto'` shows both the icon and the label.
+- **`TabBar`**: clicking the selected tab calls `onReselect`. `labelVisibility: 'auto'` labels every tab.
 
 ## Theme and icons
 
