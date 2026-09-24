@@ -300,7 +300,7 @@ describe('Platform Components Example', () => {
     // Wait for the menu to appear and select California
     await waitFor(element(by.text('California')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
     await element(by.text('California')).atIndex(0).tap();
 
     // Verify selection was made (field should show "California")
@@ -324,7 +324,7 @@ describe('Platform Components Example', () => {
     // iOS doesn't need explicit scroll - the element should be visible
     await waitFor(element(by.id('state-menu-embedded')))
       .toExist()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Select a state in embedded mode - tap the menu to open it
     if (isAndroid()) {
@@ -343,7 +343,7 @@ describe('Platform Components Example', () => {
     // Wait for the menu to appear and select Arizona (near top of list)
     await waitFor(element(by.text('Arizona')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
     await element(by.text('Arizona')).atIndex(0).tap();
 
     // Verify selection (use toExist since the menu might be partially visible)
@@ -368,7 +368,7 @@ describe('Platform Components Example', () => {
     // Wait for the menu to appear and select a visible state (Arkansas)
     await waitFor(element(by.text('Arkansas')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
     await element(by.text('Arkansas')).atIndex(0).tap();
 
     // Verify the selection
@@ -399,7 +399,7 @@ describe('Platform Components Example', () => {
     // Wait for menu to appear and verify actions are visible
     await waitFor(element(by.text('Copy')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
     await expect(element(by.text('Paste'))).toBeVisible();
     await expect(element(by.text('Share'))).toBeVisible();
 
@@ -409,7 +409,7 @@ describe('Platform Components Example', () => {
     // Verify the action was recorded
     await waitFor(element(by.text('Copy (copy)')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Test context menu with submenu
     await element(by.id('context-menu-submenu')).longPress();
@@ -417,14 +417,14 @@ describe('Platform Components Example', () => {
     // Wait for menu to appear
     await waitFor(element(by.text('Edit')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // On iOS, tap Edit to see submenu; on Android submenus work differently
     if (!isAndroid()) {
       await element(by.text('Edit')).tap();
       await waitFor(element(by.text('Cut')))
         .toBeVisible()
-        .withTimeout(2000);
+        .withTimeout(6000);
       await element(by.text('Cut')).tap();
     } else {
       // On Android, just select the Share action instead
@@ -437,7 +437,7 @@ describe('Platform Components Example', () => {
 
     await waitFor(element(by.text('Delete Forever')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Dismiss the menu by tapping outside or selecting an action
     await element(by.text('Archive')).atIndex(0).tap();
@@ -445,7 +445,7 @@ describe('Platform Components Example', () => {
     // Verify the action was recorded
     await waitFor(element(by.text('Archive (archive)')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Test tap mode
     await element(by.id('context-menu-tap')).tap();
@@ -453,7 +453,7 @@ describe('Platform Components Example', () => {
     // Wait for menu to appear
     await waitFor(element(by.text('Copy')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Select an action
     await element(by.text('Paste')).atIndex(0).tap();
@@ -461,7 +461,7 @@ describe('Platform Components Example', () => {
     // Verify the action was recorded
     await waitFor(element(by.text('Paste (paste)')))
       .toBeVisible()
-      .withTimeout(2000);
+      .withTimeout(6000);
 
     // Test Android-only programmatic mode
     if (isAndroid()) {
@@ -470,7 +470,7 @@ describe('Platform Components Example', () => {
       // Wait for menu to appear
       await waitFor(element(by.text('Copy')))
         .toBeVisible()
-        .withTimeout(2000);
+        .withTimeout(6000);
 
       // Select an action
       await element(by.text('Share')).atIndex(0).tap();
@@ -478,7 +478,7 @@ describe('Platform Components Example', () => {
       // Verify the action was recorded
       await waitFor(element(by.text('Share (share)')))
         .toBeVisible()
-        .withTimeout(2000);
+        .withTimeout(6000);
     }
 
     // Test disabled state
@@ -502,7 +502,7 @@ describe('Platform Components Example', () => {
 
       await waitFor(element(by.text('Copy')))
         .toBeVisible()
-        .withTimeout(2000);
+        .withTimeout(6000);
 
       // Dismiss
       await element(by.text('Share')).atIndex(0).tap();

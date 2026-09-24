@@ -16,6 +16,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 
@@ -25,6 +26,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   companion object {
     private const val TAG = "PCSelectionMenu"
+    private const val HEADLESS_GROUP_ID = 0
   }
 
   // --- State Wrapper for Fabric state updates ---
@@ -397,6 +399,14 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
         keyListener = null
         isCursorVisible = false
 
+        // Highlight the selected option in the dropdown, like the M3 exposed dropdown menu.
+        // The adapter from setSimpleItems() marks the item whose text matches the field.
+        simpleItemSelectedColor = MaterialColors.getColor(
+          til.context,
+          com.google.android.material.R.attr.colorSecondaryContainer,
+          0
+        )
+
         // Nice UX: click anywhere opens dropdown
         setOnClickListener { showDropDown() }
 
@@ -542,8 +552,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val labels = options.map { it.label }
 
     inlineText?.let { actv ->
-      val adapter = ArrayAdapter(actv.context, android.R.layout.simple_list_item_1, labels)
-      actv.setAdapter(adapter)
+      // Material's simple-item adapter highlights the selected option (simpleItemSelectedColor).
+      actv.setSimpleItems(labels.toTypedArray())
     }
 
     inlineSpinner?.let { sp ->
@@ -706,9 +716,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     menu.clear()
     val selectedIdx = options.indexOfFirst { it.data == selectedData }
     options.forEachIndexed { index, opt ->
-      val label = if (index == selectedIdx) "✓ ${opt.label}" else opt.label
-      menu.add(0, index, index, label)
+      menu.add(HEADLESS_GROUP_ID, index, index, opt.label).isChecked = index == selectedIdx
     }
+    // Single-choice group: the menu draws a native radio indicator on each row.
+    menu.setGroupCheckable(HEADLESS_GROUP_ID, true, true)
   }
 
   private fun suppressInlineSpinnerCallbacks(sp: Spinner) {

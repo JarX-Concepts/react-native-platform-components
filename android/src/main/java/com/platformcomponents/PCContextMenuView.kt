@@ -1,14 +1,18 @@
 package com.platformcomponents
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import androidx.appcompat.R as AppCompatR
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -31,6 +35,8 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
   companion object {
     private const val TAG = "PCContextMenu"
+    // Material 3 baseline error color, used when the theme has no colorError.
+    private const val FALLBACK_ERROR_COLOR = 0xFFB3261E.toInt()
   }
 
   // --- Props ---
@@ -193,8 +199,13 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   }
 
   fun applyAndroidAnchorPosition(value: String?) {
-    androidAnchorPosition = value ?: "left"
+    androidAnchorPosition = if (value == "right") "right" else "left"
+    popupMenu?.gravity = popupGravity()
   }
+
+  /** "right" aligns the popup to the anchor's end edge, "left" to its start edge. */
+  private fun popupGravity(): Int =
+    if (androidAnchorPosition == "right") Gravity.END else Gravity.START
 
   // ---- Internal ----
 
@@ -234,7 +245,6 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     }
   }
 
-  @SuppressLint("RestrictedApi")
   private fun showPopupMenu() {
     val visibleActions = actions.filter { !it.hidden }
     if (visibleActions.isEmpty()) {
@@ -249,21 +259,9 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
     Log.d(TAG, "showPopupMenu: creating popup with ${visibleActions.size} actions")
 
-    val popup = PopupMenu(context, this)
-
-    // Try to enable icons in the popup menu
-    try {
-      val menuHelper = PopupMenu::class.java.getDeclaredField("mPopup")
-      menuHelper.isAccessible = true
-      val menuPopupHelper = menuHelper.get(popup)
-      val setForceShowIcon = menuPopupHelper.javaClass.getDeclaredMethod(
-        "setForceShowIcon",
-        Boolean::class.java
-      )
-      setForceShowIcon.invoke(menuPopupHelper, true)
-    } catch (e: Exception) {
-      Log.d(TAG, "Could not enable popup menu icons: ${e.message}")
-    }
+    val popup = PopupMenu(context, this, popupGravity())
+    // Show item icons (public AndroidX PopupMenu API, works on every supported API level).
+    popup.setForceShowIcon(true)
 
     buildMenu(popup.menu, visibleActions, 0)
 
@@ -327,11 +325,14 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
         // Set enabled state
         item.isEnabled = !action.disabled
 
-        // Set icon
+        // Set icon (destructive icons take the error color unless imageColor is set)
         action.image?.let { imageName ->
           getDrawableByName(imageName)?.let { drawable ->
-            val tintedDrawable = tintDrawable(drawable, action.imageColor)
-            item.icon = tintedDrawable
+            item.icon = if (action.destructive && action.imageColor.isNullOrEmpty()) {
+              tintDrawable(drawable, errorColor())
+            } else {
+              tintDrawable(drawable, action.imageColor)
+            }
           }
         }
 
@@ -354,10 +355,25 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     }
   }
 
-  private fun buildTitle(action: Action): String {
-    // On Android, we can't easily style text as destructive in PopupMenu
-    // We could prefix with emoji or special character, but keeping it simple
-    return action.title
+  private fun buildTitle(action: Action): CharSequence {
+    if (!action.destructive) return action.title
+    // Destructive actions are drawn in the theme's error color.
+    return SpannableString(action.title).apply {
+      setSpan(ForegroundColorSpan(errorColor()), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+  }
+
+  /** The theme's ?attr/colorError, falling back to the Material 3 error red. */
+  private fun errorColor(): Int {
+    val value = TypedValue()
+    if (!context.theme.resolveAttribute(AppCompatR.attr.colorError, value, true)) {
+      return FALLBACK_ERROR_COLOR
+    }
+    return if (value.resourceId != 0) {
+      ContextCompat.getColor(context, value.resourceId)
+    } else {
+      value.data
+    }
   }
 
   private fun getDrawableByName(name: String): Drawable? {
@@ -389,9 +405,11 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
   private fun tintDrawable(drawable: Drawable, colorString: String?): Drawable {
     if (colorString.isNullOrEmpty()) return drawable
-
     val color = ColorParser.parse(colorString) ?: return drawable
+    return tintDrawable(drawable, color)
+  }
 
+  private fun tintDrawable(drawable: Drawable, color: Int): Drawable {
     val wrappedDrawable = DrawableCompat.wrap(drawable.mutate())
     DrawableCompat.setTint(wrappedDrawable, color)
     return wrappedDrawable
