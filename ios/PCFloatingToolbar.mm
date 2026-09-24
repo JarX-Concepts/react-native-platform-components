@@ -31,6 +31,12 @@ using namespace facebook::react;
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
+    // Fabric views seed _props with their own defaults: RCTViewComponentView
+    // asserts on it in debug builds of React Native core, and the first
+    // updateProps would otherwise read the base ViewProps as PCFloatingToolbarProps.
+    static const auto defaultProps = std::make_shared<const PCFloatingToolbarProps>();
+    _props = defaultProps;
+
     _view = [[PCFloatingToolbarView alloc] initWithFrame:self.bounds];
     _view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self addSubview:_view];
