@@ -56,39 +56,8 @@ class PCTabBarViewManager :
 
   // --- Props ---
 
-  private fun ReadableMap.icon(prefix: String): PCButtonSupport.Icon {
-    fun key(name: String) = if (prefix.isEmpty()) name else prefix + name.replaceFirstChar { it.uppercase() }
-    val scale = doubleOr(key("iconScale"), 1.0)
-    return PCButtonSupport.Icon(
-      type = stringOr(key("iconType"), ""),
-      name = stringOr(key("iconName"), ""),
-      uri = stringOr(key("iconUri"), ""),
-      scale = if (scale > 0) scale.toFloat() else 1f,
-      tinted = stringOr(key("iconTinted"), "true") != "false"
-    )
-  }
-
-  // items: [{label, value, disabled, icon…, selectedIcon…, badge, accessibilityLabel, testID}]
   override fun setItems(view: PCTabBarView, value: ReadableArray?) {
-    val out = ArrayList<PCTabBarView.Tab>()
-    if (value != null) {
-      for (i in 0 until value.size()) {
-        val m = value.getMap(i) ?: continue
-        out.add(
-          PCTabBarView.Tab(
-            label = m.stringOr("label", ""),
-            value = m.stringOr("value", ""),
-            disabled = m.stringOr("disabled", "enabled") == "disabled",
-            icon = m.icon(""),
-            selectedIcon = m.icon("selected"),
-            badge = m.stringOr("badge", ""),
-            accessibilityLabel = m.stringOr("accessibilityLabel", ""),
-            testID = m.stringOr("testID", "")
-          )
-        )
-      }
-    }
-    view.applyTabs(out)
+    view.applyTabs(PCNavigationBarSupport.parseItems(value))
   }
 
   override fun setSelectedValue(view: PCTabBarView, value: String?) {
@@ -130,11 +99,13 @@ class PCTabBarViewManager :
 
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
   override fun setLabelStyle(view: PCTabBarView, value: ReadableMap?) {
-    view.applyLabelStyle(
-      fontFamily = value?.stringOr("fontFamily", "") ?: "",
-      fontSize = value?.doubleOr("fontSize", 0.0)?.toFloat() ?: 0f,
-      fontWeight = value?.stringOr("fontWeight", "") ?: "",
-      fontStyle = value?.stringOr("fontStyle", "") ?: ""
+    view.applyLabelFont(
+      view.labelFont.copy(
+        family = value?.stringOr("fontFamily", "") ?: "",
+        size = value?.doubleOr("fontSize", 0.0)?.toFloat() ?: 0f,
+        weight = value?.stringOr("fontWeight", "") ?: "",
+        style = value?.stringOr("fontStyle", "") ?: ""
+      )
     )
   }
 
@@ -147,7 +118,7 @@ class PCTabBarViewManager :
   }
 
   override fun setMaxFontSizeMultiplier(view: PCTabBarView, value: Double) {
-    view.applyMaxFontSizeMultiplier(value.toFloat())
+    view.applyLabelFont(view.labelFont.copy(maxFontSizeMultiplier = value.toFloat()))
   }
 
   // --- Events ---

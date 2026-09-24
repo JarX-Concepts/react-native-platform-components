@@ -1,28 +1,18 @@
 package com.platformcomponents
 
 import android.content.Context
-import android.content.res.ColorStateList
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.StateListDrawable
-import android.util.TypedValue
-import android.view.Menu
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.TextView
-import androidx.core.view.MenuItemCompat
 import androidx.core.view.ViewCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.util.ReactFindViewUtil
-import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
-import com.facebook.react.views.text.ReactTypefaceUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.navigation.NavigationBarView
+import com.platformcomponents.PCNavigationBarSupport.Item
+import com.platformcomponents.PCNavigationBarSupport.LabelFont
 
 /**
  * A Material 3 navigation bar (BottomNavigationView): icons over labels, the
@@ -38,24 +28,12 @@ class PCTabBarView(context: Context) :
   ReactScrollViewHelper.HasStateWrapper,
   ReactCompoundViewGroup {
 
-  data class Tab(
-    val label: String,
-    val value: String,
-    val disabled: Boolean,
-    val icon: PCButtonSupport.Icon,
-    val selectedIcon: PCButtonSupport.Icon,
-    /** "" = no badge, " " = a dot, anything else is the badge text */
-    val badge: String,
-    val accessibilityLabel: String,
-    val testID: String
-  )
-
   // --- State Wrapper for Fabric state updates ---
   override var stateWrapper: StateWrapper? = null
   private var lastReportedHeight: Float = -1f
 
   // --- Props ---
-  var tabs: List<Tab> = emptyList()
+  var tabs: List<Item> = emptyList()
   var selectedValue: String = ""
   var labelVisibility: String = "auto"
   var activeTintColor: Int? = null
@@ -65,11 +43,7 @@ class PCTabBarView(context: Context) :
   var badgeTextColor: Int? = null
   var indicatorColor: Int? = null
   var rippleColor: Int? = null
-  var labelFontFamily: String = ""
-  var labelFontSize: Float = 0f
-  var labelFontWeight: String = ""
-  var labelFontStyle: String = ""
-  var maxFontSizeMultiplier: Float = 0f
+  var labelFont: LabelFont = LabelFont()
   var minimizeBehavior: String = "" // "" | "automatic" | "never" | "onScrollDown" | "onScrollUp"
   var scrollViewNativeID: String = ""
 
@@ -98,7 +72,7 @@ class PCTabBarView(context: Context) :
 
   // ---- Public apply* (called by manager) ----
 
-  fun applyTabs(value: List<Tab>) {
+  fun applyTabs(value: List<Item>) {
     if (tabs == value) return
     tabs = value
     rebuildUI()
@@ -114,7 +88,7 @@ class PCTabBarView(context: Context) :
     val next = value ?: "auto"
     if (labelVisibility == next) return
     labelVisibility = next
-    bar?.labelVisibilityMode = labelVisibilityMode()
+    bar?.labelVisibilityMode = PCNavigationBarSupport.labelVisibilityMode(labelVisibility)
     requestLayout()
   }
 
@@ -135,23 +109,12 @@ class PCTabBarView(context: Context) :
     if (badgeBackgroundColor == background && badgeTextColor == text) return
     badgeBackgroundColor = background
     badgeTextColor = text
-    bar?.let { applyBadges(it) }
+    bar?.let { PCNavigationBarSupport.applyBadges(it, tabs, badgeBackgroundColor, badgeTextColor) }
   }
 
-  fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
-    if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
-      labelFontWeight == fontWeight && labelFontStyle == fontStyle
-    ) return
-    labelFontFamily = fontFamily
-    labelFontSize = fontSize
-    labelFontWeight = fontWeight
-    labelFontStyle = fontStyle
-    rebuildUI()
-  }
-
-  fun applyMaxFontSizeMultiplier(value: Float) {
-    if (maxFontSizeMultiplier == value) return
-    maxFontSizeMultiplier = value
+  fun applyLabelFont(value: LabelFont) {
+    if (labelFont == value) return
+    labelFont = value
     rebuildUI()
   }
 
@@ -250,15 +213,6 @@ class PCTabBarView(context: Context) :
 
   // ---- UI Building ----
 
-  private fun itemId(index: Int) = index + 1
-
-  private fun labelVisibilityMode(): Int = when (labelVisibility) {
-    "labeled" -> NavigationBarView.LABEL_VISIBILITY_LABELED
-    "selected" -> NavigationBarView.LABEL_VISIBILITY_SELECTED
-    "unlabeled" -> NavigationBarView.LABEL_VISIBILITY_UNLABELED
-    else -> NavigationBarView.LABEL_VISIBILITY_AUTO
-  }
-
   private fun rebuildUI() {
     builtThemeVersion = PCNativeTheme.version
     removeAllViews()
@@ -269,7 +223,7 @@ class PCTabBarView(context: Context) :
     val base = PCThemeSupport.materialContext(context, "TabBar")
     val b = BottomNavigationView(base).apply {
       layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-      labelVisibilityMode = labelVisibilityMode()
+      labelVisibilityMode = PCNavigationBarSupport.labelVisibilityMode(labelVisibility)
     }
     // The bar pads itself for the system navigation bar when it sits at the
     // bottom of the window; here it is a control inside the app's layout,
@@ -277,17 +231,11 @@ class PCTabBarView(context: Context) :
     ViewCompat.setOnApplyWindowInsetsListener(b, null)
     b.setPadding(0, 0, 0, 0)
 
-    val menu = b.menu
-    val count = minOf(tabs.size, b.maxItemCount)
-    for (index in 0 until count) {
-      val tab = tabs[index]
-      val item = menu.add(Menu.NONE, itemId(index), index, tab.label)
-      item.isEnabled = !tab.disabled
-      MenuItemCompat.setContentDescription(item, tab.accessibilityLabel.ifEmpty { null })
-      loadTabIcon(tab, generation) { drawable -> item.icon = drawable }
+    PCNavigationBarSupport.populateMenu(b, tabs, isCurrent = { generation == rebuildGeneration }) {
+      requestLayout()
     }
 
-    styleBar(b)
+    PCNavigationBarSupport.applyColors(b, activeTintColor, inactiveTintColor, indicatorColor, rippleColor, barColor)
     // Select or reselect is decided against selectedValue: with no tab
     // selected the widget still counts its last one as selected
     b.setOnItemSelectedListener { item ->
@@ -302,9 +250,9 @@ class PCTabBarView(context: Context) :
 
     addView(b)
     bar = b
-    applyBadges(b)
+    PCNavigationBarSupport.applyBadges(b, tabs, badgeBackgroundColor, badgeTextColor)
     updateSelection()
-    applyTestIDsAndFonts(b)
+    PCNavigationBarSupport.applyTestIDsAndFonts(b, tabs, labelFont)
     requestLayout()
   }
 
@@ -314,142 +262,20 @@ class PCTabBarView(context: Context) :
     onTabPress?.invoke(index, value, value == selectedValue)
   }
 
-  /** Colors over the theme's, read from the fresh bar for the states left unset. */
-  private fun styleBar(b: BottomNavigationView) {
-    val checked = intArrayOf(android.R.attr.state_checked)
-    val disabled = intArrayOf(-android.R.attr.state_enabled)
-    if (activeTintColor != null || inactiveTintColor != null) {
-      fun tint(theme: ColorStateList?): ColorStateList {
-        val base = theme ?: ColorStateList.valueOf(0xFF49454F.toInt())
-        return ColorStateList(
-          arrayOf(disabled, checked, intArrayOf()),
-          intArrayOf(
-            base.getColorForState(disabled, base.defaultColor),
-            activeTintColor ?: base.getColorForState(checked, base.defaultColor),
-            inactiveTintColor ?: base.defaultColor
-          )
-        )
-      }
-      b.itemIconTintList = tint(b.itemIconTintList)
-      b.itemTextColor = tint(b.itemTextColor)
-    }
-    indicatorColor?.let { b.itemActiveIndicatorColor = ColorStateList.valueOf(it) }
-    rippleColor?.let { b.itemRippleColor = ColorStateList.valueOf(it) }
-    barColor?.let { b.setBackgroundColor(it) }
-  }
-
-  /** Material badges: a number, text, or a dot. */
-  private fun applyBadges(b: BottomNavigationView) {
-    val count = minOf(tabs.size, b.maxItemCount)
-    for (index in 0 until count) {
-      val tab = tabs[index]
-      val id = itemId(index)
-      if (tab.badge.isEmpty()) {
-        b.removeBadge(id)
-        continue
-      }
-      val badge = b.getOrCreateBadge(id)
-      badge.clearNumber()
-      badge.clearText()
-      val number = tab.badge.trim().toIntOrNull()
-      when {
-        tab.badge == " " -> Unit // a dot
-        number != null && number >= 0 -> badge.number = number
-        else -> badge.text = tab.badge
-      }
-      badgeBackgroundColor?.let { badge.backgroundColor = it }
-      badgeTextColor?.let { badge.badgeTextColor = it }
-      badge.isVisible = true
-    }
-  }
-
   private fun updateSelection() {
     val b = bar ?: return
     val index = tabs.indexOfFirst { it.value == selectedValue }
     suppressCallbacks = true
     val group = b.menu
     if (index in 0 until minOf(tabs.size, b.maxItemCount)) {
-      group.setGroupCheckable(Menu.NONE, true, true)
-      if (b.selectedItemId != itemId(index)) b.selectedItemId = itemId(index)
+      group.setGroupCheckable(android.view.Menu.NONE, true, true)
+      val id = PCNavigationBarSupport.itemId(index)
+      if (b.selectedItemId != id) b.selectedItemId = id
     } else {
       // No selection: nothing is checked, so no tab shows the indicator
-      group.setGroupCheckable(Menu.NONE, false, true)
+      group.setGroupCheckable(android.view.Menu.NONE, false, true)
     }
     suppressCallbacks = false
-  }
-
-  /**
-   * testIDs on the tab views (Detox matches the view tag), and the label font
-   * and font scale cap on their labels.
-   */
-  private fun applyTestIDsAndFonts(b: BottomNavigationView) {
-    val count = minOf(tabs.size, b.maxItemCount)
-    for (index in 0 until count) {
-      val itemView = b.findViewById<View>(itemId(index)) ?: continue
-      itemView.tag = tabs[index].testID.ifEmpty { null }
-      styleLabels(itemView)
-    }
-  }
-
-  private fun styleLabels(view: View) {
-    if (view is TextView) {
-      if (labelFontSize > 0) view.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelFontSize)
-      if (labelFontFamily.isNotEmpty() || labelFontWeight.isNotEmpty() || labelFontStyle.isNotEmpty()) {
-        view.typeface = ReactTypefaceUtils.applyStyles(
-          view.typeface,
-          ReactTypefaceUtils.parseFontStyle(labelFontStyle.ifEmpty { null }),
-          ReactTypefaceUtils.parseFontWeight(labelFontWeight.ifEmpty { null }),
-          labelFontFamily.ifEmpty { null },
-          context.assets
-        )
-      }
-      PCThemeSupport.capTextSize(view, maxFontSizeMultiplier)
-    } else if (view is ViewGroup) {
-      for (i in 0 until view.childCount) styleLabels(view.getChildAt(i))
-    }
-  }
-
-  /**
-   * The tab's icon, and a checked-state drawable with its selected icon when
-   * there is one. Drawable names and bundled assets resolve synchronously;
-   * other image URIs load in the background.
-   */
-  private fun loadTabIcon(tab: Tab, generation: Int, apply: (Drawable?) -> Unit) {
-    var normal: Drawable? = null
-    var selected: Drawable? = null
-    var pending = 1 + (if (tab.selectedIcon.isPresent) 1 else 0)
-    fun done() {
-      pending -= 1
-      if (pending > 0 || generation != rebuildGeneration) return
-      val sel = selected
-      apply(
-        if (sel == null) normal
-        else StateListDrawable().apply {
-          addState(intArrayOf(android.R.attr.state_checked), sel)
-          normal?.let { addState(intArrayOf(), it) }
-        }
-      )
-      requestLayout()
-    }
-    loadIcon(tab.icon) { normal = it; done() }
-    if (tab.selectedIcon.isPresent) loadIcon(tab.selectedIcon) { selected = it; done() }
-  }
-
-  private fun loadIcon(icon: PCButtonSupport.Icon, onLoaded: (Drawable?) -> Unit) {
-    when (icon.type) {
-      "drawable" -> onLoaded(ResourceDrawableIdHelper.instance.getResourceDrawable(context, icon.name))
-      "image" -> {
-        val uri = icon.uri
-        if (!uri.contains(':')) {
-          onLoaded(ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri))
-        } else {
-          PCImageLoader.load(context, uri, icon.scale) { bitmap ->
-            onLoaded(bitmap?.let { BitmapDrawable(resources, it) })
-          }
-        }
-      }
-      else -> onLoaded(null)
-    }
   }
 
   // ---- Layout ----
@@ -501,7 +327,7 @@ class PCTabBarView(context: Context) :
     val b = bar ?: return
     b.layout(0, 0, right - left, b.measuredHeight)
     // Material creates the label views as tabs are added; style any new ones
-    applyTestIDsAndFonts(b)
+    PCNavigationBarSupport.applyTestIDsAndFonts(b, tabs, labelFont)
   }
 
   /** Reports the intrinsic height to Fabric; the width is left to Yoga. */

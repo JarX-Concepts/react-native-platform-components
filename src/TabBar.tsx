@@ -2,15 +2,15 @@
 import React, { useCallback, useMemo } from 'react';
 import type { ColorValue, NativeSyntheticEvent, ViewProps } from 'react-native';
 
-import NativeTabBar, {
-  type TabBarItem as NativeItem,
-  type TabBarSelectEvent,
-} from './TabBarNativeComponent';
-import { resolveIcon, type PlatformIcon } from './icons';
+import NativeTabBar, { type TabBarSelectEvent } from './TabBarNativeComponent';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import {
+  MAX_TAB_ITEMS,
+  toNativeTabItems,
+  type TabBarItemProps,
+} from './tabItems';
 
-/** Material and iOS tab bars show at most five tabs on a phone. */
-const MAX_ITEMS = 5;
+export type { TabBarItemProps } from './tabItems';
 
 /**
  * How labels show under the icons.
@@ -22,6 +22,9 @@ const MAX_ITEMS = 5;
  *   labels every tab.
  * - `unlabeled`: icons only. Screen readers still announce the labels.
  */
+export type TabBarLabelVisibility =
+  'auto' | 'labeled' | 'selected' | 'unlabeled';
+
 /**
  * When the bar gets out of the way of scrolling content, following the
  * ScrollView named by `scrollViewNativeID`.
@@ -34,45 +37,10 @@ const MAX_ITEMS = 5;
 export type TabBarMinimizeBehavior =
   'automatic' | 'never' | 'onScrollDown' | 'onScrollUp';
 
-export type TabBarLabelVisibility =
-  'auto' | 'labeled' | 'selected' | 'unlabeled';
-
 /** Badge colors. Both default to the platform look. */
 export interface TabBarBadgeStyle {
   backgroundColor?: ColorValue;
   color?: ColorValue;
-}
-
-export interface TabBarItemProps {
-  /** Tab label. Also the screen-reader label unless `accessibilityLabel` is set. */
-  label: string;
-
-  /** Unique value returned in callbacks. */
-  value: string;
-
-  /** Tab icon. See {@link PlatformIcon}. */
-  icon?: PlatformIcon;
-
-  /**
-   * Icon of the selected tab, e.g. the filled variant of an SF Symbol
-   * (`house.fill`). Defaults to `icon`.
-   */
-  selectedIcon?: PlatformIcon;
-
-  /**
-   * Badge on the tab, e.g. an unread count. Numbers are shown as-is; an
-   * empty string shows a dot; `undefined` hides the badge.
-   */
-  badge?: string | number;
-
-  /** Whether the tab can be selected. */
-  disabled?: boolean;
-
-  /** Screen-reader label. Defaults to `label`. */
-  accessibilityLabel?: string;
-
-  /** Test identifier of the tab, for E2E taps. */
-  testID?: string;
 }
 
 export interface TabBarProps extends ViewProps {
@@ -166,36 +134,13 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     ...viewProps
   } = props;
 
-  if (__DEV__ && items.length > MAX_ITEMS) {
+  if (__DEV__ && items.length > MAX_TAB_ITEMS) {
     console.warn(
-      `TabBar: ${items.length} tabs given; the platform tab bars show at most ${MAX_ITEMS}, so the rest are dropped.`
+      `TabBar: ${items.length} tabs given; the platform tab bars show at most ${MAX_TAB_ITEMS}, so the rest are dropped.`
     );
   }
 
-  const nativeItems = useMemo((): NativeItem[] => {
-    return items.slice(0, MAX_ITEMS).map((item) => {
-      const icon = resolveIcon(item.icon);
-      const selected = resolveIcon(item.selectedIcon);
-      return {
-        label: item.label,
-        value: item.value,
-        disabled: item.disabled ? 'disabled' : 'enabled',
-        ...icon,
-        selectedIconType: selected.iconType,
-        selectedIconName: selected.iconName,
-        selectedIconUri: selected.iconUri,
-        selectedIconScale: selected.iconScale,
-        selectedIconTinted: selected.iconTinted,
-        badge:
-          item.badge === undefined || item.badge === null
-            ? ''
-            : // An empty badge is a dot; native tells it from none by a space
-              String(item.badge) || ' ',
-        accessibilityLabel: item.accessibilityLabel ?? '',
-        testID: item.testID ?? '',
-      };
-    });
-  }, [items]);
+  const nativeItems = useMemo(() => toNativeTabItems(items), [items]);
 
   const handleTabPress = useCallback(
     (event: NativeSyntheticEvent<TabBarSelectEvent>) => {
