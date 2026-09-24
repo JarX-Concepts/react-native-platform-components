@@ -359,7 +359,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     private func imageForAction(_ action: PCContextMenuAction) -> UIImage? {
         guard let imageName = action.image, !imageName.isEmpty else { return nil }
 
-        var image = UIImage(systemName: imageName)
+        var image = PCImageLoader.symbol(named: imageName)
 
         // Apply tint color if specified
         if let colorStr = action.imageColor, !colorStr.isEmpty, let color = colorFromString(colorStr) {

@@ -188,7 +188,7 @@ enum PCButtonSupport {
     static func image(for icon: Icon, completion: @escaping (UIImage?) -> Void) -> UIImage? {
         switch icon.type {
         case "sfSymbol":
-            return UIImage(systemName: icon.name).map { decorate($0, tinted: icon.tinted) }
+            return PCImageLoader.symbol(named: icon.name).map { decorate($0, tinted: icon.tinted) }
 
         case "image":
             let cached = PCImageLoader.shared.image(uri: icon.uri, scale: icon.scale) { image in
