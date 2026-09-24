@@ -1036,6 +1036,68 @@ describe('Platform Components Example', () => {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
       await pause(700);
     }
+
+    // The Keyboard section, below. On iOS each field is scrolled into the
+    // upper half first, clear of the keyboard; the drag also dismisses the
+    // keyboard of the field before.
+    const liftField = async (fieldId: string) => {
+      await scrollToId(fieldId);
+      if (!isAndroid()) {
+        // The drag starts near the top, above a keyboard that may be up
+        await element(by.id('demo-scroll')).scroll(250, 'down', NaN, 0.15);
+        await pause(300);
+      }
+    };
+
+    // iOS: the number pad's toolbar steps the value, and Done dismisses it
+    if (!isAndroid()) {
+      await liftField('field-quantity');
+      await inputOf('field-quantity').tap();
+      await waitFor(element(by.id('toolbar-plus')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-plus')).tap();
+      await expect(inputOf('field-quantity')).toHaveText('2');
+      await element(by.id('toolbar-done')).tap();
+      await expectText('field-last-event', 'blur: quantity');
+    }
+
+    // A chat composer (submitBehavior 'submit'): return sends, and on iOS
+    // the field keeps focus and the keyboard stays up
+    await liftField('field-chat');
+    await typeInto('field-chat', 'Hello');
+    await inputOf('field-chat').tapReturnKey();
+    await expectText('field-chat-sent', 'Hello');
+    await expect(inputOf('field-chat')).toHaveText('');
+    if (!isAndroid()) {
+      await expectText('field-last-event', 'focus: chat');
+    }
+
+    // Selection events from native, and a selection set from JS: on iOS by
+    // a keyboard toolbar button, on Android by the demo's button
+    await liftField('field-selection');
+    if (isAndroid()) {
+      await typeInto('field-selection', 'Hello there');
+      await scrollToId('field-select-word');
+      await element(by.id('field-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // A tap puts the cursor where it lands, past the end of the text
+      await inputOf('field-selection').tap();
+      await expectText('field-selection-value', '11–11');
+    } else {
+      await inputOf('field-selection').tap();
+      await waitFor(element(by.id('toolbar-select-word')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // Detox taps the field before typing, which puts the cursor at the end
+      await inputOf('field-selection').typeText('!');
+      await expectText('field-selection-value', '12–12');
+      await element(by.id('toolbar-selection-done')).tap();
+      await pause(500);
+    }
+
     await scrollToId('editable-switch');
 
     if (isAndroid()) {
