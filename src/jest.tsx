@@ -31,6 +31,7 @@ import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps } from './DatePicker';
+import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { NativeTheme } from './NativeTheme';
@@ -55,6 +56,7 @@ export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './TextField';
 export type * from './TabBar';
+export type * from './FloatingActionButton';
 export type * from './sharedTypes';
 export type * from './NativeTheme';
 export type {
@@ -319,6 +321,42 @@ export function Button(props: ButtonProps): React.ReactElement {
       onPress={() => onPress?.()}
     >
       {label ? <Text>{label}</Text> : null}
+    </Pressable>
+  );
+}
+
+/**
+ * A `Pressable` with the button role, labeled by `accessibilityLabel` or
+ * `label`, showing the label as `Text` while extended.
+ */
+export function FloatingActionButton(
+  props: FloatingActionButtonProps
+): React.ReactElement {
+  const {
+    icon,
+    label,
+    extended,
+    size,
+    color,
+    tintColor,
+    disabled,
+    accessibilityLabel,
+    onPress,
+    scrollViewNativeID,
+    accessibilityState,
+    ...viewProps
+  } = props;
+
+  return (
+    <Pressable
+      {...viewProps}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
+      disabled={disabled}
+      onPress={() => onPress?.()}
+    >
+      {label && extended !== false ? <Text>{label}</Text> : null}
     </Pressable>
   );
 }

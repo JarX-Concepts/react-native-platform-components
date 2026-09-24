@@ -12,9 +12,17 @@ import {
   DatePicker,
   SelectionMenu,
   ContextMenu,
+  FloatingActionButton,
 } from 'react-native-platform-components';
 
-type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu';
+type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu' | 'fab';
+
+const TAB_LABELS: Record<Tab, string> = {
+  datePicker: 'DatePicker',
+  selectionMenu: 'SelectionMenu',
+  contextMenu: 'ContextMenu',
+  fab: 'FAB',
+};
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('datePicker');
@@ -26,26 +34,25 @@ export default function App() {
       <Text style={styles.subtitle}>Expo Dev Client Example</Text>
 
       <View style={styles.tabs}>
-        {(['datePicker', 'selectionMenu', 'contextMenu'] as const).map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'datePicker'
-                ? 'DatePicker'
-                : t === 'selectionMenu'
-                  ? 'SelectionMenu'
-                  : 'ContextMenu'}
-            </Text>
-          </Pressable>
-        ))}
+        {(['datePicker', 'selectionMenu', 'contextMenu', 'fab'] as const).map(
+          (t) => (
+            <Pressable
+              key={t}
+              onPress={() => setTab(t)}
+              style={[styles.tab, tab === t && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                {TAB_LABELS[t]}
+              </Text>
+            </Pressable>
+          )
+        )}
       </View>
 
       {tab === 'datePicker' && <DatePickerDemo />}
       {tab === 'selectionMenu' && <SelectionMenuDemo />}
       {tab === 'contextMenu' && <ContextMenuDemo />}
+      {tab === 'fab' && <FloatingActionButtonDemo />}
 
       <Text style={styles.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -209,6 +216,35 @@ function ContextMenuDemo() {
   );
 }
 
+function FloatingActionButtonDemo() {
+  const [extended, setExtended] = useState(true);
+  const [presses, setPresses] = useState(0);
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Floating Action Button</Text>
+      <View style={[styles.card, styles.fabCanvas]}>
+        <Pressable
+          style={styles.button}
+          onPress={() => setExtended((value) => !value)}
+        >
+          <Text style={styles.buttonText}>
+            {extended ? 'Shrink' : 'Extend'}
+          </Text>
+        </Pressable>
+        <Text style={styles.value}>Pressed {presses} times</Text>
+        <FloatingActionButton
+          icon={{ type: 'image', source: require('../assets/plus.png') }}
+          label="New"
+          extended={extended}
+          onPress={() => setPresses((count) => count + 1)}
+          style={styles.fab}
+        />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -230,6 +266,7 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
     marginBottom: 16,
@@ -306,6 +343,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+  },
+  fabCanvas: {
+    height: 220,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
   },
   footer: {
     textAlign: 'center',
