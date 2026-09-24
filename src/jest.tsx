@@ -627,7 +627,16 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
 export function FloatingToolbar(
   props: FloatingToolbarProps
 ): React.ReactElement {
-  const { orientation, color, ios, android, children, ...viewProps } = props;
+  const {
+    orientation,
+    color,
+    scrollViewNativeID,
+    hideOnScroll,
+    ios,
+    android,
+    children,
+    ...viewProps
+  } = props;
   return <View {...viewProps}>{children}</View>;
 }
 
