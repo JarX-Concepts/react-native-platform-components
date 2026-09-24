@@ -3,9 +3,10 @@ package com.platformcomponents
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.DialogInterface
+import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -22,9 +23,14 @@ import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.CompositeDateValidator
+import com.google.android.material.datepicker.DateValidatorPointBackward
+import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
@@ -35,6 +41,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   companion object {
     private const val TAG = "PCDatePicker"
+    private val UTC: TimeZone = TimeZone.getTimeZone("UTC")
   }
 
   // --- State Wrapper for Fabric state updates ---
@@ -164,13 +171,15 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   }
 
   fun applyLocale(value: String?) {
+    val previous = locale
     locale =
       try {
         if (value.isNullOrBlank()) null else Locale.forLanguageTag(value)
       } catch (_: Throwable) {
         null
       }
-    // Inline pickers don’t render strings; no-op other than storing.
+    // The embedded pickers are built from a locale-wrapped context.
+    if (isInline() && locale != previous) rebuildUI()
   }
 
   fun applyTimeZoneName(value: String?) {
@@ -228,7 +237,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     androidPositiveTitle = positiveButtonTitle
     androidNegativeTitle = negativeButtonTitle
 
-    // Inline date picker can use firstDayOfWeek in its internal Calendar calculations
+    inlineDatePicker?.let { applyFirstDayOfWeek(it) }
     syncInlineFromState()
   }
 
@@ -277,6 +286,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       return
     }
 
+    val pickerContext = localizedContext(context)
     val container = LinearLayout(context).apply {
       layoutParams = FrameLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -288,7 +298,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     // date and/or time
     if (mode == "date" || mode == "dateAndTime") {
-      val dp = DatePicker(context).apply {
+      val dp = DatePicker(pickerContext).apply {
+        applyFirstDayOfWeek(this)
         layoutParams = LinearLayout.LayoutParams(
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
@@ -313,7 +324,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     }
 
     if (mode == "time" || mode == "dateAndTime") {
-      val tp = TimePicker(context).apply {
+      val tp = TimePicker(pickerContext).apply {
         layoutParams = LinearLayout.LayoutParams(
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
@@ -474,7 +485,9 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     val ts = clamp(dateMs ?: System.currentTimeMillis())
     val cal = calendarFor(ts)
 
-    val picker = DatePicker(act).apply {
+    val dialogContext = localizedContext(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val picker = DatePicker(dialogContext).apply {
+      applyFirstDayOfWeek(this)
       calendarViewShown = true
       spinnersShown = false
       // Set the date first, before min/max constraints
@@ -493,13 +506,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     // Wrap picker in a container with horizontal padding to prevent CalendarView
     // from clipping against the dialog edges
-    val container = FrameLayout(act).apply {
+    val container = FrameLayout(dialogContext).apply {
       val horizontalPadding = (8 * resources.displayMetrics.density).toInt()
       setPadding(horizontalPadding, 0, horizontalPadding, 0)
       addView(picker)
     }
 
-    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val dlg = AlertDialog.Builder(dialogContext)
       .setTitle(androidDialogTitle ?: "")
       .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
@@ -531,7 +544,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     val ts = clamp(dateMs ?: System.currentTimeMillis())
     val cal = calendarFor(ts)
 
-    val picker = TimePicker(act).apply {
+    val dialogContext = localizedContext(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val picker = TimePicker(dialogContext).apply {
       val is24 = android.text.format.DateFormat.is24HourFormat(act)
       setIs24HourView(is24)
 
@@ -547,7 +561,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       }
     }
 
-    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val dlg = AlertDialog.Builder(dialogContext)
       .setTitle(androidDialogTitle ?: "")
       .setView(picker)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
@@ -589,7 +603,9 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     val ts = clamp(dateMs ?: System.currentTimeMillis())
     val cal = calendarFor(ts)
 
-    val picker = DatePicker(act).apply {
+    val dialogContext = localizedContext(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val picker = DatePicker(dialogContext).apply {
+      applyFirstDayOfWeek(this)
       calendarViewShown = true
       spinnersShown = false
       // Set the date first, before min/max constraints
@@ -608,13 +624,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     // Wrap picker in a container with horizontal padding to prevent CalendarView
     // from clipping against the dialog edges
-    val container = FrameLayout(act).apply {
+    val container = FrameLayout(dialogContext).apply {
       val horizontalPadding = (8 * resources.displayMetrics.density).toInt()
       setPadding(horizontalPadding, 0, horizontalPadding, 0)
       addView(picker)
     }
 
-    val dlg = AlertDialog.Builder(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
+    val dlg = AlertDialog.Builder(dialogContext)
       .setTitle(androidDialogTitle ?: "")
       .setView(container)
       .setPositiveButton(androidPositiveTitle ?: "Next") { _, _ ->
@@ -649,24 +665,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun presentM3Date(act: FragmentActivity) {
     val ts = clamp(dateMs ?: System.currentTimeMillis())
 
-    val builder = MaterialDatePicker.Builder.datePicker()
-      .setSelection(ts)
-      .setTheme(m3CalendarTheme(act))
-
-    androidDialogTitle?.let { builder.setTitleText(it) }
-    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
-    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
-
-    val constraints = buildM3CalendarConstraints()
-    if (constraints != null) builder.setCalendarConstraints(constraints)
-
-    val picker = builder.build()
+    val picker = buildM3DatePicker(act, ts)
 
     picker.addOnPositiveButtonClickListener { selection ->
       val sel = (selection ?: ts)
       // Selection is date-based; merge with existing time-of-day
       val base = calendarFor(ts)
-      val selUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = sel }
+      val selUtc = Calendar.getInstance(UTC).apply { timeInMillis = sel }
       base.set(Calendar.YEAR, selUtc.get(Calendar.YEAR))
       base.set(Calendar.MONTH, selUtc.get(Calendar.MONTH))
       base.set(Calendar.DAY_OF_MONTH, selUtc.get(Calendar.DAY_OF_MONTH))
@@ -732,23 +737,12 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun presentM3DateThenTime(act: FragmentActivity) {
     val ts = clamp(dateMs ?: System.currentTimeMillis())
 
-    val builder = MaterialDatePicker.Builder.datePicker()
-      .setSelection(ts)
-      .setTheme(m3CalendarTheme(act))
-
-    androidDialogTitle?.let { builder.setTitleText(it) }
-    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
-    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
-
-    val constraints = buildM3CalendarConstraints()
-    if (constraints != null) builder.setCalendarConstraints(constraints)
-
-    val picker = builder.build()
+    val picker = buildM3DatePicker(act, ts)
 
     picker.addOnPositiveButtonClickListener { selection ->
       val sel = (selection ?: ts)
       val base = calendarFor(ts)
-      val selUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = sel }
+      val selUtc = Calendar.getInstance(UTC).apply { timeInMillis = sel }
       base.set(Calendar.YEAR, selUtc.get(Calendar.YEAR))
       base.set(Calendar.MONTH, selUtc.get(Calendar.MONTH))
       base.set(Calendar.DAY_OF_MONTH, selUtc.get(Calendar.DAY_OF_MONTH))
@@ -791,15 +785,112 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       R.style.PCMaterial3TimePickerDialogTheme_NativeTheme
     )
 
-  private fun buildM3CalendarConstraints(): CalendarConstraints? {
-    val min = minDateMs
-    val max = maxDateMs
-    if (min == null && max == null) return null
+  private fun buildM3DatePicker(act: FragmentActivity, ts: Long): MaterialDatePicker<Long> {
+    val builder = MaterialDatePicker.Builder.datePicker()
+      // MaterialDatePicker works in UTC days: its selection is the UTC midnight
+      // of the chosen day, so hand it this picker's calendar day in those terms.
+      .setSelection(utcDayFor(ts))
+      .setTheme(m3CalendarTheme(act))
+      .setCalendarConstraints(buildM3CalendarConstraints())
 
+    androidDialogTitle?.let { builder.setTitleText(it) }
+    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
+    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
+    // MaterialDatePicker formats with the process default locale and cannot be
+    // given a context, so `locale` only reaches its text-input date format.
+    locale?.let { l -> m3TextInputFormat(l)?.let { builder.setTextInputFormat(it) } }
+
+    return builder.build()
+  }
+
+  private fun buildM3CalendarConstraints(): CalendarConstraints {
     val b = CalendarConstraints.Builder()
-    min?.let { b.setStart(it) }
-    max?.let { b.setEnd(it) }
+    androidFirstDayOfWeek?.takeIf { it in Calendar.SUNDAY..Calendar.SATURDAY }?.let {
+      b.setFirstDayOfWeek(it)
+    }
+
+    val minDay = minDateMs?.let { utcDayFor(it) }
+    val maxDay = maxDateMs?.let { utcDayFor(it) }
+    minDay?.let { b.setStart(it) }
+    maxDay?.let { b.setEnd(it) }
+
+    // setStart/setEnd only limit month paging; the validator greys out the days
+    // before min in the first month and after max in the last one. Both points
+    // are UTC midnights, like the days the picker validates, and both bounds are
+    // inclusive (forward: day >= min, backward: day <= max).
+    val validators = listOfNotNull<CalendarConstraints.DateValidator>(
+      minDay?.let { DateValidatorPointForward.from(it) },
+      maxDay?.let { DateValidatorPointBackward.before(it) }
+    )
+    if (validators.isNotEmpty()) b.setValidator(CompositeDateValidator.allOf(validators))
     return b.build()
+  }
+
+  /** The UTC midnight of [ts]'s calendar day in this picker's time zone. */
+  private fun utcDayFor(ts: Long): Long {
+    val local = calendarFor(ts)
+    return Calendar.getInstance(UTC).apply {
+      clear()
+      set(
+        local.get(Calendar.YEAR),
+        local.get(Calendar.MONTH),
+        local.get(Calendar.DAY_OF_MONTH)
+      )
+    }.timeInMillis
+  }
+
+  /**
+   * The locale's short date pattern as a fixed-width input format (dd, MM,
+   * yyyy), the way MaterialDatePicker derives its default one.
+   */
+  private fun m3TextInputFormat(l: Locale): SimpleDateFormat? {
+    val pattern = (DateFormat.getDateInstance(DateFormat.SHORT, l) as? SimpleDateFormat)
+      ?.toPattern() ?: return null
+    val input = pattern
+      .replace(Regex("[^dMy/\\-.]"), "")
+      .replace(Regex("d{1,2}"), "dd")
+      .replace(Regex("M{1,2}"), "MM")
+      .replace(Regex("y{1,4}"), "yyyy")
+      .replace(Regex("\\.$"), "")
+    return try {
+      SimpleDateFormat(input, l).apply {
+        timeZone = UTC
+        isLenient = false
+      }
+    } catch (_: IllegalArgumentException) {
+      null
+    }
+  }
+
+  private fun applyFirstDayOfWeek(picker: DatePicker) {
+    androidFirstDayOfWeek?.takeIf { it in Calendar.SUNDAY..Calendar.SATURDAY }?.let {
+      picker.firstDayOfWeek = it
+    }
+  }
+
+  /**
+   * [base] with the `locale` prop as its configuration locale, so the system
+   * pickers built from it draw month and weekday names in that locale.
+   */
+  private fun localizedContext(base: Context): Context {
+    val l = locale ?: return base
+    val config = Configuration(base.resources.configuration).apply { setLocale(l) }
+    return LocaleContext(base, base.createConfigurationContext(config).resources)
+  }
+
+  /**
+   * Swaps only the Resources. `applyOverrideConfiguration` would copy the base
+   * theme into a theme of the new Resources (Theme.setTo), which drops
+   * attributes (runtime native-theme colors among them), so the base theme
+   * object is used as is. Being a ContextThemeWrapper, its LayoutInflater is
+   * bound to this context, so inflated views see the localized Resources.
+   */
+  private class LocaleContext(
+    base: Context,
+    private val localized: android.content.res.Resources
+  ) : ContextThemeWrapper(base, 0) {
+    override fun getResources(): android.content.res.Resources = localized
+    override fun getTheme(): android.content.res.Resources.Theme = baseContext.theme
   }
 
   // -----------------------------
