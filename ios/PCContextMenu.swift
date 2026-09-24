@@ -241,50 +241,62 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         return superview
     }
 
+    /// Preview targeted by the highlight and dismissal animations.
+    /// With `enablePreview`, the parent component view (which holds the React content)
+    /// lifts; otherwise we target self with a zero-size path so iOS does not manipulate
+    /// the parent view (which caused white flashes).
+    private func targetedPreview() -> UITargetedPreview? {
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = .clear
+
+        if enablePreview == "true" {
+            guard let parentView = getParentComponentView() else {
+                logger.debug("targetedPreview: no parent found")
+                return nil
+            }
+            parameters.visiblePath = UIBezierPath(roundedRect: parentView.bounds, cornerRadius: 8)
+            return UITargetedPreview(view: parentView, parameters: parameters)
+        } else {
+            parameters.visiblePath = UIBezierPath(rect: .zero)
+            return UITargetedPreview(view: self, parameters: parameters)
+        }
+    }
+
+    // iOS 16+: per-item preview delegate methods. UIKit prefers these over the
+    // deprecated configuration-level ones below when both are implemented.
+
+    @available(iOS 16.0, *)
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        configuration: UIContextMenuConfiguration,
+        highlightPreviewForItemWithIdentifier identifier: NSCopying
+    ) -> UITargetedPreview? {
+        targetedPreview()
+    }
+
+    @available(iOS 16.0, *)
+    public func contextMenuInteraction(
+        _ interaction: UIContextMenuInteraction,
+        configuration: UIContextMenuConfiguration,
+        dismissalPreviewForItemWithIdentifier identifier: NSCopying
+    ) -> UITargetedPreview? {
+        targetedPreview()
+    }
+
+    // iOS 15 fallback (deprecated in iOS 16; not called there when the methods above exist).
+
     public func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,
         previewForHighlightingMenuWithConfiguration configuration: UIContextMenuConfiguration
     ) -> UITargetedPreview? {
-        let parameters = UIPreviewParameters()
-        parameters.backgroundColor = .clear
-
-        // Check if preview is enabled via the enablePreview prop
-        if enablePreview == "true" {
-            // Target the parent view (PCContextMenu) which contains the React content
-            guard let parentView = getParentComponentView() else {
-                logger.debug("previewForHighlighting: no parent found")
-                return nil
-            }
-            let parentType = String(describing: type(of: parentView))
-            logger.debug("previewForHighlighting: targeting parent \(parentType)")
-            parameters.visiblePath = UIBezierPath(roundedRect: parentView.bounds, cornerRadius: 8)
-            return UITargetedPreview(view: parentView, parameters: parameters)
-        } else {
-            // When preview is disabled, target self with zero-size path
-            // This prevents iOS from manipulating the parent view and causing white flashes
-            logger.debug("previewForHighlighting: preview disabled, targeting self with zero path")
-            parameters.visiblePath = UIBezierPath(rect: .zero)
-            return UITargetedPreview(view: self, parameters: parameters)
-        }
+        targetedPreview()
     }
 
     public func contextMenuInteraction(
         _ interaction: UIContextMenuInteraction,
         previewForDismissingMenuWithConfiguration configuration: UIContextMenuConfiguration
     ) -> UITargetedPreview? {
-        let parameters = UIPreviewParameters()
-        parameters.backgroundColor = .clear
-
-        if enablePreview == "true" {
-            guard let parentView = getParentComponentView() else {
-                return nil
-            }
-            parameters.visiblePath = UIBezierPath(roundedRect: parentView.bounds, cornerRadius: 8)
-            return UITargetedPreview(view: parentView, parameters: parameters)
-        } else {
-            parameters.visiblePath = UIBezierPath(rect: .zero)
-            return UITargetedPreview(view: self, parameters: parameters)
-        }
+        targetedPreview()
     }
 
     public func contextMenuInteraction(

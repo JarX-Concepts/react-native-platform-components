@@ -162,13 +162,19 @@ public final class PCSelectionMenuView: UIControl {
         let opts = parsedOptions
         let disabled = (interactivity == "disabled") || opts.isEmpty
         let actions = opts.enumerated().map { (idx, opt) in
-            UIAction(title: opt.label) { [weak self] _ in
+            UIAction(
+                title: opt.label,
+                // The system draws its checkmark on the selected option. Selection
+                // stays controlled by the `selected` prop: the menu is rebuilt when it
+                // changes, so the button's changesSelectionAsPrimaryAction stays off.
+                state: (!self.selectedData.isEmpty && opt.data == self.selectedData) ? .on : .off
+            ) { [weak self] _ in
                 guard let self else { return }
                 self.selectedData = opt.data
                 self.onSelect?(idx, opt.label, opt.data)
             }
         }
-        menuButton?.menu = disabled ? nil : UIMenu(children: actions)
+        menuButton?.menu = disabled ? nil : UIMenu(options: .singleSelection, children: actions)
     }
 
     override public func layoutSubviews() {
@@ -256,8 +262,15 @@ public final class PCSelectionMenuView: UIControl {
             guard self.headlessMenuVC == nil else { return }
             guard self.window != nil else { return }
 
+            let selectedIndex = self.selectedData.isEmpty
+                ? nil
+                : opts.firstIndex(where: { $0.data == self.selectedData })
+            // Like a system menu, every row reserves the checkmark column when one is shown.
+            let reservesCheckmark = selectedIndex != nil
+
             let menuVC = PCMenuViewController(
                 options: opts,
+                selectedIndex: selectedIndex,
                 onSelect: { [weak self] idx in
                     guard let self else { return }
                     let opt = opts[idx]
@@ -289,7 +302,11 @@ public final class PCSelectionMenuView: UIControl {
             // Measure the real (possibly multi-line) content height so the
             // container fits its rows instead of clipping or leaving gaps.
             let contentHeight = opts.reduce(PCConstants.popoverVerticalPadding) { partial, opt in
-                partial + PCConstants.popoverRowHeight(forLabel: opt.label, width: menuWidth)
+                partial + PCConstants.popoverRowHeight(
+                    forLabel: opt.label,
+                    width: menuWidth,
+                    reservesCheckmark: reservesCheckmark
+                )
             }
             // Allow taller menus at accessibility sizes; otherwise keep them compact.
             let maxHeight = category.isAccessibilityCategory
@@ -298,7 +315,11 @@ public final class PCSelectionMenuView: UIControl {
             let popoverHeight = min(contentHeight, maxHeight)
 
             // Check if menu fits below the source view
-            let firstRowHeight = PCConstants.popoverRowHeight(forLabel: opts[0].label, width: menuWidth)
+            let firstRowHeight = PCConstants.popoverRowHeight(
+                forLabel: opts[0].label,
+                width: menuWidth,
+                reservesCheckmark: reservesCheckmark
+            )
             let wouldExtendBeyondBottom = sourceFrame.maxY + spacing + popoverHeight > screenBounds.maxY - 20
 
             var menuY: CGFloat
@@ -390,6 +411,11 @@ private class PCGlassMenuCell: UITableViewCell {
     /// caused rows to overlap at large Dynamic Type sizes.
     let menuLabel = UILabel()
 
+    /// Leading checkmark on the selected row, as in a system single-selection menu.
+    private let checkmarkView = UIImageView()
+    private var labelLeadingToContent: NSLayoutConstraint!
+    private var labelLeadingToCheckmark: NSLayoutConstraint!
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupCell()
@@ -411,8 +437,23 @@ private class PCGlassMenuCell: UITableViewCell {
         menuLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(menuLabel)
 
+        checkmarkView.image = UIImage(
+            systemName: "checkmark",
+            withConfiguration: PCConstants.popoverCheckmarkConfiguration
+        )
+        checkmarkView.tintColor = .label
+        checkmarkView.contentMode = .center
+        checkmarkView.translatesAutoresizingMaskIntoConstraints = false
+        checkmarkView.setContentHuggingPriority(.required, for: .horizontal)
+        checkmarkView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        contentView.addSubview(checkmarkView)
+
         let v = PCConstants.popoverRowVerticalPadding / 2
         let h = PCConstants.popoverRowHorizontalInset
+        labelLeadingToContent = menuLabel.leadingAnchor.constraint(
+            equalTo: contentView.leadingAnchor, constant: h)
+        labelLeadingToCheckmark = menuLabel.leadingAnchor.constraint(
+            equalTo: checkmarkView.trailingAnchor, constant: PCConstants.popoverCheckmarkSpacing)
         // Center the label and let it grow the row vertically. The min-height
         // constraint guarantees the 44pt touch target for short labels, while
         // the >= top / <= bottom pair lets tall (wrapped) labels expand the row.
@@ -420,10 +461,22 @@ private class PCGlassMenuCell: UITableViewCell {
             menuLabel.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: v),
             menuLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -v),
             menuLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            menuLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: h),
+            labelLeadingToContent,
+            checkmarkView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: h),
+            checkmarkView.firstBaselineAnchor.constraint(equalTo: menuLabel.firstBaselineAnchor),
             menuLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -h),
             contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: PCConstants.popoverRowHeightMin),
         ])
+    }
+
+    /// `reservesCheckmark` indents every row when the menu has a selection, so labels
+    /// stay aligned; only the selected row shows the checkmark.
+    func configure(label: String, selected: Bool, reservesCheckmark: Bool) {
+        menuLabel.text = label
+        checkmarkView.isHidden = !selected
+        labelLeadingToContent.isActive = !reservesCheckmark
+        labelLeadingToCheckmark.isActive = reservesCheckmark
+        accessibilityTraits = selected ? [.button, .selected] : [.button]
     }
 }
 
@@ -431,6 +484,7 @@ private class PCGlassMenuCell: UITableViewCell {
 
 private class PCMenuViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     private let options: [PCSelectionMenuOption]
+    private let selectedIndex: Int?
     private let onSelect: (Int) -> Void
     private let onCancel: () -> Void
     private let onDismiss: () -> Void
@@ -441,11 +495,13 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
 
     init(
         options: [PCSelectionMenuOption],
+        selectedIndex: Int?,
         onSelect: @escaping (Int) -> Void,
         onCancel: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.options = options
+        self.selectedIndex = selectedIndex
         self.onSelect = onSelect
         self.onCancel = onCancel
         self.onDismiss = onDismiss
@@ -533,7 +589,11 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: PCGlassMenuCell.reuseIdentifier, for: indexPath)
-        (cell as? PCGlassMenuCell)?.menuLabel.text = options[indexPath.row].label
+        (cell as? PCGlassMenuCell)?.configure(
+            label: options[indexPath.row].label,
+            selected: indexPath.row == selectedIndex,
+            reservesCheckmark: selectedIndex != nil
+        )
         return cell
     }
 

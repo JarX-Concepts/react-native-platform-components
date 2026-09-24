@@ -49,6 +49,8 @@ const [tab, setTab] = useState('home');
 | `barColor`              | `ColorValue`                                           | Bar background. See [Styling](#styling)                                                        |
 | `badgeStyle`            | `{ backgroundColor?, color? }`                         | Badge colors                                                                                   |
 | `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`  | Label font                                                                                     |
+| `minimizeBehavior`      | `'automatic' \| 'never' \| 'onScrollDown' \| 'onScrollUp'` | Gets the bar out of the way as the content scrolls. See [Minimize on scroll](#minimize-on-scroll) |
+| `scrollViewNativeID`    | `string`                                               | The `nativeID` of the ScrollView or FlatList that drives `minimizeBehavior`                     |
 | `maxFontSizeMultiplier` | `number`                                               | Cap on the label font scale, as on `Text`. Android only; iOS tab labels have a fixed size      |
 | `testID`                | `string`                                               | Test identifier of the bar                                                                     |
 
@@ -113,6 +115,38 @@ const bar = <TabBar items={items} selectedValue={tab} onSelect={setTab} barColor
 
 {isLiquidGlassSupported ? bar : <FloatingToolbar style={{ alignSelf: 'stretch' }}>{bar}</FloatingToolbar>}
 ```
+
+### Minimize on scroll
+
+`minimizeBehavior` gets the bar out of the way while the content scrolls, following the ScrollView (or FlatList) whose `nativeID` you pass as `scrollViewNativeID`. There's no scroll handler to write: the platform tracks the scrolling.
+
+- **iOS 26**: the system tab bar minimization. The bar shrinks into a small glass capsule showing the selected tab, and expands again as the content scrolls back. This is `UITabBarController.tabBarMinimizeBehavior`: with a `minimizeBehavior`, `TabBar` hosts its bar in a tab bar controller and hands it your ScrollView as the content scroll view.
+- **Android**: the Material behavior for a bottom bar, the bar sliding off the bottom edge and back (`HideBottomViewOnScrollBehavior`'s motion). The bar always shows at the top of the content.
+- **iOS before 26**: the bar stays; the system has no minimized tab bar.
+
+| Value | Behavior |
+| --- | --- |
+| `'onScrollDown'` | Minimize (Android: hide) while scrolling down, restore scrolling up |
+| `'onScrollUp'` | The reverse |
+| `'automatic'` | The platform default: iOS decides; Android hides on scroll down |
+| `'never'` | Always full size |
+
+```tsx
+<View style={{ flex: 1 }}>
+  <FlatList nativeID="feed" data={posts} renderItem={renderPost} />
+  <View style={{ position: 'absolute', left: 0, right: 0, bottom: insets.bottom }}>
+    <TabBar
+      items={items}
+      selectedValue={tab}
+      onSelect={setTab}
+      minimizeBehavior="onScrollDown"
+      scrollViewNativeID="feed"
+    />
+  </View>
+</View>
+```
+
+The Android bar slides down by its own height; place it at the bottom edge, or inside a view with `overflow: 'hidden'`, so it leaves the screen rather than covering content below it. A ScrollView nested in another vertical ScrollView needs `nestedScrollEnabled` on Android to scroll at all.
 
 ### Placement and safe areas
 

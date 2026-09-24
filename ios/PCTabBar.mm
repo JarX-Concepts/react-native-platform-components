@@ -188,6 +188,13 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
     _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
   }
 
+  if (!prevProps || newProps.minimizeBehavior != prevProps->minimizeBehavior) {
+    _view.minimizeBehavior = NSStringFromStd(newProps.minimizeBehavior, @"");
+  }
+  if (!prevProps || newProps.scrollViewNativeID != prevProps->scrollViewNativeID) {
+    _view.scrollViewNativeID = NSStringFromStd(newProps.scrollViewNativeID, @"");
+  }
+
   // maxFontSizeMultiplier: tab bar titles don't follow Dynamic Type on iOS
   // androidIndicatorColor / androidRippleColor: Android only
 
