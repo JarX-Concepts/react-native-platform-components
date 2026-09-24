@@ -688,6 +688,8 @@ describe('Platform Components Example', () => {
       'month · bold'
     );
 
+    // The multi-select group sits below the fold on a phone
+    await scrollToId('button-group-multiple');
     await element(by.text('Italic')).atIndex(0).tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(

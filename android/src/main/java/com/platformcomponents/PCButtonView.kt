@@ -10,7 +10,10 @@ import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
+import com.google.android.material.progressindicator.IndeterminateDrawable
 
 /**
  * A Material 3 Expressive button. Hosts a MaterialButton, rebuilt whenever a
@@ -38,7 +41,10 @@ class PCButtonView(context: Context) :
   var variant: PCExpressive.Variant = PCExpressive.Variant.FILLED
   var size: String = "small"
   var shape: String = "round"
+  var iconPosition: String = "leading" // "leading" | "trailing"
+  var cornerRadius: Float = -1f // dp; negative = use shape
   var interactivity: String = "enabled" // "enabled" | "disabled"
+  var loading: Boolean = false
   var spokenLabel: String = ""
   var expressive: Boolean = true // android.material: "expressive" | "m3"
 
@@ -47,10 +53,13 @@ class PCButtonView(context: Context) :
   var foregroundColor: Int? = null
   var rippleColor: Int? = null
   var strokeColor: Int? = null
+  var disabledContainerColor: Int? = null
+  var disabledForegroundColor: Int? = null
   var labelFontFamily: String = ""
   var labelFontSize: Float = 0f
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
+  var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
 
   // --- Events ---
   var onPress: (() -> Unit)? = null
@@ -114,11 +123,30 @@ class PCButtonView(context: Context) :
     rebuildUI()
   }
 
+  fun applyIconPosition(value: String?) {
+    val newValue = if (value == "trailing") "trailing" else "leading"
+    if (iconPosition == newValue) return
+    iconPosition = newValue
+    rebuildUI()
+  }
+
+  fun applyCornerRadius(value: Float) {
+    if (cornerRadius == value) return
+    cornerRadius = value
+    rebuildUI()
+  }
+
   fun applyInteractivity(value: String?) {
     val newValue = if (value == "disabled") "disabled" else "enabled"
     if (interactivity == newValue) return
     interactivity = newValue
     button?.isEnabled = newValue == "enabled"
+  }
+
+  fun applyLoading(value: Boolean) {
+    if (loading == value) return
+    loading = value
+    rebuildUI()
   }
 
   fun applyMaterial(value: String?) {
@@ -145,6 +173,13 @@ class PCButtonView(context: Context) :
     rebuildUI()
   }
 
+  fun applyDisabledColors(container: Int?, foreground: Int?) {
+    if (disabledContainerColor == container && disabledForegroundColor == foreground) return
+    disabledContainerColor = container
+    disabledForegroundColor = foreground
+    rebuildUI()
+  }
+
   fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
     if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
       labelFontWeight == fontWeight && labelFontStyle == fontStyle
@@ -153,6 +188,12 @@ class PCButtonView(context: Context) :
     labelFontSize = fontSize
     labelFontWeight = fontWeight
     labelFontStyle = fontStyle
+    rebuildUI()
+  }
+
+  fun applyMaxFontSizeMultiplier(value: Float) {
+    if (maxFontSizeMultiplier == value) return
+    maxFontSizeMultiplier = value
     rebuildUI()
   }
 
@@ -221,17 +262,63 @@ class PCButtonView(context: Context) :
       if (iconOnly) {
         // Centre the icon instead of leaving it at the start edge
         iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+      } else if (iconPosition == "trailing") {
+        iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
       }
-      setOnClickListener { onPress?.invoke() }
+      val radius = this@PCButtonView.cornerRadius // MaterialButton has its own cornerRadius
+      if (radius >= 0) {
+        // A numeric radius overrides the shape (and its press morph)
+        shapeAppearanceModel = shapeAppearanceModel.withCornerSize(PixelUtil.toPixelFromDIP(radius))
+      }
+      setOnClickListener { if (!loading) onPress?.invoke() }
     }
 
-    PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration }) { requestLayout() }
+    // While loading the spinner replaces the icon, so a late image load is dropped
+    val showsSpinner = loading
+    PCButtonSupport.applyIcon(b, icon, { generation == rebuildGeneration && !showsSpinner }) { requestLayout() }
     PCButtonSupport.applyFont(b, labelFontFamily, labelFontSize, labelFontWeight, labelFontStyle)
-    PCButtonSupport.applyColors(b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted)
-
+    PCButtonSupport.applyMaxFontSizeMultiplier(b, maxFontSizeMultiplier)
+    PCButtonSupport.applyColors(
+      b, containerColor, foregroundColor, rippleColor, strokeColor, icon.tinted,
+      disabledContainerColor, disabledForegroundColor
+    )
+    // Added before the spinner goes in: once measured, a TextView reads its
+    // layout params when its text changes
     addView(b, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
+    if (showsSpinner) showSpinner(b)
     button = b
     requestLayout()
+  }
+
+  /**
+   * Swaps the label and icon for an indeterminate circular progress indicator
+   * at the icon size, keeping the button at its idle size, and ignores presses
+   * without the disabled look.
+   */
+  private fun showSpinner(b: MaterialButton) {
+    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    b.measure(unspecified, unspecified)
+    val idleWidth = b.measuredWidth
+    val idleHeight = b.measuredHeight
+
+    val spec = CircularProgressIndicatorSpec(
+      b.context, null, 0, MaterialR.style.Widget_Material3_CircularProgressIndicator_ExtraSmall
+    )
+    if (b.iconSize > 0) spec.indicatorSize = b.iconSize
+    spec.indicatorInset = 0
+    spec.indicatorColors = intArrayOf(b.currentTextColor)
+
+    b.contentDescription = spokenLabel.ifEmpty { label }.ifEmpty { null }
+    b.text = ""
+    b.iconTint = null
+    b.icon = IndeterminateDrawable.createCircularDrawable(b.context, spec)
+    b.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+    b.iconPadding = 0
+    b.minWidth = idleWidth
+    b.minimumWidth = idleWidth
+    b.minHeight = idleHeight
+    b.minimumHeight = idleHeight
+    b.isClickable = false
   }
 
   // ---- Layout ----

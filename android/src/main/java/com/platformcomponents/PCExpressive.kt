@@ -17,9 +17,13 @@ import com.google.android.material.button.MaterialButton
 object PCExpressive {
   enum class Variant { FILLED, TONAL, OUTLINED, TEXT, ELEVATED }
 
+  /**
+   * The Liquid Glass variants are iOS 26 styles; Android takes the closest
+   * Material emphasis: `glass` is tonal, `prominentGlass` is filled.
+   */
   fun parseVariant(value: String?): Variant =
     when (value) {
-      "tonal" -> Variant.TONAL
+      "tonal", "glass" -> Variant.TONAL
       "outlined" -> Variant.OUTLINED
       "text" -> Variant.TEXT
       "elevated" -> Variant.ELEVATED

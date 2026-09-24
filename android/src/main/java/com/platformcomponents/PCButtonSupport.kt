@@ -3,6 +3,7 @@ package com.platformcomponents
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.util.TypedValue
 import android.widget.TextView
 import com.facebook.react.bridge.ReadableMap
@@ -91,8 +92,28 @@ object PCButtonSupport {
   }
 
   /**
-   * Applies the color props on top of the style's colors, keeping the style's
-   * disabled colors.
+   * Caps the label's font scaling at [maxMultiplier] times its unscaled size,
+   * as React Native's maxFontSizeMultiplier does; below 1 means no cap. Call
+   * after the font size is set.
+   */
+  fun applyMaxFontSizeMultiplier(button: TextView, maxMultiplier: Float) {
+    if (maxMultiplier < 1f) return
+    val metrics = button.resources.displayMetrics
+    // The sp size back from pixels; Android 14+ scales large text non-linearly
+    val sp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, button.textSize, metrics)
+    } else {
+      button.textSize / (metrics.density * button.resources.configuration.fontScale)
+    }
+    val cap = sp * metrics.density * maxMultiplier
+    if (button.textSize > cap) {
+      button.setTextSize(TypedValue.COMPLEX_UNIT_PX, cap)
+    }
+  }
+
+  /**
+   * Applies the color props on top of the style's colors. Unset disabled
+   * colors keep the style's; unset enabled colors keep the style's too.
    */
   fun applyColors(
     button: MaterialButton,
@@ -100,21 +121,30 @@ object PCButtonSupport {
     foreground: Int?,
     ripple: Int?,
     stroke: Int?,
-    iconTinted: Boolean
+    iconTinted: Boolean,
+    disabledContainer: Int? = null,
+    disabledForeground: Int? = null
   ) {
     val disabledState = intArrayOf(-android.R.attr.state_enabled)
+    val enabledState = intArrayOf(android.R.attr.state_enabled)
     val states = arrayOf(disabledState, intArrayOf())
 
-    container?.let { color ->
+    if (container != null || disabledContainer != null) {
       val theme = button.backgroundTintList
-      val disabled = theme?.getColorForState(disabledState, theme.defaultColor) ?: Color.TRANSPARENT
-      button.backgroundTintList = ColorStateList(states, intArrayOf(disabled, color))
+      val disabled = disabledContainer
+        ?: theme?.getColorForState(disabledState, theme.defaultColor)
+        ?: Color.TRANSPARENT
+      val enabled = container
+        ?: theme?.getColorForState(enabledState, theme.defaultColor)
+        ?: Color.TRANSPARENT
+      button.backgroundTintList = ColorStateList(states, intArrayOf(disabled, enabled))
     }
 
-    foreground?.let { color ->
+    if (foreground != null || disabledForeground != null) {
       val theme = button.textColors
-      val disabled = theme.getColorForState(disabledState, theme.defaultColor)
-      val tint = ColorStateList(states, intArrayOf(disabled, color))
+      val disabled = disabledForeground ?: theme.getColorForState(disabledState, theme.defaultColor)
+      val enabled = foreground ?: theme.getColorForState(enabledState, theme.defaultColor)
+      val tint = ColorStateList(states, intArrayOf(disabled, enabled))
       button.setTextColor(tint)
       if (iconTinted) {
         button.iconTint = tint

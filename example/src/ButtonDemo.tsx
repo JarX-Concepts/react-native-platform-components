@@ -32,6 +32,10 @@ const EDIT_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'pencil' },
   android: { type: 'drawable', name: 'edit' },
 };
+const SEND_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'paperplane' },
+  android: { type: 'drawable', name: 'send' },
+};
 const SHARE_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'square.and.arrow.up' },
   android: { type: 'drawable', name: 'share' },
@@ -92,6 +96,7 @@ export function ButtonDemo(): React.JSX.Element {
   const [format, setFormat] = useState<string[]>(['bold']);
   const [styled, setStyled] = useState(true);
   const [expressive, setExpressive] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
   const common = {
@@ -144,6 +149,25 @@ export function ButtonDemo(): React.JSX.Element {
         </View>
         <Divider />
         <View style={styles.wrap}>
+          <Button
+            testID="button-icon-trailing"
+            label="Send"
+            icon={SEND_ICON}
+            iconPosition="trailing"
+            onPress={() => setLastPressed('send')}
+            {...common}
+          />
+          <Button
+            testID="button-corner-radius"
+            label="Radius 6"
+            variant="tonal"
+            cornerRadius={6}
+            onPress={() => setLastPressed('radius 6')}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <View style={styles.wrap}>
           {VARIANTS.map((variant) => (
             <Button
               key={variant}
@@ -155,6 +179,77 @@ export function ButtonDemo(): React.JSX.Element {
               {...common}
             />
           ))}
+        </View>
+      </Section>
+
+      <Section title="Loading">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-loading"
+            label="Save"
+            loading={loading}
+            onPress={() => setLastPressed('save')}
+            {...common}
+          />
+          <Button
+            label="Share"
+            icon={SHARE_ICON}
+            variant="tonal"
+            loading={loading}
+            onPress={() => setLastPressed('share (loading)')}
+            {...common}
+          />
+          <Button
+            icon={EDIT_ICON}
+            variant="outlined"
+            accessibilityLabel="Edit"
+            loading={loading}
+            onPress={() => setLastPressed('edit (loading)')}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <Row label="Loading">
+          <Switch
+            style={ui.alignEnd}
+            testID="loading-switch"
+            value={loading}
+            onValueChange={setLoading}
+          />
+        </Row>
+      </Section>
+
+      <Section title="Liquid Glass">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-glass"
+            label="Glass"
+            variant="glass"
+            onPress={() => setLastPressed('glass')}
+            {...common}
+          />
+          <Button
+            testID="button-prominent-glass"
+            label="Prominent"
+            variant="prominentGlass"
+            onPress={() => setLastPressed('prominent glass')}
+            {...common}
+          />
+          <Button
+            label="Tinted"
+            variant="prominentGlass"
+            color="#FF6B35"
+            tintColor="white"
+            onPress={() => setLastPressed('tinted glass')}
+            {...common}
+          />
+          <Button
+            icon={SHARE_ICON}
+            variant="glass"
+            accessibilityLabel="Share, glass"
+            onPress={() => setLastPressed('share (glass)')}
+            {...common}
+          />
         </View>
       </Section>
 
@@ -223,6 +318,20 @@ export function ButtonDemo(): React.JSX.Element {
               : {})}
             {...common}
           />
+        </View>
+        <Divider />
+        <View style={styles.wrap}>
+          <Button
+            testID="button-disabled-colors"
+            label="Brand disabled"
+            color="#FF6B35"
+            tintColor="white"
+            disabledColor="rgba(255, 107, 53, 0.4)"
+            disabledTintColor="rgba(255, 255, 255, 0.8)"
+            {...common}
+            disabled
+          />
+          <Button label="Default disabled" {...common} disabled />
         </View>
         <Divider />
         <Row label="Custom style">
