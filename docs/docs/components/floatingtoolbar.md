@@ -87,6 +87,10 @@ Any component can go in the toolbar. A [SegmentedControl](/components/segmentedc
 </FloatingToolbar>
 ```
 
+### Floating tabs
+
+A transparent [TabBar](/components/tabbar) in the toolbar gives floating tabs on Android and on iOS before 26. On iOS 26 the tab bar is already a floating Liquid Glass bar; show it without the toolbar there (`isLiquidGlassSupported`). See [Floating tabs](/components/tabbar#floating-tabs).
+
 ### Orientation
 
 `orientation="vertical"` stacks the children; the container stays a capsule. Position it with `top` / `bottom` and `right` / `left`.

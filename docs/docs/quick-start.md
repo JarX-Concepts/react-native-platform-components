@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -300,6 +300,32 @@ export function Example() {
       ios={{ apportionsSegmentWidthsByContent: true }}
     />
   );
+}
+```
+
+---
+
+### TabBar
+
+```tsx
+import { TabBar } from 'react-native-platform-components';
+
+const tabs = [
+  {
+    label: 'Home',
+    value: 'home',
+    icon: { ios: 'house', android: 'home' },
+    // The filled SF Symbol while selected, as the system apps do
+    selectedIcon: { ios: 'house.fill' },
+  },
+  { label: 'Search', value: 'search', icon: { ios: 'magnifyingglass', android: 'search' } },
+  { label: 'Inbox', value: 'inbox', icon: { ios: 'bell', android: 'notifications' }, badge: 3 },
+];
+
+export function Example() {
+  const [tab, setTab] = React.useState('home');
+
+  return <TabBar items={tabs} selectedValue={tab} onSelect={setTab} />;
 }
 ```
 

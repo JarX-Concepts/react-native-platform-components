@@ -43,6 +43,17 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
+  // The iOS menu scrolls once it outgrows the screen; bring the item up
+  if (!isAndroid()) {
+    try {
+      await waitFor(element(by.text(label)).atIndex(0))
+        .toBeVisible()
+        .withTimeout(1000);
+    } catch {
+      await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      await pause(500);
+    }
+  }
   await element(by.text(label)).atIndex(0).tap();
   // Let the demo mount and settle; the README GIFs are trimmed to start here
   await pause(1000);
@@ -651,6 +662,53 @@ describe('Platform Components Example', () => {
       await element(by.text('Day')).atIndex(0).tap();
       await pause(300);
     }
+  });
+
+  it('should test Tab Bar functionality', async () => {
+    await selectDemo('Tab Bar');
+    await expect(element(by.id('tab-bar'))).toBeVisible();
+    await pause(600);
+
+    // Tabs by their testID; the Inbox badge clears once it is opened
+    await element(by.id('tab-search')).tap();
+    await expectText('tab-bar-value', 'search');
+    await pause(500);
+    await element(by.id('tab-inbox')).tap();
+    await expectText('tab-bar-value', 'inbox');
+    await pause(500);
+
+    // Pressing the selected tab again is a reselect
+    await element(by.id('tab-inbox')).tap();
+    await expectText('tab-bar-last-event', 'reselect: inbox');
+    await pause(400);
+    await element(by.id('tab-profile')).tap();
+    await expectText('tab-bar-value', 'profile');
+    await pause(500);
+
+    // The floating bar shares the selection
+    await element(by.id('tab-home-floating')).tap();
+    await expectText('tab-bar-value', 'home');
+    await pause(600);
+
+    // Label visibility, badges and custom colors
+    await scrollToId('tab-labels-labeled');
+    await element(by.id('tab-labels-labeled')).tap();
+    await pause(700);
+    await element(by.id('tab-labels-unlabeled')).tap();
+    await pause(700);
+    await element(by.id('tab-labels-auto')).tap();
+    await pause(500);
+    await scrollToId('tab-unread-switch');
+    await element(by.id('tab-unread-switch')).tap();
+    await pause(600);
+    await element(by.id('tab-dot-switch')).tap();
+    await pause(600);
+    await element(by.id('tab-styled-switch')).tap();
+    await pause(900);
+    await scrollToId('tab-bar', 'up');
+    await element(by.id('tab-search')).tap();
+    await expectText('tab-bar-value', 'search');
+    await pause(900);
   });
 
   it('should test Button functionality', async () => {

@@ -9,6 +9,7 @@ export type * from './DatePicker';
 export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './SegmentedControl';
+export type * from './TabBar';
 export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
@@ -24,6 +25,7 @@ export { Button } from './web/Button';
 export { ButtonGroup } from './web/ButtonGroup';
 export { DatePicker } from './web/DatePicker';
 export { SegmentedControl } from './web/SegmentedControl';
+export { TabBar } from './web/TabBar';
 export { SelectionMenu } from './web/SelectionMenu';
 export { TextField } from './web/TextField';
 export {

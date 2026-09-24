@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, Button, ButtonGroup, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -45,6 +45,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Date and time pickers | `UIDatePicker` on iOS; `MaterialDatePicker` / `MaterialTimePicker` or the AppCompat dialogs on Android. Declarative `visible` prop, modal or embedded.   | `@react-native-community/datetimepicker`: platform dialogs on Android; Material 3 pickers are an [open request](https://github.com/react-native-datetimepicker/datetimepicker/issues/790). |
 | Segmented control     | `UISegmentedControl` on iOS; Material 3 segmented buttons on Android. Icons and badges on both.                                                          | `@react-native-segmented-control/segmented-control`: native on iOS, drawn in JavaScript on Android.                                                                                        |
+| Tab bar               | `UITabBar` on iOS (the floating Liquid Glass bar on iOS 26); the Material 3 navigation bar on Android. Icons, labels and badges.                        | React Navigation's bottom tabs: drawn in JavaScript on both platforms; `react-native-bottom-tabs`: native, tied to its own navigator.                                                        |
 | Context menu          | `UIContextMenuInteraction` on iOS; `PopupMenu` on Android. Long-press gesture or modal trigger, icons on both.                                           | `zeego`: native on both platforms, through two additional native dependencies (`react-native-ios-context-menu`, `@react-native-menu/menu`).                                                |
 | Selection menu        | System menus on iOS; Material exposed dropdown or `Spinner` on Android. Headless or inline.                                                              | `@react-native-picker/picker`: wheel picker on iOS, dialog or dropdown `Spinner` on Android; no menu-style presentation.                                                                   |
 | Buttons and toolbars  | Material 3 Expressive `MaterialButton`, button groups and `FloatingToolbarLayout` on Android (five sizes, shape morphing); `UIButton` configurations and a Liquid Glass toolbar on iOS. | `react-native-paper`: Material 3 (not Expressive) drawn in JavaScript on both platforms.                                                                                                   |
@@ -58,6 +59,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 - **ContextMenu** – native context menus with long-press activation (UIContextMenuInteraction on iOS, PopupMenu on Android)
 - **SelectionMenu** – native selection menus (Material on Android, system menus on iOS)
 - **SegmentedControl** – native segmented controls (UISegmentedControl on iOS, Material 3 Expressive connected buttons on Android, classic Material 3 on request)
+- **TabBar** – native tab bars with icons, labels and badges (UITabBar on iOS, the floating Liquid Glass bar on iOS 26; the Material 3 navigation bar on Android)
 - **Button** – Material 3 Expressive buttons on Android (five sizes, round or square, shape morphing on press), UIButton on iOS
 - **ButtonGroup** – Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection
 - **FloatingToolbar** – Material 3 Expressive floating toolbar on Android, a Liquid Glass capsule on iOS 26
