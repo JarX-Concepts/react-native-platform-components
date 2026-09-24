@@ -867,6 +867,41 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('toolbar-last-view'))).toHaveText('years');
     await tapSegment('All');
     await pause(600);
+
+    // A toolbar linked to a ScrollView. Scroll the page from its upper part:
+    // a swipe starting on the nested ScrollView would scroll that instead
+    await waitFor(
+      element(
+        by.id(isAndroid() ? 'hide-on-scroll-switch' : 'edge-effect-picker')
+      )
+    )
+      .toBeVisible()
+      .whileElement(by.id('demo-scroll'))
+      .scroll(200, 'down', 0.5, 0.2);
+    if (!isAndroid()) {
+      // iOS 26 scroll edge effects under the toolbar, and interactive glass
+      for (const effect of ['Soft', 'Hard', 'Hidden', 'Automatic']) {
+        await tapSegment(effect);
+        await pause(500);
+      }
+      await element(by.id('interactive-glass-switch')).tap();
+      await pause(400);
+    }
+
+    // Hide on scroll: away while the content scrolls down, back as it
+    // scrolls up, and usable again
+    await element(by.id('hide-on-scroll-switch')).tap();
+    await pause(400);
+    await element(by.id('toolbar-feed')).scroll(250, 'down', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .not.toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('toolbar-feed')).scroll(100, 'up', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('feed-toolbar-edit')).tap();
+    await expectText('feed-last-action', 'edit');
   });
 
   it('should test Liquid Glass functionality', async () => {
