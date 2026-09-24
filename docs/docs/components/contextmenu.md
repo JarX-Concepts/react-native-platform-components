@@ -38,7 +38,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `subtitle`   | `string`                               | Secondary text (iOS only)                         |
 | `image`      | `string`                               | Icon name (SF Symbol on iOS, drawable on Android) |
 | `imageColor` | `string`                               | Tint color for the icon (hex string)              |
-| `attributes` | `{ destructive?, disabled?, hidden? }` | Action attributes                                 |
+| `attributes` | `{ destructive?, disabled?, hidden? }` | Action attributes (see [Destructive actions](#destructive-actions)) |
 | `state`      | `'off' \| 'on' \| 'mixed'`             | Checkmark state                                   |
 | `subactions` | `ContextMenuAction[]`                  | Nested actions for submenu                        |
 
@@ -52,7 +52,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 
 | Prop             | Type                | Description                                    |
 | ---------------- | ------------------- | ---------------------------------------------- |
-| `anchorPosition` | `'left' \| 'right'` | Anchor position for the popup menu             |
+| `anchorPosition` | `'left' \| 'right'` | Aligns the popup with the start (`'left'`, default) or end (`'right'`) edge of the wrapped content; mirrored in RTL layouts |
 | `visible`        | `boolean`           | Programmatic visibility control (Android only) |
 
 ### Trigger Modes
@@ -61,7 +61,18 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 - **Tap** (`trigger="tap"`): Single tap on wrapped content triggers the menu.
 - **Programmatic** (Android only): Use `android.visible` to control menu visibility programmatically. iOS does not support programmatic menu opening due to platform limitations.
 
+### Destructive actions
+
+`attributes: { destructive: true }` draws the action in the platform's destructive style:
+
+- **iOS**: the system red title and icon (`UIMenuElement.Attributes.destructive`).
+- **Android**: the title and icon use the theme's `colorError` (Material 3 error red when the theme has none). An explicit `imageColor` still wins for the icon.
+
+### Preview (iOS)
+
+With `ios.enablePreview`, the wrapped content lifts as the menu's preview. On iOS 16+ the component uses the per-item highlight and dismissal preview delegate methods; iOS 15 uses the older configuration-level ones.
+
 ### Icon Support
 
 - **iOS**: Use SF Symbol names (e.g., `'trash'`, `'square.and.arrow.up'`, `'doc.on.doc'`)
-- **Android**: Use drawable resource names or Material icon names
+- **Android**: Use drawable resource names or Material icon names. Icons are shown in the popup menu via `PopupMenu.setForceShowIcon`.

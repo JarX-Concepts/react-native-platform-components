@@ -278,6 +278,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             disabled={disabled}
             onPressAction={handleAction}
             ios={{ enablePreview }}
+            android={{ anchorPosition: 'right' }}
             style={styles.fullFlex}
           >
             <View style={styles.dangerDemoBox}>

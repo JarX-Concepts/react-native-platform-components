@@ -82,7 +82,10 @@ export interface ContextMenuProps extends ViewProps {
 
   /** Android-specific props */
   android?: {
-    /** Anchor position for the popup menu */
+    /**
+     * Aligns the popup with the start ('left', default) or end ('right') edge
+     * of the wrapped content. Mirrored in RTL layouts.
+     */
     anchorPosition?: 'left' | 'right';
     /**
      * Programmatic visibility control (Android only).
