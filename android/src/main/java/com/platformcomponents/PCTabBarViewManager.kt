@@ -138,6 +138,14 @@ class PCTabBarViewManager :
     )
   }
 
+  override fun setMinimizeBehavior(view: PCTabBarView, value: String?) {
+    view.applyMinimize(value ?: "", view.scrollViewNativeID)
+  }
+
+  override fun setScrollViewNativeID(view: PCTabBarView, value: String?) {
+    view.applyMinimize(view.minimizeBehavior, value ?: "")
+  }
+
   override fun setMaxFontSizeMultiplier(view: PCTabBarView, value: Double) {
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }
