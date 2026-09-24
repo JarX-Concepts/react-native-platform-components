@@ -66,6 +66,8 @@ const [tab, setTab] = useState('home');
 | `disabled`           | `boolean`             | The tab can't be selected                                                                     |
 | `accessibilityLabel` | `string`              | Screen-reader label. Defaults to `label`; the badge is announced after it                     |
 | `testID`             | `string`              | Test identifier of the tab. See [Testing](#testing)                                           |
+| `role`               | `'search'`            | The search tab. See [Search tab and system items](#search-tab-and-system-items)               |
+| `systemItem`         | `TabBarSystemItem`    | iOS: a system tab item with the system's title and icon. See [Search tab and system items](#search-tab-and-system-items) |
 
 ### Android Props (`android`)
 
@@ -97,6 +99,30 @@ Screen readers announce the label in every mode.
 { label: 'Inbox', value: 'inbox', icon: 'bell', badge: unread > 0 ? unread : undefined }
 { label: 'Updates', value: 'updates', icon: 'sparkles', badge: '' } // a dot
 ```
+
+### Search tab and system items
+
+`role: 'search'` makes a tab the app's search tab. On iOS it is the system search item, with the magnifying glass and the localized "Search" title; iOS 26 sets it apart from the other tabs as its own glass circle at the end of the bar, wherever it is in `items`. Android has no search tab: it's a regular tab with a search icon (your `icon` if you set one). Selecting it goes through `onSelect` like any other tab, and it's up to you what it shows.
+
+| iOS 26 | iOS 18 | Android |
+| --- | --- | --- |
+| ![The search tab as its own circle on iOS 26](/img/components/tabbar/search-ios.webp) | ![The search tab on iOS 18](/img/components/tabbar/search-ios18.webp) | ![The search tab on Android](/img/components/tabbar/search-android.webp) |
+
+```tsx
+items={[
+  { label: 'Home', value: 'home', icon: { ios: 'house', android: 'home' } },
+  { label: 'Inbox', value: 'inbox', icon: { ios: 'bell', android: 'notifications' } },
+  { label: 'Search', value: 'search', role: 'search' },
+]}
+```
+
+`systemItem` gives an iOS tab one of UIKit's system items (`UITabBarItem.SystemItem`), with the system's localized title and icon: `'bookmarks'`, `'contacts'`, `'downloads'`, `'favorites'`, `'featured'`, `'history'`, `'more'`, `'mostRecent'`, `'mostViewed'`, `'recents'`, `'search'` or `'topRated'`. The system decides both, so `label` and `icon` only apply on Android (and web), where there are no system items. `systemItem: 'search'` is the same tab as `role: 'search'` on iOS.
+
+```tsx
+{ label: 'Favorites', value: 'favorites', systemItem: 'favorites', icon: { android: 'star' } }
+```
+
+A system item's title follows your app's localizations, as the system apps' do. For a search tab with your own title, use a regular tab with a magnifying glass icon instead.
 
 ### Styling
 
@@ -188,7 +214,7 @@ A bottom-tab navigator takes a custom tab bar through its `tabBar` option:
 
 ### Testing
 
-A tab's `testID` goes on the tab itself: the tab button on iOS, the navigation bar item on Android. E2E tests tap a tab by id:
+A tab's `testID` goes on the tab itself: the tab button on iOS (the circle, for the iOS 26 search tab), the navigation bar item on Android. E2E tests tap a tab by id:
 
 ```ts
 await element(by.id('tab-inbox')).tap();

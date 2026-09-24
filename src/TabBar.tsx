@@ -10,7 +10,7 @@ import {
   type TabBarItemProps,
 } from './tabItems';
 
-export type { TabBarItemProps } from './tabItems';
+export type { TabBarItemProps, TabBarSystemItem } from './tabItems';
 
 /**
  * How labels show under the icons.

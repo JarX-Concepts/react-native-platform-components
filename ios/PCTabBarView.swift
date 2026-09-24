@@ -11,6 +11,31 @@ struct PCTabBarTab {
     let badge: String
     let accessibilityLabel: String
     let testID: String
+    /// "" | "search"
+    let role: String
+    /// "" | a UITabBarItem.SystemItem name
+    let systemItem: String
+
+    /// The system item the tab is drawn as, if any: the search role is the
+    /// system search item, which iOS 26 sets apart as its own circle.
+    var system: UITabBarItem.SystemItem? {
+        if role == "search" { return .search }
+        switch systemItem {
+        case "bookmarks": return .bookmarks
+        case "contacts": return .contacts
+        case "downloads": return .downloads
+        case "favorites": return .favorites
+        case "featured": return .featured
+        case "history": return .history
+        case "more": return .more
+        case "mostRecent": return .mostRecent
+        case "mostViewed": return .mostViewed
+        case "recents": return .recents
+        case "search": return .search
+        case "topRated": return .topRated
+        default: return nil
+        }
+    }
 }
 
 /// A standalone `UITabBar`: the system tab bar, icons over labels, badges and
@@ -120,7 +145,9 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
                 selectedIcon: icon("selected"),
                 badge: (dict["badge"] as? String) ?? "",
                 accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? "",
-                testID: (dict["testID"] as? String) ?? ""
+                testID: (dict["testID"] as? String) ?? "",
+                role: (dict["role"] as? String) ?? "",
+                systemItem: (dict["systemItem"] as? String) ?? ""
             )
         }
 
@@ -129,22 +156,31 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
         let unlabeled = labelVisibility == "unlabeled"
 
         let barItems = tabs.enumerated().map { index, tab -> UITabBarItem in
-            let item = UITabBarItem(title: unlabeled ? nil : tab.label, image: nil, tag: index)
-            item.image = PCTabBarView.symbol(tab.icon) ?? PCButtonSupport.image(for: tab.icon) { [weak self, weak item] image in
-                guard let self, let item, self.generation == current else { return }
-                item.image = image
-            }
-            if !tab.selectedIcon.isPresent {
-                item.selectedImage = nil
+            let item: UITabBarItem
+            var title = tab.label
+            if let system = tab.system {
+                // The system's localized title and icon
+                item = UITabBarItem(tabBarSystemItem: system, tag: index)
+                title = item.title ?? tab.label
+                if unlabeled { item.title = nil }
             } else {
-                item.selectedImage = PCTabBarView.symbol(tab.selectedIcon) ?? PCButtonSupport.image(for: tab.selectedIcon) { [weak self, weak item] image in
+                item = UITabBarItem(title: unlabeled ? nil : tab.label, image: nil, tag: index)
+                item.image = PCTabBarView.symbol(tab.icon) ?? PCButtonSupport.image(for: tab.icon) { [weak self, weak item] image in
                     guard let self, let item, self.generation == current else { return }
-                    item.selectedImage = image
+                    item.image = image
+                }
+                if !tab.selectedIcon.isPresent {
+                    item.selectedImage = nil
+                } else {
+                    item.selectedImage = PCTabBarView.symbol(tab.selectedIcon) ?? PCButtonSupport.image(for: tab.selectedIcon) { [weak self, weak item] image in
+                        guard let self, let item, self.generation == current else { return }
+                        item.selectedImage = image
+                    }
                 }
             }
             item.isEnabled = !tab.disabled
             item.badgeValue = tab.badge.isEmpty ? nil : (tab.badge == " " ? "" : tab.badge)
-            let spoken = tab.accessibilityLabel.isEmpty ? tab.label : tab.accessibilityLabel
+            let spoken = tab.accessibilityLabel.isEmpty ? title : tab.accessibilityLabel
             item.accessibilityLabel = tab.badge.isEmpty || tab.badge == " " ? spoken : "\(spoken), \(tab.badge)"
             return item
         }
@@ -437,15 +473,32 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
         }
         buttons = buttons.filter(shown)
         // One button per position, the frontmost (last collected) copy
-        var byPosition: [Int: UIView] = [:]
-        for button in buttons {
-            byPosition[Int(bar.convert(button.bounds, from: button).minX.rounded())] = button
+        func inOrder(_ buttons: [UIView]) -> [UIView] {
+            var byPosition: [Int: UIView] = [:]
+            for button in buttons {
+                byPosition[Int(bar.convert(button.bounds, from: button).minX.rounded())] = button
+            }
+            var ordered = Array(byPosition.values)
+            ordered.sort { bar.convert($0.bounds, from: $0).minX < bar.convert($1.bounds, from: $1).minX }
+            if bar.effectiveUserInterfaceLayoutDirection == .rightToLeft { ordered.reverse() }
+            return ordered
         }
-        buttons = Array(byPosition.values)
-        buttons.sort { bar.convert($0.bounds, from: $0).minX < bar.convert($1.bounds, from: $1).minX }
-        if bar.effectiveUserInterfaceLayoutDirection == .rightToLeft { buttons.reverse() }
-        guard buttons.count == tabs.count else { return }
-        for (button, tab) in zip(buttons, tabs) {
+        // iOS 26 draws the search tab apart, in an auxiliary view at the end
+        // of the bar, wherever it is among the items
+        func isAuxiliary(_ view: UIView) -> Bool {
+            var current = view.superview
+            while let v = current, v !== bar {
+                if NSStringFromClass(type(of: v)).hasSuffix("AuxiliaryView") { return true }
+                current = v.superview
+            }
+            return false
+        }
+        let auxiliary = inOrder(buttons.filter(isAuxiliary))
+        let regular = inOrder(buttons.filter { !isAuxiliary($0) })
+        let apart = auxiliary.isEmpty ? [] : tabs.filter { $0.system == .search }
+        let inline = auxiliary.isEmpty ? tabs : tabs.filter { $0.system != .search }
+        guard regular.count == inline.count, auxiliary.count == apart.count else { return }
+        for (button, tab) in zip(regular + auxiliary, inline + apart) {
             button.accessibilityIdentifier = tab.testID.isEmpty ? nil : tab.testID
         }
     }

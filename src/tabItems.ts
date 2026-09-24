@@ -6,8 +6,30 @@
 import type { TabBarItem as NativeItem } from './TabBarNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 
+/**
+ * A system tab item on iOS (`UITabBarItem.SystemItem`), with the system's
+ * localized title and icon.
+ */
+export type TabBarSystemItem =
+  | 'bookmarks'
+  | 'contacts'
+  | 'downloads'
+  | 'favorites'
+  | 'featured'
+  | 'history'
+  | 'more'
+  | 'mostRecent'
+  | 'mostViewed'
+  | 'recents'
+  | 'search'
+  | 'topRated';
+
 export interface TabBarItemProps {
-  /** Tab label. Also the screen-reader label unless `accessibilityLabel` is set. */
+  /**
+   * Tab label. Also the screen-reader label unless `accessibilityLabel` is
+   * set. iOS system items (`role: 'search'`, `systemItem`) show the system's
+   * title instead.
+   */
   label: string;
 
   /** Unique value returned in callbacks. */
@@ -36,6 +58,23 @@ export interface TabBarItemProps {
 
   /** Test identifier of the tab, for E2E taps. */
   testID?: string;
+
+  /**
+   * `'search'`: the app's search tab.
+   *
+   * - iOS: the system search item, with its localized title and magnifying
+   *   glass. iOS 26 sets it apart from the other tabs, as its own glass
+   *   circle at the end of the bar.
+   * - Android: a regular tab, with a search icon unless `icon` is set.
+   */
+  role?: 'search';
+
+  /**
+   * iOS: a system item (`UITabBarItem.SystemItem`) with the system's
+   * localized title and icon, in place of `label` and `icon`. Android
+   * has no system items and shows `label` and `icon`.
+   */
+  systemItem?: TabBarSystemItem;
 }
 
 /** Material and iOS tab bars show at most five tabs on a phone. */
@@ -66,6 +105,8 @@ export function toNativeTabItems(
             String(item.badge) || ' ',
       accessibilityLabel: item.accessibilityLabel ?? '',
       testID: item.testID ?? '',
+      role: item.role ?? '',
+      systemItem: item.systemItem ?? '',
     };
   });
 }

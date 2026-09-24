@@ -684,7 +684,8 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('tab-bar'))).toBeVisible();
     await pause(600);
 
-    // Tabs by their testID; the Inbox badge clears once it is opened
+    // Tabs by their testID; the Inbox badge clears once it is opened. Search
+    // is the search tab (iOS 26: its own circle at the end of the bar)
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(500);

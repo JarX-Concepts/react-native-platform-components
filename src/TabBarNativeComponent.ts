@@ -29,6 +29,8 @@ export type TabBarItem = Readonly<{
   badge: string; // badge text, '' = no badge
   accessibilityLabel: string; // '' = the label
   testID: string; // '' = none
+  role: string; // '' | 'search'
+  systemItem: string; // '' | a UITabBarItem.SystemItem name ('favorites', …)
 }>;
 
 /** A press on a tab. `reselected` is 'true' when the tab was already selected. */

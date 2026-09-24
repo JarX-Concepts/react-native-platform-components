@@ -38,7 +38,8 @@ static inline bool ItemsEqual(
         x.selectedIconType != y.selectedIconType || x.selectedIconName != y.selectedIconName ||
         x.selectedIconUri != y.selectedIconUri || x.selectedIconScale != y.selectedIconScale ||
         x.selectedIconTinted != y.selectedIconTinted || x.badge != y.badge ||
-        x.accessibilityLabel != y.accessibilityLabel || x.testID != y.testID) {
+        x.accessibilityLabel != y.accessibilityLabel || x.testID != y.testID ||
+        x.role != y.role || x.systemItem != y.systemItem) {
       return false;
     }
   }
@@ -158,6 +159,8 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
         @"badge" : NSStringFromStd(item.badge, @""),
         @"accessibilityLabel" : NSStringFromStd(item.accessibilityLabel, @""),
         @"testID" : NSStringFromStd(item.testID, @""),
+        @"role" : NSStringFromStd(item.role, @""),
+        @"systemItem" : NSStringFromStd(item.systemItem, @""),
       }];
     }
     _view.items = arr;

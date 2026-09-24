@@ -11,7 +11,8 @@ import {
 import { ChipTabs, Divider, Row, Section, ui, useDemoColors } from './DemoUI';
 
 // A native symbol per platform; iOS shows the filled symbol when selected,
-// as the system apps do.
+// as the system apps do. The search tab is the platform's search tab: on
+// iOS 26 its own glass circle at the end of the bar.
 function tabs(unread: number, dot: boolean): TabBarItemProps[] {
   return [
     {
@@ -25,7 +26,7 @@ function tabs(unread: number, dot: boolean): TabBarItemProps[] {
       label: 'Search',
       value: 'search',
       testID: 'tab-search',
-      icon: { ios: 'magnifyingglass', android: 'search' },
+      role: 'search',
     },
     {
       label: 'Inbox',

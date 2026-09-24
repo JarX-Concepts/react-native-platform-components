@@ -62,6 +62,24 @@ describe('TabBar', () => {
     act(() => tree.unmount());
   });
 
+  it('flattens the search role and system items', () => {
+    const tree = render(
+      <TabBar
+        items={[
+          { label: 'Search', value: 'search', role: 'search' },
+          { label: 'Starred', value: 'fav', systemItem: 'favorites' },
+          { label: 'Home', value: 'home' },
+        ]}
+        selectedValue="home"
+      />
+    );
+    const [search, fav, home] = lastNativeProps().items;
+    expect(search).toMatchObject({ role: 'search', systemItem: '' });
+    expect(fav).toMatchObject({ role: '', systemItem: 'favorites' });
+    expect(home).toMatchObject({ role: '', systemItem: '' });
+    act(() => tree.unmount());
+  });
+
   it('flattens items, icons and badges for native', () => {
     const tree = render(
       <TabBar

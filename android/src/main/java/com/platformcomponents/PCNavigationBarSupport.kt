@@ -10,6 +10,7 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuItemCompat
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
@@ -36,7 +37,9 @@ object PCNavigationBarSupport {
     /** "" = no badge, " " = a dot, anything else is the badge text */
     val badge: String,
     val accessibilityLabel: String,
-    val testID: String
+    val testID: String,
+    /** "" | "search": a search tab without an icon gets a search icon */
+    val role: String = ""
   )
 
   /** Label font and font scale cap; empty / 0 = the platform default. */
@@ -51,7 +54,7 @@ object PCNavigationBarSupport {
   /** Menu item id of the tab at [index]; 0 means "no id" to the menu. */
   fun itemId(index: Int) = index + 1
 
-  // items: [{label, value, disabled, icon…, selectedIcon…, badge, accessibilityLabel, testID}]
+  // items: [{label, value, disabled, icon…, selectedIcon…, badge, accessibilityLabel, testID, role}]
   fun parseItems(value: ReadableArray?): List<Item> {
     val out = ArrayList<Item>()
     if (value == null) return out
@@ -66,7 +69,8 @@ object PCNavigationBarSupport {
           selectedIcon = m.icon("selected"),
           badge = m.stringOr("badge", ""),
           accessibilityLabel = m.stringOr("accessibilityLabel", ""),
-          testID = m.stringOr("testID", "")
+          testID = m.stringOr("testID", ""),
+          role = m.stringOr("role", "")
         )
       )
     }
@@ -226,7 +230,12 @@ object PCNavigationBarSupport {
         }
       )
     }
-    loadIcon(context, tab.icon) { normal = it; done() }
+    if (tab.role == "search" && !tab.icon.isPresent) {
+      normal = ContextCompat.getDrawable(context, R.drawable.pc_ic_search)
+      done()
+    } else {
+      loadIcon(context, tab.icon) { normal = it; done() }
+    }
     if (tab.selectedIcon.isPresent) loadIcon(context, tab.selectedIcon) { selected = it; done() }
   }
 
