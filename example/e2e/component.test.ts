@@ -137,6 +137,19 @@ const expectText = async (testID: string, text: string) => {
     .withTimeout(8000);
 };
 
+// Dismisses an open iOS menu. iOS 26 passes the dismissing tap on to the view
+// underneath, so it lands in the page's empty left margin, clear of controls.
+const tapOutsideMenu = async () => {
+  await device.tap({ x: 8, y: 600 });
+};
+
+// The demo's ActionField carries its testID on the pressable around the text
+const expectFieldText = async (testID: string, text: string) => {
+  await waitFor(element(by.text(text).withAncestor(by.id(testID))))
+    .toBeVisible()
+    .withTimeout(8000);
+};
+
 export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
   const button = element(by.id('picker-toggle-button'));
@@ -207,6 +220,12 @@ describe('Platform Components Example', () => {
       // buttons below a focused field, as it does on the CI emulator
       execSync(
         `"${adbPath()}" -s ${device.id} shell settings put secure show_ime_with_hard_keyboard 0`
+      );
+      // The searchable SelectionMenu takes typing; on a fresh emulator the
+      // keyboard's first appearance otherwise opens Gboard's "Try out your
+      // stylus" sheet over the app
+      execSync(
+        `"${adbPath()}" -s ${device.id} shell settings put secure stylus_handwriting_enabled 0`
       );
     }
     if (process.env.E2E_CLEAN_STATUS_BAR) {
@@ -318,14 +337,36 @@ describe('Platform Components Example', () => {
       .withTimeout(6000);
     await element(by.text('California')).atIndex(0).tap();
 
-    // Verify selection was made (field should show "California")
-    await expect(element(by.text('California'))).toBeVisible();
+    // Verify selection was made (field should show "California"; the menu's
+    // own row may still be fading out)
+    await expectFieldText('state-field-headless', 'California');
 
     // Test clearing the selection
     await element(by.id('clear-state-button')).tap();
 
     // Verify selection was cleared
     await expect(element(by.text('None'))).toBeVisible();
+
+    if (!isAndroid()) {
+      // The headless menu is a system menu: a tap outside dismisses it and
+      // onRequestClose sets the demo's state back to closed
+      await element(by.id('menu-toggle-button')).tap();
+      await waitFor(element(by.text('Alabama')))
+        .toBeVisible()
+        .withTimeout(6000);
+      await tapOutsideMenu();
+      await expectFieldText('menu-toggle-field', 'closed');
+    }
+
+    // Options with icons and subtitles
+    await scrollToId('notify-field');
+    await element(by.id('notify-field')).tap();
+    await waitFor(element(by.text('Email')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Email')).atIndex(0).tap();
+    await expectFieldText('notify-field', 'Email');
+    await element(by.id('demo-scroll')).scrollTo('top');
 
     // Test embedded mode
     await element(by.id('embedded-switch')).tap();
@@ -387,17 +428,45 @@ describe('Platform Components Example', () => {
     await element(by.text('Arkansas')).atIndex(0).tap();
 
     // Verify the selection
-    await expect(element(by.text('Arkansas'))).toBeVisible();
+    await expectFieldText('state-field-headless', 'Arkansas');
 
-    // Set Android material to "M3" (Android only)
-    try {
+    if (isAndroid()) {
+      // The M3 exposed dropdown, searchable: typing filters the options
       await selectMenuOption('android-material-menu', 'M3');
-
       await element(by.id('embedded-switch')).tap();
+      await element(by.id('searchable-switch')).tap();
+      const field = element(
+        by
+          .type('android.widget.EditText')
+          .withAncestor(by.id('state-menu-embedded'))
+      ).atIndex(0);
+      await waitFor(field).toBeVisible().withTimeout(6000);
+      await field.tap();
+      // The keyboard comes up and the window resizes; let the list settle
+      await pause(1000);
+      await field.replaceText('new y');
+      // The filtered list is re-laid out above the keyboard; Espresso doesn't
+      // wait for that window
+      await pause(1500);
+      // The dropdown is a window without focus, which Espresso can't search,
+      // so the one row left ("New York") is tapped through adb: it sits right
+      // under the field, about half a field height down.
+      const { frame } = (await field.getAttributes()) as {
+        frame: { x: number; y: number; width: number; height: number };
+      };
+      const x = Math.round(frame.x + frame.width / 2);
+      const y = Math.round(frame.y + frame.height * 1.55);
+      execSync(`"${adbPath()}" -s ${device.id} shell input tap ${x} ${y}`);
+      // The pick leaves the field and the keyboard goes down
+      await pause(1500);
+      await waitFor(field).toHaveText('New York').withTimeout(6000);
 
-      await element(by.id('state-menu-embedded')).tap();
-    } catch {
-      // Not on Android.
+      // Text that matches nothing goes back to the selection on leaving
+      await field.tap();
+      await field.replaceText('zzz');
+      await field.tapReturnKey();
+      await pause(1500);
+      await waitFor(field).toHaveText('New York').withTimeout(6000);
     }
   });
 
@@ -507,6 +576,60 @@ describe('Platform Components Example', () => {
 
     // Re-enable
     await element(by.id('disabled-switch')).tap();
+
+    if (!isAndroid()) {
+      // Tapping the preview (on by default) fires onPreviewPress
+      await element(by.id('context-menu-basic')).longPress();
+      await waitFor(element(by.text('Copy')))
+        .toBeVisible()
+        .withTimeout(6000);
+      await element(
+        by.label('Preview').withAncestor(by.type('_UIContextMenuContainerView'))
+      )
+        .atIndex(0)
+        .tap();
+      await expectFieldText('last-action-field', 'Preview pressed');
+    }
+
+    // Inline sections, an image-asset icon and a submenu inside a section
+    await scrollToId('context-menu-sections');
+    await element(by.id('context-menu-sections')).longPress();
+    await waitFor(element(by.text('Remind Me')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Remind Me')).atIndex(0).tap();
+    await expectFieldText('last-action-field', 'Remind Me (remind)');
+    await element(by.id('context-menu-sections')).longPress();
+    await waitFor(element(by.text('Send To')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Send To')).atIndex(0).tap();
+    await waitFor(element(by.text('Mail')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Mail')).atIndex(0).tap();
+    await expectFieldText('last-action-field', 'Mail (send-mail)');
+
+    // A stepper that keeps the menu open on iOS; Android closes it per press
+    await scrollToId('context-menu-stepper');
+    await element(by.id('context-menu-stepper')).tap();
+    await waitFor(element(by.text('Increase')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Increase')).atIndex(0).tap();
+    await expectText('stepper-value', 'Qty 2');
+    if (!isAndroid()) {
+      await element(by.text('Increase')).atIndex(0).tap();
+      await element(by.text('Favorite')).atIndex(0).tap();
+      await expectText('stepper-value', 'Qty 3 ★');
+      // Still open: the section header shows the new value
+      await expect(element(by.text('Quantity: 3'))).toBeVisible();
+      await tapOutsideMenu();
+      await waitFor(element(by.text('Increase')))
+        .not.toBeVisible()
+        .withTimeout(6000);
+    }
+    await element(by.id('demo-scroll')).scrollTo('top');
 
     // Test iOS preview toggle (iOS only)
     if (!isAndroid()) {
