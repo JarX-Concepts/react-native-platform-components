@@ -507,6 +507,9 @@ public final class PCDatePickerView: UIControl,
 
     private func applyMode() {
         suppressNextChangesBriefly()
+        // UIKit throws when countDownTimer meets the compact or inline
+        // style; set the style it supports first
+        if mode == "countDownTimer" { applyPreferredStyle() }
         switch mode {
         case "date": picker.datePickerMode = .date
         case "time": picker.datePickerMode = .time
@@ -514,6 +517,8 @@ public final class PCDatePickerView: UIControl,
         case "countDownTimer": picker.datePickerMode = .countDownTimer
         default: picker.datePickerMode = .date
         }
+        // Leaving countdown, the preferred style can apply again
+        if mode != "countDownTimer" { applyPreferredStyle() }
         // countDownDuration is ignored outside countDownTimer mode, so apply it
         // again in case the prop arrived before the mode did.
         applyCountDownDuration()
@@ -522,7 +527,8 @@ public final class PCDatePickerView: UIControl,
     private func applyPreferredStyle() {
         guard #available(iOS 13.4, *) else { return }
         suppressNextChangesBriefly()
-        let s = preferredStyle ?? "automatic"
+        // The countdown timer only exists as wheels
+        let s = mode == "countDownTimer" ? "wheels" : (preferredStyle ?? "automatic")
         switch s {
         case "wheels": picker.preferredDatePickerStyle = .wheels
         case "compact": picker.preferredDatePickerStyle = .compact

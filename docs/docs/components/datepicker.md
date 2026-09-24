@@ -35,7 +35,7 @@ Native date & time picker using **platform system pickers**.
 
 | Prop                       | Type                                               | Description                                                                           |
 | -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style                                                                 |
+| `preferredStyle`           | `'automatic' \| 'compact' \| 'inline' \| 'wheels'` | iOS date picker style. `countDownTimer` always shows as wheels, the only style it has |
 | `countDownDurationSeconds` | `number`                                           | Duration for countdown timer mode                                                     |
 | `minuteInterval`           | `number`                                           | Minute interval (1-30)                                                                |
 | `roundsToMinuteInterval`   | `'inherit' \| 'round' \| 'noRound'`                | Rounding behavior                                                                     |
