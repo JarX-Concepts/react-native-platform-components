@@ -35,4 +35,16 @@ Native selection menu with **modal** and **embedded** modes.
 - **Modal mode** (default): Menu visibility controlled by `visible` prop. Use for custom trigger UI.
 - **Embedded mode** (`presentation="embedded"`): Native picker UI rendered inline. Menu managed internally.
 
+### Selected option
+
+The option matching `selected` is marked natively when the menu is open:
+
+- **iOS embedded**: a single-selection `UIMenu` with the system checkmark on the selected action.
+- **iOS modal**: a checkmark on the selected row of the popover, in the leading position like a system menu.
+- **Android modal**: a single-choice `PopupMenu` group with the selected item checked (radio indicator).
+- **Android embedded, `m3`**: the exposed dropdown highlights the selected item.
+- **Android embedded, `system`**: the Spinner shows the selected label.
+
+Selection stays controlled: the mark follows the `selected` prop, not the last tap.
+
 > **Note:** On iOS, modal mode uses a custom popover to enable programmatic presentation. For the full native menu experience (system animations, scroll physics), use embedded mode. This is an intentional trade-off: modal gives you control over the trigger UI, embedded gives you the complete system menu behavior.

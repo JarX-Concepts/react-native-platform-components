@@ -25,6 +25,22 @@ enum PCConstants {
     /// Vertical padding added to each menu row's text (top + bottom combined)
     static let popoverRowVerticalPadding: CGFloat = 16
 
+    /// Spacing between the selection checkmark and the row's label
+    static let popoverCheckmarkSpacing: CGFloat = 8
+
+    /// Symbol configuration of the selection checkmark (scales with Dynamic Type)
+    static var popoverCheckmarkConfiguration: UIImage.SymbolConfiguration {
+        UIImage.SymbolConfiguration(textStyle: .body, scale: .small)
+            .applying(UIImage.SymbolConfiguration(weight: .semibold))
+    }
+
+    /// Leading column reserved for the checkmark on every row when the menu has a
+    /// selection (like a system single-selection menu), checkmark width + spacing.
+    static var popoverCheckmarkColumnWidth: CGFloat {
+        let image = UIImage(systemName: "checkmark", withConfiguration: popoverCheckmarkConfiguration)
+        return ceil(image?.size.width ?? 17) + popoverCheckmarkSpacing
+    }
+
     /// Estimated single-line row height that respects the user's preferred
     /// content size. Used only as a table-view estimate; actual rows self-size.
     static var popoverRowHeight: CGFloat {
@@ -36,9 +52,14 @@ enum PCConstants {
     /// width, accounting for multi-line wrapping at the current Dynamic Type
     /// size. Mirrors the Auto Layout sizing of `PCGlassMenuCell` so the popover
     /// container can be sized to fit its content.
-    static func popoverRowHeight(forLabel label: String, width: CGFloat) -> CGFloat {
+    static func popoverRowHeight(
+        forLabel label: String,
+        width: CGFloat,
+        reservesCheckmark: Bool = false
+    ) -> CGFloat {
         let bodyFont = UIFont.preferredFont(forTextStyle: .body)
-        let textWidth = max(1, width - popoverRowHorizontalInset * 2)
+        let checkmarkReserve = reservesCheckmark ? popoverCheckmarkColumnWidth : 0
+        let textWidth = max(1, width - popoverRowHorizontalInset * 2 - checkmarkReserve)
         let bounding = (label as NSString).boundingRect(
             with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading],
