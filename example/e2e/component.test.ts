@@ -285,6 +285,21 @@ describe('Platform Components Example', () => {
 
     // Dismiss it
     await dismissModal();
+
+    if (!isAndroid()) {
+      // Countdown from the inline style (UIKit only has countdown wheels),
+      // reporting the duration
+      await ensureModalMode(false);
+      await selectMenuOption('ios-style-menu', 'Inline');
+      await selectMenuOption('mode-menu', 'Countdown');
+      await pause(800);
+      await scrollToId('date-picker');
+      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.7, 0.5);
+      await pause(1500);
+      await expect(element(by.id('countdown-duration'))).not.toHaveText(
+        '(none)'
+      );
+    }
   });
 
   it('should test Selection Menu functionality', async () => {

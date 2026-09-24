@@ -75,7 +75,22 @@ describe('DatePicker', () => {
         nativeEvent: { timestampMs: 1577836800000, confirmed: true },
       });
     });
-    expect(onConfirm).toHaveBeenCalledWith(new Date(1577836800000), true);
+    expect(onConfirm).toHaveBeenCalledWith(new Date(1577836800000), true, 0);
+
+    act(() => {
+      props.onConfirm({
+        nativeEvent: {
+          timestampMs: 1577836800000,
+          confirmed: true,
+          durationSeconds: 5400,
+        },
+      });
+    });
+    expect(onConfirm).toHaveBeenLastCalledWith(
+      new Date(1577836800000),
+      true,
+      5400
+    );
     act(() => {
       tree.unmount();
     });

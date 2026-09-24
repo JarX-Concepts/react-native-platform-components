@@ -13,6 +13,11 @@ export type TimestampMs = Double;
 export type DateChangeEvent = {
   timestampMs: Double;
   confirmed: boolean;
+  /**
+   * iOS `countDownTimer` mode: the selected duration in seconds. 0 in every
+   * other mode and on Android (which has no countdown picker).
+   */
+  durationSeconds: Double;
 };
 
 export type DatePickerMode = 'date' | 'time' | 'dateAndTime' | 'countDownTimer';

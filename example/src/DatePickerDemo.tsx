@@ -1,6 +1,6 @@
 // DatePickerDemo.tsx
 import React, { useMemo, useState } from 'react';
-import { Platform, Switch, View } from 'react-native';
+import { Platform, Switch, Text, View } from 'react-native';
 import {
   DatePicker,
   SelectionMenu,
@@ -28,7 +28,10 @@ export function DatePickerDemo(): React.JSX.Element {
   const visible = presentationModal ? open : undefined;
 
   // ----- Core value -----
-  const [mode, setMode] = useState<'date' | 'time' | 'dateAndTime'>('date');
+  const [mode, setMode] = useState<
+    'date' | 'time' | 'dateAndTime' | 'countDownTimer'
+  >('date');
+  const [duration, setDuration] = useState<number | null>(null);
   const [date, setDate] = useState<Date | null>(null);
 
   // ----- Min / Max -----
@@ -84,6 +87,10 @@ export function DatePickerDemo(): React.JSX.Element {
         { label: 'Date', data: 'date' },
         { label: 'Time', data: 'time' },
         { label: 'Date & Time', data: 'dateAndTime' },
+        // UIDatePicker's countdown mode; Android has no countdown picker
+        ...(Platform.OS === 'ios'
+          ? ([{ label: 'Countdown', data: 'countDownTimer' }] as const)
+          : []),
       ] as const,
     []
   );
@@ -185,6 +192,17 @@ export function DatePickerDemo(): React.JSX.Element {
             }}
           />
         </Row>
+
+        {mode === 'countDownTimer' && (
+          <>
+            <Divider />
+            <Row label="Duration">
+              <Text testID="countdown-duration" style={ui.valueText}>
+                {duration === null ? '(none)' : `${duration}s`}
+              </Text>
+            </Row>
+          </>
+        )}
 
         <Divider />
 
@@ -368,8 +386,13 @@ export function DatePickerDemo(): React.JSX.Element {
               negativeButtonTitle: negativeTitle,
             }}
             onClosed={() => setOpen(false)}
-            onConfirm={(newDate: Date, confirmed: boolean) => {
+            onConfirm={(
+              newDate: Date,
+              confirmed: boolean,
+              durationSeconds?: number
+            ) => {
               setDate(newDate);
+              if (mode === 'countDownTimer') setDuration(durationSeconds ?? 0);
               if (confirmed) {
                 setOpen(false);
               }

@@ -522,8 +522,9 @@ export function SegmentedControl(
 
 /**
  * A view carrying `testID`. Its handlers are on the view, so
- * `fireEvent(picker, 'confirm', date, true)` and `fireEvent(picker, 'closed')`
- * reach `onConfirm` and `onClosed`.
+ * `fireEvent(picker, 'confirm', date, true, 0)` and `fireEvent(picker, 'closed')`
+ * reach `onConfirm` and `onClosed` (the third `confirm` argument is
+ * `durationSeconds`: pass the duration for `countDownTimer`, 0 otherwise).
  */
 export function DatePicker(props: DatePickerProps): React.ReactElement {
   const { style, testID, onConfirm, onClosed } = props;

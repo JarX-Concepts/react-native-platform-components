@@ -52,7 +52,7 @@ using namespace facebook::react;
 
     __weak __typeof(self) weakSelf = self;
 
-    _datePickerView.onChangeHandler = ^(NSNumber *ms, BOOL confirmed) {
+    _datePickerView.onChangeHandler = ^(NSNumber *ms, BOOL confirmed, NSNumber *durationSeconds) {
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf)
         return;
@@ -60,6 +60,7 @@ using namespace facebook::react;
       PCDatePickerEventEmitter::OnConfirm event{};
       event.timestampMs = ms.doubleValue;
       event.confirmed = confirmed;
+      event.durationSeconds = durationSeconds.doubleValue;
 
       strongSelf.eventEmitterTyped.onConfirm(event);
     };
