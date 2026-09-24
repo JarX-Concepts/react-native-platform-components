@@ -1037,16 +1037,83 @@ describe('Platform Components Example', () => {
       await pause(700);
     }
 
-    // The Keyboard section, below. On iOS each field is scrolled into the
-    // upper half first, clear of the keyboard; the drag also dismisses the
-    // keyboard of the field before.
-    const liftField = async (fieldId: string) => {
-      await scrollToId(fieldId);
-      if (!isAndroid()) {
-        // The drag starts near the top, above a keyboard that may be up
-        await element(by.id('demo-scroll')).scroll(250, 'down', NaN, 0.15);
-        await pause(300);
+    await scrollToId('editable-switch');
+
+    if (isAndroid()) {
+      // Material variants
+      await scrollToId('filled-switch');
+      await element(by.id('filled-switch')).tap();
+      await pause(900);
+      await scrollToId('dense-switch');
+      await element(by.id('dense-switch')).tap();
+      await pause(900);
+      await scrollToId('filled-switch');
+      await element(by.id('filled-switch')).tap();
+      await pause(600);
+      await scrollToId('dense-switch');
+      await element(by.id('dense-switch')).tap();
+      await pause(600);
+      // The platform EditText, then back to Material
+      await scrollToId('material-switch');
+      await element(by.id('material-switch')).tap();
+      await pause(900);
+      await element(by.id('material-switch')).tap();
+      await pause(600);
+    }
+
+    await scrollToId('editable-switch');
+
+    // A read-only field with onPress acts as a button, and its trailing
+    // icon has its own testID
+    await scrollToId('field-due');
+    await element(by.id('field-due')).tap();
+    await expectText('field-last-event', 'press: due');
+    await expect(element(by.id('field-due'))).toHaveText('Tomorrow');
+    await element(by.id('field-due-icon')).tap();
+    await expectText('field-last-event', 'icon: due');
+
+    // A non-editable field ignores taps
+    await element(by.id('editable-switch')).tap();
+    await pause(700);
+    await scrollToId('field-name', 'up');
+    await inputOf('field-name').tap();
+    await pause(500);
+    // No focus event: the last one is still the icon press above
+    await expectText('field-last-event', 'icon: due');
+  });
+
+  // The Keyboard section: its own flow, since the Text Field flow is already
+  // long on CI's slower emulator and simulator
+  it('should test Text Field keyboard features', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
+
+    // A drag from near the top of the list, which also puts the keyboard
+    // away as it does for a TextInput. Near the end of the content there is
+    // less to scroll than asked, which is fine here.
+    const dragList = async (distance: number) => {
+      try {
+        await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
+      } catch {
+        // At the end of the content
       }
+    };
+
+    // Scrolls a field into view. On iOS it then goes into the upper part of
+    // the screen, clear of the keyboard and its toolbar, by the frame the
+    // field reports rather than a fixed distance (the screens differ).
+    const liftField = async (fieldId: string) => {
+      if (!isAndroid()) await dragList(40);
+      await scrollToId(fieldId);
+      if (isAndroid()) return;
+      for (let i = 0; i < 4; i++) {
+        const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+          frame: { y: number };
+        };
+        if (frame.y < 320) break;
+        await dragList(150);
+      }
+      await pause(300);
     };
 
     // iOS: the number pad's toolbar steps the value, and Done dismisses it
@@ -1097,50 +1164,6 @@ describe('Platform Components Example', () => {
       await element(by.id('toolbar-selection-done')).tap();
       await pause(500);
     }
-
-    await scrollToId('editable-switch');
-
-    if (isAndroid()) {
-      // Material variants
-      await scrollToId('filled-switch');
-      await element(by.id('filled-switch')).tap();
-      await pause(900);
-      await scrollToId('dense-switch');
-      await element(by.id('dense-switch')).tap();
-      await pause(900);
-      await scrollToId('filled-switch');
-      await element(by.id('filled-switch')).tap();
-      await pause(600);
-      await scrollToId('dense-switch');
-      await element(by.id('dense-switch')).tap();
-      await pause(600);
-      // The platform EditText, then back to Material
-      await scrollToId('material-switch');
-      await element(by.id('material-switch')).tap();
-      await pause(900);
-      await element(by.id('material-switch')).tap();
-      await pause(600);
-    }
-
-    await scrollToId('editable-switch');
-
-    // A read-only field with onPress acts as a button, and its trailing
-    // icon has its own testID
-    await scrollToId('field-due');
-    await element(by.id('field-due')).tap();
-    await expectText('field-last-event', 'press: due');
-    await expect(element(by.id('field-due'))).toHaveText('Tomorrow');
-    await element(by.id('field-due-icon')).tap();
-    await expectText('field-last-event', 'icon: due');
-
-    // A non-editable field ignores taps
-    await element(by.id('editable-switch')).tap();
-    await pause(700);
-    await scrollToId('field-name', 'up');
-    await inputOf('field-name').tap();
-    await pause(500);
-    // No focus event: the last one is still the icon press above
-    await expectText('field-last-event', 'icon: due');
   });
 
   it('should test Theme functionality', async () => {
