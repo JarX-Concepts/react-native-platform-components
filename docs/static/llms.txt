@@ -1,6 +1,6 @@
 # react-native-platform-components
 
-> Native TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native. Every component is the real platform widget on both iOS (UIKit / SwiftUI) and Android (Material 3), behind one typed, declarative API. No JavaScript re-implementations. New Architecture (Fabric + Codegen) only. TypeScript types included. Expo config plugin included.
+> Native TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native. Every component is the real platform widget on both iOS (UIKit) and Android (Material 3), behind one typed, declarative API. No JavaScript re-implementations. New Architecture (Fabric + Codegen) only. TypeScript types included. Expo config plugin included.
 
 Install: `npm install react-native-platform-components`. iOS: `cd ios && pod install`. Android: nothing to configure; give the app a Material 3 theme to use your colors (the components fall back to Material 3 defaults otherwise). Expo: dev client or EAS Build (not Expo Go); add `["react-native-platform-components/app.plugin", { "android": { "theme": "material3" } }]` to `expo.plugins`, then `npx expo prebuild`.
 

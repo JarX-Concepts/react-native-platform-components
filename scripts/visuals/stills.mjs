@@ -234,7 +234,7 @@ function socialHtml() {
   <div class="copy">
     <h1><small>react-native-platform-components</small>Native components for React Native, on both platforms</h1>
     <p>TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. Real UIKit and Material 3 Expressive widgets behind one typed API.</p>
-    <div class="tags"><span class="tag ios">iOS · UIKit &amp; SwiftUI</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
+    <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>
 </body></html>`;
