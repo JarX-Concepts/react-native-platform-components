@@ -24,6 +24,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `actions`       | `ContextMenuAction[]`             | Array of menu actions                       |
 | `disabled`      | `boolean`                         | Disables the menu                           |
 | `trigger`       | `'longPress' \| 'tap'`            | How the menu opens (default: `'longPress'`) |
+| `haptics`       | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses an action. The long-press open haptic stays; `'none'` also turns it off on Android. See [Haptics](/guides/haptics). Default: none |
 | `onPressAction` | `(actionId, actionTitle) => void` | Called when user selects an action          |
 | `onMenuOpen`    | `() => void`                      | Called when menu opens                      |
 | `onMenuClose`   | `() => void`                      | Called when menu closes                     |

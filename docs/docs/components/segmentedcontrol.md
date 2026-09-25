@@ -30,6 +30,7 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 | `labelStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                     |
 | `badgeStyle`           | `{ backgroundColor?, color? }`                        | Colors for segment badges. See [Badges](#badges)                                                                                     |
 | `maxFontSizeMultiplier` | `number`                                             | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                       |
+| `haptics`              | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user changes the selection, not when `selectedValue` does. See [Haptics](/guides/haptics). Default: none |
 | `onSelect`             | `(value: string, index: number) => void`              | Called when user selects a segment                                                                                                   |
 | `onDeselect`           | `() => void`                                          | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
 

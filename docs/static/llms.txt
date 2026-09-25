@@ -24,6 +24,7 @@ Platform-only props live under `ios={{ ... }}` and `android={{ ... }}` on every 
 - [Installation](https://jarx-concepts.github.io/react-native-platform-components/installation): bare React Native, Expo, New Architecture, compatibility table
 - [Quick Start](https://jarx-concepts.github.io/react-native-platform-components/quick-start): copy-paste examples for every component and mode
 - [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme): Material 3 setup, Expo plugin option, fallback behavior
+- [Haptics](https://jarx-concepts.github.io/react-native-platform-components/guides/haptics): the shared `haptics` prop, platform mapping, defaults and `'none'`
 - [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, Android drawables, image sources
 - [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
 

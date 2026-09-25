@@ -58,6 +58,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `color`             | `ColorValue`                                             | Container (background) color of the buttons                                                                  |
 | `tintColor`         | `ColorValue`                                             | Label and icon color of the buttons                                                                          |
 | `labelStyle`        | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font                                                                                                   |
+| `haptics`           | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played on every press, in every selection mode. See [Haptics](/guides/haptics). Default: none |
 | `onPress`           | `(value: string, index: number) => void`                 | Called when a button is pressed, in every selection mode                                                     |
 | `onSelectionChange` | `(values: string[]) => void`                             | Called when the selection changes, with the selected values in button order                                  |
 

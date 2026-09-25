@@ -26,6 +26,7 @@ Native selection menu with **modal** and **embedded** modes.
 | `placeholder`      | `string`                            | Placeholder text when no selection              |
 | `presentation`     | `'modal' \| 'embedded'`             | Presentation mode (default: `'modal'`)          |
 | `visible`          | `boolean`                           | Controls modal mode menu visibility             |
+| `haptics`          | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none |
 | `onSelect`         | `(data, label, index) => void`      | Called when user selects an option              |
 | `onRequestClose`   | `() => void`                        | Called when menu is dismissed without selection |
 | `android.material` | `'system' \| 'm3'`                  | Material Design style preference                |
