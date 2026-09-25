@@ -1130,15 +1130,21 @@ describe('Platform Components Example', () => {
     }
 
     // A chat composer (submitBehavior 'submit'): return sends, and on iOS
-    // the field keeps focus and the keyboard stays up
-    await liftField('field-chat');
-    await typeInto('field-chat', 'Hello');
-    await inputOf('field-chat').tapReturnKey();
-    await expectText('field-chat-sent', 'Hello');
-    await expect(inputOf('field-chat')).toHaveText('');
-    if (!isAndroid()) {
-      await expectText('field-last-event', 'focus: chat');
-    }
+    // the field keeps focus and the keyboard stays up. Android types the
+    // return with a tap that focuses the field, and without a hardware
+    // keyboard (CI) the soft keyboard then stays over the list, where the
+    // scrolls start, so Android does this last.
+    const chatSendsOnReturn = async () => {
+      await liftField('field-chat');
+      await typeInto('field-chat', 'Hello');
+      await inputOf('field-chat').tapReturnKey();
+      await expectText('field-chat-sent', 'Hello');
+      await expect(inputOf('field-chat')).toHaveText('');
+      if (!isAndroid()) {
+        await expectText('field-last-event', 'focus: chat');
+      }
+    };
+    if (!isAndroid()) await chatSendsOnReturn();
 
     // Selection events from native, and a selection set from JS: on iOS by
     // a keyboard toolbar button, on Android by the demo's button
@@ -1148,9 +1154,11 @@ describe('Platform Components Example', () => {
       await scrollToId('field-select-word');
       await element(by.id('field-select-word')).tap();
       await expectText('field-selection-value', '6–11');
-      // A tap puts the cursor where it lands, past the end of the text
-      await inputOf('field-selection').tap();
-      await expectText('field-selection-value', '11–11');
+      // New text puts the cursor at the start, which native reports; no
+      // tap, so no keyboard
+      await typeInto('field-selection', 'Hi there');
+      await expectText('field-selection-value', '0–0');
+      await chatSendsOnReturn();
     } else {
       await inputOf('field-selection').tap();
       await waitFor(element(by.id('toolbar-select-word')))
