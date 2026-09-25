@@ -1,14 +1,26 @@
 // SelectionMenuNativeComponent.ts
 import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler, Int32, WithDefault } from './codegenTypes';
+import type {
+  BubblingEventHandler,
+  Double,
+  Int32,
+  WithDefault,
+} from './codegenTypes';
 
 /**
- * A single option in the menu.
+ * A single option in the menu. Icons are pre-resolved on the JS side (see
+ * icons.ts); empty strings mean "none".
  */
-export type SelectionMenuOption = Readonly<{
+export type SelectionMenuNativeOption = Readonly<{
   label: string;
   data: string;
+  subtitle: string;
+  iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
+  iconName: string;
+  iconUri: string;
+  iconScale: Double;
+  iconTinted: string; // 'true' | 'false'
 }>;
 
 /**
@@ -44,13 +56,15 @@ export type IOSProps = Readonly<{}>;
  */
 export type AndroidProps = Readonly<{
   material?: string; // AndroidMaterialMode
+  /** Embedded M3 dropdown: accept typing to filter the options */
+  searchable?: string; // 'true' | 'false'
 }>;
 
 export interface SelectionMenuProps extends ViewProps {
   /**
    * Menu options.
    */
-  options: ReadonlyArray<SelectionMenuOption>;
+  options: ReadonlyArray<SelectionMenuNativeOption>;
 
   /**
    * Controlled selection by `data`.

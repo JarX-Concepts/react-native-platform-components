@@ -25,6 +25,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     onPressAction,
     onMenuOpen,
     onMenuClose,
+    onPreviewPress,
     ios,
     android,
     children,

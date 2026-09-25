@@ -619,8 +619,8 @@ export const isDateRangePickerSupported: boolean = true;
  * A view carrying `testID` that shows the selected option's label (or the
  * placeholder). While the menu is open (embedded, or modal with `visible`),
  * each option is a `Pressable` with the test ID `${testID}-${data}` that calls
- * `onSelect`. `fireEvent(menu, 'select', data, label, index)` and
- * `fireEvent(menu, 'requestClose')` also work.
+ * `onSelect` and shows its label and subtitle. `fireEvent(menu, 'select',
+ * data, label, index)` and `fireEvent(menu, 'requestClose')` also work.
  */
 export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
@@ -661,6 +661,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
               onPress={() => onSelect?.(option.data, option.label, index)}
             >
               <Text>{option.label}</Text>
+              {option.subtitle ? <Text>{option.subtitle}</Text> : null}
             </Pressable>
           ))
         : null}
@@ -670,8 +671,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
 
 /**
  * Its children in a view carrying `testID`. The menu itself isn't rendered;
- * `fireEvent(menu, 'pressAction', id, title)`, `'menuOpen'` and `'menuClose'`
- * reach the callbacks.
+ * `fireEvent(menu, 'pressAction', id, title)`, `'menuOpen'`, `'menuClose'`
+ * and `'previewPress'` reach the callbacks.
  */
 export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   const {
@@ -679,6 +680,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     onPressAction,
     onMenuOpen,
     onMenuClose,
+    onPreviewPress,
     title,
     actions,
     disabled,
@@ -691,7 +693,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   return (
     <View
       {...viewProps}
-      {...handlers({ onPressAction, onMenuOpen, onMenuClose })}
+      {...handlers({ onPressAction, onMenuOpen, onMenuClose, onPreviewPress })}
     >
       {children}
     </View>

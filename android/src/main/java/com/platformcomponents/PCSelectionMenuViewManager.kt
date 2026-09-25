@@ -13,6 +13,7 @@ import com.facebook.react.uimanager.events.Event
 import com.facebook.react.uimanager.events.RCTEventEmitter
 import com.facebook.react.viewmanagers.PCSelectionMenuManagerDelegate
 import com.facebook.react.viewmanagers.PCSelectionMenuManagerInterface
+import com.platformcomponents.PCButtonSupport.stringOr
 
 class PCSelectionMenuViewManager :
   SimpleViewManager<PCSelectionMenuView>(),
@@ -57,15 +58,20 @@ class PCSelectionMenuViewManager :
     }
   }
 
-  // options: array of {label,data}
+  // options: array of {label, data, subtitle, iconType, iconName, iconUri, iconScale, iconTinted}
   override fun setOptions(view: PCSelectionMenuView, value: ReadableArray?) {
     val out = ArrayList<PCSelectionMenuView.Option>()
     if (value != null) {
       for (i in 0 until value.size()) {
         val m = value.getMap(i) ?: continue
-        val label = if (m.hasKey("label") && !m.isNull("label")) m.getString("label") ?: "" else ""
-        val data = if (m.hasKey("data") && !m.isNull("data")) m.getString("data") ?: "" else ""
-        out.add(PCSelectionMenuView.Option(label = label, data = data))
+        out.add(
+          PCSelectionMenuView.Option(
+            label = m.stringOr("label", ""),
+            data = m.stringOr("data", ""),
+            subtitle = m.stringOr("subtitle", ""),
+            icon = PCButtonSupport.parseIcon(m)
+          )
+        )
       }
     }
     view.applyOptions(out)
@@ -96,6 +102,7 @@ class PCSelectionMenuViewManager :
     val material =
       if (value != null && value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
     view.applyAndroidMaterial(material)
+    view.applyAndroidSearchable(value?.stringOr("searchable", "false") == "true")
   }
 
   override fun setIos(view: PCSelectionMenuView, value: ReadableMap?) {

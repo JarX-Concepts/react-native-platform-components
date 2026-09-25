@@ -1,47 +1,23 @@
 package com.platformcomponents
 
 import android.content.Context
-import android.graphics.drawable.Drawable
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
 import android.util.Log
-import android.util.TypedValue
 import android.view.Gravity
-import android.view.Menu
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewConfiguration
-import androidx.appcompat.R as AppCompatR
 import androidx.appcompat.widget.PopupMenu
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import com.facebook.react.views.view.ReactViewGroup
 
 class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
-  data class Action(
-    val id: String,
-    val title: String,
-    val subtitle: String?,
-    val image: String?,
-    val imageColor: String?,
-    val destructive: Boolean,
-    val disabled: Boolean,
-    val hidden: Boolean,
-    val state: String?, // "off" | "on" | "mixed"
-    val subactions: List<Action>
-  )
-
   companion object {
     private const val TAG = "PCContextMenu"
-    // Material 3 baseline error color, used when the theme has no colorError.
-    private const val FALLBACK_ERROR_COLOR = 0xFFB3261E.toInt()
   }
 
   // --- Props ---
   var menuTitle: String? = null
-  var actions: List<Action> = emptyList()
+  /** The flattened menu items (see PCMenuSupport) */
+  var actions: List<PCMenuSupport.Item> = emptyList()
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var trigger: String = "longPress"     // "longPress" | "tap"
   var androidVisible: String = "closed" // "open" | "closed" (Android-only programmatic)
@@ -152,7 +128,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     menuTitle = value
   }
 
-  fun applyActions(newActions: List<Action>) {
+  fun applyActions(newActions: List<PCMenuSupport.Item>) {
     actions = newActions
     Log.d(TAG, "applyActions size=${actions.size}")
   }
@@ -246,8 +222,8 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   }
 
   private fun showPopupMenu() {
-    val visibleActions = actions.filter { !it.hidden }
-    if (visibleActions.isEmpty()) {
+    val items = actions
+    if (items.isEmpty()) {
       Log.d(TAG, "showPopupMenu: no visible actions")
       return
     }
@@ -257,20 +233,21 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
       return
     }
 
-    Log.d(TAG, "showPopupMenu: creating popup with ${visibleActions.size} actions")
+    Log.d(TAG, "showPopupMenu: creating popup with ${items.size} items")
 
     val popup = PopupMenu(context, this, popupGravity())
+    popupMenu = popup
+    val hasIcons = PCMenuSupport.populate(context, popup.menu, items) { popupMenu === popup }
     // Show item icons (public AndroidX PopupMenu API, works on every supported API level).
-    popup.setForceShowIcon(true)
+    popup.setForceShowIcon(hasIcons)
 
-    buildMenu(popup.menu, visibleActions, 0)
-
-    popup.setOnMenuItemClickListener { item ->
-      val actionId = item.intent?.getStringExtra("actionId") ?: ""
-      val actionTitle = item.title?.toString() ?: ""
-      Log.d(TAG, "popup onMenuItemClick id=$actionId title=$actionTitle")
+    popup.setOnMenuItemClickListener { menuItem ->
+      // Submenu headers open their submenu; they aren't actions.
+      val item = PCMenuSupport.itemFor(menuItem, items)
+      if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      Log.d(TAG, "popup onMenuItemClick id=${item.id} title=${item.title}")
       dismissAfterSelect = true
-      onPressAction?.invoke(actionId, actionTitle)
+      onPressAction?.invoke(item.id, item.title)
       true
     }
 
@@ -294,125 +271,6 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
     onMenuOpen?.invoke()
     popup.show()
-  }
-
-  private fun buildMenu(menu: Menu, actions: List<Action>, groupId: Int) {
-    var order = 0
-    for (action in actions) {
-      if (action.hidden) continue
-
-      if (action.subactions.isNotEmpty()) {
-        // Create submenu
-        val subMenu = menu.addSubMenu(groupId, order, order, action.title)
-        buildMenu(subMenu, action.subactions, groupId + 1)
-
-        // Set icon on submenu header if available
-        action.image?.let { imageName ->
-          getDrawableByName(imageName)?.let { drawable ->
-            val tintedDrawable = tintDrawable(drawable, action.imageColor)
-            subMenu.item.icon = tintedDrawable
-          }
-        }
-      } else {
-        // Create regular item
-        val item = menu.add(groupId, order, order, buildTitle(action))
-
-        // Store action ID in intent for retrieval
-        item.intent = android.content.Intent().apply {
-          putExtra("actionId", action.id)
-        }
-
-        // Set enabled state
-        item.isEnabled = !action.disabled
-
-        // Set icon (destructive icons take the error color unless imageColor is set)
-        action.image?.let { imageName ->
-          getDrawableByName(imageName)?.let { drawable ->
-            item.icon = if (action.destructive && action.imageColor.isNullOrEmpty()) {
-              tintDrawable(drawable, errorColor())
-            } else {
-              tintDrawable(drawable, action.imageColor)
-            }
-          }
-        }
-
-        // Set checkable state
-        when (action.state) {
-          "on" -> {
-            item.isCheckable = true
-            item.isChecked = true
-          }
-          "mixed" -> {
-            item.isCheckable = true
-            item.isChecked = true // Android doesn't have "mixed", treat as checked
-          }
-          else -> {
-            item.isCheckable = false
-          }
-        }
-      }
-      order++
-    }
-  }
-
-  private fun buildTitle(action: Action): CharSequence {
-    if (!action.destructive) return action.title
-    // Destructive actions are drawn in the theme's error color.
-    return SpannableString(action.title).apply {
-      setSpan(ForegroundColorSpan(errorColor()), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-  }
-
-  /** The theme's ?attr/colorError, falling back to the Material 3 error red. */
-  private fun errorColor(): Int {
-    val value = TypedValue()
-    if (!context.theme.resolveAttribute(AppCompatR.attr.colorError, value, true)) {
-      return FALLBACK_ERROR_COLOR
-    }
-    return if (value.resourceId != 0) {
-      ContextCompat.getColor(context, value.resourceId)
-    } else {
-      value.data
-    }
-  }
-
-  private fun getDrawableByName(name: String): Drawable? {
-    // First try as a drawable resource
-    val resourceId = context.resources.getIdentifier(
-      name,
-      "drawable",
-      context.packageName
-    )
-
-    if (resourceId != 0) {
-      return ContextCompat.getDrawable(context, resourceId)
-    }
-
-    // Try common Material icons (ic_ prefix)
-    val icResourceId = context.resources.getIdentifier(
-      "ic_$name",
-      "drawable",
-      context.packageName
-    )
-
-    if (icResourceId != 0) {
-      return ContextCompat.getDrawable(context, icResourceId)
-    }
-
-    Log.d(TAG, "Drawable not found: $name")
-    return null
-  }
-
-  private fun tintDrawable(drawable: Drawable, colorString: String?): Drawable {
-    if (colorString.isNullOrEmpty()) return drawable
-    val color = ColorParser.parse(colorString) ?: return drawable
-    return tintDrawable(drawable, color)
-  }
-
-  private fun tintDrawable(drawable: Drawable, color: Int): Drawable {
-    val wrappedDrawable = DrawableCompat.wrap(drawable.mutate())
-    DrawableCompat.setTint(wrappedDrawable, color)
-    return wrappedDrawable
   }
 
   override fun onDetachedFromWindow() {
