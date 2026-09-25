@@ -18,9 +18,15 @@ export type DateChangeEvent = {
    * other mode and on Android (which has no countdown picker).
    */
   durationSeconds: Double;
+  /**
+   * `dateRange` mode (Android): the last day of the range, with
+   * `timestampMs` the first. 0 in every other mode.
+   */
+  endTimestampMs: Double;
 };
 
-export type DatePickerMode = 'date' | 'time' | 'dateAndTime' | 'countDownTimer';
+export type DatePickerMode =
+  'date' | 'time' | 'dateAndTime' | 'countDownTimer' | 'yearAndMonth';
 export type DatePickerPresentation = 'modal' | 'embedded';
 
 export type IOSDatePickerStyle = 'automatic' | 'compact' | 'inline' | 'wheels';
@@ -41,6 +47,7 @@ export type AndroidProps = {
   dialogTitle?: string;
   positiveButtonTitle?: string;
   negativeButtonTitle?: string;
+  inputMode?: string; // '' | 'calendar' | 'text'
 };
 
 export type WebProps = Readonly<{}>;
@@ -53,14 +60,19 @@ export type MacOSProps = Readonly<{}>;
  *   (Allows negative timestamps for pre-1970 dates.)
  */
 export type CommonProps = {
-  mode?: string; // DatePickerMode
+  mode?: string; // DatePickerMode, or 'dateRange' for DateRangePicker
 
   dateMs?: WithDefault<TimestampMs, -9007199254740991>;
+  /** `dateRange` mode: the last day of the range (`dateMs` is the first). */
+  endDateMs?: WithDefault<TimestampMs, -9007199254740991>;
   minDateMs?: WithDefault<TimestampMs, -9007199254740991>;
   maxDateMs?: WithDefault<TimestampMs, -9007199254740991>;
 
   locale?: string;
   timeZoneName?: string;
+
+  /** '' (device setting) | '12' | '24' */
+  hourFormat?: string;
 
   /**
    * Only used when presentation === "modal".

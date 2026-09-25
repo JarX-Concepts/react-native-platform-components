@@ -51,15 +51,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private var lastReportedHeight: Float = 0f
 
   // --- Public props (set by manager) ---
-  private var mode: String = "date" // "date" | "time" | "dateAndTime"
+  private var mode: String = "date" // "date" | "time" | "dateAndTime" | "dateRange"
   private var presentation: String = "modal" // "inline" | "modal" | "popover" | "sheet" | "auto" (we treat non-inline as modal-ish)
   private var visible: String = "closed" // "open" | "closed" (only for non-inline)
   private var locale: Locale? = null
   private var timeZone: TimeZone = TimeZone.getDefault()
 
   private var dateMs: Long? = null
+  private var endDateMs: Long? = null // dateRange: the last day
   private var minDateMs: Long? = null
   private var maxDateMs: Long? = null
+  private var hourFormat: String = "" // "" (device setting) | "12" | "24"
 
   // --- Android config from nested `android` prop ---
   private var androidFirstDayOfWeek: Int? = null
@@ -67,9 +69,12 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private var androidDialogTitle: String? = null
   private var androidPositiveTitle: String? = null
   private var androidNegativeTitle: String? = null
+  private var androidInputMode: String = "" // "" | "calendar" | "text"
 
   // --- Events (wired by manager) ---
   var onConfirm: ((Long) -> Unit)? = null
+  /** dateRange: the first and last day. */
+  var onConfirmRange: ((Long, Long) -> Unit)? = null
   var onCancel: (() -> Unit)? = null
 
   // --- Inline UI ---
@@ -146,7 +151,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   fun applyMode(value: String?) {
     mode = when (value) {
-      "date", "time", "dateAndTime" -> value
+      "date", "time", "dateAndTime", "dateRange" -> value
+      // UIDatePicker's month and year wheels have no Android counterpart
       else -> "date"
     }
     Log.d(TAG, "applyMode mode=$mode")
@@ -198,6 +204,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     syncInlineFromState()
   }
 
+  fun applyEndDateMs(value: Long?) {
+    endDateMs = value
+  }
+
+  fun applyHourFormat(value: String?) {
+    val next = if (value == "12" || value == "24") value else ""
+    if (hourFormat == next) return
+    hourFormat = next
+    inlineTimePicker?.setIs24HourView(is24Hour(context))
+  }
+
   fun applyMinDateMs(value: Long?) {
     minDateMs = value
     // clamp if needed
@@ -223,9 +240,11 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     material: String?,
     dialogTitle: String?,
     positiveButtonTitle: String?,
-    negativeButtonTitle: String?
+    negativeButtonTitle: String?,
+    inputMode: String?
   ) {
     androidFirstDayOfWeek = firstDayOfWeek
+    androidInputMode = if (inputMode == "calendar" || inputMode == "text") inputMode else ""
 
     androidMaterialMode = when (material) {
       "m3" -> PCMaterialMode.M3
@@ -329,8 +348,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        val is24 = android.text.format.DateFormat.is24HourFormat(context)
-        setIs24HourView(is24)
+        setIs24HourView(is24Hour(context))
       }
       container.addView(tp)
       inlineTimePicker = tp
@@ -450,6 +468,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       when (mode) {
         "time" -> presentTime(act)
         "dateAndTime" -> presentDateThenTime(act)
+        // Only Material has a range picker
+        "dateRange" -> presentM3DateRange(act)
         else -> presentDate(act)
       }
     }
@@ -546,8 +566,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     val dialogContext = localizedContext(PCThemeSupport.appCompatDialogContext(act, "DatePicker"))
     val picker = TimePicker(dialogContext).apply {
-      val is24 = android.text.format.DateFormat.is24HourFormat(act)
-      setIs24HourView(is24)
+      setIs24HourView(is24Hour(act))
 
       val hour = cal.get(Calendar.HOUR_OF_DAY)
       val minute = cal.get(Calendar.MINUTE)
@@ -698,12 +717,15 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     val ts = clamp(dateMs ?: System.currentTimeMillis())
     val cal = calendarFor(ts)
 
-    val is24 = android.text.format.DateFormat.is24HourFormat(act)
     val builder = MaterialTimePicker.Builder()
       .setTheme(m3TimePickerTheme(act))
-      .setTimeFormat(if (is24) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
+      .setTimeFormat(if (is24Hour(act)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
       .setHour(cal.get(Calendar.HOUR_OF_DAY))
       .setMinute(cal.get(Calendar.MINUTE))
+    when (androidInputMode) {
+      "text" -> builder.setInputMode(MaterialTimePicker.INPUT_MODE_KEYBOARD)
+      "calendar" -> builder.setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
+    }
 
     androidDialogTitle?.let { builder.setTitleText(it) }
     // These exist in recent Material; if you’re on an older one, you’ll get compile errors.
@@ -765,6 +787,52 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   }
 
   /**
+   * The Material range picker (full screen). The selection is two UTC-midnight
+   * days, reported as the start of each day in this picker's time zone.
+   */
+  private fun presentM3DateRange(act: FragmentActivity) {
+    val builder = MaterialDatePicker.Builder.dateRangePicker()
+      .setTheme(m3CalendarTheme(act))
+      .setCalendarConstraints(buildM3CalendarConstraints())
+    val start = dateMs?.let { utcDayFor(clamp(it)) }
+    val end = endDateMs?.let { utcDayFor(clamp(it)) }
+    if (start != null && end != null && end >= start) {
+      builder.setSelection(androidx.core.util.Pair(start, end))
+    }
+    androidDialogTitle?.let { builder.setTitleText(it) }
+    androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
+    androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
+    m3InputMode()?.let { builder.setInputMode(it) }
+    locale?.let { l -> m3TextInputFormat(l)?.let { builder.setTextInputFormat(it) } }
+
+    val picker = builder.build()
+
+    picker.addOnPositiveButtonClickListener { selection ->
+      val first = selection?.first
+      val second = selection?.second
+      if (first != null && second != null) {
+        val startMs = clamp(localDayStartFor(first))
+        val endMs = clamp(localDayStartFor(second))
+        dateMs = startMs
+        endDateMs = endMs
+        onConfirmRange?.invoke(startMs, endMs)
+      } else {
+        onCancel?.invoke()
+      }
+      onCancelOrClose()
+    }
+
+    picker.addOnDismissListener {
+      if (showingModal) {
+        onCancel?.invoke()
+        onCancelOrClose()
+      }
+    }
+
+    picker.show(act.supportFragmentManager, "PCDatePicker_M3_RANGE")
+  }
+
+  /**
    * Material pickers resolve their theme from the activity. When the app theme is
    * not a Material theme they would throw, so hand them a full Material 3 dialog
    * theme instead (0 = use the activity theme).
@@ -796,6 +864,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     androidDialogTitle?.let { builder.setTitleText(it) }
     androidPositiveTitle?.let { builder.setPositiveButtonText(it) }
     androidNegativeTitle?.let { builder.setNegativeButtonText(it) }
+    m3InputMode()?.let { builder.setInputMode(it) }
     // MaterialDatePicker formats with the process default locale and cannot be
     // given a context, so `locale` only reaches its text-input date format.
     locale?.let { l -> m3TextInputFormat(l)?.let { builder.setTextInputFormat(it) } }
@@ -824,6 +893,29 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     )
     if (validators.isNotEmpty()) b.setValidator(CompositeDateValidator.allOf(validators))
     return b.build()
+  }
+
+  /** MaterialDatePicker's input mode for `android.inputMode`; null keeps its default. */
+  private fun m3InputMode(): Int? = when (androidInputMode) {
+    "text" -> MaterialDatePicker.INPUT_MODE_TEXT
+    "calendar" -> MaterialDatePicker.INPUT_MODE_CALENDAR
+    else -> null
+  }
+
+  /** `is24Hour`, else the device's 12/24-hour setting. */
+  private fun is24Hour(ctx: Context): Boolean = when (hourFormat) {
+    "24" -> true
+    "12" -> false
+    else -> android.text.format.DateFormat.is24HourFormat(ctx)
+  }
+
+  /** The start of the day [utcDay] (a UTC midnight) names, in this picker's time zone. */
+  private fun localDayStartFor(utcDay: Long): Long {
+    val day = Calendar.getInstance(UTC).apply { timeInMillis = utcDay }
+    return Calendar.getInstance(timeZone).apply {
+      clear()
+      set(day.get(Calendar.YEAR), day.get(Calendar.MONTH), day.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
   }
 
   /** The UTC midnight of [ts]'s calendar day in this picker's time zone. */

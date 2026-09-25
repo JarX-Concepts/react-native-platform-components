@@ -150,6 +150,15 @@ using namespace facebook::react;
             : nil;
   }
 
+  // hourFormat: "" | "12" | "24"
+  if (oldViewProps.hourFormat != newViewProps.hourFormat) {
+    _datePickerView.hourFormat =
+        (!newViewProps.hourFormat.empty())
+            ? [NSString stringWithUTF8String:newViewProps.hourFormat.c_str()]
+            : @"";
+    needsToUpdateMeasurements = YES;
+  }
+
   // time zone
   if (oldViewProps.timeZoneName != newViewProps.timeZoneName) {
     _datePickerView.timeZoneName =

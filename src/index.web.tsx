@@ -25,6 +25,10 @@ export * from './labelStyle';
 export { Button } from './web/Button';
 export { ButtonGroup } from './web/ButtonGroup';
 export { DatePicker } from './web/DatePicker';
+export {
+  DateRangePicker,
+  isDateRangePickerSupported,
+} from './web/DateRangePicker';
 export { SegmentedControl } from './web/SegmentedControl';
 export { TabBar } from './web/TabBar';
 export { SelectionMenu } from './web/SelectionMenu';
