@@ -39,6 +39,7 @@ const [destination, setDestination] = useState('home');
 | ----------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `items`                 | `NavigationRailItem[]`                             | The destinations: the same items as TabBar tabs, `role: 'search'` included (`systemItem` is TabBar only). See [TabBarItem](/components/tabbar#tabbaritem) |
 | `selectedValue`         | `string \| null`                                   | The selected destination's `value`; `null` for none                                                 |
+| `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses a destination, a reselect included. See [Haptics](/guides/haptics). Default: none |
 | `onSelect`              | `(value: string, index: number) => void`           | A destination was pressed                                                                           |
 | `onReselect`            | `(value: string, index: number) => void`           | The selected destination was pressed again                                                          |
 | `header`                | `ReactNode`                                        | Shown above the destinations, usually a floating action button or a Button. See [Header](#header)   |

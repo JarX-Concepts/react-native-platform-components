@@ -36,6 +36,7 @@ The button doesn't position itself on either platform: place it in your layout, 
 | `tintColor`          | `ColorValue`                                    | Icon and label color                                                                                 |
 | `disabled`           | `boolean`                                       | Disables the button                                                                                  |
 | `accessibilityLabel` | `string`                                        | Screen-reader label. Defaults to `label`; give icon-only buttons one                                |
+| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the button is pressed. See [Haptics](/guides/haptics). Default: none |
 | `onPress`            | `() => void`                                    | Called when the button is pressed                                                                    |
 | `scrollViewNativeID` | `string`                                        | The `nativeID` of a ScrollView or FlatList whose scrolling shrinks and extends the button. See [Shrink on scroll](#shrink-on-scroll) |
 | `testID`             | `string`                                        | Test identifier                                                                                      |

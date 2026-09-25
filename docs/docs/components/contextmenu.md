@@ -24,6 +24,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `actions`        | `ContextMenuAction[]`             | Array of menu actions                                                       |
 | `disabled`       | `boolean`                         | Disables the menu                                                           |
 | `trigger`        | `'longPress' \| 'tap'`            | How the menu opens (default: `'longPress'`)                                 |
+| `haptics`        | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses an action; an action's own `haptics` wins. The long-press open haptic stays; `'none'` also turns it off on Android. See [Haptics](/guides/haptics). Default: none |
 | `onPressAction`  | `(actionId, actionTitle) => void` | Called when user selects an action                                          |
 | `onMenuOpen`     | `() => void`                      | Called when menu opens                                                      |
 | `onMenuClose`    | `() => void`                      | Called when menu closes                                                     |
@@ -41,6 +42,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `imageColor`    | `string`                                                    | Tint color for the icon (hex string)                                                 |
 | `attributes`    | `{ destructive?, disabled?, hidden?, keepsMenuPresented? }` | Action attributes (see [Destructive actions](#destructive-actions) and [Keeping the menu open](#keeping-the-menu-open)) |
 | `state`         | `'off' \| 'on' \| 'mixed'`                                  | Checkmark state                                                                      |
+| `haptics`       | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when this action is picked, in place of the component's `haptics`. See [Haptics](/guides/haptics) |
 | `subactions`    | `ContextMenuAction[]`                                       | Nested actions: a submenu, or an inline section with `displayInline`                 |
 | `displayInline` | `boolean`                                                   | Shows `subactions` inline as a section instead of a submenu. See [Sections](#sections) |
 

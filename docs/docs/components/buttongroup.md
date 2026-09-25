@@ -59,6 +59,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `tintColor`         | `ColorValue`                                             | Label and icon color of the buttons                                                                          |
 | `labelStyle`        | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font                                                                                                   |
 | `overflow`          | `'none' \| 'menu' \| 'wrap'`                             | What happens to buttons that don't fit. See [Overflow](#overflow). Default: `'none'`                         |
+| `haptics`           | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played on every press (an overflow-menu pick included), in every selection mode. See [Haptics](/guides/haptics). Default: none |
 | `onPress`           | `(value: string, index: number) => void`                 | Called when a button is pressed (or picked from the overflow menu), in every selection mode                 |
 | `onSelectionChange` | `(values: string[]) => void`                             | Called when the selection changes, with the selected values in button order                                  |
 
@@ -205,6 +206,7 @@ It is a separate component rather than a ButtonGroup option because a split butt
 | `color`                  | `ColorValue`                                             | Container (background) color                                                                 |
 | `tintColor`              | `ColorValue`                                             | Label and icon color                                                                         |
 | `labelStyle`             | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font                                                                                   |
+| `haptics`                | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the main button is pressed or a menu item is picked; an item's own `haptics` wins. See [Haptics](/guides/haptics). Default: none |
 | `onPress`                | `() => void`                                             | Called when the main button is pressed                                                       |
 | `onMenuSelect`           | `(id: string, title: string) => void`                    | Called when a menu item is picked                                                            |
 | `onMenuOpen`             | `() => void`                                             | Called when the menu opens                                                                   |
