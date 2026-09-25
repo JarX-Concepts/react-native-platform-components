@@ -14,6 +14,7 @@ import {
   ContextMenu,
   DatePicker,
   DateRangePicker,
+  FloatingActionButton,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
@@ -211,6 +212,29 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('FloatingActionButton (web)', () => {
+  it('renders a <button> with the label while extended', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <FloatingActionButton icon="pencil" label="Compose" onPress={onPress} />
+    );
+    const button = tree.root.findByType('button');
+    expect(button.props['aria-label']).toBe('Compose');
+    expect(button.props.children).toContain('Compose');
+    click(button);
+    expect(onPress).toHaveBeenCalledTimes(1);
+
+    act(() =>
+      tree.update(
+        <FloatingActionButton icon="pencil" label="Compose" extended={false} />
+      )
+    );
+    expect(tree.root.findByType('button').props.children).not.toContain(
+      'Compose'
+    );
   });
 });
 

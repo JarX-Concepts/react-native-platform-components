@@ -197,6 +197,32 @@ const expectText = async (testID: string, text: string) => {
     .withTimeout(8000);
 };
 
+// A view's width (points on iOS, pixels on Android)
+const widthOf = async (testID: string): Promise<number> => {
+  const attributes = (await element(by.id(testID)).getAttributes()) as {
+    width?: number;
+    frame?: { width: number };
+  };
+  return attributes.frame?.width ?? attributes.width ?? 0;
+};
+
+// Polls a view's width until it passes the check
+const waitForWidth = async (
+  testID: string,
+  check: (width: number) => boolean,
+  timeout = 8000
+) => {
+  const start = Date.now();
+  let width = await widthOf(testID);
+  while (!check(width)) {
+    if (Date.now() - start > timeout) {
+      throw new Error(`${testID}: width ${width} never passed the check`);
+    }
+    await pause(250);
+    width = await widthOf(testID);
+  }
+};
+
 // Dismisses an open iOS menu with a tap away from it, in the page's empty left
 // margin. An in-app tap: device.tap() starts an XCUITest runner, which takes
 // tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
@@ -1337,6 +1363,63 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('button-last-pressed'))).toHaveText(
       'clear glass'
     );
+  });
+
+  it('should test Floating Action Button functionality', async () => {
+    await selectDemo('Floating Action Button');
+    await expect(element(by.id('fab-regular'))).toBeVisible();
+
+    // Every size is a native button that reports presses
+    for (const size of ['small', 'regular', 'medium', 'large']) {
+      await element(by.id(`fab-${size}`)).tap();
+      await expectText('fab-last-pressed', size);
+      await pause(300);
+    }
+
+    // The extended button shrinks to its icon and extends again; the view
+    // follows the button's width
+    await scrollToId('fab-extended-switch');
+    const extendedWidth = await widthOf('fab-extended');
+    await element(by.id('fab-extended-switch')).tap();
+    await waitForWidth('fab-extended', (w) => w < extendedWidth * 0.7);
+    await element(by.id('fab-extended')).tap();
+    await expectText('fab-last-pressed', 'compose');
+    await element(by.id('fab-extended-switch')).tap();
+    await waitForWidth('fab-extended', (w) => w >= extendedWidth - 1);
+
+    // Custom colors, then disabled buttons don't report presses
+    await element(by.id('fab-styled-switch')).tap();
+    await pause(700);
+    await element(by.id('fab-regular')).tap();
+    await expectText('fab-last-pressed', 'regular');
+    await scrollToId('fab-disabled-switch');
+    await element(by.id('fab-disabled-switch')).tap();
+    await pause(500);
+    await element(by.id('fab-extended')).tap();
+    await pause(500);
+    await expect(element(by.id('fab-last-pressed'))).toHaveText('regular');
+    await element(by.id('fab-disabled-switch')).tap();
+    await element(by.id('fab-styled-switch')).tap();
+    await pause(500);
+
+    // Scrolling the feed down shrinks the linked button (the same Compose
+    // button as above), scrolling back up extends it
+    if (isAndroid()) {
+      await scrollToId('fab-feed');
+      await element(by.id('demo-scroll')).scroll(200, 'down');
+    } else {
+      // Drag the page from the top of the screen: the feed fills the middle
+      // and would take the swipe
+      await element(by.id('demo-scroll')).scrollTo('bottom', 0.5, 0.15);
+    }
+    await pause(400);
+    await element(by.id('fab-feed')).scroll(300, 'down', NaN, 0.5);
+    await waitForWidth('fab-scroll', (w) => w < extendedWidth * 0.7);
+    await element(by.id('fab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+    await waitForWidth('fab-scroll', (w) => w >= extendedWidth - 1);
+    await element(by.id('fab-scroll')).tap();
+    await expectText('fab-last-pressed', 'scroll');
+    await pause(600);
   });
 
   it('should test Floating Toolbar functionality', async () => {

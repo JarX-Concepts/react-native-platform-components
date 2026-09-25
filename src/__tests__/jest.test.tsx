@@ -13,6 +13,7 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  FloatingActionButton,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
@@ -256,6 +257,43 @@ describe('Button (mock)', () => {
 
     fire(button, 'menuSelect', 'name', 'Name');
     expect(onMenuSelect).toHaveBeenCalledWith('name', 'Name');
+  });
+});
+
+describe('FloatingActionButton (mock)', () => {
+  it('is a pressable labeled by its label', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <FloatingActionButton
+        testID="compose"
+        icon="pencil"
+        label="Compose"
+        onPress={onPress}
+      />
+    );
+    const fab = byTestID(tree, 'compose');
+    expect(fab.props.accessibilityRole).toBe('button');
+    expect(fab.props.accessibilityLabel).toBe('Compose');
+    expect(texts(tree)).toEqual(['Compose']);
+
+    press(fab);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the label when shrunk and respects disabled', () => {
+    const tree = render(
+      <FloatingActionButton
+        testID="compose"
+        icon="pencil"
+        label="Compose"
+        extended={false}
+        disabled
+      />
+    );
+    expect(texts(tree)).toEqual([]);
+    expect(byTestID(tree, 'compose').props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
   });
 });
 

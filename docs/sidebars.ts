@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'components/navigationrail',
         'components/button',
         'components/buttongroup',
+        'components/floatingactionbutton',
         'components/floatingtoolbar',
         'components/liquidglass',
       ],

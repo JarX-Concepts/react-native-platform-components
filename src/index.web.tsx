@@ -10,6 +10,7 @@ export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './SegmentedControl';
 export type * from './TabBar';
+export type * from './FloatingActionButton';
 export type * from './NavigationRail';
 export type * from './Button';
 export type * from './ButtonGroup';
@@ -34,6 +35,7 @@ export {
 } from './web/DateRangePicker';
 export { SegmentedControl } from './web/SegmentedControl';
 export { TabBar } from './web/TabBar';
+export { FloatingActionButton } from './web/FloatingActionButton';
 export { NavigationRail } from './web/NavigationRail';
 export { SelectionMenu } from './web/SelectionMenu';
 export { TextField } from './web/TextField';

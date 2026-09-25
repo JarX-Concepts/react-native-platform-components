@@ -101,6 +101,7 @@ All color props in this library support the same formats as React Native's `back
 - `SegmentedControl`: `selectedSegmentColor`, `activeTintColor`, `inactiveTintColor`, `badgeStyle.backgroundColor`, `badgeStyle.color`, `android.rippleColor`, `android.strokeColor` (these also accept `PlatformColor` / `DynamicColorIOS`)
 - `TabBar`: `activeTintColor`, `inactiveTintColor`, `barColor`, `badgeStyle.backgroundColor`, `badgeStyle.color`, `android.indicatorColor`, `android.rippleColor`
 - `NavigationRail`: `activeTintColor`, `inactiveTintColor`, `railColor`, `badgeStyle.backgroundColor`, `badgeStyle.color`, `android.indicatorColor`, `android.rippleColor`
+- `FloatingActionButton`: `color`, `tintColor`
 - `LiquidGlass`: `ios.tintColor`, `android.fallbackBackgroundColor`
 
 ```tsx

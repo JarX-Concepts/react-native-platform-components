@@ -15,6 +15,7 @@ import {
 import { ButtonDemo } from './ButtonDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
+import { FloatingActionButtonDemo } from './FloatingActionButtonDemo';
 import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
@@ -38,6 +39,7 @@ type DemoKey =
   | 'tabBar'
   | 'navigationRail'
   | 'button'
+  | 'floatingActionButton'
   | 'floatingToolbar'
   | 'textField'
   | 'liquidGlass'
@@ -52,6 +54,7 @@ const COMPONENT_DEMOS = [
   { label: 'Tab Bar', data: 'tabBar' },
   { label: 'Navigation Rail', data: 'navigationRail' },
   { label: 'Button', data: 'button' },
+  { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
 ];
 
@@ -135,6 +138,7 @@ export default function App(): React.ReactElement {
       {demo === 'tabBar' && <TabBarDemo />}
       {demo === 'navigationRail' && <NavigationRailDemo />}
       {demo === 'button' && <ButtonDemo />}
+      {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}

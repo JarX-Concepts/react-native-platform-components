@@ -3,6 +3,7 @@ export * from './SelectionMenu';
 export * from './ContextMenu';
 export * from './SegmentedControl';
 export * from './TabBar';
+export * from './FloatingActionButton';
 export * from './NavigationRail';
 export * from './Button';
 export * from './ButtonGroup';
