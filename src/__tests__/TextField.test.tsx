@@ -20,6 +20,7 @@ jest.mock('../TextFieldNativeComponent', () => {
       blur: jest.fn(),
       clear: jest.fn(),
       setText: jest.fn(),
+      setSelection: jest.fn(),
     },
   };
 });
@@ -53,6 +54,7 @@ const Commands = jest.requireMock('../TextFieldNativeComponent').Commands as {
   blur: jest.Mock;
   clear: jest.Mock;
   setText: jest.Mock;
+  setSelection: jest.Mock;
 };
 const TextInputState = jest.requireMock(
   'react-native/Libraries/Components/TextInput/TextInputState'
@@ -92,6 +94,7 @@ describe('TextField', () => {
     Commands.blur.mockClear();
     Commands.clear.mockClear();
     Commands.setText.mockClear();
+    Commands.setSelection.mockClear();
   });
 
   it('applies the defaults', () => {
@@ -134,7 +137,13 @@ describe('TextField', () => {
       borderStyle: '',
       labelPlacement: '',
       labelWidth: 0,
+      passwordRules: '',
     });
+    expect(props.submitBehavior).toBe('blurAndSubmit');
+    expect(props.keyboardToolbarItems).toEqual([]);
+    expect(props.onFieldSelectionChange).toBeUndefined();
+    expect(props.onKeyboardToolbarPress).toBeUndefined();
+    expect(Commands.setSelection).not.toHaveBeenCalled();
     expect(props.onFieldSubmit).toBeUndefined();
     expect(props.onTrailingIconPress).toBeUndefined();
     expect(props.leadingIconTestID).toBe('');
@@ -210,6 +219,7 @@ describe('TextField', () => {
     expect(props.autoCorrect).toBe('disabled');
     expect(props.secureTextEntry).toBe('secure');
     expect(props.lines).toBe('multiline');
+    expect(props.submitBehavior).toBe('newline');
     expect(props.interactivity).toBe('disabled');
     expect(props.autoFocus).toBe('focus');
     expect(props.selectTextOnFocus).toBe('select');
@@ -449,6 +459,176 @@ describe('TextField', () => {
       lastNativeProps().onFieldPress({ nativeEvent: {} });
     });
     expect(onPress).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('resolves submitBehavior as TextInput does', () => {
+    const cases: Array<[object, string]> = [
+      [{}, 'blurAndSubmit'],
+      [{ submitBehavior: 'submit' }, 'submit'],
+      // A single-line field has no newline to insert
+      [{ submitBehavior: 'newline' }, 'blurAndSubmit'],
+      [{ multiline: true }, 'newline'],
+      [{ multiline: true, submitBehavior: 'submit' }, 'submit'],
+      [{ multiline: true, submitBehavior: 'blurAndSubmit' }, 'blurAndSubmit'],
+    ];
+    for (const [props, expected] of cases) {
+      const tree = render(<TextField {...props} />);
+      expect(lastNativeProps().submitBehavior).toBe(expected);
+      act(() => tree.unmount());
+    }
+  });
+
+  it('reports selection changes in the TextInput shape', () => {
+    const onSelectionChange = jest.fn();
+    const tree = render(<TextField onSelectionChange={onSelectionChange} />);
+    act(() => {
+      lastNativeProps().onFieldSelectionChange({
+        nativeEvent: { start: 2, end: 5 },
+      });
+    });
+    expect(onSelectionChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nativeEvent: { selection: { start: 2, end: 5 } },
+      })
+    );
+    // An uncontrolled selection is never pushed
+    expect(Commands.setSelection).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('pushes a controlled selection after the text, without echoing native', () => {
+    function Controlled(props: { selection: { start: number; end?: number } }) {
+      const React = require('react');
+      const [selection, setSelection] = React.useState(props.selection);
+      React.useEffect(() => setSelection(props.selection), [props.selection]);
+      return (
+        <TextField
+          value="Hello world"
+          selection={selection}
+          onSelectionChange={(event) =>
+            setSelection(event.nativeEvent.selection)
+          }
+        />
+      );
+    }
+    const tree = render(<Controlled selection={{ start: 0 }} />);
+    const node = nativeNode();
+    // `end` defaults to `start`
+    expect(Commands.setSelection).toHaveBeenCalledTimes(1);
+    expect(Commands.setSelection).toHaveBeenLastCalledWith(node, 0, 0, 0);
+
+    // The user moves the cursor and the owner follows: nothing to push
+    act(() => {
+      lastNativeProps().onFieldSelectionChange({
+        nativeEvent: { start: 3, end: 3 },
+      });
+    });
+    expect(Commands.setSelection).toHaveBeenCalledTimes(1);
+
+    // An edit, then a new selection from JS carries the latest count
+    act(() => {
+      lastNativeProps().onFieldChange({
+        nativeEvent: { text: 'Hello world', eventCount: 4 },
+      });
+    });
+    act(() => tree.update(<Controlled selection={{ start: 6, end: 11 }} />));
+    expect(Commands.setSelection).toHaveBeenCalledTimes(2);
+    expect(Commands.setSelection).toHaveBeenLastCalledWith(node, 4, 6, 11);
+    act(() => tree.unmount());
+  });
+
+  it('returns a constant controlled selection to its value', () => {
+    const tree = render(<TextField value="abc" selection={{ start: 1 }} />);
+    const node = nativeNode();
+    expect(Commands.setSelection).toHaveBeenCalledTimes(1);
+    act(() => {
+      lastNativeProps().onFieldSelectionChange({
+        nativeEvent: { start: 3, end: 3 },
+      });
+    });
+    expect(Commands.setSelection).toHaveBeenCalledTimes(2);
+    expect(Commands.setSelection).toHaveBeenLastCalledWith(node, 0, 1, 1);
+    act(() => tree.unmount());
+  });
+
+  it('sets the selection through the ref with the latest event count', () => {
+    const ref = createRef<TextFieldRef>();
+    const tree = render(<TextField ref={ref} defaultValue="abcdef" />);
+    const node = nativeNode();
+    act(() => {
+      lastNativeProps().onFieldChange({
+        nativeEvent: { text: 'abcdefg', eventCount: 2 },
+      });
+    });
+    act(() => ref.current?.setSelection(1, 4));
+    expect(Commands.setSelection).toHaveBeenLastCalledWith(node, 2, 1, 4);
+    act(() => ref.current?.setSelection(3));
+    expect(Commands.setSelection).toHaveBeenLastCalledWith(node, 2, 3, 3);
+    act(() => tree.unmount());
+  });
+
+  it('flattens the iOS keyboard toolbar and routes item presses', () => {
+    const onItemPress = jest.fn();
+    const tree = render(
+      <TextField
+        ios={{
+          passwordRules: 'minlength: 12;',
+          keyboardToolbar: {
+            items: [
+              { id: 'prev', icon: 'chevron.up', testID: 'prev' },
+              { id: 'save', systemItem: 'save', prominent: true },
+            ],
+            done: 'Close',
+            doneTestID: 'close',
+            onItemPress,
+          },
+        }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.ios.passwordRules).toBe('minlength: 12;');
+    const items = props.keyboardToolbarItems;
+    expect(items.map((item: { kind: string }) => item.kind)).toEqual([
+      'button',
+      'button',
+      'flexibleSpace',
+      'done',
+    ]);
+    expect(items[0]).toMatchObject({
+      itemId: 'prev',
+      iconType: 'sfSymbol',
+      iconName: 'chevron.up',
+      testID: 'prev',
+      prominent: 'false',
+    });
+    expect(items[1]).toMatchObject({
+      itemId: 'save',
+      systemItem: 'save',
+      prominent: 'true',
+    });
+    expect(items[3]).toMatchObject({ title: 'Close', testID: 'close' });
+
+    act(() => {
+      lastNativeProps().onKeyboardToolbarPress({
+        nativeEvent: { itemId: 'save' },
+      });
+    });
+    expect(onItemPress).toHaveBeenCalledWith('save');
+    act(() => tree.unmount());
+  });
+
+  it('puts a lone Done button at the end of the toolbar', () => {
+    const tree = render(
+      <TextField ios={{ keyboardToolbar: { done: true } }} />
+    );
+    const items = lastNativeProps().keyboardToolbarItems;
+    expect(items.map((item: { kind: string }) => item.kind)).toEqual([
+      'flexibleSpace',
+      'done',
+    ]);
+    // The system Done button brings its own title
+    expect(items[1].title).toBe('');
     act(() => tree.unmount());
   });
 

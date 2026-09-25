@@ -38,7 +38,7 @@ public final class PCDatePickerView: UIControl,
 
     // MARK: - Props
 
-    /// "date" | "time" | "dateAndTime" | "countDownTimer"
+    /// "date" | "time" | "dateAndTime" | "countDownTimer" | "yearAndMonth"
     public var mode: String = "date" {
         didSet {
             if oldValue != mode {
@@ -75,6 +75,16 @@ public final class PCDatePickerView: UIControl,
 
     public var localeIdentifier: String? { didSet { applyLocale() } }
     public var timeZoneName: String? { didSet { applyTimeZone() } }
+
+    /// "" (the locale's own clock) | "12" | "24"
+    public var hourFormat: String = "" {
+        didSet {
+            if oldValue != hourFormat {
+                applyLocale()
+                invalidateSize()
+            }
+        }
+    }
 
     /// "wheels" | "compact" | "inline" | "automatic"
     public var preferredStyle: String? {
@@ -489,11 +499,29 @@ public final class PCDatePickerView: UIControl,
 
     private func applyLocale() {
         suppressNextChangesBriefly()
+        var locale: Locale?
         if let id = localeIdentifier, !id.isEmpty {
-            picker.locale = Locale(identifier: id)
-        } else {
-            picker.locale = nil
+            locale = Locale(identifier: id)
         }
+        // UIDatePicker draws its clock in its locale's hour cycle, so a
+        // forced 12/24-hour clock is the locale with that cycle
+        if hourFormat == "12" || hourFormat == "24" {
+            locale = PCDatePickerView.locale(locale ?? .current, is24Hour: hourFormat == "24")
+        }
+        picker.locale = locale
+    }
+
+    /// [base] with its hour cycle forced to 0–23 or 1–12.
+    private static func locale(_ base: Locale, is24Hour: Bool) -> Locale {
+        if #available(iOS 16.0, *) {
+            var components = Locale.Components(locale: base)
+            components.hourCycle = is24Hour ? .zeroToTwentyThree : .oneToTwelve
+            return Locale(components: components)
+        }
+        // The ICU keyword that Locale.Components writes on iOS 16+
+        let keyword = "hours=\(is24Hour ? "h23" : "h12")"
+        let id = base.identifier
+        return Locale(identifier: id.contains("@") ? "\(id);\(keyword)" : "\(id)@\(keyword)")
     }
 
     private func applyTimeZone() {
@@ -505,20 +533,30 @@ public final class PCDatePickerView: UIControl,
         }
     }
 
+    /// The countdown timer and the month-and-year picker only exist as wheels
+    private var wheelsOnlyMode: Bool { mode == "countDownTimer" || mode == "yearAndMonth" }
+
     private func applyMode() {
         suppressNextChangesBriefly()
-        // UIKit throws when countDownTimer meets the compact or inline
+        // UIKit throws when a wheels-only mode meets the compact or inline
         // style; set the style it supports first
-        if mode == "countDownTimer" { applyPreferredStyle() }
+        if wheelsOnlyMode { applyPreferredStyle() }
         switch mode {
         case "date": picker.datePickerMode = .date
         case "time": picker.datePickerMode = .time
         case "dateAndTime": picker.datePickerMode = .dateAndTime
         case "countDownTimer": picker.datePickerMode = .countDownTimer
+        case "yearAndMonth":
+            // iOS 17.4; the date wheels before
+            if #available(iOS 17.4, *) {
+                picker.datePickerMode = .yearAndMonth
+            } else {
+                picker.datePickerMode = .date
+            }
         default: picker.datePickerMode = .date
         }
-        // Leaving countdown, the preferred style can apply again
-        if mode != "countDownTimer" { applyPreferredStyle() }
+        // Leaving a wheels-only mode, the preferred style can apply again
+        if !wheelsOnlyMode { applyPreferredStyle() }
         // countDownDuration is ignored outside countDownTimer mode, so apply it
         // again in case the prop arrived before the mode did.
         applyCountDownDuration()
@@ -527,8 +565,7 @@ public final class PCDatePickerView: UIControl,
     private func applyPreferredStyle() {
         guard #available(iOS 13.4, *) else { return }
         suppressNextChangesBriefly()
-        // The countdown timer only exists as wheels
-        let s = mode == "countDownTimer" ? "wheels" : (preferredStyle ?? "automatic")
+        let s = wheelsOnlyMode ? "wheels" : (preferredStyle ?? "automatic")
         switch s {
         case "wheels": picker.preferredDatePickerStyle = .wheels
         case "compact": picker.preferredDatePickerStyle = .compact

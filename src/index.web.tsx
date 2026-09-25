@@ -15,6 +15,7 @@ export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
+export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
@@ -25,6 +26,10 @@ export * from './labelStyle';
 export { Button } from './web/Button';
 export { ButtonGroup } from './web/ButtonGroup';
 export { DatePicker } from './web/DatePicker';
+export {
+  DateRangePicker,
+  isDateRangePickerSupported,
+} from './web/DateRangePicker';
 export { SegmentedControl } from './web/SegmentedControl';
 export { TabBar } from './web/TabBar';
 export { NavigationRail } from './web/NavigationRail';
@@ -34,6 +39,7 @@ export {
   ContextMenu,
   FloatingToolbar,
   LiquidGlass,
+  LiquidGlassContainer,
   isLiquidGlassSupported,
 } from './web/containers';
 export { setNativeTheme, useNativeTheme } from './web/NativeTheme';

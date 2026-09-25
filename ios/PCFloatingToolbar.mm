@@ -53,6 +53,13 @@ using namespace facebook::react;
   [childComponentView removeFromSuperview];
 }
 
+// While the toolbar is slid away (hideOnScroll), the empty space it left
+// passes touches to the content underneath
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  UIView *hit = [super hitTest:point withEvent:event];
+  return hit == self && _view.isScrollHidden ? nil : hit;
+}
+
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &newProps = *std::static_pointer_cast<const PCFloatingToolbarProps>(props);
@@ -68,6 +75,20 @@ using namespace facebook::react;
   const auto &oldIos = prevProps ? prevProps->ios : PCFloatingToolbarIosStruct{};
   if (!prevProps || newIos.effect != oldIos.effect) {
     _view.effectStyle = newIos.effect == "clear" ? @"clear" : @"regular";
+  }
+  if (!prevProps || newIos.interactive != oldIos.interactive) {
+    _view.interactive = newIos.interactive;
+  }
+  if (!prevProps || newIos.scrollEdgeEffect != oldIos.scrollEdgeEffect) {
+    _view.scrollEdgeEffect = [NSString stringWithUTF8String:newIos.scrollEdgeEffect.c_str()];
+  }
+
+  // The linked ScrollView and hide on scroll
+  if (!prevProps || newProps.scrollViewNativeID != prevProps->scrollViewNativeID) {
+    _view.scrollViewNativeID = [NSString stringWithUTF8String:newProps.scrollViewNativeID.c_str()];
+  }
+  if (!prevProps || newProps.hideOnScroll != prevProps->hideOnScroll) {
+    _view.hideOnScroll = newProps.hideOnScroll;
   }
 
   // android.variant: Android only
