@@ -15,6 +15,7 @@ import {
   DatePicker,
   LiquidGlass,
   LiquidGlassContainer,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -214,6 +215,31 @@ describe('Button (mock)', () => {
     const tree = render(<Button testID="save" label="Save" loading />);
     const button = byTestID(tree, 'save');
     expect(button.props.accessibilityState).toMatchObject({ busy: true });
+  });
+});
+
+describe('NavigationRail (mock)', () => {
+  it('renders the header and selects destinations', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <NavigationRail
+        testID="rail"
+        header={<Text>Compose</Text>}
+        items={[
+          { label: 'Home', value: 'home', testID: 'rail-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+      />
+    );
+    expect(texts(tree)).toEqual(['Compose', 'Home', 'Inbox', '2']);
+    press(byTestID(tree, 'rail-inbox'));
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    press(byTestID(tree, 'rail-home'));
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
   });
 });
 

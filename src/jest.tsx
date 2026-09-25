@@ -34,6 +34,7 @@ import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
+import type { NavigationRailProps } from './NavigationRail';
 import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
@@ -58,6 +59,7 @@ export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './TabBar';
+export type * from './NavigationRail';
 export type * from './sharedTypes';
 export type * from './NativeTheme';
 export type {
@@ -505,6 +507,67 @@ export function TabBar(props: TabBarProps): React.ReactElement {
         })}
       </View>
     </>
+  );
+}
+
+/**
+ * A vertical `tablist` view carrying `testID`: the header, then a
+ * `Pressable` per destination with its `testID`, else `${testID}-${value}`.
+ * Pressing a destination calls `onSelect`, or `onReselect` when it is the
+ * selected one.
+ */
+export function NavigationRail(props: NavigationRailProps): React.ReactElement {
+  const {
+    items,
+    selectedValue,
+    onSelect,
+    onReselect,
+    header,
+    testID,
+    labelVisibility,
+    menuGravity,
+    expanded,
+    activeTintColor,
+    inactiveTintColor,
+    railColor,
+    badgeStyle,
+    labelStyle,
+    maxFontSizeMultiplier,
+    android,
+    ...viewProps
+  } = props;
+
+  return (
+    <View {...viewProps} testID={testID}>
+      {header}
+      <View accessibilityRole="tablist">
+        {items.map((item, index) => {
+          const selected = item.value === selectedValue;
+          return (
+            <Pressable
+              key={item.value}
+              testID={
+                item.testID ?? (testID ? `${testID}-${item.value}` : undefined)
+              }
+              accessibilityRole="tab"
+              accessibilityLabel={item.accessibilityLabel ?? item.label}
+              accessibilityState={{ selected, disabled: !!item.disabled }}
+              disabled={item.disabled}
+              onPress={() =>
+                selected
+                  ? onReselect?.(item.value, index)
+                  : onSelect?.(item.value, index)
+              }
+            >
+              <Text>{item.label}</Text>
+              {item.badge != null && item.badge !== '' ? (
+                <Text>{String(item.badge)}</Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 

@@ -16,6 +16,7 @@ import {
   DateRangePicker,
   LiquidGlass,
   LiquidGlassContainer,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -165,6 +166,38 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('NavigationRail (web)', () => {
+  it('selects and reselects destinations, with the header above', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <NavigationRail
+        header={<button type="button">Compose</button>}
+        items={[
+          { label: 'Home', value: 'home', testID: 'rail-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+        labelVisibility="selected"
+      />
+    );
+    const [compose, home, inbox] = tree.root.findAllByType('button');
+    expect(compose!.props.children).toBe('Compose');
+    expect(home!.props.role).toBe('tab');
+    expect(home!.props['aria-selected']).toBe(true);
+    expect(home!.props['data-testid']).toBe('rail-home');
+    // Only the selected destination is labeled
+    expect(inbox!.props.children).toContain(null);
+
+    click(inbox!);
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    click(home!);
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
   });
 });
 
