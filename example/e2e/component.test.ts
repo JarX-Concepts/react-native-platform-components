@@ -230,6 +230,10 @@ describe('Platform Components Example', () => {
       .withTimeout(5000);
   });
 
+  // The first flow runs on a simulator that is still cold, and CI's iOS
+  // runner has taken 96 to 133 s for it, while its steps take about 27 s
+  // locally (CI's log shows the app busy with layout and animations), so it
+  // gets more than the 120 s default
   it('should test Date Picker functionality', async () => {
     // The demo titles the Android dialogs' negative button. On iOS the
     // picker presents in a popover, and the Cancel item of its own confirm
@@ -329,10 +333,10 @@ describe('Platform Components Example', () => {
         .not.toHaveText('—')
         .withTimeout(8000);
     }
-  });
+  }, 180000);
 
-  // UIDatePicker's wheels-only modes (iOS): their own flow, which keeps the
-  // Date Picker flow well under the time limit on CI's slower iOS runner
+  // UIDatePicker's wheels-only modes (iOS), in a flow of their own to keep
+  // the first flow short
   it('should test Date Picker wheels', async () => {
     // Android has no countdown or month-and-year picker
     if (isAndroid()) return;
