@@ -3,6 +3,17 @@ title: "NavigationRail"
 description: "Material navigation rail for React Native: NavigationRailView (Material 3 Expressive) on Android, with a header, badges, menu gravity and the expanded rail. iOS falls back to a column of tab-style UIButtons."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-navigationrail.gif" height="480" alt="NavigationRail on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-navigationrail.gif" height="480" alt="NavigationRail on Android" /></td>
+  </tr>
+</table>
+
 The Material **navigation rail**: the side navigation for tablets, foldables and landscape screens, where Material apps put their destinations instead of a bottom bar. Android renders **NavigationRailView** with the Material 3 Expressive style: destinations with the active indicator, badges, a header slot (usually a floating action button), `menuGravity` and the expanded rail.
 
 iOS has no navigation rail. The iPad sidebar belongs to the navigation stack (`UISplitViewController`, `UITabBarController`'s sidebar), which this library doesn't manage. On iOS, `NavigationRail` falls back to a column of tab-style `UIButton`s: the image above the title, the selected destination in the accent color as `UITabBar` shows it, badges, and the header above them. It has no Material pill indicator. On iPhone, use [TabBar](/components/tabbar).

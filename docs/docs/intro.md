@@ -10,7 +10,7 @@ Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **Segm
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-dark.webp" />
-    <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
+    <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, TabBar, NavigationRail, FloatingActionButton, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
   </picture>
 </p>
 <p align="center"><sub>Every tile is the platform's own widget, captured from the example app. Each component page has full recordings on both platforms; <a href="/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
