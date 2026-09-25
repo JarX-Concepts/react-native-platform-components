@@ -1080,22 +1080,11 @@ describe('Platform Components Example', () => {
       await expectText('tab-accessory-state', 'paused, track 1');
     } else if (isAndroid()) {
       // Slid away with the bar. On a slow emulator the first scroll can end
-      // before the bar starts hiding, so scroll on a little, a bounded number
-      // of times: a bar that never hides fails here rather than scrolling
-      // forever.
-      for (let attempt = 1; ; attempt++) {
-        try {
-          await waitFor(element(by.id('tab-accessory')))
-            .not.toBeVisible()
-            .withTimeout(2000);
-          break;
-        } catch (error) {
-          if (attempt >= 4) throw error;
-          await element(by.id('tab-player-feed'))
-            .scroll(150, 'down')
-            .catch(() => {});
-        }
-      }
+      // before the bar starts hiding, so keep scrolling until it's gone.
+      await waitFor(element(by.id('tab-accessory')))
+        .not.toBeVisible()
+        .whileElement(by.id('tab-player-feed'))
+        .scroll(150, 'down');
     }
     // Back up: expanded, the accessory regular again (a short swipe, so
     // Android doesn't hand the rest on to the page)
