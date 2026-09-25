@@ -99,7 +99,7 @@ A ScrollView nested in another vertical ScrollView needs `nestedScrollEnabled` o
 The button takes the Material colors on Android (the primary container, with the "on" color for the icon and label), including a brand color set with [`useNativeTheme`](/guides/theming), and the tint color on iOS. `color` and `tintColor` override them:
 
 - **Android:** `color` is the `backgroundTint` and `tintColor` the icon tint and text color. The disabled colors stay Material's.
-- **iOS:** `color` is the configuration's `baseBackgroundColor`, which tints the prominent glass on iOS 26, and `tintColor` its `baseForegroundColor`. The iOS 26 glass renders the foreground with its own vibrancy.
+- **iOS:** `color` is the configuration's `baseBackgroundColor`, which tints the prominent glass on iOS 26, and `tintColor` its `baseForegroundColor`. The iOS 26 prominent glass draws the icon and label with its own vibrancy, a light tint over the container color with a lighter rim rather than plain white, as it does for a Button with `variant="prominentGlass"`.
 
 | iOS 26 | Android |
 | --- | --- |
