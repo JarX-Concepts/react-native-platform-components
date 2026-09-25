@@ -163,25 +163,32 @@ export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
   const button = element(by.id('picker-toggle-button'));
 
-  // The switch mounts (or unmounts) the picker's Open/Close button, so that
-  // button's presence is what says which mode the demo is in
-  const inModalMode = async () => {
+  // The switch's own value says which mode the demo is in. The Open/Close
+  // button it mounts can be there but covered (by a popover or menu that is
+  // still going away), which a visibility check reads as "not modal".
+  const isOn = async () => {
     try {
-      await expect(button).toBeVisible();
+      await expect(toggle).toHaveToggleValue(true);
       return true;
     } catch {
       return false;
     }
   };
 
-  if ((await inModalMode()) === enabled) return;
+  if ((await isOn()) === enabled) return;
   await toggle.tap();
+  // A tap that lands while the screen is still settling can be dropped;
+  // the switch shows it, so tap once more
+  if ((await isOn()) !== enabled) {
+    await pause(500);
+    if ((await isOn()) !== enabled) await toggle.tap();
+  }
   // React re-renders before the button appears or goes, so poll for it rather
   // than asserting straight after the tap
   if (enabled) {
     await waitFor(button).toBeVisible().withTimeout(10000);
   } else {
-    await waitFor(button).not.toBeVisible().withTimeout(10000);
+    await waitFor(button).not.toExist().withTimeout(10000);
   }
 };
 
@@ -251,18 +258,29 @@ describe('Platform Components Example', () => {
       .withTimeout(5000);
   });
 
+  // The first flow runs on a simulator that is still cold, and CI's iOS
+  // runner has taken 96 to 133 s for it, while its steps take about 27 s
+  // locally (CI's log shows the app busy with layout and animations), so it
+  // gets more than the 120 s default
   it('should test Date Picker functionality', async () => {
+    // The demo titles the Android dialogs' negative button. On iOS the
+    // picker presents in a popover, and the Cancel item of its own confirm
+    // toolbar is the only control above the overlay. A tap aimed at the demo
+    // behind it never lands: the app stops answering Detox, which waits on
+    // that one tap until the test times out.
+    const cancelControl = () =>
+      isAndroid()
+        ? element(by.text('Custom Cancel')).atIndex(0)
+        : element(by.label('Cancel')).atIndex(0);
+
+    // Opens the modal and waits for it, rather than for a fixed time
+    const openModal = async () => {
+      await element(by.id('picker-toggle-button')).tap();
+      await waitFor(cancelControl()).toBeVisible().withTimeout(10000);
+    };
+
     const dismissModal = async () => {
-      if (isAndroid()) {
-        // The demo titles the dialog's negative button
-        await element(by.text('Custom Cancel')).atIndex(0).tap();
-      } else {
-        // The picker presents in a popover, and the Cancel item of its own
-        // confirm toolbar is the only control above the overlay. A tap aimed
-        // at the demo behind it never lands: the app stops answering Detox,
-        // which waits on that one tap until the test times out.
-        await element(by.label('Cancel')).atIndex(0).tap();
-      }
+      await cancelControl().tap();
       // The Open/Close button is hittable again only once the picker has gone
       await waitFor(element(by.id('picker-toggle-button')))
         .toBeVisible()
@@ -282,13 +300,22 @@ describe('Platform Components Example', () => {
     // catching the failure costs a full matcher timeout on every run.
     if (isAndroid()) {
       await selectMenuOption('android-material-menu', 'M3');
+      // The Material pickers open on their text fields
+      await selectMenuOption('android-input-mode-menu', 'Text');
     } else {
       await selectMenuOption('ios-style-menu', 'Inline');
     }
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    // Open the modal
+    await openModal();
+
+    if (isAndroid()) {
+      await expect(
+        element(
+          by.type('com.google.android.material.textfield.TextInputEditText')
+        ).atIndex(0)
+      ).toBeVisible();
+    }
 
     // Dismiss it
     await dismissModal();
@@ -300,33 +327,91 @@ describe('Platform Components Example', () => {
       await selectMenuOption('ios-style-menu', 'Wheels');
     }
 
-    // Set mode to "Time" (then pause)
+    // Set mode to "Time"
     await selectMenuOption('mode-menu', 'Time');
-    await pause(1000);
 
     // Enable the modal mode
     await ensureModalMode(true);
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    if (isAndroid()) {
+      // A 24-hour clock: the keyboard entry has no AM/PM toggle
+      await selectMenuOption('hour-format-menu', '24-hour');
+    }
+
+    // Open the modal
+    await openModal();
+
+    if (isAndroid()) {
+      await expect(element(by.text('AM'))).not.toBeVisible();
+    }
 
     // Dismiss it
     await dismissModal();
 
-    if (!isAndroid()) {
-      // Countdown from the inline style (UIKit only has countdown wheels),
-      // reporting the duration
-      await ensureModalMode(false);
-      await selectMenuOption('ios-style-menu', 'Inline');
-      await selectMenuOption('mode-menu', 'Countdown');
-      await pause(800);
-      await scrollToId('date-picker');
+    if (isAndroid()) {
+      // The Material range picker opens on its suggested range; saving it
+      // reports both days
+      await scrollToId('range-open-button');
+      await element(by.id('range-open-button')).tap();
+      await waitFor(element(by.text('Custom OK')))
+        .toBeVisible()
+        .withTimeout(10000);
+      await element(by.text('Custom OK')).atIndex(0).tap();
+      await waitFor(element(by.id('range-value')))
+        .not.toHaveText('—')
+        .withTimeout(8000);
+    }
+  }, 180000);
+
+  // UIDatePicker's wheels-only modes (iOS), in a flow of their own to keep
+  // the first flow short
+  it('should test Date Picker wheels', async () => {
+    // Android has no countdown or month-and-year picker
+    if (isAndroid()) return;
+
+    // The app opens on the Date Picker demo, embedded with the inline style
+    // (beforeEach waits for it). Countdown from there (UIKit only has
+    // countdown wheels), reporting the duration
+    await selectMenuOption('mode-menu', 'Countdown');
+    await pause(800);
+    await scrollToId('date-picker');
+
+    // A swiped wheel can leave a run loop block pending that Detox keeps
+    // waiting on after the app has gone idle (the flow then stalled until
+    // it timed out), so the wheel steps run unsynchronized and their checks
+    // poll
+    await device.disableSynchronization();
+    try {
       await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.7, 0.5);
-      await pause(1500);
-      await expect(element(by.id('countdown-duration'))).not.toHaveText(
-        '(none)'
-      );
+      await waitFor(element(by.id('countdown-duration')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
+
+      // Month and year wheels (iOS 17.4+), reporting the month picked
+      await element(by.id('mode-menu')).tap();
+      const yearAndMonth = element(
+        by
+          .text('Year & Month')
+          .withAncestor(by.type('_UIContextMenuContainerView'))
+      ).atIndex(0);
+      await waitFor(yearAndMonth).toBeVisible().withTimeout(5000);
+      await yearAndMonth.tap();
+      await waitFor(element(by.id('year-month-value')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await pause(800);
+      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.3, 0.5);
+      await waitFor(element(by.id('year-month-value')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
+      // The pending block belongs to the touch-tracking run loop mode; a
+      // drag on the list runs that mode again and lets it go
+      await element(by.id('demo-scroll'))
+        .scroll(40, 'down', NaN, 0.15)
+        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15));
+      await pause(500);
+    } finally {
+      await device.enableSynchronization();
     }
   });
 
@@ -986,6 +1071,41 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('toolbar-last-view'))).toHaveText('years');
     await tapSegment('All');
     await pause(600);
+
+    // A toolbar linked to a ScrollView. Scroll the page from its upper part:
+    // a swipe starting on the nested ScrollView would scroll that instead
+    await waitFor(
+      element(
+        by.id(isAndroid() ? 'hide-on-scroll-switch' : 'edge-effect-picker')
+      )
+    )
+      .toBeVisible()
+      .whileElement(by.id('demo-scroll'))
+      .scroll(200, 'down', 0.5, 0.2);
+    if (!isAndroid()) {
+      // iOS 26 scroll edge effects under the toolbar, and interactive glass
+      for (const effect of ['Soft', 'Hard', 'Hidden', 'Automatic']) {
+        await tapSegment(effect);
+        await pause(500);
+      }
+      await element(by.id('interactive-glass-switch')).tap();
+      await pause(400);
+    }
+
+    // Hide on scroll: away while the content scrolls down, back as it
+    // scrolls up, and usable again
+    await element(by.id('hide-on-scroll-switch')).tap();
+    await pause(400);
+    await element(by.id('toolbar-feed')).scroll(250, 'down', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .not.toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('toolbar-feed')).scroll(100, 'up', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('feed-toolbar-edit')).tap();
+    await expectText('feed-last-action', 'edit');
   });
 
   it('should test Liquid Glass functionality', async () => {
@@ -1073,6 +1193,35 @@ describe('Platform Components Example', () => {
       await pause(300);
       await element(by.id('liquid-glass-demo-2')).longPress(600);
       await pause(300);
+
+      // LiquidGlassContainer: a button materializes out of the group, the
+      // first one widens, and both morph back
+      await scrollToId('glass-expand-switch');
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await waitFor(element(by.text('♥ Favorite')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await pause(600);
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .not.toExist()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await pause(600);
+
+      // The system spacing keeps them apart; then the demo's 24 again
+      await selectMenuOption('spacing-menu', 'Default');
+      await pause(800);
+      await selectMenuOption('spacing-menu', '24');
+      await pause(600);
+
+      // Concentric and capsule corners
+      await scrollToId('corner-capsule');
+      await expect(element(by.id('corner-concentric'))).toBeVisible();
     }
 
     // Take final screenshot
@@ -1155,6 +1304,7 @@ describe('Platform Components Example', () => {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
       await pause(700);
     }
+
     await scrollToId('editable-switch');
 
     if (isAndroid()) {
@@ -1198,6 +1348,98 @@ describe('Platform Components Example', () => {
     await pause(500);
     // No focus event: the last one is still the icon press above
     await expectText('field-last-event', 'icon: due');
+  });
+
+  // The Keyboard section: its own flow, since the Text Field flow is already
+  // long on CI's slower emulator and simulator
+  it('should test Text Field keyboard features', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
+
+    // A drag from near the top of the list, which also puts the keyboard
+    // away as it does for a TextInput. Near the end of the content there is
+    // less to scroll than asked, which is fine here.
+    const dragList = async (distance: number) => {
+      try {
+        await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
+      } catch {
+        // At the end of the content
+      }
+    };
+
+    // Scrolls a field into view. On iOS it then goes into the upper part of
+    // the screen, clear of the keyboard and its toolbar, in one drag sized
+    // from the frame the field reports (the screens differ). Scrolling to
+    // an anchor further down first keeps that drag short.
+    const liftField = async (fieldId: string, anchorId = fieldId) => {
+      await scrollToId(anchorId);
+      if (isAndroid()) return;
+      const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+        frame: { y: number };
+      };
+      const distance = Math.round(frame.y - 200);
+      if (distance > 40) await dragList(distance);
+      await pause(300);
+    };
+
+    // iOS: the number pad's toolbar steps the value, and Done dismisses it
+    if (!isAndroid()) {
+      await liftField('field-quantity', 'field-select-word');
+      await inputOf('field-quantity').tap();
+      await waitFor(element(by.id('toolbar-plus')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-plus')).tap();
+      await expect(inputOf('field-quantity')).toHaveText('2');
+      await element(by.id('toolbar-done')).tap();
+      await expectText('field-last-event', 'blur: quantity');
+    }
+
+    // A chat composer (submitBehavior 'submit'): return sends, and on iOS
+    // the field keeps focus and the keyboard stays up. Android types the
+    // return with a tap that focuses the field, and without a hardware
+    // keyboard (CI) the soft keyboard then stays over the list, where the
+    // scrolls start, so Android does this last.
+    const chatSendsOnReturn = async () => {
+      await liftField('field-chat');
+      await typeInto('field-chat', 'Hello');
+      await inputOf('field-chat').tapReturnKey();
+      await expectText('field-chat-sent', 'Hello');
+      await expect(inputOf('field-chat')).toHaveText('');
+      if (!isAndroid()) {
+        await expectText('field-last-event', 'focus: chat');
+      }
+    };
+    if (!isAndroid()) await chatSendsOnReturn();
+
+    // Selection events from native, and a selection set from JS: on iOS by
+    // a keyboard toolbar button, on Android by the demo's button. On iOS
+    // the chat keyboard is still up; a drag puts it away first.
+    if (!isAndroid()) await dragList(40);
+    await liftField('field-selection');
+    if (isAndroid()) {
+      await typeInto('field-selection', 'Hello there');
+      await scrollToId('field-select-word');
+      await element(by.id('field-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // New text puts the cursor at the start, which native reports; no
+      // tap, so no keyboard
+      await typeInto('field-selection', 'Hi there');
+      await expectText('field-selection-value', '0–0');
+      await chatSendsOnReturn();
+    } else {
+      await inputOf('field-selection').tap();
+      await waitFor(element(by.id('toolbar-select-word')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // Detox taps the field before typing, which puts the cursor at the end
+      await inputOf('field-selection').typeText('!');
+      await expectText('field-selection-value', '12–12');
+      await element(by.id('toolbar-selection-done')).tap();
+      await pause(500);
+    }
   });
 
   it('should test Theme functionality', async () => {

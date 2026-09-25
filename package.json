@@ -241,6 +241,7 @@
         "PCButtonGroup": "PCButtonGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
         "PCLiquidGlass": "PCLiquidGlass",
+        "PCLiquidGlassContainer": "PCLiquidGlassContainer",
         "PCTextField": "PCTextField"
       }
     }

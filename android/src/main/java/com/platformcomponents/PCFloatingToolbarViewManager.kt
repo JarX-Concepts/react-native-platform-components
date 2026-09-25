@@ -37,6 +37,14 @@ class PCFloatingToolbarViewManager :
     view.applyColor(value)
   }
 
+  override fun setScrollViewNativeID(view: PCFloatingToolbarView, value: String?) {
+    view.applyScrollViewNativeID(value ?: "")
+  }
+
+  override fun setHideOnScroll(view: PCFloatingToolbarView, value: Boolean) {
+    view.applyHideOnScroll(value)
+  }
+
   override fun setIos(view: PCFloatingToolbarView, value: ReadableMap?) {
     // iOS props are ignored on Android
   }

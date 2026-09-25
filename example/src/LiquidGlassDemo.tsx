@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Image, Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   LiquidGlass,
+  LiquidGlassContainer,
   isLiquidGlassSupported,
   type LiquidGlassColorScheme,
   type LiquidGlassEffect,
@@ -22,6 +23,18 @@ const COLOR_SCHEME_OPTIONS = [
   { label: 'Dark', data: 'dark' },
 ] as const;
 
+// The buttons are 8 apart: 12 keeps them apart, 24 merges them
+const SPACING_OPTIONS = [
+  { label: 'Default', data: '-1' },
+  { label: '12', data: '12' },
+  { label: '24', data: '24' },
+  { label: '40', data: '40' },
+] as const;
+
+const BACKGROUND = {
+  uri: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+};
+
 const TINT_COLOR_OPTIONS = [
   { label: 'None', data: '' },
   { label: 'Blue', data: '#007AFF' },
@@ -38,6 +51,9 @@ export function LiquidGlassDemo(): React.JSX.Element {
     useState<LiquidGlassColorScheme>('system');
   const [tintColor, setTintColor] = useState('');
   const [cornerRadius, setCornerRadius] = useState(20);
+  const [spacing, setSpacing] = useState(24);
+  const [showExtra, setShowExtra] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const effectOptions = useMemo(() => EFFECT_OPTIONS, []);
   const colorSchemeOptions = useMemo(() => COLOR_SCHEME_OPTIONS, []);
@@ -65,9 +81,7 @@ export function LiquidGlassDemo(): React.JSX.Element {
         <View style={styles.previewContainer}>
           {/* Background image for glass effect demonstration */}
           <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-            }}
+            source={BACKGROUND}
             style={styles.backgroundImage}
             resizeMode="cover"
           />
@@ -192,6 +206,119 @@ export function LiquidGlassDemo(): React.JSX.Element {
         </Row>
       </Section>
 
+      <Section title="Container">
+        <View style={styles.previewContainer}>
+          <Image
+            source={BACKGROUND}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
+          {/* Glass within `spacing` of each other merges into one shape;
+              buttons that appear, go or resize morph through the container */}
+          <LiquidGlassContainer
+            testID="glass-container"
+            spacing={spacing}
+            style={styles.glassRow}
+          >
+            <LiquidGlass
+              testID="glass-favorite"
+              cornerStyle="capsule"
+              ios={{ interactive: true }}
+              style={[styles.glassButton, expanded && styles.glassButtonWide]}
+            >
+              <Text style={styles.glassButtonText}>
+                {expanded ? '♥ Favorite' : '♥'}
+              </Text>
+            </LiquidGlass>
+            <LiquidGlass
+              testID="glass-share"
+              cornerStyle="capsule"
+              ios={{ interactive: true }}
+              style={styles.glassButton}
+            >
+              <Text style={styles.glassButtonText}>↑</Text>
+            </LiquidGlass>
+            {showExtra && (
+              <LiquidGlass
+                testID="glass-extra"
+                cornerStyle="capsule"
+                ios={{ interactive: true }}
+                style={styles.glassButton}
+              >
+                <Text style={styles.glassButtonText}>+</Text>
+              </LiquidGlass>
+            )}
+          </LiquidGlassContainer>
+        </View>
+
+        <Row label="Spacing">
+          <SelectionMenu
+            testID="spacing-menu"
+            style={ui.alignEnd}
+            options={SPACING_OPTIONS}
+            selected={String(spacing)}
+            presentation="embedded"
+            placeholder="Spacing"
+            onSelect={(data) => setSpacing(Number(data))}
+          />
+        </Row>
+
+        <Divider />
+
+        <Row label="Extra Button">
+          <Switch
+            style={ui.alignEnd}
+            testID="glass-extra-switch"
+            value={showExtra}
+            onValueChange={setShowExtra}
+          />
+        </Row>
+
+        <Divider />
+
+        <Row label="Expand">
+          <Switch
+            style={ui.alignEnd}
+            testID="glass-expand-switch"
+            value={expanded}
+            onValueChange={setExpanded}
+          />
+        </Row>
+      </Section>
+
+      <Section title="Corner Styles">
+        <View style={styles.previewContainer}>
+          <Image
+            source={BACKGROUND}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
+          <LiquidGlass
+            testID="corner-card"
+            cornerRadius={36}
+            style={styles.cornerCard}
+          >
+            <LiquidGlass
+              testID="corner-concentric"
+              cornerStyle="concentric"
+              cornerRadius={8}
+              ios={{ tintColor: '#007AFF55' }}
+              style={styles.cornerInner}
+            >
+              <Text style={styles.cornerLabel}>Concentric</Text>
+            </LiquidGlass>
+            <LiquidGlass
+              testID="corner-capsule"
+              cornerStyle="capsule"
+              ios={{ tintColor: '#AF52DE55' }}
+              style={styles.cornerPill}
+            >
+              <Text style={styles.cornerLabel}>Capsule</Text>
+            </LiquidGlass>
+          </LiquidGlass>
+        </View>
+      </Section>
+
       <Section title="Support Status">
         <Row label="Supported">
           <Text style={styles.statusText}>
@@ -268,6 +395,58 @@ const styles = StyleSheet.create({
   },
   glassIcon: {
     fontSize: 28,
+  },
+  glassRow: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  glassButton: {
+    height: 52,
+    minWidth: 52,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  glassButtonWide: {
+    minWidth: 140,
+  },
+  glassButtonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  cornerCard: {
+    position: 'absolute',
+    top: 24,
+    left: 20,
+    right: 20,
+    bottom: 24,
+    padding: 12,
+    gap: 10,
+  },
+  cornerInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cornerPill: {
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cornerLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   statusText: {
     fontSize: 14,
