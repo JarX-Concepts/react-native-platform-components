@@ -83,6 +83,21 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         didSet { if oldValue != multiline { rebuildInput() } }
     }
 
+    /// What the return key does: "submit" | "blurAndSubmit" | "newline";
+    /// "" keeps the defaults (a newline in multi-line fields, else blur and submit)
+    public var submitBehavior: String = ""
+
+    /// UITextInputPasswordRules descriptor; "" = none
+    public var passwordRules: String = "" {
+        didSet { if oldValue != passwordRules { applyTraits() } }
+    }
+
+    /// The keyboard toolbar's items (kind, itemId, title, systemItem, icon
+    /// fields, prominent, accessibilityLabel, testID); empty = no toolbar
+    public var keyboardToolbarItems: [NSDictionary] = [] {
+        didSet { if oldValue != keyboardToolbarItems { applyKeyboardToolbar() } }
+    }
+
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
         didSet { if oldValue != interactivity { applyEnabled() } }
@@ -243,6 +258,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     public var onChange: ((String, Int) -> Void)?
     public var onFocusChange: ((Bool, String) -> Void)?
     public var onSubmit: ((String) -> Void)?
+    public var onSelectionChange: ((Int, Int) -> Void)?
+    public var onKeyboardToolbarPress: ((String) -> Void)?
     public var onTrailingIconPress: (() -> Void)?
     public var onPress: (() -> Void)?
 
@@ -260,6 +277,15 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
     /// Whether a secure field is currently showing its text (password toggle)
     private var revealed = false
+
+    /// The selection JS last heard of, so a change is reported once. Changes
+    /// made from JS (text or selection) update it without an event.
+    private var lastReportedSelection = NSRange(location: NSNotFound, length: 0)
+    private var applyingFromJS = false
+
+    /// The toolbar above the keyboard, while there are toolbar items
+    private var keyboardToolbar: UIToolbar?
+    private var toolbarGeneration = 0
 
     // MARK: - Subviews
 
@@ -368,6 +394,28 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         guard !text.isEmpty else { return }
         setTextInternal("", moveCursorToEnd: true)
         reportEdit()
+        lastReportedSelection = NSRange(location: NSNotFound, length: 0)
+        reportSelection()
+    }
+
+    /// A selection from JS, in UTF-16 offsets clamped to the text. Dropped
+    /// like a stale `setText` when the user has edited since `eventCount`.
+    public func setSelection(start: Int, end: Int, eventCount: Int) {
+        guard eventCount >= nativeEventCount else { return }
+        guard activeInput.markedTextRange == nil else { return }
+        let length = (text as NSString).length
+        let from = min(max(0, start), length)
+        let to = min(max(from, end), length)
+        let range = NSRange(location: from, length: to - from)
+        applyingFromJS = true
+        if multiline {
+            textView.selectedRange = range
+        } else if let startPosition = textField.position(from: textField.beginningOfDocument, offset: from),
+                  let endPosition = textField.position(from: startPosition, offset: to - from) {
+            textField.selectedTextRange = textField.textRange(from: startPosition, to: endPosition)
+        }
+        applyingFromJS = false
+        lastReportedSelection = currentSelection() ?? range
     }
 
     public func focus() {
@@ -414,6 +462,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         nativeEventCount = 0
         revealed = false
         setTextInternal("", moveCursorToEnd: true)
+        lastReportedSelection = NSRange(location: NSNotFound, length: 0)
     }
 
     private var activeInput: UIView & UITextInput {
@@ -421,6 +470,12 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     private func setTextInternal(_ value: String, moveCursorToEnd: Bool) {
+        // The cursor moves with the text; JS knows, so there is no event
+        applyingFromJS = true
+        defer {
+            applyingFromJS = false
+            lastReportedSelection = currentSelection() ?? lastReportedSelection
+        }
         if multiline {
             let wasAtEnd = textView.selectedRange.location == (textView.text as NSString).length
             let cursor = textView.selectedRange.location
@@ -453,6 +508,31 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     private func reportEdit() {
         nativeEventCount += 1
         onChange?(text, nativeEventCount)
+    }
+
+    /// The selection in UTF-16 offsets, as JS strings count them.
+    private func currentSelection() -> NSRange? {
+        if multiline { return textView.selectedRange }
+        guard let range = textField.selectedTextRange else { return nil }
+        let start = textField.offset(from: textField.beginningOfDocument, to: range.start)
+        let end = textField.offset(from: textField.beginningOfDocument, to: range.end)
+        return NSRange(location: start, length: max(0, end - start))
+    }
+
+    private func reportSelection() {
+        guard !applyingFromJS, let selection = currentSelection(), selection != lastReportedSelection else { return }
+        lastReportedSelection = selection
+        onSelectionChange?(selection.location, selection.location + selection.length)
+    }
+
+    /// The return key: submits unless it inserts a newline, and blurs
+    /// unless submitBehavior is "submit". Returns whether it submitted.
+    private func handleReturn() -> Bool {
+        let behavior = submitBehavior.isEmpty ? (multiline ? "newline" : "blurAndSubmit") : submitBehavior
+        if multiline && behavior == "newline" { return false }
+        onSubmit?(text)
+        if behavior != "submit" { activeInput.resignFirstResponder() }
+        return true
     }
 
     // MARK: - UITextField
@@ -491,10 +571,14 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     public func textFieldShouldReturn(_ field: UITextField) -> Bool {
-        onSubmit?(text)
-        // Single-line fields blur on submit, as the core TextInput does by default
-        field.resignFirstResponder()
+        // Single-line fields blur on submit unless submitBehavior is
+        // "submit", as the core TextInput does
+        _ = handleReturn()
         return true
+    }
+
+    public func textFieldDidChangeSelection(_ field: UITextField) {
+        reportSelection()
     }
 
     public func textField(_ field: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
@@ -559,7 +643,15 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     public func textView(_ view: UITextView, shouldChangeTextIn range: NSRange, replacementText string: String) -> Bool {
-        allowsChange(current: view.text ?? "", range: range, replacement: string, input: view)
+        // Return submits instead of inserting a newline, unless submitBehavior is "newline"
+        if string == "\n", view.markedTextRange == nil, handleReturn() {
+            return false
+        }
+        return allowsChange(current: view.text ?? "", range: range, replacement: string, input: view)
+    }
+
+    public func textViewDidChangeSelection(_ view: UITextView) {
+        reportSelection()
     }
 
     /// Enforces `maxLength` in UTF-16 units, like the core TextInput and the
@@ -801,6 +893,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         input.isSecureTextEntry = secureTextEntry && !revealed
         input.textContentType = PCTextFieldView.contentType(autoComplete)
         input.keyboardAppearance = PCTextFieldView.keyboardAppearance(keyboardAppearance)
+        input.passwordRules = passwordRules.isEmpty ? nil : UITextInputPasswordRules(descriptor: passwordRules)
         input.smartQuotesType = PCTextFieldView.smartQuotesType(smartQuotes)
         input.smartDashesType = PCTextFieldView.smartDashesType(smartDashes)
         input.smartInsertDeleteType = PCTextFieldView.smartInsertDeleteType(smartInsertDelete)
@@ -822,6 +915,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         input.isSecureTextEntry = secureTextEntry && !revealed
         input.textContentType = PCTextFieldView.contentType(autoComplete)
         input.keyboardAppearance = PCTextFieldView.keyboardAppearance(keyboardAppearance)
+        input.passwordRules = passwordRules.isEmpty ? nil : UITextInputPasswordRules(descriptor: passwordRules)
         input.smartQuotesType = PCTextFieldView.smartQuotesType(smartQuotes)
         input.smartDashesType = PCTextFieldView.smartDashesType(smartDashes)
         input.smartInsertDeleteType = PCTextFieldView.smartInsertDeleteType(smartInsertDelete)
@@ -831,6 +925,102 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         if #available(iOS 18.0, *) {
             input.mathExpressionCompletionType = PCTextFieldView.mathCompletionType(mathExpressionCompletion)
             input.writingToolsBehavior = PCTextFieldView.writingToolsBehavior(writingTools)
+        }
+    }
+
+    /// The keyboard toolbar: a `UIToolbar` as the input's
+    /// `inputAccessoryView`, with the given buttons, flexible spaces and a
+    /// Done button that dismisses the keyboard.
+    private func applyKeyboardToolbar() {
+        toolbarGeneration += 1
+        if keyboardToolbarItems.isEmpty {
+            keyboardToolbar = nil
+        } else {
+            let toolbar = keyboardToolbar ?? UIToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+            toolbar.items = keyboardToolbarItems.map { toolbarItem(from: $0) }
+            toolbar.sizeToFit()
+            keyboardToolbar = toolbar
+        }
+        textField.inputAccessoryView = keyboardToolbar
+        textView.inputAccessoryView = keyboardToolbar
+        if activeInput.isFirstResponder {
+            activeInput.reloadInputViews()
+        }
+    }
+
+    private func toolbarItem(from spec: NSDictionary) -> UIBarButtonItem {
+        let kind = spec["kind"] as? String ?? "button"
+        if kind == "flexibleSpace" {
+            return .flexibleSpace()
+        }
+        let itemId = spec["itemId"] as? String ?? ""
+        let title = spec["title"] as? String ?? ""
+        let spokenLabel = spec["accessibilityLabel"] as? String ?? ""
+        let testID = spec["testID"] as? String ?? ""
+        let action: UIAction
+        if kind == "done" {
+            action = UIAction { [weak self] _ in self?.blur() }
+        } else {
+            action = UIAction { [weak self] _ in self?.onKeyboardToolbarPress?(itemId) }
+        }
+
+        let item: UIBarButtonItem
+        let systemItem = kind == "done" && title.isEmpty
+            ? UIBarButtonItem.SystemItem.done
+            : PCTextFieldView.toolbarSystemItem(spec["systemItem"] as? String ?? "")
+        let icon = PCButtonSupport.Icon(dictionary: spec as? [String: Any] ?? [:])
+        if let systemItem {
+            item = UIBarButtonItem(systemItem: systemItem, primaryAction: action)
+        } else if icon.isPresent {
+            item = UIBarButtonItem(title: nil, image: nil, primaryAction: action, menu: nil)
+            // The title is what VoiceOver reads for an icon button
+            item.accessibilityLabel = title.isEmpty ? nil : title
+            let generation = toolbarGeneration
+            item.image = PCButtonSupport.image(for: icon) { [weak self, weak item] image in
+                guard let self, self.toolbarGeneration == generation else { return }
+                item?.image = image
+            }
+        } else {
+            item = UIBarButtonItem(title: title, image: nil, primaryAction: action, menu: nil)
+        }
+        if (spec["prominent"] as? String) == "true" {
+            PCTextFieldView.makeProminent(item)
+        }
+        if !spokenLabel.isEmpty {
+            item.accessibilityLabel = spokenLabel
+        }
+        item.accessibilityIdentifier = testID.isEmpty ? nil : testID
+        return item
+    }
+
+    /// The prominent style: tinted glass on iOS 26, bold before
+    private static func makeProminent(_ item: UIBarButtonItem) {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            item.style = .prominent
+            return
+        }
+        #endif
+        item.style = .done
+    }
+
+    private static func toolbarSystemItem(_ value: String) -> UIBarButtonItem.SystemItem? {
+        switch value {
+        case "done": return .done
+        case "cancel": return .cancel
+        case "save": return .save
+        case "add": return .add
+        case "edit": return .edit
+        case "close": return .close
+        case "search": return .search
+        case "compose": return .compose
+        case "reply": return .reply
+        case "action": return .action
+        case "camera": return .camera
+        case "trash": return .trash
+        case "undo": return .undo
+        case "redo": return .redo
+        default: return nil
         }
     }
 

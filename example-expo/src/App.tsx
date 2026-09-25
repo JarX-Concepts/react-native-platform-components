@@ -13,15 +13,17 @@ import {
   SelectionMenu,
   ContextMenu,
   FloatingActionButton,
+  NavigationRail,
 } from 'react-native-platform-components';
 
-type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu' | 'fab';
+type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu' | 'fab' | 'rail';
 
 const TAB_LABELS: Record<Tab, string> = {
   datePicker: 'DatePicker',
   selectionMenu: 'SelectionMenu',
   contextMenu: 'ContextMenu',
   fab: 'FAB',
+  rail: 'NavigationRail',
 };
 
 export default function App() {
@@ -34,25 +36,26 @@ export default function App() {
       <Text style={styles.subtitle}>Expo Dev Client Example</Text>
 
       <View style={styles.tabs}>
-        {(['datePicker', 'selectionMenu', 'contextMenu', 'fab'] as const).map(
-          (t) => (
-            <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              style={[styles.tab, tab === t && styles.tabActive]}
-            >
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                {TAB_LABELS[t]}
-              </Text>
-            </Pressable>
-          )
-        )}
+        {(
+          ['datePicker', 'selectionMenu', 'contextMenu', 'fab', 'rail'] as const
+        ).map((t) => (
+          <Pressable
+            key={t}
+            onPress={() => setTab(t)}
+            style={[styles.tab, tab === t && styles.tabActive]}
+          >
+            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+              {TAB_LABELS[t]}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       {tab === 'datePicker' && <DatePickerDemo />}
       {tab === 'selectionMenu' && <SelectionMenuDemo />}
       {tab === 'contextMenu' && <ContextMenuDemo />}
       {tab === 'fab' && <FloatingActionButtonDemo />}
+      {tab === 'rail' && <NavigationRailDemo />}
 
       <Text style={styles.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -245,6 +248,32 @@ function FloatingActionButtonDemo() {
   );
 }
 
+function NavigationRailDemo() {
+  const [selected, setSelected] = useState('home');
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Navigation Rail</Text>
+      <View style={[styles.card, styles.railCard]}>
+        <NavigationRail
+          items={[
+            { label: 'Home', value: 'home', icon: { ios: 'house' } },
+            {
+              label: 'Search',
+              value: 'search',
+              icon: { ios: 'magnifyingglass' },
+            },
+            { label: 'Inbox', value: 'inbox', icon: { ios: 'bell' }, badge: 2 },
+          ]}
+          selectedValue={selected}
+          onSelect={setSelected}
+        />
+        <Text style={[styles.value, styles.railContent]}>{selected}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -351,6 +380,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
+  },
+  railCard: {
+    height: 320,
+    flexDirection: 'row',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  railContent: {
+    flex: 1,
+    alignSelf: 'center',
   },
   footer: {
     textAlign: 'center',

@@ -47,6 +47,11 @@ class PCDatePickerViewManager :
 
       dispatcher?.dispatchEvent(CancelEvent(view.id))
     }
+    view.onConfirmRange = { startMs: Long, endMs: Long ->
+      dispatcher?.dispatchEvent(ConfirmEvent(view.id, startMs.toDouble(), endTs = endMs.toDouble()))
+
+      dispatcher?.dispatchEvent(CancelEvent(view.id))
+    }
     view.onCancel = {
       dispatcher?.dispatchEvent(CancelEvent(view.id))
     }
@@ -81,6 +86,14 @@ class PCDatePickerViewManager :
     view.applyDateMs(if (value > noDateSentinel) value.toLong() else null)
   }
 
+  override fun setEndDateMs(view: PCDatePickerView, value: Double) {
+    view.applyEndDateMs(if (value > noDateSentinel) value.toLong() else null)
+  }
+
+  override fun setHourFormat(view: PCDatePickerView, value: String?) {
+    view.applyHourFormat(value)
+  }
+
   override fun setMinDateMs(view: PCDatePickerView, value: Double) {
     view.applyMinDateMs(if (value > noDateSentinel) value.toLong() else null)
   }
@@ -93,7 +106,7 @@ class PCDatePickerViewManager :
 
   override fun setAndroid(view: PCDatePickerView, value: ReadableMap?) {
     if (value == null) {
-      view.applyAndroidConfig(null, null, null, null, null)
+      view.applyAndroidConfig(null, null, null, null, null, null)
       return
     }
 
@@ -130,7 +143,12 @@ class PCDatePickerViewManager :
         value.getString("negativeButtonTitle")
       else null
 
-    view.applyAndroidConfig(firstDay, material, title, pos, neg)
+    val inputMode =
+      if (value.hasKey("inputMode") && !value.isNull("inputMode"))
+        value.getString("inputMode")
+      else null
+
+    view.applyAndroidConfig(firstDay, material, title, pos, neg, inputMode)
   }
 
   override fun setIos(view: PCDatePickerView, value: ReadableMap?) {
@@ -142,13 +160,15 @@ class PCDatePickerViewManager :
   private class ConfirmEvent(
     surfaceId: Int,
     private val ts: Double,
-    private val confirmed: Boolean = true
+    private val confirmed: Boolean = true,
+    private val endTs: Double = 0.0
   ) : Event<ConfirmEvent>(surfaceId) {
     override fun getEventName(): String = "topConfirm"
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
       val payload = com.facebook.react.bridge.Arguments.createMap().apply {
         putDouble("timestampMs", ts)
         putBoolean("confirmed", confirmed)
+        putDouble("endTimestampMs", endTs)
       }
       rctEventEmitter.receiveEvent(viewTag, eventName, payload)
     }

@@ -51,6 +51,8 @@ const [tab, setTab] = useState('home');
 | `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`  | Label font                                                                                     |
 | `minimizeBehavior`      | `'automatic' \| 'never' \| 'onScrollDown' \| 'onScrollUp'` | Gets the bar out of the way as the content scrolls. See [Minimize on scroll](#minimize-on-scroll) |
 | `scrollViewNativeID`    | `string`                                               | The `nativeID` of the ScrollView or FlatList that drives `minimizeBehavior`                     |
+| `accessory`             | `ReactNode`                                            | A view carried with the bar, such as a mini player. See [Bottom accessory](#bottom-accessory)   |
+| `onAccessoryEnvironmentChange` | `(environment: 'regular' \| 'inline') => void` | iOS 26: the accessory moved into its row above the bar (`'regular'`) or beside the minimized bar (`'inline'`) |
 | `maxFontSizeMultiplier` | `number`                                               | Cap on the label font scale, as on `Text`. Android only; iOS tab labels have a fixed size      |
 | `testID`                | `string`                                               | Test identifier of the bar                                                                     |
 
@@ -66,13 +68,20 @@ const [tab, setTab] = useState('home');
 | `disabled`           | `boolean`             | The tab can't be selected                                                                     |
 | `accessibilityLabel` | `string`              | Screen-reader label. Defaults to `label`; the badge is announced after it                     |
 | `testID`             | `string`              | Test identifier of the tab. See [Testing](#testing)                                           |
+| `role`               | `'search'`            | The search tab. See [Search tab and system items](#search-tab-and-system-items)               |
+| `systemItem`         | `TabBarSystemItem`    | iOS: a system tab item with the system's title and icon. See [Search tab and system items](#search-tab-and-system-items) |
 
 ### Android Props (`android`)
 
-| Prop             | Type         | Description                                           |
-| ---------------- | ------------ | ----------------------------------------------------- |
-| `indicatorColor` | `ColorValue` | The active indicator pill behind the selected icon    |
-| `rippleColor`    | `ColorValue` | Ripple shown while pressing a tab                     |
+| Prop              | Type                             | Description                                                                                  |
+| ----------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `indicatorColor`  | `ColorValue`                     | The active indicator pill behind the selected icon                                           |
+| `rippleColor`     | `ColorValue`                     | Ripple shown while pressing a tab                                                            |
+| `indicator`       | `boolean`                        | Whether the selected tab shows the active indicator. Default: `true`                         |
+| `indicatorShape`  | `'pill' \| 'circle' \| number`   | The indicator's shape; a number is a corner radius in dp. Default: `'pill'`                  |
+| `indicatorWidth`  | `number`                         | Indicator width in dp. Default: the Material width (64)                                      |
+| `indicatorHeight` | `number`                         | Indicator height in dp. Default: the Material height (32)                                    |
+| `itemLayout`      | `'vertical' \| 'horizontal' \| 'auto'` | Icon above or beside the label. Default: `'vertical'`. See [Active indicator and horizontal tabs](#active-indicator-and-horizontal-tabs-android) |
 
 ### Selection
 
@@ -98,11 +107,56 @@ Screen readers announce the label in every mode.
 { label: 'Updates', value: 'updates', icon: 'sparkles', badge: '' } // a dot
 ```
 
+### Search tab and system items
+
+`role: 'search'` makes a tab the app's search tab. On iOS it is the system search item, with the magnifying glass and the localized "Search" title; iOS 26 sets it apart from the other tabs as its own glass circle at the end of the bar, wherever it is in `items`. Android has no search tab: it's a regular tab with a search icon (your `icon` if you set one). Selecting it goes through `onSelect` like any other tab, and it's up to you what it shows.
+
+| iOS 26 | iOS 18 | Android |
+| --- | --- | --- |
+| ![The search tab as its own circle on iOS 26](/img/components/tabbar/search-ios.webp) | ![The search tab on iOS 18](/img/components/tabbar/search-ios18.webp) | ![The search tab on Android](/img/components/tabbar/search-android.webp) |
+
+```tsx
+items={[
+  { label: 'Home', value: 'home', icon: { ios: 'house', android: 'home' } },
+  { label: 'Inbox', value: 'inbox', icon: { ios: 'bell', android: 'notifications' } },
+  { label: 'Search', value: 'search', role: 'search' },
+]}
+```
+
+`systemItem` gives an iOS tab one of UIKit's system items (`UITabBarItem.SystemItem`), with the system's localized title and icon: `'bookmarks'`, `'contacts'`, `'downloads'`, `'favorites'`, `'featured'`, `'history'`, `'more'`, `'mostRecent'`, `'mostViewed'`, `'recents'`, `'search'` or `'topRated'`. The system decides both, so `label` and `icon` only apply on Android (and web), where there are no system items. `systemItem: 'search'` is the same tab as `role: 'search'` on iOS.
+
+```tsx
+{ label: 'Favorites', value: 'favorites', systemItem: 'favorites', icon: { android: 'star' } }
+```
+
+A system item's title follows your app's localizations, as the system apps' do. For a search tab with your own title, use a regular tab with a magnifying glass icon instead.
+
 ### Styling
 
 The bar takes the tint color on iOS and the Material 3 colors on Android, including a brand color set with [`useNativeTheme`](/guides/theming). `activeTintColor` and `inactiveTintColor` override the tab colors, `android.indicatorColor` the pill.
 
 `barColor` replaces the bar background: the system chrome on iOS before 26, the Material surface container on Android. `'transparent'` puts the bar on your own background. On iOS 26 the bar is always its floating Liquid Glass capsule; `barColor` doesn't replace the glass.
+
+### Active indicator and horizontal tabs (Android)
+
+The Material 3 bar marks the selected tab with the active indicator, a pill behind its icon. `android.indicator: false` turns it off, leaving the selected tab to its color. `android.indicatorShape` reshapes it: `'pill'` (the default, fully rounded ends), `'circle'` (a circle the indicator's height across) or a number, the corner radius in dp of a rounded rectangle. `indicatorWidth` and `indicatorHeight` size it in dp; the bar keeps its 80dp height, so an indicator taller than the default 32dp crowds the label.
+
+`android.itemLayout: 'horizontal'` puts each icon beside its label, the Material 3 Expressive layout for wide bars; its indicator wraps the icon and label. `'auto'` picks horizontal when the bar is at least 600dp wide (a tablet, or a phone in landscape) and vertical below that.
+
+| No indicator | Circle indicator | Horizontal tabs (`'auto'`, landscape) |
+| --- | --- | --- |
+| ![The bar without the active indicator](/img/components/tabbar/indicator-off-android.webp) | ![A circle active indicator](/img/components/tabbar/indicator-circle-android.webp) | ![Horizontal tabs on a wide bar](/img/components/tabbar/horizontal-android.webp) |
+
+```tsx
+<TabBar
+  items={items}
+  selectedValue={tab}
+  onSelect={setTab}
+  android={{ indicatorShape: 'circle', itemLayout: 'auto' }}
+/>
+```
+
+iOS has no equivalent settings: its selection look is the system's.
 
 ### Floating tabs
 
@@ -148,9 +202,43 @@ const bar = <TabBar items={items} selectedValue={tab} onSelect={setTab} barColor
 
 The Android bar slides down by its own height; place it at the bottom edge, or inside a view with `overflow: 'hidden'`, so it leaves the screen rather than covering content below it. A ScrollView nested in another vertical ScrollView needs `nestedScrollEnabled` on Android to scroll at all.
 
+### Bottom accessory
+
+`accessory` puts a view of yours on the bar, such as the mini player of a music app.
+
+- **iOS 26**: the tab bar's bottom accessory (`UITabBarController.bottomAccessory`, a `UITabAccessory`). The system draws it as a glass row above the bar, and while the bar is minimized (see [Minimize on scroll](#minimize-on-scroll)) it moves inline, beside the minimized tab. Your view is laid out at the accessory's size and follows it as it changes; `onAccessoryEnvironmentChange` reports the move (`'inline'`, then `'regular'` again), so you can switch to a compact layout.
+- **Android and iOS before 26**: a plain view above the bar. There's no system accessory, so your view draws its own background. On Android it slides away together with the bar under `minimizeBehavior`.
+
+The bar's height includes the accessory's row, so place it as you would the bar alone. The accessory is a regular React view: presses, `testID`s and state work as anywhere else.
+
+| iOS 26 | iOS 26, minimized | iOS 18 | Android |
+| --- | --- | --- | --- |
+| ![The accessory above the bar on iOS 26](/img/components/tabbar/accessory-ios.webp) | ![The accessory inline beside the minimized bar](/img/components/tabbar/accessory-inline-ios.webp) | ![The accessory as a view above the bar on iOS 18](/img/components/tabbar/accessory-ios18.webp) | ![The accessory as a view above the bar on Android](/img/components/tabbar/accessory-android.webp) |
+
+```tsx
+const [environment, setEnvironment] = useState<TabBarAccessoryEnvironment>('regular');
+
+<TabBar
+  items={items}
+  selectedValue={tab}
+  onSelect={setTab}
+  minimizeBehavior="onScrollDown"
+  scrollViewNativeID="library"
+  accessory={
+    <MiniPlayer
+      compact={environment === 'inline'}
+      style={isLiquidGlassSupported ? undefined : styles.playerCard}
+    />
+  }
+  onAccessoryEnvironmentChange={setEnvironment}
+/>
+```
+
+On iOS 26 the accessory content is hosted by UIKit and your view sits inside the system's glass capsule, so give it no background of its own there (`isLiquidGlassSupported` tells the two apart). The row is 48pt tall; lay the content out with flexbox rather than fixed widths, since the inline accessory is narrower.
+
 ### Placement and safe areas
 
-The bar is a view in your layout: it fills the width it's given and takes the height the platform wants for it (49pt on iOS before 26, 83pt with the iOS 26 floating spacing, 80dp on Android). It doesn't pad itself for the home indicator or the Android navigation bar; at the bottom of the screen, add the bottom inset around it, for example with `react-native-safe-area-context`:
+The bar is a view in your layout: it fills the width it's given and takes the height the platform wants for it (49pt on iOS before 26, 83pt with the iOS 26 floating spacing, 80dp on Android), plus the accessory's row when it has one. It doesn't pad itself for the home indicator or the Android navigation bar; at the bottom of the screen, add the bottom inset around it, for example with `react-native-safe-area-context`:
 
 ```tsx
 const insets = useSafeAreaInsets();
@@ -188,7 +276,7 @@ A bottom-tab navigator takes a custom tab bar through its `tabBar` option:
 
 ### Testing
 
-A tab's `testID` goes on the tab itself: the tab button on iOS, the navigation bar item on Android. E2E tests tap a tab by id:
+A tab's `testID` goes on the tab itself: the tab button on iOS (the circle, for the iOS 26 search tab), the navigation bar item on Android. E2E tests tap a tab by id:
 
 ```ts
 await element(by.id('tab-inbox')).tap();

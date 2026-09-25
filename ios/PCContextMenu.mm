@@ -16,110 +16,10 @@
 #import "PlatformComponents-Swift.h"
 #endif
 
+#import "PCMenuItems.h"
+
 using namespace facebook::react;
-
-namespace {
-// Helper to convert subaction struct to NSDictionary
-static NSDictionary *SubactionToDict(const PCContextMenuActionsSubactionsStruct &action) {
-  NSMutableDictionary *dict = [NSMutableDictionary new];
-
-  dict[@"id"] = action.id.empty() ? @"" : [NSString stringWithUTF8String:action.id.c_str()];
-  dict[@"title"] = action.title.empty() ? @"" : [NSString stringWithUTF8String:action.title.c_str()];
-
-  if (!action.subtitle.empty()) {
-    dict[@"subtitle"] = [NSString stringWithUTF8String:action.subtitle.c_str()];
-  }
-
-  if (!action.image.empty()) {
-    dict[@"image"] = [NSString stringWithUTF8String:action.image.c_str()];
-  }
-
-  if (!action.imageColor.empty()) {
-    dict[@"imageColor"] = [NSString stringWithUTF8String:action.imageColor.c_str()];
-  }
-
-  // Check if any attributes field is non-empty
-  if (!action.attributes.destructive.empty() ||
-      !action.attributes.disabled.empty() ||
-      !action.attributes.hidden.empty()) {
-    NSMutableDictionary *attrs = [NSMutableDictionary new];
-    attrs[@"destructive"] = action.attributes.destructive.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.destructive.c_str()];
-    attrs[@"disabled"] = action.attributes.disabled.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.disabled.c_str()];
-    attrs[@"hidden"] = action.attributes.hidden.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.hidden.c_str()];
-    dict[@"attributes"] = attrs;
-  }
-
-  if (!action.state.empty()) {
-    dict[@"state"] = [NSString stringWithUTF8String:action.state.c_str()];
-  }
-
-  return dict;
-}
-
-// Helper to convert action struct to NSDictionary
-static NSDictionary *ActionToDict(const PCContextMenuActionsStruct &action) {
-  NSMutableDictionary *dict = [NSMutableDictionary new];
-
-  dict[@"id"] = action.id.empty() ? @"" : [NSString stringWithUTF8String:action.id.c_str()];
-  dict[@"title"] = action.title.empty() ? @"" : [NSString stringWithUTF8String:action.title.c_str()];
-
-  if (!action.subtitle.empty()) {
-    dict[@"subtitle"] = [NSString stringWithUTF8String:action.subtitle.c_str()];
-  }
-
-  if (!action.image.empty()) {
-    dict[@"image"] = [NSString stringWithUTF8String:action.image.c_str()];
-  }
-
-  if (!action.imageColor.empty()) {
-    dict[@"imageColor"] = [NSString stringWithUTF8String:action.imageColor.c_str()];
-  }
-
-  // Check if any attributes field is non-empty
-  if (!action.attributes.destructive.empty() ||
-      !action.attributes.disabled.empty() ||
-      !action.attributes.hidden.empty()) {
-    NSMutableDictionary *attrs = [NSMutableDictionary new];
-    attrs[@"destructive"] = action.attributes.destructive.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.destructive.c_str()];
-    attrs[@"disabled"] = action.attributes.disabled.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.disabled.c_str()];
-    attrs[@"hidden"] = action.attributes.hidden.empty() ? @"false" :
-        [NSString stringWithUTF8String:action.attributes.hidden.c_str()];
-    dict[@"attributes"] = attrs;
-  }
-
-  if (!action.state.empty()) {
-    dict[@"state"] = [NSString stringWithUTF8String:action.state.c_str()];
-  }
-
-  // Convert subactions (vector, not optional)
-  if (!action.subactions.empty()) {
-    NSMutableArray *subs = [NSMutableArray new];
-    for (const auto &sub : action.subactions) {
-      [subs addObject:SubactionToDict(sub)];
-    }
-    dict[@"subactions"] = subs;
-  }
-
-  return dict;
-}
-
-static bool ActionsEqual(
-    const std::vector<PCContextMenuActionsStruct> &a,
-    const std::vector<PCContextMenuActionsStruct> &b) {
-  if (a.size() != b.size()) return false;
-  for (size_t i = 0; i < a.size(); i++) {
-    if (a[i].id != b[i].id) return false;
-    if (a[i].title != b[i].title) return false;
-    // Simplified comparison - in production, compare all fields
-  }
-  return true;
-}
-} // namespace
+using namespace platformcomponents;
 
 @implementation PCContextMenu {
   PCContextMenuView *_view;
@@ -182,6 +82,18 @@ static bool ActionsEqual(
 
       eventEmitter->onMenuClose({});
     };
+
+    _view.onPreviewPress = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCContextMenuEventEmitter>(
+              strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onPreviewPress({});
+    };
   }
   return self;
 }
@@ -202,13 +114,9 @@ static bool ActionsEqual(
     }
   }
 
-  // actions
-  if (!prevProps || !ActionsEqual(newProps.actions, prevProps->actions)) {
-    NSMutableArray *arr = [NSMutableArray new];
-    for (const auto &action : newProps.actions) {
-      [arr addObject:ActionToDict(action)];
-    }
-    _view.actions = arr;
+  // actions: the flattened menu items
+  if (!prevProps || !PCMenuItemsEqual(newProps.actions, prevProps->actions)) {
+    _view.actions = PCMenuItemsToArray(newProps.actions);
   }
 
   // interactivity: "enabled" | "disabled"
