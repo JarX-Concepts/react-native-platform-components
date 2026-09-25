@@ -47,6 +47,8 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     private var contextMenuInteraction: UIContextMenuInteraction?
     /// Whether the long-press menu is showing, so new actions update it in place.
     private var isMenuVisible = false
+    /// The long-press menu last handed to UIKit, to find the showing root.
+    private var presentedMenu: UIMenu?
 
     // Tap mode: UIButton with UIMenu for tap-to-show
     private var tapMenuButton: PCMenuButton?
@@ -95,8 +97,10 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         } else if isMenuVisible, let interaction = contextMenuInteraction {
             // An action that keeps the menu presented changed a title or state.
             let menu = buildMenu()
+            let oldMenu = presentedMenu
+            presentedMenu = menu
             interaction.updateVisibleMenu { visible in
-                PCMenuSupport.updatedVisibleMenu(visible, in: menu)
+                PCMenuSupport.updatedVisibleMenu(visible, in: menu, replacing: oldMenu)
             }
         } else {
             // Start loading image icons now, so they are ready when the menu opens.
@@ -193,7 +197,10 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
             identifier: nil,
             previewProvider: nil,
             actionProvider: { [weak self] _ in
-                self?.buildMenu()
+                guard let self else { return nil }
+                let menu = self.buildMenu()
+                self.presentedMenu = menu
+                return menu
             }
         )
     }
