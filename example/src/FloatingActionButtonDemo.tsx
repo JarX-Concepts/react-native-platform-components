@@ -38,6 +38,7 @@ export function FloatingActionButtonDemo(): React.JSX.Element {
               icon={ADD_ICON}
               size={size}
               accessibilityLabel={`Add (${size})`}
+              haptics="medium"
               onPress={() => setLastPressed(size)}
             />
           ))}
@@ -62,6 +63,7 @@ export function FloatingActionButtonDemo(): React.JSX.Element {
             disabled={disabled}
             color={styled ? '#FF6B35' : undefined}
             tintColor={styled ? '#FFFFFF' : undefined}
+            haptics="medium"
             onPress={() => setLastPressed('compose')}
           />
         </View>

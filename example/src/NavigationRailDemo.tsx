@@ -91,6 +91,7 @@ export function NavigationRailDemo(): React.JSX.Element {
           <NavigationRail
             testID="rail"
             items={items}
+            haptics="selection"
             selectedValue={selected}
             onSelect={select}
             onReselect={(value) => setLastEvent(`reselect: ${value}`)}

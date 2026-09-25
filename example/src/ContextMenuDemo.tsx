@@ -404,6 +404,8 @@ export function ContextMenuDemo(): React.JSX.Element {
                 title: 'Delete Forever',
                 image: Platform.OS === 'ios' ? 'trash.fill' : 'delete_forever',
                 attributes: { destructive: true },
+                // Its own haptic, in place of the menu's
+                haptics: 'warning',
               },
             ]}
             disabled={disabled}
@@ -427,6 +429,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             title="Document"
             actions={SECTION_ACTIONS}
             disabled={disabled}
+            haptics={haptics}
             onPressAction={handleAction}
             ios={{ enablePreview }}
             style={styles.fullFlex}
@@ -444,6 +447,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             testID="context-menu-stepper"
             actions={stepperActions}
             disabled={disabled}
+            haptics={haptics}
             trigger="tap"
             onPressAction={handleStepperAction}
             style={styles.fullFlex}

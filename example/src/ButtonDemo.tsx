@@ -149,6 +149,8 @@ const REPLY_MENU: ContextMenuAction[] = [
     title: 'Delete',
     image: { ios: 'trash', android: 'delete' },
     attributes: { destructive: true },
+    // Its own haptic, in place of the button's
+    haptics: 'warning',
   },
 ];
 const SAVE_MENU: ContextMenuAction[] = [
@@ -779,6 +781,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
           <SplitButton
@@ -790,6 +793,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
         </View>
@@ -804,6 +808,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
         </View>
