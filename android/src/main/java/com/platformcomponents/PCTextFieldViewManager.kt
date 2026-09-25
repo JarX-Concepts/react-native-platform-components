@@ -1,6 +1,7 @@
 package com.platformcomponents
 
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
@@ -58,6 +59,9 @@ class PCTextFieldViewManager :
     }
     view.onSubmit = { text ->
       dispatcher?.dispatchEvent(TextEvent(view.id, "topFieldSubmit", text))
+    }
+    view.onSelectionChange = { start, end ->
+      dispatcher?.dispatchEvent(SelectionEvent(view.id, start, end))
     }
     view.onTrailingIconPress = {
       dispatcher?.dispatchEvent(EmptyEvent(view.id, "topTrailingIconPress"))
@@ -148,6 +152,15 @@ class PCTextFieldViewManager :
 
   override fun setLines(view: PCTextFieldView, value: String?) {
     view.applyMultiline(value == "multiline")
+  }
+
+  override fun setSubmitBehavior(view: PCTextFieldView, value: String?) {
+    view.applySubmitBehavior(value ?: "")
+  }
+
+  override fun setKeyboardToolbarItems(view: PCTextFieldView, value: ReadableArray?) {
+    // iOS only: Android keyboards have no toolbar; returnKeyType picks the
+    // action key, which number pads have too
   }
 
   override fun setInteractivity(view: PCTextFieldView, value: String?) {
@@ -284,6 +297,10 @@ class PCTextFieldViewManager :
     view.setTextFromJS(eventCount, text ?: "")
   }
 
+  override fun setSelection(view: PCTextFieldView, eventCount: Int, start: Int, end: Int) {
+    view.setSelectionFromJS(eventCount, start, end)
+  }
+
   // --- Events ---
 
   private class ChangeEvent(
@@ -309,6 +326,21 @@ class PCTextFieldViewManager :
     override fun getEventName(): String = name
     override fun dispatch(rctEventEmitter: RCTEventEmitter) {
       val payload = Arguments.createMap().apply { putString("text", text) }
+      rctEventEmitter.receiveEvent(viewTag, eventName, payload)
+    }
+  }
+
+  private class SelectionEvent(
+    surfaceId: Int,
+    private val start: Int,
+    private val end: Int
+  ) : Event<SelectionEvent>(surfaceId) {
+    override fun getEventName(): String = "topFieldSelectionChange"
+    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
+      val payload = Arguments.createMap().apply {
+        putInt("start", start)
+        putInt("end", end)
+      }
       rctEventEmitter.receiveEvent(viewTag, eventName, payload)
     }
   }
