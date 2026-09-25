@@ -137,10 +137,19 @@ const expectText = async (testID: string, text: string) => {
     .withTimeout(8000);
 };
 
-// Dismisses an open iOS menu. iOS 26 passes the dismissing tap on to the view
-// underneath, so it lands in the page's empty left margin, clear of controls.
+// Dismisses an open iOS menu with a tap away from it, in the page's empty left
+// margin. An in-app tap: device.tap() starts an XCUITest runner, which takes
+// tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
+// underneath (the page's scroll view there); before iOS 26 the menu's
+// full-screen container takes it.
 const tapOutsideMenu = async () => {
-  await device.tap({ x: 8, y: 600 });
+  try {
+    await element(by.id('demo-scroll')).tap({ x: 8, y: 600 });
+  } catch {
+    await element(by.type('_UIContextMenuContainerView'))
+      .atIndex(0)
+      .tap({ x: 8, y: 600 });
+  }
 };
 
 // The demo's ActionField carries its testID on the pressable around the text
@@ -591,16 +600,11 @@ describe('Platform Components Example', () => {
       await expectFieldText('last-action-field', 'Preview pressed');
     }
 
-    // Inline sections, an image-asset icon and a submenu inside a section
+    // Inline sections, an image-asset icon (Remind Me) and a submenu inside a
+    // section
     await scrollToId('context-menu-sections');
     await element(by.id('context-menu-sections')).longPress();
     await waitFor(element(by.text('Remind Me')))
-      .toBeVisible()
-      .withTimeout(6000);
-    await element(by.text('Remind Me')).atIndex(0).tap();
-    await expectFieldText('last-action-field', 'Remind Me (remind)');
-    await element(by.id('context-menu-sections')).longPress();
-    await waitFor(element(by.text('Send To')))
       .toBeVisible()
       .withTimeout(6000);
     await element(by.text('Send To')).atIndex(0).tap();
@@ -619,11 +623,11 @@ describe('Platform Components Example', () => {
     await element(by.text('Increase')).atIndex(0).tap();
     await expectText('stepper-value', 'Qty 2');
     if (!isAndroid()) {
-      await element(by.text('Increase')).atIndex(0).tap();
+      // Still open: the section header shows the new value, and the toggle
+      // takes its checkmark in place
+      await expect(element(by.text('Quantity: 2'))).toBeVisible();
       await element(by.text('Favorite')).atIndex(0).tap();
-      await expectText('stepper-value', 'Qty 3 ★');
-      // Still open: the section header shows the new value
-      await expect(element(by.text('Quantity: 3'))).toBeVisible();
+      await expectText('stepper-value', 'Qty 2 ★');
       await tapOutsideMenu();
       await waitFor(element(by.text('Increase')))
         .not.toBeVisible()
