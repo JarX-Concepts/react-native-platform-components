@@ -1100,25 +1100,23 @@ describe('Platform Components Example', () => {
     };
 
     // Scrolls a field into view. On iOS it then goes into the upper part of
-    // the screen, clear of the keyboard and its toolbar, by the frame the
-    // field reports rather than a fixed distance (the screens differ).
-    const liftField = async (fieldId: string) => {
-      if (!isAndroid()) await dragList(40);
-      await scrollToId(fieldId);
+    // the screen, clear of the keyboard and its toolbar, in one drag sized
+    // from the frame the field reports (the screens differ). Scrolling to
+    // an anchor further down first keeps that drag short.
+    const liftField = async (fieldId: string, anchorId = fieldId) => {
+      await scrollToId(anchorId);
       if (isAndroid()) return;
-      for (let i = 0; i < 4; i++) {
-        const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
-          frame: { y: number };
-        };
-        if (frame.y < 320) break;
-        await dragList(150);
-      }
+      const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+        frame: { y: number };
+      };
+      const distance = Math.round(frame.y - 200);
+      if (distance > 40) await dragList(distance);
       await pause(300);
     };
 
     // iOS: the number pad's toolbar steps the value, and Done dismisses it
     if (!isAndroid()) {
-      await liftField('field-quantity');
+      await liftField('field-quantity', 'field-select-word');
       await inputOf('field-quantity').tap();
       await waitFor(element(by.id('toolbar-plus')))
         .toBeVisible()
@@ -1147,7 +1145,9 @@ describe('Platform Components Example', () => {
     if (!isAndroid()) await chatSendsOnReturn();
 
     // Selection events from native, and a selection set from JS: on iOS by
-    // a keyboard toolbar button, on Android by the demo's button
+    // a keyboard toolbar button, on Android by the demo's button. On iOS
+    // the chat keyboard is still up; a drag puts it away first.
+    if (!isAndroid()) await dragList(40);
     await liftField('field-selection');
     if (isAndroid()) {
       await typeInto('field-selection', 'Hello there');
