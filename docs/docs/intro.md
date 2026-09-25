@@ -50,7 +50,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**SegmentedControl**](/components/segmentedcontrol) | `UISegmentedControl` | Material 3 Expressive connected buttons, or classic segmented buttons | `@react-native-segmented-control/segmented-control` (JavaScript on Android) |
 | [**TabBar**](/components/tabbar) | `UITabBar`, the floating Liquid Glass bar on iOS 26 | Material 3 navigation bar | React Navigation's bottom tabs (JavaScript); `react-native-bottom-tabs` (tied to its navigator) |
 | [**Button**](/components/button) | `UIButton` configurations, Liquid Glass variants on iOS 26 | Material 3 Expressive `MaterialButton`: five sizes, shape morph | `react-native-paper` (Material 3, not Expressive, in JavaScript) |
-| [**ButtonGroup**](/components/buttongroup) | A row of `UIButton`s | Material 3 Expressive button groups, single or multiple selection | `react-native-paper` segmented buttons (JavaScript) |
+| [**ButtonGroup**](/components/buttongroup) | A row of `UIButton`s with a "…" overflow menu; SplitButton: a button and a chevron `UIMenu` button | Material 3 Expressive button groups, single or multiple selection, overflow menu; `MaterialSplitButton` | `react-native-paper` segmented buttons (JavaScript) |
 | [**FloatingToolbar**](/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
 | [**LiquidGlass**](/components/liquidglass) | `UIGlassEffect` on iOS 26+ | A fallback `View` | `@callstack/liquid-glass`, `expo-glass-effect` |
 

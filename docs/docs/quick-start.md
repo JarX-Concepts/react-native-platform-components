@@ -402,6 +402,27 @@ export function Example() {
 }
 ```
 
+### SplitButton
+
+```tsx
+import { SplitButton } from 'react-native-platform-components';
+
+export function Example() {
+  return (
+    <SplitButton
+      label="Reply"
+      menu={[
+        { id: 'reply-all', title: 'Reply All' },
+        { id: 'forward', title: 'Forward' },
+      ]}
+      menuAccessibilityLabel="Reply options"
+      onPress={() => console.log('reply')}
+      onMenuSelect={(id) => console.log(id)}
+    />
+  );
+}
+```
+
 ### FloatingToolbar
 
 ```tsx

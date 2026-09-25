@@ -14,6 +14,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `SelectionMenu`    | `embedded` renders a `<select>`; `modal` opens the options in a `<dialog>`                                                                                                     |
 | `Button`           | A `<button>` in the Material 3 variants and sizes. A toggle (`selected`) sets `aria-pressed`. There is no web menu: a button with a `menu` calls `onPress` and logs a warning once |
 | `ButtonGroup`      | A row of `<button>`s, with toggle semantics (`aria-pressed`, or radios for single selection) when `selection` is set                                                           |
+| `SplitButton`      | The main button alone: there is no web menu (a warning is logged once)                                                                                                         |
 | `SegmentedControl` | A radio group of `<button>`s in a track, like the iOS control                                                                                                                  |
 | `TabBar`           | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                   |
 | `FloatingToolbar`  | A pill-shaped surface that lays out its children                                                                                                                               |
