@@ -85,6 +85,12 @@ export interface ButtonNativeProps extends ViewProps {
    */
   spokenLabel?: string;
 
+  /**
+   * Haptic played when the button is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
   /** Fired when the button is pressed. */
   onButtonPress?: BubblingEventHandler<Readonly<{}>>;
 }

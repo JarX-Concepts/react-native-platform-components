@@ -128,6 +128,12 @@ export interface SegmentedControlProps extends ViewProps {
   badgeTextColor?: ColorValue;
 
   /**
+   * Haptic played when the user changes the selection: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
+  /**
    * Fired when the user selects a segment.
    */
   onSelect?: BubblingEventHandler<SegmentedControlSelectEvent>;

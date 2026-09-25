@@ -47,6 +47,9 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   var androidVisible: String = "closed" // "open" | "closed" (Android-only programmatic)
   var androidAnchorPosition: String? = "left" // "left" | "right"
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onPressAction: ((id: String, title: String) -> Unit)? = null
   var onMenuOpen: (() -> Unit)? = null

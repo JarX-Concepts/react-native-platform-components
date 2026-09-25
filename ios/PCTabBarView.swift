@@ -53,6 +53,9 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
         didSet { if oldValue != scrollViewNativeID { attachedScrollView = nil; attachScrollView() } }
     }
 
+    /// The `haptics` prop; PCTabBar.mm plays it on a tab press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     /// (index, value, reselected)

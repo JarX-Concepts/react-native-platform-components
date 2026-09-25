@@ -70,6 +70,9 @@ class PCButtonGroupView(context: Context) :
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onPress: ((index: Int, value: String) -> Unit)? = null
   var onSelectionChange: ((values: List<String>) -> Unit)? = null

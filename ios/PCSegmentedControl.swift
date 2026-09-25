@@ -103,6 +103,9 @@ public final class PCSegmentedControlView: UIControl {
     /// Badge text color; nil = white
     public var badgeTextColor: UIColor? { didSet { updateBadgeColors() } }
 
+    /// The `haptics` prop; PCSegmentedControl.mm plays it on a user selection
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onSelect: ((Int, String) -> Void)?  // (index, value)

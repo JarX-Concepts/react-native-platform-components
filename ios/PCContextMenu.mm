@@ -146,6 +146,8 @@ static bool ActionsEqual(
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCContextMenuEventEmitter>(
               strongSelf->_eventEmitter);
@@ -229,6 +231,10 @@ static bool ActionsEqual(
     } else {
       _view.trigger = @"longPress";
     }
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = [NSString stringWithUTF8String:newProps.haptics.c_str()];
   }
 
   // iOS-specific props

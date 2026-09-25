@@ -53,6 +53,7 @@ class PCButtonGroupViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onPress = { index, value ->
+      PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(PressEvent(view.id, index, value))
     }
     view.onSelectionChange = { values ->
@@ -153,6 +154,11 @@ class PCButtonGroupViewManager :
   }
 
   // android: {overflow, material}
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCButtonGroupView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
+  }
+
   override fun setAndroid(view: PCButtonGroupView, value: ReadableMap?) {
     view.applyOverflow(value?.stringOr("overflow", "none"))
     view.applyMaterial(value?.stringOr("material", "expressive"))

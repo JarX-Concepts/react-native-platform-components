@@ -85,6 +85,9 @@ class PCSegmentedControlView(context: Context) :
   var badgeTextColor: Int? = null
   var maxFontSizeMultiplier: Float = 0f
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   /** index -1 with an empty value means the selection was cleared. */
   var onSelect: ((index: Int, value: String) -> Unit)? = null

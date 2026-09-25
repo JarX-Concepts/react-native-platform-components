@@ -48,6 +48,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   // Only used to choose inline rendering style.
   var androidMaterial: String? = "system" // "system" | "m3"
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onSelect: ((index: Int, label: String, data: String) -> Unit)? = null
   var onRequestClose: (() -> Unit)? = null

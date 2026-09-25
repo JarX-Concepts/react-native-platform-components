@@ -72,6 +72,9 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     /// iOS-specific: enable preview
     public var enablePreview: String = "false"
 
+    /// The `haptics` prop; PCContextMenu.mm plays it when an action is pressed
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPressAction: ((String, String) -> Void)?  // (id, title)
@@ -305,6 +308,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         animator: UIContextMenuInteractionAnimating?
     ) {
         logger.debug("contextMenuInteraction: willDisplayMenu")
+        haptics.prepare(in: self)
         onMenuOpen?()
     }
 

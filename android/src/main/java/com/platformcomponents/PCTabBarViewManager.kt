@@ -48,6 +48,7 @@ class PCTabBarViewManager :
     // another native container (a FloatingToolbar) lost its events when the
     // dispatcher was taken at creation
     view.onTabPress = { index, value, reselected ->
+      PCHaptics.perform(view, view.haptics)
       UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)?.dispatchEvent(
         TabPressEvent(UIManagerHelper.getSurfaceId(view), view.id, index, value, reselected)
       )
@@ -136,6 +137,11 @@ class PCTabBarViewManager :
       fontWeight = value?.stringOr("fontWeight", "") ?: "",
       fontStyle = value?.stringOr("fontStyle", "") ?: ""
     )
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCTabBarView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setMinimizeBehavior(view: PCTabBarView, value: String?) {

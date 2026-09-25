@@ -9,6 +9,7 @@ import NativeSelectionMenu, {
 
 export type { SelectionMenuOption };
 
+import type { Haptics } from './haptics';
 import type { AndroidMaterialMode, Presentation } from './sharedTypes';
 
 export interface SelectionMenuProps extends ViewProps {
@@ -36,6 +37,12 @@ export interface SelectionMenuProps extends ViewProps {
    * controls whether the native menu UI is presented.
    */
   visible?: boolean;
+
+  /**
+   * Haptic played when the user picks an option. Default: none beyond the
+   * system menu's own feedback. See {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /**
    * Called when the user selects an option.
@@ -84,6 +91,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     placeholder,
     presentation = 'modal',
     visible,
+    haptics,
     onSelect,
     onRequestClose,
     ios,
@@ -136,6 +144,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       placeholder={placeholder}
       anchorMode={presentation === 'embedded' ? 'inline' : 'headless'}
       visible={nativeVisible}
+      haptics={haptics ?? ''}
       onSelect={onSelect ? handleSelect : undefined}
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
       ios={ios}

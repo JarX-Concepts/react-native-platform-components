@@ -69,6 +69,8 @@ static inline bool OptionsEqual(
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       // The Swift view has already updated its content (selectedData + sync()).
       // Trigger measurement now so Yoga gets the new size before the React
       // round-trip, preventing a frame of clipped text.
@@ -172,6 +174,10 @@ static inline bool OptionsEqual(
     } else {
       _view.visible = @"closed";
     }
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = [NSString stringWithUTF8String:newProps.haptics.c_str()];
   }
 
   // android.material (plumbed through; iOS can ignore)

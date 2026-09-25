@@ -91,6 +91,9 @@ public final class PCButtonView: UIView {
         didSet { updateAccessibilityLabel() }
     }
 
+    /// The `haptics` prop; PCButton.mm plays it on a press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPress: (() -> Void)?
@@ -152,6 +155,7 @@ public final class PCButtonView: UIView {
         addSubview(sizingButton)
 
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
+        button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
         // Custom disabled colors: rebuild the configuration when isEnabled flips
         button.configurationUpdateHandler = { [weak self] button in
             guard let self, self.hasDisabledColors, self.configuredEnabled != button.isEnabled else { return }
@@ -163,6 +167,11 @@ public final class PCButtonView: UIView {
     @objc private func pressed() {
         guard !loading else { return }
         onPress?()
+    }
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
     }
 
     /// The title is dropped while loading, so the label is kept explicitly.

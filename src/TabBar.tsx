@@ -7,6 +7,7 @@ import NativeTabBar, {
   type TabBarSelectEvent,
 } from './TabBarNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
+import type { Haptics } from './haptics';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 
 /** Material and iOS tab bars show at most five tabs on a phone. */
@@ -91,6 +92,13 @@ export interface TabBarProps extends ViewProps {
    */
   onReselect?: (value: string, index: number) => void;
 
+  /**
+   * Haptic played when the user presses a tab, including the selected one
+   * (a reselect). Default: none, like the native tab bars. See
+   * {@link Haptics}.
+   */
+  haptics?: Haptics;
+
   /** How labels show. Default: `'auto'`. See {@link TabBarLabelVisibility}. */
   labelVisibility?: TabBarLabelVisibility;
 
@@ -153,6 +161,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     selectedValue,
     onSelect,
     onReselect,
+    haptics,
     labelVisibility,
     activeTintColor,
     inactiveTintColor,
@@ -230,6 +239,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       scrollViewNativeID={scrollViewNativeID ?? ''}
       androidIndicatorColor={android?.indicatorColor}
       androidRippleColor={android?.rippleColor}
+      haptics={haptics ?? ''}
       onTabPress={onSelect || onReselect ? handleTabPress : undefined}
       {...viewProps}
     />

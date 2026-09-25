@@ -39,6 +39,9 @@ public final class PCSelectionMenuView: UIControl {
     /// Android material preference (ignored on iOS; retained for debugging/log parity)
     public var androidMaterial: String? = nil
 
+    /// The `haptics` prop; PCSelectionMenu.mm plays it on a pick
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onSelect: ((Int, String, String) -> Void)?  // (index,label,data)
@@ -354,6 +357,7 @@ public final class PCSelectionMenuView: UIControl {
 
             self.headlessMenuVC = menuVC
             vc.present(menuVC, animated: true)
+            self.haptics.prepare(in: self)
         }
     }
 

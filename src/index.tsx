@@ -11,4 +11,5 @@ export * from './TextField';
 export * from './icons';
 export * from './labelStyle';
 export * from './sharedTypes';
+export * from './haptics';
 export * from './NativeTheme';

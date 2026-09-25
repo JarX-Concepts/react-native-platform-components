@@ -87,6 +87,12 @@ export interface TabBarNativeProps extends ViewProps {
   /** Android: ripple shown while pressing a tab. */
   androidRippleColor?: ColorValue;
 
+  /**
+   * Haptic played when a tab is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
   /** Fired when a tab is pressed. */
   onTabPress?: BubblingEventHandler<TabBarSelectEvent>;
 }

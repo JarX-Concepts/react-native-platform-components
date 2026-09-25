@@ -51,6 +51,7 @@ class PCButtonViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onPress = {
+      PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(PressEvent(view.id))
     }
   }
@@ -137,6 +138,11 @@ class PCButtonViewManager :
 
   override fun setSpokenLabel(view: PCButtonView, value: String?) {
     view.applySpokenLabel(value ?: "")
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCButtonView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   // "expressive" (default) | "m3"

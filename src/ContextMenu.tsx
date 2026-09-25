@@ -7,6 +7,7 @@ import NativeContextMenu, {
   type ContextMenuSubaction as NativeSubaction,
   type ContextMenuPressActionEvent,
 } from './ContextMenuNativeComponent';
+import type { Haptics } from './haptics';
 
 /**
  * Attributes for a context menu action.
@@ -58,6 +59,13 @@ export interface ContextMenuProps extends ViewProps {
    * - 'tap': Single tap opens the menu
    */
   trigger?: 'longPress' | 'tap';
+
+  /**
+   * Haptic played when the user presses an action. Opening the menu keeps
+   * the platform's own long-press haptic; `'none'` also turns that off on
+   * Android (iOS offers no switch for it). See {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /**
    * Called when the user presses an action.
@@ -150,6 +158,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger = 'longPress',
+    haptics,
     onPressAction,
     onMenuOpen,
     onMenuClose,
@@ -199,6 +208,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
       actions={nativeActions}
       interactivity={disabled ? 'disabled' : 'enabled'}
       trigger={trigger}
+      haptics={haptics ?? ''}
       onPressAction={onPressAction ? handlePressAction : undefined}
       onMenuOpen={onMenuOpen ? handleMenuOpen : undefined}
       onMenuClose={onMenuClose ? handleMenuClose : undefined}

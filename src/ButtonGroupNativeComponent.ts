@@ -103,6 +103,12 @@ export interface ButtonGroupNativeProps extends ViewProps {
   /** Label font. */
   labelStyle?: ButtonGroupLabelStyleProps;
 
+  /**
+   * Haptic played when a button is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
   /** Fired when a button is pressed. */
   onButtonPress?: BubblingEventHandler<ButtonGroupPressEvent>;
 

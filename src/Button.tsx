@@ -5,6 +5,7 @@ import type { ColorValue, ViewProps } from 'react-native';
 import NativeButton from './ButtonNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
@@ -126,6 +127,12 @@ export interface ButtonProps extends ViewProps {
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
 
+  /**
+   * Haptic played when the button is pressed, not while `loading` or
+   * disabled. Default: none, like the native buttons. See {@link Haptics}.
+   */
+  haptics?: Haptics;
+
   /** Called when the button is pressed. */
   onPress?: () => void;
 
@@ -169,6 +176,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     labelStyle,
     maxFontSizeMultiplier,
     accessibilityLabel,
+    haptics,
     onPress,
     android,
     accessibilityState,
@@ -213,6 +221,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       labelStyle={nativeLabelStyle}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       spokenLabel={accessibilityLabel ?? ''}
+      haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       accessibilityState={mergedAccessibilityState}
       {...viewProps}

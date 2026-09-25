@@ -35,6 +35,8 @@ class PCContextMenuViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onPressAction = { id, title ->
+      // A submenu's own row also reports here, with no id; it only opens the submenu
+      if (id.isNotEmpty()) PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(PressActionEvent(view.id, id, title))
     }
 
@@ -127,6 +129,11 @@ class PCContextMenuViewManager :
 
   override fun setIos(view: PCContextMenuView, value: ReadableMap?) {
     // Android ignores iOS config
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCContextMenuView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setAndroid(view: PCContextMenuView, value: ReadableMap?) {

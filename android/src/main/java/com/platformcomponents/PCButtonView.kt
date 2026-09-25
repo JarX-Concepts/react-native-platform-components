@@ -61,6 +61,9 @@ class PCButtonView(context: Context) :
   var labelFontStyle: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onPress: (() -> Unit)? = null
 

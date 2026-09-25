@@ -119,6 +119,12 @@ export interface ContextMenuProps extends ViewProps {
   trigger?: string; // ContextMenuTrigger
 
   /**
+   * Haptic played when an action is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
+  /**
    * Fired when user presses an action.
    */
   onPressAction?: BubblingEventHandler<ContextMenuPressActionEvent>;

@@ -78,6 +78,9 @@ public final class PCButtonGroupView: UIView {
         didSet { applyConfigurations() }
     }
 
+    /// The `haptics` prop; PCButtonGroup.mm plays it on a press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPress: ((Int, String) -> Void)? // (index, value)
@@ -150,6 +153,7 @@ public final class PCButtonGroupView: UIView {
             let button = UIButton(type: .system)
             button.tag = index
             button.addTarget(self, action: #selector(tapped(_:)), for: .touchUpInside)
+            button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
             stack.addArrangedSubview(button)
             uiButtons.append(button)
 
@@ -203,6 +207,11 @@ public final class PCButtonGroupView: UIView {
     }
 
     // MARK: - Selection
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
+    }
 
     @objc private func tapped(_ sender: UIButton) {
         let index = sender.tag

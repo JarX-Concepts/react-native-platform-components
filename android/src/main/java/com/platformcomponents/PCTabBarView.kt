@@ -73,6 +73,9 @@ class PCTabBarView(context: Context) :
   var minimizeBehavior: String = "" // "" | "automatic" | "never" | "onScrollDown" | "onScrollUp"
   var scrollViewNativeID: String = ""
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onTabPress: ((index: Int, value: String, reselected: Boolean) -> Unit)? = null
 

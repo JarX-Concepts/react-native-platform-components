@@ -56,6 +56,7 @@ export type * from './LiquidGlass';
 export type * from './TextField';
 export type * from './TabBar';
 export type * from './sharedTypes';
+export type * from './haptics';
 export type * from './NativeTheme';
 export type {
   SegmentedControlBadgeStyle,
@@ -300,6 +301,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     maxFontSizeMultiplier,
     accessibilityLabel,
     accessibilityState,
+    haptics,
     onPress,
     android,
     ...viewProps
@@ -345,6 +347,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    haptics,
     android,
     ...viewProps
   } = props;
@@ -415,6 +418,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     maxFontSizeMultiplier,
     minimizeBehavior,
     scrollViewNativeID,
+    haptics,
     android,
     ...viewProps
   } = props;
@@ -466,6 +470,7 @@ export function SegmentedControl(
     onDeselect,
     disabled,
     testID,
+    haptics,
     ios,
     android,
     labelVisibility,
@@ -552,6 +557,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     placeholder,
     presentation,
     visible,
+    haptics,
     onSelect,
     onRequestClose,
     testID,
@@ -605,6 +611,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger,
+    haptics,
     ios,
     android,
     ...viewProps

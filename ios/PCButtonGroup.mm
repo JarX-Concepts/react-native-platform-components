@@ -111,6 +111,8 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCButtonGroupEventEmitter>(strongSelf->_eventEmitter);
       if (!eventEmitter) return;
@@ -219,6 +221,10 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
   if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
     _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
   // androidRippleColor / androidStrokeColor / android: Android only

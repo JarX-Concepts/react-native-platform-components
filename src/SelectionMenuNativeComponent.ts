@@ -82,6 +82,12 @@ export interface SelectionMenuProps extends ViewProps {
   visible?: string; // SelectionMenuVisible
 
   /**
+   * Haptic played when the user picks an option: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
+  /**
    * Fired when the user selects an option.
    */
   onSelect?: BubblingEventHandler<SelectionMenuSelectEvent>;
