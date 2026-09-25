@@ -747,6 +747,96 @@ describe('Platform Components Example', () => {
     await pause(900);
   });
 
+  it('should test Navigation Rail functionality', async () => {
+    await selectDemo('Navigation Rail');
+    await expect(element(by.id('rail'))).toBeVisible();
+
+    // The rail's width, in points on iOS and pixels on Android
+    const railWidth = async () => {
+      const attributes = (await element(by.id('rail')).getAttributes()) as {
+        width?: number;
+        frame?: { width: number };
+      };
+      return attributes.frame?.width ?? attributes.width ?? 0;
+    };
+    const tapRailItem = async (testID: string) => {
+      await waitFor(element(by.id(testID)))
+        .toBeVisible()
+        .whileElement(by.id('demo-scroll'))
+        .scroll(200, 'up');
+      await element(by.id(testID)).tap();
+    };
+
+    // Destinations by testID; the selected one again is a reselect, and
+    // opening the Inbox clears its badge
+    await tapRailItem('rail-search');
+    await expectText('rail-value', 'search');
+    await element(by.id('rail-search')).tap();
+    await expectText('rail-last-event', 'reselect: search');
+    await element(by.id('rail-inbox')).tap();
+    await expectText('rail-value', 'inbox');
+    await pause(500);
+
+    // The header (a Button) sits in the rail and takes its own presses
+    await element(by.id('rail-header-button')).tap();
+    await expectText('rail-last-event', 'header: compose');
+
+    // Menu gravity moves the destinations; they stay where the taps land
+    for (const gravity of ['center', 'bottom', 'top']) {
+      await scrollToId(`rail-gravity-${gravity}`);
+      await element(by.id(`rail-gravity-${gravity}`)).tap();
+      await pause(600);
+      await tapRailItem('rail-profile');
+      await expectText('rail-value', 'profile');
+      await tapRailItem('rail-home');
+      await expectText('rail-value', 'home');
+    }
+
+    // Expanded: the rail widens, and narrows again collapsed
+    const collapsedWidth = await railWidth();
+    await scrollToId('rail-expanded-switch');
+    await element(by.id('rail-expanded-switch')).tap();
+    await pause(1200);
+    const expandedWidth = await railWidth();
+    if (expandedWidth <= collapsedWidth * 1.5) {
+      throw new Error(
+        `rail: expanded width ${expandedWidth} vs collapsed ${collapsedWidth}`
+      );
+    }
+    await tapRailItem('rail-photos');
+    await expectText('rail-value', 'photos');
+    await scrollToId('rail-expanded-switch');
+    await element(by.id('rail-expanded-switch')).tap();
+    await pause(1200);
+    if ((await railWidth()) !== collapsedWidth) {
+      throw new Error('rail: the collapsed width did not come back');
+    }
+
+    // Label modes, the header off and on, badges and custom colors
+    await scrollToId('rail-labels-selected');
+    await element(by.id('rail-labels-selected')).tap();
+    await pause(600);
+    await element(by.id('rail-labels-unlabeled')).tap();
+    await pause(600);
+    await element(by.id('rail-labels-auto')).tap();
+    await pause(400);
+    await scrollToId('rail-header-switch');
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
+    await scrollToId('rail-unread-switch');
+    await element(by.id('rail-unread-switch')).tap();
+    await pause(500);
+    await scrollToId('rail-styled-switch');
+    await element(by.id('rail-styled-switch')).tap();
+    await pause(900);
+    await tapRailItem('rail-search');
+    await expectText('rail-value', 'search');
+    await tapRailItem('rail-header-button');
+    await expectText('rail-last-event', 'header: compose');
+  });
+
   it('should test Button functionality', async () => {
     await selectDemo('Button');
     await expect(element(by.id('button-filled'))).toBeVisible();
