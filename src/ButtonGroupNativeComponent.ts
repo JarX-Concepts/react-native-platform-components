@@ -47,12 +47,42 @@ export type ButtonGroupLabelStyleProps = Readonly<{
 }>;
 
 /**
+ * One item of the split button's menu, the shape of `ContextMenuItem` (see
+ * menuItems.ts). Every field is set; empty strings mean "none" and flags are
+ * 'true' | 'false'.
+ */
+export type ButtonGroupMenuItem = Readonly<{
+  id: string;
+  title: string;
+  subtitle: string;
+  /** Index of the parent submenu or section; -1 at the top level */
+  parent: Int32;
+  /** 'action' | 'menu' | 'section' */
+  kind: string;
+  /** '' | 'sfSymbol' | 'drawable' | 'image' */
+  iconType: string;
+  iconName: string;
+  iconUri: string;
+  iconScale: Double;
+  iconTinted: string;
+  imageColor: string;
+  destructive: string;
+  disabled: string;
+  keepsMenuPresented: string;
+  /** '' | 'off' | 'on' | 'mixed' */
+  state: string;
+}>;
+
+/** Event emitted when a split button menu item is picked. */
+export type ButtonGroupMenuSelectEvent = Readonly<{
+  id: string;
+  title: string;
+}>;
+
+/**
  * Android-specific configuration.
  */
 export type ButtonGroupAndroidProps = Readonly<{
-  /** What happens to buttons that don't fit: 'none' | 'menu' | 'wrap' */
-  overflow?: string;
-
   /** Material style: 'm3' | 'expressive' */
   material?: string;
 }>;
@@ -61,7 +91,10 @@ export interface ButtonGroupNativeProps extends ViewProps {
   /** Buttons to display. */
   buttons: ReadonlyArray<ButtonGroupButton>;
 
-  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' */
+  /**
+   * 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' |
+   * 'prominentGlass' | 'clearGlass' | 'prominentClearGlass'
+   */
   variant?: string;
 
   /** 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge' */
@@ -103,6 +136,24 @@ export interface ButtonGroupNativeProps extends ViewProps {
   /** Label font. */
   labelStyle?: ButtonGroupLabelStyleProps;
 
+  /**
+   * What happens to buttons that don't fit: 'none' | 'menu' | 'wrap'
+   * ('wrap' is Android only)
+   */
+  overflow?: string;
+
+  /**
+   * 'true' | 'false': a split button, the first button joined to a trailing
+   * button that opens `menu` (SplitButton).
+   */
+  split?: string;
+
+  /** The split button's menu, flattened (see ButtonGroupMenuItem). */
+  menu?: ReadonlyArray<ButtonGroupMenuItem>;
+
+  /** Screen-reader label of the split button's menu button. */
+  menuAccessibilityLabel?: string;
+
   /** Fired when a button is pressed. */
   onButtonPress?: BubblingEventHandler<ButtonGroupPressEvent>;
 
@@ -112,6 +163,15 @@ export interface ButtonGroupNativeProps extends ViewProps {
    * name can't be both direct and bubbling.
    */
   onGroupSelectionChange?: BubblingEventHandler<ButtonGroupSelectionEvent>;
+
+  /** Fired when a split button menu item is picked. */
+  onMenuSelect?: BubblingEventHandler<ButtonGroupMenuSelectEvent>;
+
+  /** Fired when the split button's menu opens. */
+  onMenuOpen?: BubblingEventHandler<Readonly<{}>>;
+
+  /** Fired when the split button's menu closes. */
+  onMenuClose?: BubblingEventHandler<Readonly<{}>>;
 
   android?: ButtonGroupAndroidProps;
 }

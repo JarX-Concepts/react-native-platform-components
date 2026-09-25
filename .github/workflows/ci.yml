@@ -243,6 +243,19 @@ jobs:
           yarn workspace react-native-platform-components-example detox build-framework-cache
           yarn workspace react-native-platform-components-example test:e2e:ios
 
+      # Logs only (the iOS run records videos), plus the crash reports macOS
+      # writes when the simulated app dies
+      - name: Upload Detox logs and crash reports (iOS)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: detox-ios-logs
+          path: |
+            example/artifacts/**/*.log
+            example/artifacts/**/*.json
+            /Users/runner/Library/Logs/DiagnosticReports/PlatformComponentsExample*
+          if-no-files-found: ignore
+
   # These jobs build a throwaway app against old versions, so the compatibility
   # table is verified rather than asserted: without them, upgrading our own dev
   # dependencies could silently start requiring a newer React Native.

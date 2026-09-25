@@ -39,6 +39,7 @@ import type { NavigationRailProps } from './NavigationRail';
 import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
+import type { SplitButtonProps } from './SplitButton';
 import type { TabBarProps } from './TabBar';
 import type {
   TextFieldChangeEvent,
@@ -55,6 +56,7 @@ export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './Button';
 export type * from './ButtonGroup';
+export type * from './SplitButton';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -457,6 +459,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    overflow,
     android,
     ...viewProps
   } = props;
@@ -503,6 +506,48 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
         );
       })}
     </View>
+  );
+}
+
+/**
+ * A `Pressable` with the button role, `testID` and the label as `Text`, for
+ * the main button. Pressing it calls `onPress`. The menu isn't rendered;
+ * `fireEvent(button, 'menuSelect', id, title)`, `'menuOpen'` and
+ * `'menuClose'` reach the menu callbacks.
+ */
+export function SplitButton(props: SplitButtonProps): React.ReactElement {
+  const {
+    label,
+    icon,
+    accessibilityLabel,
+    menu,
+    menuAccessibilityLabel,
+    variant,
+    size,
+    disabled,
+    color,
+    tintColor,
+    labelStyle,
+    onPress,
+    onMenuSelect,
+    onMenuOpen,
+    onMenuClose,
+    android,
+    ...viewProps
+  } = props;
+
+  return (
+    <Pressable
+      {...viewProps}
+      {...handlers({ onMenuSelect, onMenuOpen, onMenuClose })}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      onPress={() => onPress?.()}
+    >
+      {label ? <Text>{label}</Text> : null}
+    </Pressable>
   );
 }
 

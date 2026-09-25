@@ -9,6 +9,7 @@ import {
   type ButtonVariant,
   type ContextMenuAction,
   type PlatformIcon,
+  SplitButton,
 } from 'react-native-platform-components';
 import { Divider, Row, Section, ui } from './DemoUI';
 
@@ -116,6 +117,45 @@ function sortMenu(sortBy: SortKey): ContextMenuAction[] {
   ];
 }
 
+// Split button menus
+const REPLY_MENU: ContextMenuAction[] = [
+  {
+    id: 'reply-all',
+    title: 'Reply All',
+    image: { ios: 'arrowshape.turn.up.left.2', android: 'send' },
+  },
+  {
+    id: 'forward',
+    title: 'Forward',
+    image: { ios: 'arrowshape.turn.up.right', android: 'share' },
+  },
+  {
+    id: 'delete',
+    title: 'Delete',
+    image: { ios: 'trash', android: 'delete' },
+    attributes: { destructive: true },
+  },
+];
+const SAVE_MENU: ContextMenuAction[] = [
+  { id: 'save-as', title: 'Save As…' },
+  { id: 'duplicate', title: 'Duplicate' },
+];
+const EXPORT_MENU: ContextMenuAction[] = [
+  { id: 'pdf', title: 'PDF' },
+  { id: 'png', title: 'PNG' },
+];
+
+// More buttons than a phone's width holds: the trailing ones overflow
+const OVERFLOW_BUTTONS = [
+  { label: 'Undo', value: 'undo' },
+  { label: 'Redo', value: 'redo' },
+  { label: 'Indent', value: 'indent' },
+  { label: 'Outdent', value: 'outdent' },
+  { label: 'Link', value: 'link' },
+  { label: 'Quote', value: 'quote' },
+  { label: 'Code', value: 'code' },
+];
+
 // A photo behind the clear glass buttons; the color shows while it loads
 const BACKDROP_URI =
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800';
@@ -170,6 +210,8 @@ export function ButtonDemo(): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const [bounces, setBounces] = useState(0);
   const [wiggles, setWiggles] = useState(0);
+  const [splitAction, setSplitAction] = useState<string | null>(null);
+  const [overflowPressed, setOverflowPressed] = useState<string | null>(null);
 
   const menu = useMemo(() => sortMenu(sortBy), [sortBy]);
   const toggled = [
@@ -693,6 +735,75 @@ export function ButtonDemo(): React.JSX.Element {
           </Row>
         </Section>
       )}
+
+      {/* A main action with an attached menu */}
+      <Section title="Split Button">
+        <View style={styles.wrap}>
+          <SplitButton
+            testID="split-button"
+            label="Reply"
+            menu={REPLY_MENU}
+            menuAccessibilityLabel="Reply options"
+            onPress={() => setSplitAction('reply')}
+            onMenuSelect={(id) => setSplitAction(id)}
+            size={size}
+            disabled={disabled}
+            android={common.android}
+          />
+          <SplitButton
+            label="Save"
+            variant="tonal"
+            menu={SAVE_MENU}
+            menuAccessibilityLabel="Save options"
+            onPress={() => setSplitAction('save')}
+            onMenuSelect={(id) => setSplitAction(id)}
+            size={size}
+            disabled={disabled}
+            android={common.android}
+          />
+        </View>
+        <Divider />
+        <View style={styles.wrap}>
+          <SplitButton
+            label="Export"
+            variant="outlined"
+            menu={EXPORT_MENU}
+            menuAccessibilityLabel="Export options"
+            onPress={() => setSplitAction('export')}
+            onMenuSelect={(id) => setSplitAction(id)}
+            size={size}
+            disabled={disabled}
+            android={common.android}
+          />
+        </View>
+        <Divider />
+        <Row label="Action">
+          <Text testID="split-value" style={ui.valueText}>
+            {splitAction ?? '(none)'}
+          </Text>
+        </Row>
+      </Section>
+
+      {/* The buttons that don't fit fold into an overflow menu; its picks
+          are presses */}
+      <Section title="Overflow">
+        <View style={styles.groupRow}>
+          <ButtonGroup
+            testID="button-group-overflow"
+            buttons={OVERFLOW_BUTTONS}
+            variant="tonal"
+            overflow="menu"
+            onPress={(value) => setOverflowPressed(value)}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <Row label="Pressed">
+          <Text testID="overflow-value" style={ui.valueText}>
+            {overflowPressed ?? '(none)'}
+          </Text>
+        </Row>
+      </Section>
     </>
   );
 }
