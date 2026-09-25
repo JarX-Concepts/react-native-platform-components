@@ -68,6 +68,9 @@ public final class PCFloatingActionButtonView: UIView {
         }
     }
 
+    /// The `haptics` prop; PCFloatingActionButton.mm plays it on a press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPress: (() -> Void)?
@@ -125,11 +128,17 @@ public final class PCFloatingActionButtonView: UIView {
         // Frame layout: the button's width animates inside this view
         addSubview(button)
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
+        button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
         applyConfiguration()
     }
 
     @objc private func pressed() {
         onPress?()
+    }
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
     }
 
     /// The label stays the spoken name while the button is shrunk.

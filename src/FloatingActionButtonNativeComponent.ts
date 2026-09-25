@@ -42,6 +42,12 @@ export interface FloatingActionButtonNativeProps extends ViewProps {
   /** nativeID of the ScrollView whose scrolling shrinks and extends the button. */
   scrollViewNativeID?: string;
 
+  /**
+   * Haptic played when the button is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
   /** Fired when the button is pressed. */
   onFabPress?: BubblingEventHandler<Readonly<{}>>;
 }

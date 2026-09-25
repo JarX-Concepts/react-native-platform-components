@@ -119,6 +119,8 @@ static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style,
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCNavigationRailEventEmitter>(strongSelf->_eventEmitter);
       if (!eventEmitter) return;
@@ -224,6 +226,10 @@ static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style,
   }
 
   // items' systemItem: TabBar only
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
+  }
+
   // androidIndicatorColor / androidRippleColor: Android only
 
   [super updateProps:props oldProps:oldProps];

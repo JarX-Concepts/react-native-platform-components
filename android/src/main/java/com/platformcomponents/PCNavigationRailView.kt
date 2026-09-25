@@ -58,6 +58,9 @@ class PCNavigationRailView(context: Context) :
   var rippleColor: Int? = null
   var labelFont: LabelFont = LabelFont()
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onItemPress: ((index: Int, value: String, reselected: Boolean) -> Unit)? = null
 

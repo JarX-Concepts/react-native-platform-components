@@ -54,6 +54,9 @@ class PCFloatingActionButtonView(context: Context) :
   var spokenLabel: String = ""
   var scrollViewNativeID: String = ""
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onPress: (() -> Unit)? = null
 

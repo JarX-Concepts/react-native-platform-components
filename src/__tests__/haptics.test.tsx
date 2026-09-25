@@ -5,8 +5,11 @@ import {
   Button,
   ButtonGroup,
   ContextMenu,
+  FloatingActionButton,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
+  SplitButton,
   TabBar,
   type Haptics,
 } from '../index';
@@ -29,6 +32,12 @@ jest.mock('../SelectionMenuNativeComponent', () =>
   mockNative('PCSelectionMenu')
 );
 jest.mock('../ContextMenuNativeComponent', () => mockNative('PCContextMenu'));
+jest.mock('../FloatingActionButtonNativeComponent', () =>
+  mockNative('PCFloatingActionButton')
+);
+jest.mock('../NavigationRailNativeComponent', () =>
+  mockNative('PCNavigationRail')
+);
 
 /** The props the native component received last. */
 function nativeProps(spec: string) {
@@ -101,6 +110,33 @@ const COMPONENTS: Array<
       </ContextMenu>
     ),
   ],
+  [
+    'FloatingActionButton',
+    '../FloatingActionButtonNativeComponent',
+    (h) => <FloatingActionButton icon="plus" haptics={h} />,
+  ],
+  [
+    'NavigationRail',
+    '../NavigationRailNativeComponent',
+    (h) => (
+      <NavigationRail
+        items={[{ label: 'Home', value: 'home' }]}
+        selectedValue="home"
+        haptics={h}
+      />
+    ),
+  ],
+  [
+    'SplitButton',
+    '../ButtonGroupNativeComponent',
+    (h) => (
+      <SplitButton
+        label="Send"
+        menu={[{ id: 'later', title: 'Send later' }]}
+        haptics={h}
+      />
+    ),
+  ],
 ];
 
 const VALUES: Haptics[] = [
@@ -123,5 +159,26 @@ describe.each(COMPONENTS)('%s haptics', (_name, spec, build) => {
   it.each(VALUES)('passes %s through', (value) => {
     render(build(value));
     expect(nativeProps(spec).haptics).toBe(value);
+  });
+});
+
+describe('menu items', () => {
+  it("send each action's own haptics with the flattened menu", () => {
+    render(
+      <Button
+        label="Sort"
+        haptics="selection"
+        menu={[
+          { id: 'name', title: 'Name' },
+          { id: 'delete', title: 'Delete', haptics: 'warning' },
+        ]}
+      />
+    );
+    const { menu, haptics } = nativeProps('../ButtonNativeComponent');
+    expect(haptics).toBe('selection');
+    expect(menu.map((item: { haptics: string }) => item.haptics)).toEqual([
+      '',
+      'warning',
+    ]);
   });
 });

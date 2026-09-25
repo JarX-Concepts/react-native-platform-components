@@ -68,6 +68,8 @@ static inline bool IconEqual(
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter = std::static_pointer_cast<const PCFloatingActionButtonEventEmitter>(
           strongSelf->_eventEmitter);
       if (!eventEmitter) return;
@@ -131,6 +133,10 @@ static inline bool IconEqual(
 
   if (!prevProps || newProps.scrollViewNativeID != prevProps->scrollViewNativeID) {
     _view.scrollViewNativeID = NSStringFromStd(newProps.scrollViewNativeID, @"");
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
   [super updateProps:props oldProps:oldProps];

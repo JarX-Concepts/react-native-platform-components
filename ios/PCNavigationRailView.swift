@@ -59,6 +59,9 @@ public final class PCNavigationRailView: UIView {
         didSet { applyConfigurations(); onNeedsRemeasure?() }
     }
 
+    /// The `haptics` prop; PCNavigationRail.mm plays it on a destination press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     /// (index, value, reselected)
@@ -143,6 +146,7 @@ public final class PCNavigationRailView: UIView {
             let button = UIButton(type: .system)
             button.tag = index
             button.addTarget(self, action: #selector(pressed(_:)), for: .touchUpInside)
+            button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
             button.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
             let badge = UILabel()
             badge.textAlignment = .center
@@ -173,6 +177,11 @@ public final class PCNavigationRailView: UIView {
         applyConfigurations()
         updateBadges()
         onNeedsRemeasure?()
+    }
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
     }
 
     @objc private func pressed(_ sender: UIButton) {

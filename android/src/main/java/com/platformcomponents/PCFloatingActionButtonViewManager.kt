@@ -43,6 +43,7 @@ class PCFloatingActionButtonViewManager :
 
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCFloatingActionButtonView) {
     view.onPress = {
+      PCHaptics.perform(view, view.haptics)
       UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)?.dispatchEvent(
         PressEvent(UIManagerHelper.getSurfaceId(view), view.id)
       )
@@ -83,6 +84,11 @@ class PCFloatingActionButtonViewManager :
 
   override fun setSpokenLabel(view: PCFloatingActionButtonView, value: String?) {
     view.applySpokenLabel(value ?: "")
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCFloatingActionButtonView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setScrollViewNativeID(view: PCFloatingActionButtonView, value: String?) {
