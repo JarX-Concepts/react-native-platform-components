@@ -8,6 +8,7 @@ import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.View
@@ -90,6 +91,9 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
         if (trigger == "longPress") {
           longPressRunnable = Runnable {
             if (handleLongClick()) {
+              // The long-press haptic View.performLongClick plays, which this
+              // path bypasses; off with haptics "none" (isHapticFeedbackEnabled)
+              if (popupShowing) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
               // Cancel any pending touch events on children
               val cancel = MotionEvent.obtain(
                 ev.downTime, System.currentTimeMillis(),
