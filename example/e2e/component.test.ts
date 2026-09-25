@@ -905,15 +905,18 @@ describe('Platform Components Example', () => {
       'month · bold'
     );
 
-    // The multi-select group sits below the fold on a phone
+    // The multi-select group sits below the fold on a phone. Its labels are
+    // looked up inside it: the Toggle section has buttons with the same ones.
+    const formatButton = (label: string) =>
+      element(by.text(label).withAncestor(by.id('button-group-multiple')));
     await scrollToId('button-group-multiple');
-    await element(by.text('Italic')).atIndex(0).tap();
+    await formatButton('Italic').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · bold, italic'
     );
 
-    await element(by.text('Bold')).atIndex(0).tap();
+    await formatButton('Bold').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · italic'
@@ -937,7 +940,11 @@ describe('Platform Components Example', () => {
     await waitFor(element(by.text('Date')))
       .toBeVisible()
       .withTimeout(6000);
-    await expectText('button-menu-value', '(none) · open');
+    if (!isAndroid()) {
+      // On Android the popup window has the focus, and Espresso can't read
+      // the page under it while it is open
+      await expectText('button-menu-value', '(none) · open');
+    }
     await element(by.text('Date')).atIndex(0).tap();
     await expectText('button-menu-value', 'date · closed');
 
