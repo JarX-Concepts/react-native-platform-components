@@ -7,7 +7,9 @@ import {
   type ButtonShape,
   type ButtonSize,
   type ButtonVariant,
+  type Haptics,
   type PlatformIcon,
+  SelectionMenu,
 } from 'react-native-platform-components';
 import { Divider, Row, Section, ui } from './DemoUI';
 
@@ -18,6 +20,19 @@ const VARIANTS: ButtonVariant[] = [
   'text',
   'elevated',
 ];
+
+// Haptic played on press; 'default' leaves the prop unset.
+const HAPTICS = [
+  'default',
+  'selection',
+  'light',
+  'medium',
+  'heavy',
+  'success',
+  'warning',
+  'error',
+  'none',
+].map((value) => ({ label: value, data: value }));
 
 const SIZES: { label: string; value: ButtonSize }[] = [
   { label: 'XS', value: 'xsmall' },
@@ -97,12 +112,15 @@ export function ButtonDemo(): React.JSX.Element {
   const [styled, setStyled] = useState(true);
   const [expressive, setExpressive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [haptics, setHaptics] = useState('default');
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
+  const hapticsProp = haptics === 'default' ? undefined : (haptics as Haptics);
   const common = {
     size,
     shape,
     disabled,
+    haptics: hapticsProp,
     android: { material: expressive ? 'expressive' : 'm3' } as const,
   };
 
@@ -277,6 +295,7 @@ export function ButtonDemo(): React.JSX.Element {
             onSelectionChange={setRange}
             shape={shape}
             disabled={disabled}
+            haptics={hapticsProp}
           />
         </View>
         <Divider />
@@ -290,6 +309,7 @@ export function ButtonDemo(): React.JSX.Element {
             onSelectionChange={setFormat}
             shape={shape}
             disabled={disabled}
+            haptics={hapticsProp}
           />
         </View>
         <Divider />
@@ -375,6 +395,17 @@ export function ButtonDemo(): React.JSX.Element {
             testID="disabled-switch"
             value={disabled}
             onValueChange={setDisabled}
+          />
+        </Row>
+        <Divider />
+        <Row label="Haptics">
+          <SelectionMenu
+            testID="haptics-menu"
+            style={ui.alignEnd}
+            options={HAPTICS}
+            selected={haptics}
+            presentation="embedded"
+            onSelect={setHaptics}
           />
         </Row>
         {Platform.OS === 'android' && (

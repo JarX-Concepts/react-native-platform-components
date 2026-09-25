@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   ContextMenu,
+  SegmentedControl,
   type ContextMenuAction,
+  type Haptics,
 } from 'react-native-platform-components';
 import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
 
@@ -89,10 +91,18 @@ const ACTIONS_WITH_STATE: ContextMenuAction[] = [
   },
 ];
 
+const HAPTICS_SEGMENTS = [
+  { label: 'Default', value: 'default' },
+  { label: 'Light', value: 'light' },
+  { label: 'None', value: 'none' },
+];
+
 export function ContextMenuDemo(): React.JSX.Element {
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [disabled, setDisabled] = useState(false);
   const [enablePreview, setEnablePreview] = useState(true);
+  // Haptic on an action press; 'none' also drops Android's long-press one
+  const [haptics, setHaptics] = useState<Haptics | undefined>(undefined);
 
   // Modal mode state
   const [modalOpen, setModalOpen] = useState(false);
@@ -114,6 +124,18 @@ export function ContextMenuDemo(): React.JSX.Element {
               setDisabled(v);
               if (v) setModalOpen(false);
             }}
+          />
+        </Row>
+
+        <Divider />
+        <Row label="Haptics">
+          <SegmentedControl
+            testID="haptics-picker"
+            segments={HAPTICS_SEGMENTS}
+            selectedValue={haptics ?? 'default'}
+            onSelect={(value) =>
+              setHaptics(value === 'default' ? undefined : (value as Haptics))
+            }
           />
         </Row>
 
@@ -149,6 +171,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             title="Actions"
             actions={BASIC_ACTIONS}
             disabled={disabled}
+            haptics={haptics}
             onPressAction={handleAction}
             ios={{ enablePreview }}
             style={styles.fullFlex}
@@ -167,6 +190,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             title="Options"
             actions={ACTIONS_WITH_SUBMENU}
             disabled={disabled}
+            haptics={haptics}
             onPressAction={handleAction}
             ios={{ enablePreview }}
             style={styles.fullFlex}
@@ -185,6 +209,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             title="Sort By"
             actions={ACTIONS_WITH_STATE}
             disabled={disabled}
+            haptics={haptics}
             onPressAction={handleAction}
             ios={{ enablePreview }}
             style={styles.fullFlex}
@@ -203,6 +228,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             title="Tap Menu"
             actions={BASIC_ACTIONS}
             disabled={disabled}
+            haptics={haptics}
             trigger="tap"
             onPressAction={handleAction}
             style={styles.fullFlex}
@@ -235,6 +261,7 @@ export function ContextMenuDemo(): React.JSX.Element {
               title="Programmatic Menu"
               actions={BASIC_ACTIONS}
               disabled={disabled}
+              haptics={haptics}
               android={{ visible: modalOpen }}
               onPressAction={(id, title) => {
                 handleAction(id, title);
@@ -276,6 +303,7 @@ export function ContextMenuDemo(): React.JSX.Element {
               },
             ]}
             disabled={disabled}
+            haptics={haptics}
             onPressAction={handleAction}
             ios={{ enablePreview }}
             android={{ anchorPosition: 'right' }}

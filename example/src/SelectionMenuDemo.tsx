@@ -151,6 +151,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               testID="state-menu-embedded"
               style={ui.alignEnd}
               options={STATE_OPTIONS}
+              haptics="selection"
               selected={selected}
               disabled={disabled}
               placeholder="Select a state"
@@ -204,6 +205,7 @@ export function SelectionMenuDemo(): React.JSX.Element {
               <SelectionMenu
                 testID="state-menu-modal"
                 options={STATE_OPTIONS}
+                haptics="selection"
                 selected={selected}
                 disabled={disabled}
                 placeholder="Select a state"

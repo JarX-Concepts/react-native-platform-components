@@ -114,6 +114,7 @@ export function SegmentedControlDemo(): React.JSX.Element {
           <SegmentedControl
             testID="segment-basic"
             segments={TIME_SEGMENTS}
+            haptics="selection"
             selectedValue={selected}
             disabled={disabled}
             onSelect={(value) => setSelected(value)}
