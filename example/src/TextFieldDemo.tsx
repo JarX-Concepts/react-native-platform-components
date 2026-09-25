@@ -5,6 +5,7 @@ import {
   TextField,
   type PlatformIcon,
   type TextFieldRef,
+  type TextFieldSelection,
 } from 'react-native-platform-components';
 import { Divider, PillButton, Row, Section, ui } from './DemoUI';
 
@@ -27,6 +28,10 @@ const CALENDAR_ICON: PlatformIcon = {
 };
 const DUE_DATES = ['Today', 'Tomorrow', 'Next week'];
 const BIG_AMOUNT_STYLE = { fontSize: 36, fontWeight: '600' } as const;
+// Rules for the strong password iOS offers, unlike its default
+// xxxxxx-xxxxxx-xxxxxx format
+const PASSWORD_RULES =
+  'minlength: 20; required: lower; required: upper; required: digit; required: [#$%&!];';
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -52,7 +57,34 @@ export function TextFieldDemo(): React.JSX.Element {
   const [dense, setDense] = useState(false);
   const [material, setMaterial] = useState(true);
   const [writingTools, setWritingTools] = useState(true);
+  const [quantity, setQuantity] = useState('1');
+  const [newPassword, setNewPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState<string[]>([]);
+  const [greeting, setGreeting] = useState('Hello world');
+  const [selection, setSelection] = useState<TextFieldSelection>({
+    start: 0,
+    end: 0,
+  });
   const nameField = useRef<TextFieldRef>(null);
+
+  const stepQuantity = (id: string) => {
+    const current = Number.parseInt(quantity, 10) || 0;
+    setQuantity(String(Math.max(0, current + (id === 'plus' ? 1 : -1))));
+  };
+
+  // A controlled selection: the last word of the text
+  const selectLastWord = () => {
+    const start = greeting.trimEnd().lastIndexOf(' ') + 1;
+    setSelection({ start, end: greeting.trimEnd().length });
+  };
+
+  const sendMessage = () => {
+    const text = message.trim();
+    if (!text) return;
+    setSent((previous) => [...previous, text]);
+    setMessage('');
+  };
 
   const emailError =
     emailTouched && email.length > 0 && !isValidEmail(email)
@@ -237,6 +269,124 @@ export function TextFieldDemo(): React.JSX.Element {
             showCharacterCount
             ios={{ writingTools: writingTools ? 'default' : 'none' }}
             {...common}
+          />
+        </View>
+      </Section>
+
+      <Section title="Keyboard">
+        <View style={styles.fields}>
+          {/* A number pad has no return key: on iOS, a toolbar above the
+              keyboard steps the value and dismisses it */}
+          <TextField
+            testID="field-quantity"
+            label="Quantity"
+            value={quantity}
+            onChangeText={setQuantity}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            supportingText={
+              Platform.OS === 'ios'
+                ? 'Number pad with a keyboard toolbar'
+                : 'Number pad; the action key is Done'
+            }
+            onFocus={() => setLastEvent('focus: quantity')}
+            onBlur={() => setLastEvent('blur: quantity')}
+            ios={{
+              keyboardToolbar: {
+                items: [
+                  {
+                    id: 'minus',
+                    icon: 'minus',
+                    accessibilityLabel: 'Decrease',
+                    testID: 'toolbar-minus',
+                  },
+                  {
+                    id: 'plus',
+                    icon: 'plus',
+                    accessibilityLabel: 'Increase',
+                    testID: 'toolbar-plus',
+                  },
+                ],
+                done: true,
+                doneTestID: 'toolbar-done',
+                onItemPress: stepQuantity,
+              },
+            }}
+            android={android}
+          />
+          {/* Rules for the strong password iOS suggests */}
+          <TextField
+            testID="field-new-password"
+            label="New password"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+            autoComplete="new-password"
+            supportingText="20+ characters with a digit and one of #$%&!"
+            ios={{ passwordRules: PASSWORD_RULES }}
+            android={android}
+          />
+          {/* A chat composer: return sends and the keyboard stays up */}
+          <TextField
+            testID="field-chat"
+            placeholder="Message"
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLines={4}
+            submitBehavior="submit"
+            returnKeyType="send"
+            onSubmitEditing={sendMessage}
+            onFocus={() => setLastEvent('focus: chat')}
+            onBlur={() => setLastEvent('blur: chat')}
+            android={android}
+          />
+          {/* Selection events, and a selection set from JS */}
+          <TextField
+            testID="field-selection"
+            label="Selection"
+            value={greeting}
+            onChangeText={setGreeting}
+            selection={selection}
+            onSelectionChange={(event) =>
+              setSelection(event.nativeEvent.selection)
+            }
+            autoCorrect={false}
+            ios={{
+              keyboardToolbar: {
+                items: [
+                  {
+                    id: 'word',
+                    title: 'Select last word',
+                    testID: 'toolbar-select-word',
+                  },
+                ],
+                done: true,
+                doneTestID: 'toolbar-selection-done',
+                onItemPress: selectLastWord,
+              },
+            }}
+            android={android}
+          />
+        </View>
+        <Divider />
+        <Row label="Sent">
+          <Text testID="field-chat-sent" style={ui.valueText}>
+            {sent.length > 0 ? sent[sent.length - 1] : '(none)'}
+          </Text>
+        </Row>
+        <Divider />
+        <Row label="Selection">
+          <Text testID="field-selection-value" style={ui.valueText}>
+            {`${selection.start}–${selection.end}`}
+          </Text>
+        </Row>
+        <Divider />
+        <View style={styles.actions}>
+          <PillButton
+            testID="field-select-word"
+            label="Select last word"
+            onPress={selectLastWord}
           />
         </View>
       </Section>

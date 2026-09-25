@@ -68,6 +68,31 @@ using namespace facebook::react;
   [childComponentView removeFromSuperview];
 }
 
+// Removed from its parent: inside a glass container the glass dematerializes
+// in place rather than vanishing
+- (void)willMoveToSuperview:(UIView *)newSuperview {
+  if (newSuperview == nil && self.superview != nil) {
+    [_view willUnmount];
+  }
+  [super willMoveToSuperview:newSuperview];
+}
+
+// Inside a glass container on screen, a new frame animates, which morphs the
+// merged glass instead of jumping
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
+  BOOL morphs = oldLayoutMetrics != EmptyLayoutMetrics &&
+      layoutMetrics.frame != oldLayoutMetrics.frame && _view.morphsLayoutChanges;
+  if (!morphs) {
+    [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+    return;
+  }
+  [PCLiquidGlassView morph:^{
+    [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+    [self layoutIfNeeded];
+  }];
+}
+
 
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
@@ -81,6 +106,11 @@ using namespace facebook::react;
   // cornerRadius -> glassCornerRadius
   if (!prevProps || newProps.cornerRadius != prevProps->cornerRadius) {
     _view.glassCornerRadius = newProps.cornerRadius;
+  }
+
+  // cornerStyle -> cornerConfiguration on iOS 26
+  if (!prevProps || newProps.cornerStyle != prevProps->cornerStyle) {
+    _view.cornerStyle = [NSString stringWithUTF8String:newProps.cornerStyle.c_str()];
   }
 
   // iOS-specific props

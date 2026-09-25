@@ -989,6 +989,35 @@ describe('Platform Components Example', () => {
       await pause(300);
       await element(by.id('liquid-glass-demo-2')).longPress(600);
       await pause(300);
+
+      // LiquidGlassContainer: a button materializes out of the group, the
+      // first one widens, and both morph back
+      await scrollToId('glass-expand-switch');
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await waitFor(element(by.text('♥ Favorite')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await pause(600);
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .not.toExist()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await pause(600);
+
+      // The system spacing keeps them apart; then the demo's 24 again
+      await selectMenuOption('spacing-menu', 'Default');
+      await pause(800);
+      await selectMenuOption('spacing-menu', '24');
+      await pause(600);
+
+      // Concentric and capsule corners
+      await scrollToId('corner-capsule');
+      await expect(element(by.id('corner-concentric'))).toBeVisible();
     }
 
     // Take final screenshot
@@ -1071,6 +1100,7 @@ describe('Platform Components Example', () => {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
       await pause(700);
     }
+
     await scrollToId('editable-switch');
 
     if (isAndroid()) {
@@ -1114,6 +1144,98 @@ describe('Platform Components Example', () => {
     await pause(500);
     // No focus event: the last one is still the icon press above
     await expectText('field-last-event', 'icon: due');
+  });
+
+  // The Keyboard section: its own flow, since the Text Field flow is already
+  // long on CI's slower emulator and simulator
+  it('should test Text Field keyboard features', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
+
+    // A drag from near the top of the list, which also puts the keyboard
+    // away as it does for a TextInput. Near the end of the content there is
+    // less to scroll than asked, which is fine here.
+    const dragList = async (distance: number) => {
+      try {
+        await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
+      } catch {
+        // At the end of the content
+      }
+    };
+
+    // Scrolls a field into view. On iOS it then goes into the upper part of
+    // the screen, clear of the keyboard and its toolbar, in one drag sized
+    // from the frame the field reports (the screens differ). Scrolling to
+    // an anchor further down first keeps that drag short.
+    const liftField = async (fieldId: string, anchorId = fieldId) => {
+      await scrollToId(anchorId);
+      if (isAndroid()) return;
+      const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+        frame: { y: number };
+      };
+      const distance = Math.round(frame.y - 200);
+      if (distance > 40) await dragList(distance);
+      await pause(300);
+    };
+
+    // iOS: the number pad's toolbar steps the value, and Done dismisses it
+    if (!isAndroid()) {
+      await liftField('field-quantity', 'field-select-word');
+      await inputOf('field-quantity').tap();
+      await waitFor(element(by.id('toolbar-plus')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-plus')).tap();
+      await expect(inputOf('field-quantity')).toHaveText('2');
+      await element(by.id('toolbar-done')).tap();
+      await expectText('field-last-event', 'blur: quantity');
+    }
+
+    // A chat composer (submitBehavior 'submit'): return sends, and on iOS
+    // the field keeps focus and the keyboard stays up. Android types the
+    // return with a tap that focuses the field, and without a hardware
+    // keyboard (CI) the soft keyboard then stays over the list, where the
+    // scrolls start, so Android does this last.
+    const chatSendsOnReturn = async () => {
+      await liftField('field-chat');
+      await typeInto('field-chat', 'Hello');
+      await inputOf('field-chat').tapReturnKey();
+      await expectText('field-chat-sent', 'Hello');
+      await expect(inputOf('field-chat')).toHaveText('');
+      if (!isAndroid()) {
+        await expectText('field-last-event', 'focus: chat');
+      }
+    };
+    if (!isAndroid()) await chatSendsOnReturn();
+
+    // Selection events from native, and a selection set from JS: on iOS by
+    // a keyboard toolbar button, on Android by the demo's button. On iOS
+    // the chat keyboard is still up; a drag puts it away first.
+    if (!isAndroid()) await dragList(40);
+    await liftField('field-selection');
+    if (isAndroid()) {
+      await typeInto('field-selection', 'Hello there');
+      await scrollToId('field-select-word');
+      await element(by.id('field-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // New text puts the cursor at the start, which native reports; no
+      // tap, so no keyboard
+      await typeInto('field-selection', 'Hi there');
+      await expectText('field-selection-value', '0–0');
+      await chatSendsOnReturn();
+    } else {
+      await inputOf('field-selection').tap();
+      await waitFor(element(by.id('toolbar-select-word')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // Detox taps the field before typing, which puts the cursor at the end
+      await inputOf('field-selection').typeText('!');
+      await expectText('field-selection-value', '12–12');
+      await element(by.id('toolbar-selection-done')).tap();
+      await pause(500);
+    }
   });
 
   it('should test Theme functionality', async () => {
