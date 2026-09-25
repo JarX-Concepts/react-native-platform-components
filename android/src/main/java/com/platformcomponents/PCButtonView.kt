@@ -67,7 +67,7 @@ class PCButtonView(context: Context) :
   var labelFontStyle: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
 
-  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  /** The `haptics` prop: the manager plays it on a press (a toggle's included), showMenu on a pick. */
   var haptics: String = ""
 
   // --- Events ---
@@ -403,6 +403,7 @@ class PCButtonView(context: Context) :
       // Submenu headers open their submenu; they aren't picks
       val item = PCMenuSupport.itemFor(menuItem, items)
       if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
       onMenuSelect?.invoke(item.id, item.title)
       true
     }

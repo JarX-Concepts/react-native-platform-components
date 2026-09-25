@@ -110,7 +110,8 @@ public final class PCButtonGroupView: UIView {
         didSet { chevronButton?.accessibilityLabel = menuAccessibilityLabel.isEmpty ? nil : menuAccessibilityLabel }
     }
 
-    /// The `haptics` prop; PCButtonGroup.mm plays it on a press
+    /// The `haptics` prop: PCButtonGroup.mm plays it on a press (an overflow
+    /// pick included), the split menu handler on a pick
     public let haptics = PCHaptics()
 
     // MARK: - Events back to ObjC++
@@ -302,7 +303,11 @@ public final class PCButtonGroupView: UIView {
             title: "",
             items: splitItems,
             onImageLoaded: { [weak self] in self?.updateSplitMenu() },
-            handler: { [weak self] item in self?.onMenuSelect?(item.id, item.title) }
+            handler: { [weak self] item in
+                guard let self else { return }
+                self.haptics.perform(in: self, override: item.haptics)
+                self.onMenuSelect?(item.id, item.title)
+            }
         ))
     }
 

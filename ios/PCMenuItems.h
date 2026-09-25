@@ -36,6 +36,7 @@ NSDictionary *PCMenuItemToDictionary(const Item &item) {
     @"disabled" : PCMenuString(item.disabled),
     @"keepsMenuPresented" : PCMenuString(item.keepsMenuPresented),
     @"state" : PCMenuString(item.state),
+    @"haptics" : PCMenuString(item.haptics),
   };
 }
 
@@ -56,7 +57,8 @@ bool PCMenuItemEqual(const Item &a, const Item &b) {
       a.iconScale == b.iconScale && a.iconTinted == b.iconTinted &&
       a.imageColor == b.imageColor && a.destructive == b.destructive &&
       a.disabled == b.disabled &&
-      a.keepsMenuPresented == b.keepsMenuPresented && a.state == b.state;
+      a.keepsMenuPresented == b.keepsMenuPresented && a.state == b.state &&
+      a.haptics == b.haptics;
 }
 
 /// Compares every field, so a changed title or state (a stepper or toggle

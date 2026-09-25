@@ -24,7 +24,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   var androidVisible: String = "closed" // "open" | "closed" (Android-only programmatic)
   var androidAnchorPosition: String? = "left" // "left" | "right"
 
-  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  /** The `haptics` prop, played when an action is picked (an action's own `haptics` wins). */
   var haptics: String = ""
 
   // --- Events ---
@@ -254,6 +254,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
       if (item == null || !item.isAction) return@setOnMenuItemClickListener false
       Log.d(TAG, "popup onMenuItemClick id=${item.id} title=${item.title}")
       dismissAfterSelect = true
+      PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
       onPressAction?.invoke(item.id, item.title)
       true
     }

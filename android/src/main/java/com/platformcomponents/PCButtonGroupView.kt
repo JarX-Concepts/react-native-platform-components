@@ -84,7 +84,7 @@ class PCButtonGroupView(context: Context) :
   var labelFontWeight: String = ""
   var labelFontStyle: String = ""
 
-  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  /** The `haptics` prop: the manager plays it on a press (an overflow pick included), the split menu on a pick. */
   var haptics: String = ""
 
   // --- Events ---
@@ -466,6 +466,7 @@ class PCButtonGroupView(context: Context) :
       // Submenu headers open their submenu; they aren't picks
       val item = PCMenuSupport.itemFor(menuItem, items)
       if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
       onMenuSelect?.invoke(item.id, item.title)
       true
     }

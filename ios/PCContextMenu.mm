@@ -46,8 +46,6 @@ using namespace platformcomponents;
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
-      [strongSelf->_view.haptics performIn:strongSelf->_view];
-
       auto eventEmitter =
           std::static_pointer_cast<const PCContextMenuEventEmitter>(
               strongSelf->_eventEmitter);

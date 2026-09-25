@@ -1,30 +1,39 @@
 import UIKit
 
 /// The shared `haptics` prop: a UIKit feedback generator played when a
-/// control reports the user's action. Each view keeps one of these; the
-/// generator is created on first use (attached to the view on iOS 17.5+) and
-/// dropped when the kind changes. UIKit follows the system haptics setting.
+/// control reports the user's action. Each view keeps one of these; a
+/// generator is created on first use of its kind (attached to the view on
+/// iOS 17.5+) and kept. UIKit follows the system haptics setting.
 @objcMembers
 @MainActor
 public final class PCHaptics: NSObject {
     /// "" (unset) | "none" | "selection" | "light" | "medium" | "heavy" |
     /// "success" | "warning" | "error". "" and "none" play nothing: UIKit has
     /// no switch for the haptics its own controls play.
-    public var kind: String = "" {
-        didSet { if oldValue != kind { reset() } }
-    }
+    public var kind: String = ""
 
-    private var generator: UIFeedbackGenerator?
+    /// Generators by kind, created on first use.
+    private var generators: [String: UIFeedbackGenerator] = [:]
 
     /// Readies the Taptic Engine for an action that is likely to follow, such
     /// as a touch down, so the haptic plays without delay.
     public func prepare(in view: UIView) {
-        makeGenerator(in: view)?.prepare()
+        generator(for: kind, in: view)?.prepare()
     }
 
     /// Plays the haptic for `kind`.
     public func perform(in view: UIView) {
-        switch makeGenerator(in: view) {
+        play(kind, in: view)
+    }
+
+    /// Plays `override` when it is set (a menu item's own `haptics`, "none"
+    /// included), else `kind`.
+    public func perform(in view: UIView, override: String) {
+        play(override.isEmpty ? kind : override, in: view)
+    }
+
+    private func play(_ kind: String, in view: UIView) {
+        switch generator(for: kind, in: view) {
         case let selection as UISelectionFeedbackGenerator:
             selection.selectionChanged()
         case let impact as UIImpactFeedbackGenerator:
@@ -57,8 +66,8 @@ public final class PCHaptics: NSObject {
         }
     }
 
-    private func makeGenerator(in view: UIView) -> UIFeedbackGenerator? {
-        if let generator { return generator }
+    private func generator(for kind: String, in view: UIView) -> UIFeedbackGenerator? {
+        if let generator = generators[kind] { return generator }
         guard let feedback = Feedback(kind) else { return nil }
         let made: UIFeedbackGenerator
         if #available(iOS 17.5, *) {
@@ -76,14 +85,7 @@ public final class PCHaptics: NSObject {
             case .notification: made = UINotificationFeedbackGenerator()
             }
         }
-        generator = made
+        generators[kind] = made
         return made
-    }
-
-    private func reset() {
-        if #available(iOS 17.5, *), let generator, let view = generator.view {
-            view.removeInteraction(generator)
-        }
-        generator = nil
     }
 }

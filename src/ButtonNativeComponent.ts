@@ -55,6 +55,8 @@ export type ButtonMenuItem = Readonly<{
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 }>;
 
 /** Event emitted when a toggle button is pressed. */

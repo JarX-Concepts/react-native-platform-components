@@ -19,6 +19,8 @@ struct PCMenuItem {
     let keepsMenuPresented: Bool
     /// "" | "off" | "on" | "mixed"
     let state: String
+    /// The item's own `haptics`; "" = the component's
+    let haptics: String
 
     init(
         index: Int,
@@ -32,7 +34,8 @@ struct PCMenuItem {
         destructive: Bool = false,
         disabled: Bool = false,
         keepsMenuPresented: Bool = false,
-        state: String = ""
+        state: String = "",
+        haptics: String = ""
     ) {
         self.index = index
         self.id = id
@@ -46,6 +49,7 @@ struct PCMenuItem {
         self.disabled = disabled
         self.keepsMenuPresented = keepsMenuPresented
         self.state = state
+        self.haptics = haptics
     }
 
     /// Reads an item bridged from ObjC++ as a dictionary (see PCMenuItems.h).
@@ -63,7 +67,8 @@ struct PCMenuItem {
             destructive: string("destructive") == "true",
             disabled: string("disabled") == "true",
             keepsMenuPresented: string("keepsMenuPresented") == "true",
-            state: string("state")
+            state: string("state"),
+            haptics: string("haptics")
         )
     }
 }

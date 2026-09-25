@@ -35,8 +35,6 @@ class PCContextMenuViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onPressAction = { id, title ->
-      // A submenu's own row also reports here, with no id; it only opens the submenu
-      if (id.isNotEmpty()) PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(PressActionEvent(view.id, id, title))
     }
 

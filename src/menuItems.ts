@@ -5,6 +5,7 @@
 // points at its parent, so menus nest to any depth without a recursive codegen
 // type. Components that show a native menu share this shape and
 // `flattenMenuActions`.
+import type { Haptics } from './haptics';
 import { resolveIcon, type PlatformIcon } from './icons';
 
 /**
@@ -51,6 +52,12 @@ export interface ContextMenuAction {
   attributes?: ContextMenuActionAttributes;
   /** Checkmark state */
   state?: 'off' | 'on' | 'mixed';
+  /**
+   * Haptic played when this action is picked, in place of the component's
+   * `haptics` (`'none'` plays nothing). Unset uses the component's. See
+   * {@link Haptics}.
+   */
+  haptics?: Haptics;
   /** Nested actions: a submenu, or an inline section with `displayInline` */
   subactions?: readonly ContextMenuAction[];
   /**
@@ -89,6 +96,8 @@ export type NativeMenuItem = {
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 };
 
 const flag = (value: boolean | undefined) => (value ? 'true' : 'false');
@@ -130,6 +139,7 @@ export function flattenMenuActions(
         disabled: flag(attributes?.disabled),
         keepsMenuPresented: flag(attributes?.keepsMenuPresented),
         state: action.state ?? '',
+        haptics: action.haptics ?? '',
       });
 
       if (kind !== 'action') visit(children, index);

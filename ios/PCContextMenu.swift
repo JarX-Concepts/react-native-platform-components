@@ -34,7 +34,8 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     /// iOS-specific: enable preview
     public var enablePreview: String = "false"
 
-    /// The `haptics` prop; PCContextMenu.mm plays it when an action is pressed
+    /// The `haptics` prop, played when an action is pressed (an action's own
+    /// `haptics` wins)
     public let haptics = PCHaptics()
 
     // MARK: - Events back to ObjC++
@@ -315,7 +316,9 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
             onImageLoaded: { [weak self] in self?.sync() },
             handler: { [weak self] item in
                 logger.debug("UIAction selected: id=\(item.id), title=\(item.title)")
-                self?.onPressAction?(item.id, item.title)
+                guard let self else { return }
+                self.haptics.perform(in: self, override: item.haptics)
+                self.onPressAction?(item.id, item.title)
             }
         )
     }

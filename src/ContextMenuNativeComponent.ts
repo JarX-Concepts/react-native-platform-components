@@ -40,6 +40,8 @@ export type ContextMenuItem = Readonly<{
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 }>;
 
 /**

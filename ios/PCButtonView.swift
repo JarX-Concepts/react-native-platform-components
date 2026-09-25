@@ -102,7 +102,8 @@ public final class PCButtonView: UIView {
         }
     }
 
-    /// The `haptics` prop; PCButton.mm plays it on a press
+    /// The `haptics` prop: PCButton.mm plays it on a press (a toggle's
+    /// included), the menu handler on a pick
     public let haptics = PCHaptics()
 
     // MARK: - Events back to ObjC++
@@ -255,7 +256,11 @@ public final class PCButtonView: UIView {
             title: "",
             items: items,
             onImageLoaded: { [weak self] in self?.updateMenu() },
-            handler: { [weak self] item in self?.onMenuSelect?(item.id, item.title) }
+            handler: { [weak self] item in
+                guard let self else { return }
+                self.haptics.perform(in: self, override: item.haptics)
+                self.onMenuSelect?(item.id, item.title)
+            }
         )
     }
 
