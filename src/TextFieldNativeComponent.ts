@@ -40,6 +40,36 @@ export type TextFieldTextEvent = Readonly<{
   text: string;
 }>;
 
+/** The cursor or selection, as UTF-16 offsets into the text. */
+export type TextFieldSelectionEvent = Readonly<{
+  start: Int32;
+  end: Int32;
+}>;
+
+/** A press on a keyboard toolbar button (iOS). */
+export type TextFieldToolbarPressEvent = Readonly<{
+  itemId: string;
+}>;
+
+/**
+ * A keyboard toolbar item (iOS). Icons are pre-resolved on the JS side (see
+ * icons.ts); empty strings mean "none".
+ */
+export type TextFieldToolbarItem = Readonly<{
+  kind: string; // 'button' | 'done' | 'flexibleSpace'
+  itemId: string;
+  title: string;
+  systemItem: string; // '' | UIBarButtonItem.SystemItem name
+  iconType: string; // '' | 'sfSymbol' | 'image'
+  iconName: string;
+  iconUri: string;
+  iconScale: Double;
+  iconTinted: string; // 'true' | 'false'
+  prominent: string; // 'true' | 'false'
+  accessibilityLabel: string;
+  testID: string;
+}>;
+
 /**
  * iOS-specific configuration. Every field is '' for the platform default.
  */
@@ -62,6 +92,8 @@ export type TextFieldIOSProps = Readonly<{
   labelPlacement?: string;
   /** Width of a leading label column in points; 0 = default */
   labelWidth?: Double;
+  /** UITextInputPasswordRules descriptor; '' = none */
+  passwordRules?: string;
 }>;
 
 /**
@@ -139,6 +171,15 @@ export interface TextFieldNativeProps extends ViewProps {
 
   /** 'single' | 'multiline' */
   lines?: string;
+
+  /**
+   * What the return key does: 'submit' | 'blurAndSubmit' | 'newline',
+   * resolved on the JS side ('newline' only for multi-line fields).
+   */
+  submitBehavior?: string;
+
+  /** iOS: the keyboard toolbar (inputAccessoryView); empty = none. */
+  keyboardToolbarItems?: ReadonlyArray<TextFieldToolbarItem>;
 
   /** 'enabled' | 'disabled' */
   interactivity?: string;
@@ -219,8 +260,14 @@ export interface TextFieldNativeProps extends ViewProps {
   /** Fired when the field loses focus. */
   onFieldBlur?: BubblingEventHandler<TextFieldTextEvent>;
 
-  /** Fired when the keyboard's return key is pressed (single-line). */
+  /** Fired when the return key submits (see submitBehavior). */
   onFieldSubmit?: BubblingEventHandler<TextFieldTextEvent>;
+
+  /** Fired when the cursor moves or the selection changes. */
+  onFieldSelectionChange?: BubblingEventHandler<TextFieldSelectionEvent>;
+
+  /** iOS: fired when a keyboard toolbar button (other than Done) is pressed. */
+  onKeyboardToolbarPress?: BubblingEventHandler<TextFieldToolbarPressEvent>;
 
   /** Fired when the trailing icon is pressed. */
   onTrailingIconPress?: BubblingEventHandler<Readonly<{}>>;
@@ -253,10 +300,21 @@ interface NativeCommands {
     eventCount: Int32,
     text: string
   ) => void;
+
+  /**
+   * Selects `start`..`end` (UTF-16 offsets, clamped to the text), unless the
+   * user has edited since `eventCount` was reported, as for `setText`.
+   */
+  setSelection: (
+    viewRef: React.ElementRef<NativeTextFieldComponent>,
+    eventCount: Int32,
+    start: Int32,
+    end: Int32
+  ) => void;
 }
 
 export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
-  supportedCommands: ['focus', 'blur', 'clear', 'setText'],
+  supportedCommands: ['focus', 'blur', 'clear', 'setText', 'setSelection'],
 });
 
 export default codegenNativeComponent<TextFieldNativeProps>(

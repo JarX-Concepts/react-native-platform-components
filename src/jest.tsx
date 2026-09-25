@@ -33,6 +33,7 @@ import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
+import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
@@ -44,6 +45,7 @@ import type {
   TextFieldRef,
 } from './TextField';
 import { resolveIcon } from './icons';
+import { resolveSubmitBehavior } from './submitBehavior';
 import { nextSelection } from './web/ButtonGroup';
 
 export type * from './DatePicker';
@@ -53,6 +55,7 @@ export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
+export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './TabBar';
 export type * from './sharedTypes';
@@ -102,7 +105,9 @@ function withText<E extends { nativeEvent: object }>(
  * button with the test ID `trailingIconTestID`, else
  * `${testID}-trailing-icon`; a leading icon with `leadingIconTestID` renders
  * as a view with that ID. A non-editable field with `onPress` calls it when
- * the input is pressed.
+ * the input is pressed. The iOS keyboard toolbar's buttons render as
+ * buttons with their `testID`, else `${testID}-toolbar-${id}`; Done
+ * (`doneTestID`, else `${testID}-toolbar-done`) calls `onBlur`.
  */
 export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
   function TextFieldMock(props, ref): React.ReactElement {
@@ -114,6 +119,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       onFocus,
       onBlur,
       onSubmitEditing,
+      submitBehavior,
+      onSelectionChange,
+      selection,
       label,
       placeholder,
       supportingText,
@@ -195,6 +203,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         },
         clear: () => handleChangeText(''),
         isFocused: () => focused.current,
+        setSelection: (start: number, end?: number) => {
+          inputRef.current?.setSelection?.(start, end ?? start);
+        },
       }),
       [handleChangeText]
     );
@@ -212,6 +223,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
     };
 
     const helper = typeof error === 'string' && error ? error : supportingText;
+    const toolbar = ios?.keyboardToolbar;
 
     return (
       <View {...viewProps}>
@@ -231,6 +243,16 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
           onFocus={handleFocus}
           onBlur={handleBlur}
           onSubmitEditing={handleSubmit}
+          submitBehavior={resolveSubmitBehavior(submitBehavior, multiline)}
+          selection={
+            selection
+              ? {
+                  start: selection.start,
+                  end: selection.end ?? selection.start,
+                }
+              : undefined
+          }
+          onSelectionChange={onSelectionChange}
           placeholder={placeholder}
           editable={editable}
           onPress={editable === false ? onPress : undefined}
@@ -262,6 +284,36 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
           />
         ) : null}
         {helper ? <Text>{helper}</Text> : null}
+        {toolbar?.items?.map((item, index) =>
+          item === 'flexibleSpace' ? null : (
+            <Pressable
+              key={`${item.id}-${index}`}
+              testID={
+                item.testID ??
+                (testID ? `${testID}-toolbar-${item.id}` : undefined)
+              }
+              accessibilityLabel={item.accessibilityLabel ?? item.title}
+              accessibilityRole="button"
+              onPress={() => toolbar.onItemPress?.(item.id)}
+            />
+          )
+        )}
+        {toolbar?.done ? (
+          <Pressable
+            testID={
+              toolbar.doneTestID ??
+              (testID ? `${testID}-toolbar-done` : undefined)
+            }
+            accessibilityLabel={
+              typeof toolbar.done === 'string' ? toolbar.done : 'Done'
+            }
+            accessibilityRole="button"
+            onPress={() => {
+              focused.current = false;
+              onBlur?.(withText<TextFieldEvent>(undefined, { text }));
+            }}
+          />
+        ) : null}
         {showCharacterCount ? (
           <Text>
             {maxLength ? `${text.length} / ${maxLength}` : `${text.length}`}
@@ -653,7 +705,15 @@ export function FloatingToolbar(
 
 /** A view with its children; a `Pressable` when `onPress` is set. */
 export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
-  const { cornerRadius, ios, android, onPress, children, ...viewProps } = props;
+  const {
+    cornerRadius,
+    cornerStyle,
+    ios,
+    android,
+    onPress,
+    children,
+    ...viewProps
+  } = props;
 
   if (!onPress) return <View {...viewProps}>{children}</View>;
 
@@ -675,6 +735,14 @@ export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
       {children}
     </Pressable>
   );
+}
+
+/** A view with its children. */
+export function LiquidGlassContainer(
+  props: LiquidGlassContainerProps
+): React.ReactElement {
+  const { spacing, children, ...viewProps } = props;
+  return <View {...viewProps}>{children}</View>;
 }
 
 /** Always `false` under Jest. */

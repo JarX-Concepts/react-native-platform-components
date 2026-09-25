@@ -13,11 +13,15 @@ import type { ColorValue, NativeSyntheticEvent, ViewProps } from 'react-native';
 import NativeTextField, {
   Commands,
   type TextFieldChangeEvent as NativeChangeEvent,
+  type TextFieldSelectionEvent as NativeSelectionEvent,
   type TextFieldTextEvent as NativeTextEvent,
+  type TextFieldToolbarItem as NativeToolbarItem,
+  type TextFieldToolbarPressEvent as NativeToolbarPressEvent,
 } from './TextFieldNativeComponent';
-import { resolveIcon, type PlatformIcon } from './icons';
+import { NO_ICON, resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import { focusRegistry } from './focusRegistry';
+import { resolveSubmitBehavior } from './submitBehavior';
 import type { AndroidMaterialMode } from './sharedTypes';
 
 /** Keyboard to show; the React Native `TextInput` values. */
@@ -135,6 +139,77 @@ export type TextFieldChangeEvent = NativeSyntheticEvent<{
   eventCount: number;
 }>;
 
+/** A cursor position or selected range, as UTF-16 offsets into the text. */
+export type TextFieldSelection = { start: number; end: number };
+
+/** Selection events carry the new selection, as on `TextInput`. */
+export type TextFieldSelectionChangeEvent = NativeSyntheticEvent<{
+  selection: TextFieldSelection;
+}>;
+
+/**
+ * What the return key does, as on `TextInput`: `'blurAndSubmit'` calls
+ * `onSubmitEditing` and dismisses the keyboard, `'submit'` calls it and keeps
+ * the keyboard up, `'newline'` inserts a newline (multi-line fields).
+ */
+export type TextFieldSubmitBehavior = 'submit' | 'blurAndSubmit' | 'newline';
+
+/** A system button of the iOS keyboard toolbar (`UIBarButtonItem.SystemItem`). */
+export type TextFieldToolbarSystemItem =
+  | 'done'
+  | 'cancel'
+  | 'save'
+  | 'add'
+  | 'edit'
+  | 'close'
+  | 'search'
+  | 'compose'
+  | 'reply'
+  | 'action'
+  | 'camera'
+  | 'trash'
+  | 'undo'
+  | 'redo';
+
+/**
+ * An item of the iOS keyboard toolbar: a button, or `'flexibleSpace'` to push
+ * the next items to the end.
+ */
+export type TextFieldToolbarItem =
+  | 'flexibleSpace'
+  | {
+      /** Passed to `onItemPress`. */
+      id: string;
+      /** Button title. */
+      title?: string;
+      /** An icon instead of the title: an SF Symbol name or an image. */
+      icon?: PlatformIcon;
+      /** A system button, with its own localized title or symbol. */
+      systemItem?: TextFieldToolbarSystemItem;
+      /** The prominent style: bold, or tinted glass on iOS 26. */
+      prominent?: boolean;
+      /** Screen-reader label; defaults to the title. */
+      accessibilityLabel?: string;
+      /** Test identifier of the button. */
+      testID?: string;
+    };
+
+/** The iOS keyboard toolbar, a `UIToolbar` shown above the keyboard. */
+export interface TextFieldKeyboardToolbar {
+  /**
+   * A Done button at the end of the toolbar that dismisses the keyboard
+   * (`onBlur` is called; `onSubmitEditing` is not). `true` is the system
+   * Done button; a string is a prominent button with that title.
+   */
+  done?: boolean | string;
+  /** Buttons at the start of the toolbar, before Done. */
+  items?: TextFieldToolbarItem[];
+  /** Called with the `id` of a pressed item. */
+  onItemPress?: (id: string) => void;
+  /** Test identifier of the Done button. */
+  doneTestID?: string;
+}
+
 /** Methods available through the `ref`. */
 export interface TextFieldRef {
   /** Focuses the field and shows the keyboard. */
@@ -145,6 +220,11 @@ export interface TextFieldRef {
   clear(): void;
   /** Whether the field currently has focus. */
   isFocused(): boolean;
+  /**
+   * Moves the cursor to `start`, or selects `start`..`end`, in UTF-16
+   * offsets clamped to the text.
+   */
+  setSelection(start: number, end?: number): void;
 }
 
 export interface TextFieldProps extends Omit<
@@ -173,8 +253,32 @@ export interface TextFieldProps extends Omit<
   /** Called when the field loses focus. */
   onBlur?: (event: TextFieldEvent) => void;
 
-  /** Called when the return key is pressed. Single-line fields only. */
+  /**
+   * Called when the return key is pressed, unless it inserts a newline (see
+   * `submitBehavior`).
+   */
   onSubmitEditing?: (event: TextFieldEvent) => void;
+
+  /**
+   * What the return key does. Default: `'blurAndSubmit'` for single-line
+   * fields, `'newline'` for multi-line fields. `'submit'` keeps the keyboard
+   * up, for a chat composer that sends on return.
+   */
+  submitBehavior?: TextFieldSubmitBehavior;
+
+  /**
+   * Called when the cursor moves or the selection changes, with
+   * `nativeEvent.selection` in UTF-16 offsets.
+   */
+  onSelectionChange?: (event: TextFieldSelectionChangeEvent) => void;
+
+  /**
+   * Controlled cursor position or selection, in UTF-16 offsets; `end`
+   * defaults to `start`, a cursor. Like `value`, the field returns to it
+   * when the user moves the cursor, so update it from `onSelectionChange`.
+   * For a one-off move, use the ref's `setSelection` instead.
+   */
+  selection?: { start: number; end?: number };
 
   /**
    * Field label. Android: the Material floating label. iOS: a caption above
@@ -374,6 +478,21 @@ export interface TextFieldProps extends Omit<
 
     /** Width of the leading label column, in points. Default: 100. */
     labelWidth?: number;
+
+    /**
+     * A toolbar above the keyboard (`inputAccessoryView`) with a Done
+     * button and your own buttons. Number and phone pads have no return
+     * key, so this is how they are dismissed.
+     */
+    keyboardToolbar?: TextFieldKeyboardToolbar;
+
+    /**
+     * Requirements for the strong passwords iOS suggests, as a
+     * `UITextInputPasswordRules` descriptor, e.g.
+     * `'minlength: 12; required: lower; required: upper; required: digit;'`.
+     * Use with `autoComplete="new-password"`.
+     */
+    passwordRules?: string;
   };
 
   /**
@@ -409,6 +528,51 @@ export interface TextFieldProps extends Omit<
 
 type NativeTextFieldInstance = React.ComponentRef<typeof NativeTextField>;
 
+const TOOLBAR_ITEM: NativeToolbarItem = {
+  kind: 'button',
+  itemId: '',
+  title: '',
+  systemItem: '',
+  ...NO_ICON,
+  prominent: 'false',
+  accessibilityLabel: '',
+  testID: '',
+};
+
+/** The keyboard toolbar as flat items: yours, then a Done button at the end. */
+function toolbarItems(
+  toolbar: TextFieldKeyboardToolbar | undefined
+): NativeToolbarItem[] {
+  if (toolbar == null) return [];
+  const items = (toolbar.items ?? []).map((item): NativeToolbarItem =>
+    item === 'flexibleSpace'
+      ? { ...TOOLBAR_ITEM, kind: 'flexibleSpace' }
+      : {
+          ...TOOLBAR_ITEM,
+          itemId: item.id,
+          title: item.title ?? '',
+          systemItem: item.systemItem ?? '',
+          ...resolveIcon(item.icon),
+          prominent: item.prominent ? 'true' : 'false',
+          accessibilityLabel: item.accessibilityLabel ?? '',
+          testID: item.testID ?? '',
+        }
+  );
+  if (toolbar.done) {
+    if (items[items.length - 1]?.kind !== 'flexibleSpace') {
+      items.push({ ...TOOLBAR_ITEM, kind: 'flexibleSpace' });
+    }
+    items.push({
+      ...TOOLBAR_ITEM,
+      kind: 'done',
+      title: typeof toolbar.done === 'string' ? toolbar.done : '',
+      prominent: 'true',
+      testID: toolbar.doneTestID ?? '',
+    });
+  }
+  return items;
+}
+
 export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
   function TextFieldComponent(props, ref): React.ReactElement {
     const {
@@ -419,6 +583,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       onFocus,
       onBlur,
       onSubmitEditing,
+      submitBehavior,
+      onSelectionChange,
+      selection,
       label,
       placeholder,
       supportingText,
@@ -473,9 +640,14 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
     // count JS has seen. Native drops the update when the user has typed
     // since, and the edit that follows brings JS back in line.
     const [mostRecentEventCount, setMostRecentEventCount] = useState(0);
+    const eventCountRef = useRef(0);
     const [lastNativeText, setLastNativeText] = useState<string | undefined>(
       value ?? defaultValue
     );
+    // The selection last reported by native or pushed from here; a
+    // `selection` prop that differs from it is pushed, the same way
+    const [lastNativeSelection, setLastNativeSelection] =
+      useState<TextFieldSelection | null>(null);
 
     // Registered like a TextInput, so Keyboard.dismiss() and the ScrollView
     // keyboard props treat the field as one (see focusRegistry.ts)
@@ -486,14 +658,41 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       return () => focusRegistry.unregister(node);
     }, []);
 
+    // Text first, then the selection, which may point into the new text
+    const selectionStart = selection?.start;
+    const selectionEnd = selection?.end ?? selectionStart;
     useLayoutEffect(() => {
-      if (typeof value !== 'string' || value === lastNativeText) return;
-      setLastNativeText(value);
       const node = nativeRef.current;
-      if (node != null) {
-        Commands.setText(node, mostRecentEventCount, value);
+      if (typeof value === 'string' && value !== lastNativeText) {
+        setLastNativeText(value);
+        if (node != null) {
+          Commands.setText(node, mostRecentEventCount, value);
+        }
       }
-    }, [value, lastNativeText, mostRecentEventCount]);
+      if (
+        selectionStart != null &&
+        selectionEnd != null &&
+        (lastNativeSelection?.start !== selectionStart ||
+          lastNativeSelection?.end !== selectionEnd)
+      ) {
+        setLastNativeSelection({ start: selectionStart, end: selectionEnd });
+        if (node != null) {
+          Commands.setSelection(
+            node,
+            mostRecentEventCount,
+            selectionStart,
+            selectionEnd
+          );
+        }
+      }
+    }, [
+      value,
+      lastNativeText,
+      mostRecentEventCount,
+      selectionStart,
+      selectionEnd,
+      lastNativeSelection,
+    ]);
 
     useImperativeHandle(
       ref,
@@ -511,6 +710,17 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
           if (node != null) Commands.clear(node);
         },
         isFocused: () => focused.current,
+        setSelection: (start: number, end?: number) => {
+          const node = nativeRef.current;
+          if (node != null) {
+            Commands.setSelection(
+              node,
+              eventCountRef.current,
+              start,
+              end ?? start
+            );
+          }
+        },
       }),
       []
     );
@@ -518,6 +728,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
     const handleChange = useCallback(
       (event: NativeSyntheticEvent<NativeChangeEvent>) => {
         const { text, eventCount } = event.nativeEvent;
+        eventCountRef.current = eventCount;
         setMostRecentEventCount(eventCount);
         setLastNativeText(text);
         onChange?.(event);
@@ -549,6 +760,26 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         onSubmitEditing?.(event);
       },
       [onSubmitEditing]
+    );
+
+    const handleSelectionChange = useCallback(
+      (event: NativeSyntheticEvent<NativeSelectionEvent>) => {
+        const { start, end } = event.nativeEvent;
+        setLastNativeSelection({ start, end });
+        onSelectionChange?.({
+          ...event,
+          nativeEvent: { selection: { start, end } },
+        });
+      },
+      [onSelectionChange]
+    );
+
+    const onToolbarItemPress = ios?.keyboardToolbar?.onItemPress;
+    const handleToolbarPress = useCallback(
+      (event: NativeSyntheticEvent<NativeToolbarPressEvent>) => {
+        onToolbarItemPress?.(event.nativeEvent.itemId);
+      },
+      [onToolbarItemPress]
     );
 
     const handleTrailingIconPress = useCallback(() => {
@@ -586,8 +817,14 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         borderStyle: ios?.borderStyle ?? '',
         labelPlacement: ios?.labelPlacement ?? '',
         labelWidth: ios?.labelWidth ?? 0,
+        passwordRules: ios?.passwordRules ?? '',
       }),
       [ios]
+    );
+
+    const nativeToolbarItems = useMemo(
+      () => toolbarItems(ios?.keyboardToolbar),
+      [ios?.keyboardToolbar]
     );
 
     const nativeAndroid = useMemo(
@@ -622,6 +859,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         autoCorrect={autoCorrect === false ? 'disabled' : 'enabled'}
         secureTextEntry={secureTextEntry ? 'secure' : 'plain'}
         lines={multiline ? 'multiline' : 'single'}
+        submitBehavior={resolveSubmitBehavior(submitBehavior, multiline)}
+        keyboardToolbarItems={nativeToolbarItems}
         interactivity={editable === false ? 'disabled' : 'enabled'}
         autoFocus={autoFocus ? 'focus' : 'none'}
         selectTextOnFocus={selectTextOnFocus ? 'select' : 'keep'}
@@ -650,6 +889,12 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         onFieldFocus={handleFocus}
         onFieldBlur={handleBlur}
         onFieldSubmit={onSubmitEditing ? handleSubmit : undefined}
+        onFieldSelectionChange={
+          onSelectionChange || selection ? handleSelectionChange : undefined
+        }
+        onKeyboardToolbarPress={
+          onToolbarItemPress ? handleToolbarPress : undefined
+        }
         onTrailingIconPress={
           onTrailingIconPress ? handleTrailingIconPress : undefined
         }

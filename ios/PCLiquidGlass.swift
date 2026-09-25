@@ -21,19 +21,32 @@ import UIKit
     #endif
 }
 
-#if compiler(>=6.2)
-
-/// The actual Liquid Glass view implementation for iOS 26+
-/// Extends UIVisualEffectView to properly support UIGlassEffect
-@available(iOS 26.0, *)
+/// The Liquid Glass view: a UIVisualEffectView with a UIGlassEffect on iOS 26.
+///
+/// Built with an Xcode older than the iOS 26 SDK, the glass code is compiled
+/// out and the view falls back to a blur. Built with the iOS 26 SDK and run on
+/// an older iOS, it is a plain view.
+///
+/// Inside a `PCLiquidGlassContainerView` the glass merges with its neighbours,
+/// and it morphs when it appears, disappears or changes frame: UIKit
+/// materializes glass when `effect` is set inside an animation block, and
+/// reshapes the merged glass when a frame changes inside one.
 @objcMembers
 public final class PCLiquidGlassView: UIVisualEffectView {
 
     // MARK: - Static
 
     @objc public static var isSupported: Bool {
-        return true
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            return true
+        }
+        #endif
+        return false
     }
+
+    /// Duration of the morphs inside a container.
+    static let morphDuration: TimeInterval = 0.45
 
     // MARK: - Props (set from ObjC++)
 
@@ -41,12 +54,17 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     /// Effect style: "clear", "regular", "none"
     public var effectStyle: String = "regular" {
-        didSet { applyGlassEffect() }
+        didSet { applyEffect() }
     }
 
     /// Corner radius for the glass effect
     public var glassCornerRadius: CGFloat = 0 {
-        didSet { applyCornerRadius() }
+        didSet { applyCornerStyle() }
+    }
+
+    /// Corner shape: "capsule", "concentric", or "" for glassCornerRadius
+    public var cornerStyle: String = "" {
+        didSet { applyCornerStyle() }
     }
 
     /// Enable touch interaction feedback
@@ -54,7 +72,7 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     /// Tint color for the glass effect (hex string)
     public var glassTintColor: String? {
-        didSet { applyGlassEffect() }
+        didSet { applyEffect() }
     }
 
     /// Color scheme: "light", "dark", "system"
@@ -64,6 +82,11 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     /// Callback for press events with touch coordinates
     public var onPressCallback: ((CGFloat, CGFloat) -> Void)?
+
+    /// The dematerializing copy `willUnmount()` left in the container. Kept
+    /// until the end of the run loop: a view that is only being moved is
+    /// inserted again before then, and removes its copy.
+    private weak var pendingGhost: UIView?
 
     // MARK: - Init
 
@@ -80,6 +103,9 @@ public final class PCLiquidGlassView: UIVisualEffectView {
     private func setup() {
         clipsToBounds = false
         setupTapGesture()
+        #if !compiler(>=6.2)
+        applyEffect()
+        #endif
     }
 
     private func setupTapGesture() {
@@ -99,7 +125,11 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
         // Apply glass effect on first layout when we have bounds
         if effect == nil && bounds.size != .zero {
-            applyGlassEffect()
+            applyEffect()
+        }
+        // Without corner configurations, a capsule follows the size
+        if cornerStyle == "capsule" && !usesCornerConfiguration {
+            applyCornerStyle()
         }
     }
 
@@ -107,12 +137,24 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     /// Call this after setting props to apply/re-apply the glass effect
     @objc public func setupView() {
-        applyGlassEffect()
+        applyEffect()
     }
 
     // MARK: - Glass Effect
 
-    private func applyGlassEffect() {
+    private func applyEffect() {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            applyGlassEffect(duration: 0.2)
+        }
+        #else
+        applyFallbackEffect()
+        #endif
+    }
+
+    #if compiler(>=6.2)
+    @available(iOS 26.0, *)
+    private func applyGlassEffect(duration: TimeInterval) {
         guard bounds.size != .zero else { return }
 
         // Parse effect style
@@ -128,7 +170,7 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
         // Handle "none" style
         guard let glassStyle = style.glassStyle else {
-            UIView.animate(withDuration: 0.2) {
+            UIView.animate(withDuration: duration) {
                 self.effect = nil
             }
             return
@@ -149,106 +191,14 @@ public final class PCLiquidGlassView: UIVisualEffectView {
             self.effect = glassEffect
             isFirstMount = false
         } else {
-            UIView.animate(withDuration: 0.2) {
+            UIView.animate(withDuration: duration) {
                 self.effect = glassEffect
             }
         }
 
-        applyCornerRadius()
+        applyCornerStyle()
     }
-
-    private func applyCornerRadius() {
-        layer.cornerRadius = glassCornerRadius
-        layer.cornerCurve = .continuous
-    }
-
-    private func applyColorScheme() {
-        switch colorScheme {
-        case "light":
-            overrideUserInterfaceStyle = .light
-        case "dark":
-            overrideUserInterfaceStyle = .dark
-        default:
-            overrideUserInterfaceStyle = .unspecified
-        }
-        applyGlassEffect()
-    }
-
-    // MARK: - Sizing
-
-    public override func sizeThatFits(_ size: CGSize) -> CGSize {
-        return size
-    }
-
-    public override var intrinsicContentSize: CGSize {
-        return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
-    }
-}
-
-#else
-
-/// Fallback for older Swift compilers (pre-iOS 26 SDK)
-/// Uses UIBlurEffect as a fallback
-@objcMembers
-public final class PCLiquidGlassView: UIVisualEffectView {
-
-    @objc public static var isSupported: Bool {
-        return false
-    }
-
-    public var effectStyle: String = "regular" {
-        didSet { applyFallbackEffect() }
-    }
-
-    public var glassCornerRadius: CGFloat = 0 {
-        didSet { applyCornerRadius() }
-    }
-
-    public var interactive: Bool = false
-    public var glassTintColor: String?
-    public var colorScheme: String = "system" {
-        didSet { applyColorScheme() }
-    }
-    public var onPressCallback: ((CGFloat, CGFloat) -> Void)?
-
-    public override init(effect: UIVisualEffect?) {
-        super.init(effect: effect)
-        setup()
-    }
-
-    public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setup()
-    }
-
-    private func setup() {
-        clipsToBounds = false
-        setupTapGesture()
-        applyFallbackEffect()
-    }
-
-    private func setupTapGesture() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        addGestureRecognizer(tap)
-    }
-
-    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
-        let location = gesture.location(in: self)
-        onPressCallback?(location.x, location.y)
-    }
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        if effect == nil && bounds.size != .zero {
-            applyFallbackEffect()
-        }
-    }
-
-    /// Call this after setting props to apply/re-apply the effect
-    @objc public func setupView() {
-        applyFallbackEffect()
-    }
-
+    #else
     private func applyFallbackEffect() {
         guard effectStyle != "none" else {
             self.effect = nil
@@ -273,11 +223,46 @@ public final class PCLiquidGlassView: UIVisualEffectView {
         }
 
         self.effect = UIBlurEffect(style: blurStyle)
-        applyCornerRadius()
+        applyCornerStyle()
+    }
+    #endif
+
+    // MARK: - Corners
+
+    /// Whether corners go through UIView.cornerConfiguration (iOS 26).
+    private var usesCornerConfiguration: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            return true
+        }
+        #endif
+        return false
     }
 
-    private func applyCornerRadius() {
-        layer.cornerRadius = glassCornerRadius
+    private func applyCornerStyle() {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            switch cornerStyle {
+            case "capsule":
+                cornerConfiguration = .capsule()
+            case "concentric":
+                // Each corner follows the matching corner of the enclosing
+                // shape (a parent glass, the screen), inset by the distance
+                // to it; cornerRadius is the smallest it gets.
+                cornerConfiguration = .corners(
+                    radius: .containerConcentric(minimum: glassCornerRadius > 0 ? glassCornerRadius : nil)
+                )
+            default:
+                cornerConfiguration = .uniformCorners(radius: .fixed(Double(glassCornerRadius)))
+            }
+            return
+        }
+        #endif
+        // Without corner configurations: a capsule is half the short side,
+        // and concentric corners use cornerRadius
+        layer.cornerRadius = cornerStyle == "capsule"
+            ? min(bounds.width, bounds.height) / 2
+            : glassCornerRadius
         layer.cornerCurve = .continuous
     }
 
@@ -290,11 +275,133 @@ public final class PCLiquidGlassView: UIVisualEffectView {
         default:
             overrideUserInterfaceStyle = .unspecified
         }
-        applyFallbackEffect()
+        applyEffect()
+    }
+
+    // MARK: - Container morphing
+
+    /// The container this glass merges in: the nearest one above it, unless
+    /// another glass view comes first.
+    private var glassContainer: PCLiquidGlassContainerView? {
+        var view = superview
+        while let current = view {
+            if let container = current as? PCLiquidGlassContainerView {
+                return container
+            }
+            if current is PCLiquidGlassView {
+                return nil
+            }
+            view = current.superview
+        }
+        return nil
+    }
+
+    /// Whether frame changes should animate: glass shown in a container that
+    /// is already on screen.
+    @objc public var morphsLayoutChanges: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            return effect is UIGlassEffect && glassContainer?.isSettled == true
+        }
+        #endif
+        return false
+    }
+
+    /// Runs layout changes in the animation that reshapes merged glass.
+    @objc public static func morph(_ changes: @escaping () -> Void) {
+        UIView.animate(
+            withDuration: morphDuration,
+            delay: 0,
+            usingSpringWithDamping: 0.82,
+            initialSpringVelocity: 0,
+            options: [.beginFromCurrentState, .allowUserInteraction],
+            animations: changes
+        )
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil else { return }
+
+        if let ghost = pendingGhost {
+            // Moved within one transaction rather than removed: the glass
+            // is still here, so drop the copy that was fading out
+            ghost.removeFromSuperview()
+            pendingGhost = nil
+            return
+        }
+
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *), glassContainer?.isSettled == true, bounds.size != .zero {
+            // Added to a container already on screen: materialize, which
+            // grows the glass out of the neighbours it merges with
+            effect = nil
+            isFirstMount = false
+            applyGlassEffect(duration: PCLiquidGlassView.morphDuration)
+        }
+        #endif
+    }
+
+    /// Called by the React view as it is removed from its parent. In a
+    /// container that is on screen, a copy of the glass takes its place and
+    /// dematerializes, so the shape melts back into its neighbours instead of
+    /// vanishing.
+    @objc public func willUnmount() {
+        #if compiler(>=6.2)
+        guard #available(iOS 26.0, *),
+              let glass = effect as? UIGlassEffect,
+              let container = glassContainer, container.isSettled,
+              bounds.size != .zero else { return }
+
+        let ghost = UIVisualEffectView(effect: glass)
+        ghost.frame = convert(bounds, to: container.contentView)
+        ghost.cornerConfiguration = cornerConfiguration
+        ghost.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        ghost.isUserInteractionEnabled = false
+        // Last, so the indexes React inserts its children at stay right
+        container.contentView.addSubview(ghost)
+
+        pendingGhost = ghost
+        UIView.animate(withDuration: PCLiquidGlassView.morphDuration, animations: {
+            ghost.effect = nil
+        }, completion: { _ in
+            ghost.removeFromSuperview()
+        })
+
+        // Once the transaction has applied the container's new size: a copy
+        // left outside it (glass removed at an edge) shrinks into the edge,
+        // where its neighbour is, rather than being cut off by the bounds.
+        // A transform keeps its corners; a new frame would square them.
+        DispatchQueue.main.async { [weak self] in
+            self?.pendingGhost = nil
+            guard ghost.superview != nil else { return }
+            let bounds = container.contentView.bounds
+            let frame = ghost.frame
+            let target = CGPoint(
+                x: min(max(frame.midX, bounds.minX), bounds.maxX),
+                y: min(max(frame.midY, bounds.minY), bounds.maxY)
+            )
+            guard target.x != frame.midX || target.y != frame.midY else { return }
+            PCLiquidGlassView.morph {
+                ghost.transform = CGAffineTransform(
+                    translationX: target.x - frame.midX,
+                    y: target.y - frame.midY
+                ).scaledBy(x: 0.5, y: 0.5)
+            }
+        }
+        #endif
+    }
+
+    // MARK: - Sizing
+
+    public override func sizeThatFits(_ size: CGSize) -> CGSize {
+        return size
+    }
+
+    public override var intrinsicContentSize: CGSize {
+        return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
     }
 }
-
-#endif
 
 // MARK: - UIColor parsing extension
 

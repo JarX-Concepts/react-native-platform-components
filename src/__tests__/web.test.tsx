@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { TextInput } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import renderer, {
   act,
   type ReactTestInstance,
@@ -14,6 +14,8 @@ import {
   ContextMenu,
   DatePicker,
   DateRangePicker,
+  LiquidGlass,
+  LiquidGlassContainer,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -470,6 +472,41 @@ describe('TextField (web)', () => {
     expect(onChangeText).toHaveBeenCalledWith('');
   });
 
+  it('maps submitBehavior onto the web TextInput', () => {
+    const onSubmitEditing = jest.fn();
+    let tree = render(<TextField onSubmitEditing={onSubmitEditing} />);
+    let input = tree.root.findByType(TextInput);
+    expect(input.props.submitBehavior).toBe('blurAndSubmit');
+    expect(input.props.blurOnSubmit).toBe(true);
+
+    tree = render(<TextField submitBehavior="submit" />);
+    expect(tree.root.findByType(TextInput).props.blurOnSubmit).toBe(false);
+
+    // A multi-line field that submits on Enter keeps Shift+Enter for newlines
+    tree = render(
+      <TextField
+        multiline
+        value="hi"
+        submitBehavior="submit"
+        onSubmitEditing={onSubmitEditing}
+      />
+    );
+    input = tree.root.findByType(TextInput);
+    const preventDefault = jest.fn();
+    act(() =>
+      input.props.onKeyPress({
+        nativeEvent: { key: 'Enter', shiftKey: true },
+        preventDefault,
+      })
+    );
+    expect(onSubmitEditing).not.toHaveBeenCalled();
+    act(() =>
+      input.props.onKeyPress({ nativeEvent: { key: 'Enter' }, preventDefault })
+    );
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(onSubmitEditing.mock.calls[0][0].nativeEvent.text).toBe('hi');
+  });
+
   it('toggles password visibility', () => {
     const tree = render(<TextField secureTextEntry passwordToggle />);
     expect(tree.root.findByType(TextInput).props.secureTextEntry).toBe(true);
@@ -496,5 +533,45 @@ describe('ContextMenu (web)', () => {
     expect(tree.root.findByType('button').props['aria-label']).toBe('Inside');
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+describe('LiquidGlass (web)', () => {
+  const host = (tree: ReactTestRenderer, testID: string) =>
+    tree.root.find(
+      (node) => typeof node.type === 'string' && node.props.testID === testID
+    );
+  const radiusOf = (tree: ReactTestRenderer) =>
+    StyleSheet.flatten(host(tree, 'glass').props.style)?.borderRadius;
+
+  it('rounds a capsule fully and uses the radius otherwise', () => {
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle="capsule" />))
+    ).toBe(9999);
+    expect(
+      radiusOf(
+        render(
+          <LiquidGlass
+            testID="glass"
+            cornerStyle="concentric"
+            cornerRadius={8}
+          />
+        )
+      )
+    ).toBe(8);
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle={20} />))
+    ).toBe(20);
+  });
+
+  it('renders the container as a plain view around its children', () => {
+    const tree = render(
+      <LiquidGlassContainer spacing={16} testID="group">
+        <LiquidGlass testID="glass" />
+      </LiquidGlassContainer>
+    );
+    const group = host(tree, 'group');
+    expect(group.props.spacing).toBeUndefined();
+    expect(host(tree, 'glass')).toBeDefined();
   });
 });

@@ -14,6 +14,7 @@ import {
   ContextMenu,
   DatePicker,
   LiquidGlass,
+  LiquidGlassContainer,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -154,6 +155,38 @@ describe('TextField (mock)', () => {
     expect(onTrailingIconPress).toHaveBeenCalledTimes(1);
     press(byTestID(tree, 'due'));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes submitBehavior and selection, and presses toolbar buttons', () => {
+    const onItemPress = jest.fn();
+    const onBlur = jest.fn();
+    const onSelectionChange = jest.fn();
+    const tree = render(
+      <TextField
+        testID="qty"
+        multiline
+        submitBehavior="submit"
+        selection={{ start: 1 }}
+        onSelectionChange={onSelectionChange}
+        onBlur={onBlur}
+        ios={{
+          keyboardToolbar: {
+            items: ['flexibleSpace', { id: 'plus', icon: 'plus' }],
+            done: true,
+            onItemPress,
+          },
+        }}
+      />
+    );
+    const input = tree.root.findByType(TextInput);
+    expect(input.props.submitBehavior).toBe('submit');
+    expect(input.props.selection).toEqual({ start: 1, end: 1 });
+    expect(input.props.onSelectionChange).toBe(onSelectionChange);
+
+    press(byTestID(tree, 'qty-toolbar-plus'));
+    expect(onItemPress).toHaveBeenCalledWith('plus');
+    press(byTestID(tree, 'qty-toolbar-done'));
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -347,10 +380,13 @@ describe('menus, pickers and containers (mock)', () => {
     const onConfirm = jest.fn();
     const onPress = jest.fn();
     const tree = render(
-      <LiquidGlass testID="glass" onPress={onPress}>
-        <DatePicker testID="date" date={null} onConfirm={onConfirm} />
-      </LiquidGlass>
+      <LiquidGlassContainer testID="group" spacing={20}>
+        <LiquidGlass testID="glass" cornerStyle="capsule" onPress={onPress}>
+          <DatePicker testID="date" date={null} onConfirm={onConfirm} />
+        </LiquidGlass>
+      </LiquidGlassContainer>
     );
+    expect(byTestID(tree, 'group').props.spacing).toBeUndefined();
     press(byTestID(tree, 'glass'));
     expect(onPress).toHaveBeenCalledWith({ x: 0, y: 0 });
     const date = new Date(2026, 8, 23);

@@ -40,6 +40,24 @@ static inline bool IconEqual(const PCTextFieldTrailingIconStruct &a, const PCTex
          a.iconScale == b.iconScale && a.iconTinted == b.iconTinted;
 }
 
+static inline bool ToolbarItemsEqual(
+    const std::vector<PCTextFieldKeyboardToolbarItemsStruct> &a,
+    const std::vector<PCTextFieldKeyboardToolbarItemsStruct> &b) {
+  if (a.size() != b.size()) return false;
+  for (size_t i = 0; i < a.size(); i++) {
+    const auto &x = a[i];
+    const auto &y = b[i];
+    if (x.kind != y.kind || x.itemId != y.itemId || x.title != y.title ||
+        x.systemItem != y.systemItem || x.iconType != y.iconType || x.iconName != y.iconName ||
+        x.iconUri != y.iconUri || x.iconScale != y.iconScale || x.iconTinted != y.iconTinted ||
+        x.prominent != y.prominent || x.accessibilityLabel != y.accessibilityLabel ||
+        x.testID != y.testID) {
+      return false;
+    }
+  }
+  return true;
+}
+
 static inline bool TextStyleEqual(
     const PCTextFieldTextStyleStruct &a,
     const PCTextFieldTextStyleStruct &b) {
@@ -141,6 +159,28 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
       if (!eventEmitter) return;
 
       eventEmitter->onFieldSubmit({.text = text.UTF8String});
+    };
+
+    _view.onSelectionChange = ^(NSInteger start, NSInteger end) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCTextFieldEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onFieldSelectionChange({.start = (int)start, .end = (int)end});
+    };
+
+    _view.onKeyboardToolbarPress = ^(NSString *itemId) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCTextFieldEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onKeyboardToolbarPress({.itemId = itemId.UTF8String});
     };
 
     _view.onTrailingIconPress = ^{
@@ -271,6 +311,32 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
     _view.multiline = newProps.lines == "multiline";
   }
 
+  if (!prevProps || newProps.submitBehavior != prevProps->submitBehavior) {
+    _view.submitBehavior = NSStringFromStd(newProps.submitBehavior, @"");
+  }
+
+  // keyboardToolbarItems: {kind, itemId, title, systemItem, icon fields, prominent, ...}
+  if (!prevProps || !ToolbarItemsEqual(newProps.keyboardToolbarItems, prevProps->keyboardToolbarItems)) {
+    NSMutableArray *items = [NSMutableArray new];
+    for (const auto &item : newProps.keyboardToolbarItems) {
+      [items addObject:@{
+        @"kind" : NSStringFromStd(item.kind, @"button"),
+        @"itemId" : NSStringFromStd(item.itemId, @""),
+        @"title" : NSStringFromStd(item.title, @""),
+        @"systemItem" : NSStringFromStd(item.systemItem, @""),
+        @"iconType" : NSStringFromStd(item.iconType, @""),
+        @"iconName" : NSStringFromStd(item.iconName, @""),
+        @"iconUri" : NSStringFromStd(item.iconUri, @""),
+        @"iconScale" : @(item.iconScale),
+        @"iconTinted" : NSStringFromStd(item.iconTinted, @"true"),
+        @"prominent" : NSStringFromStd(item.prominent, @"false"),
+        @"accessibilityLabel" : NSStringFromStd(item.accessibilityLabel, @""),
+        @"testID" : NSStringFromStd(item.testID, @""),
+      }];
+    }
+    _view.keyboardToolbarItems = items;
+  }
+
   if (!prevProps || newProps.interactivity != prevProps->interactivity) {
     _view.interactivity = NSStringFromStd(newProps.interactivity, @"enabled");
   }
@@ -375,6 +441,9 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
   if (!prevProps || newIOS.labelWidth != oldIOS.labelWidth) {
     _view.labelWidth = newIOS.labelWidth;
   }
+  if (!prevProps || newIOS.passwordRules != oldIOS.passwordRules) {
+    _view.passwordRules = NSStringFromStd(newIOS.passwordRules, @"");
+  }
 
   // autoFocus last, once the field is configured
   if (!prevProps || newProps.autoFocus != prevProps->autoFocus) {
@@ -423,6 +492,10 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
 
 - (void)setText:(NSInteger)eventCount text:(NSString *)text {
   [_view setText:text ?: @"" eventCount:eventCount];
+}
+
+- (void)setSelection:(NSInteger)eventCount start:(NSInteger)start end:(NSInteger)end {
+  [_view setSelectionWithStart:start end:end eventCount:eventCount];
 }
 
 #pragma mark - State (Measuring)
