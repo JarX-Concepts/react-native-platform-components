@@ -449,7 +449,8 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
 /**
  * A `tablist` view of `Pressable` tabs (at most five), each with its
  * `testID`, else `${testID}-${value}`. Pressing a tab calls `onSelect`, or
- * `onReselect` when it is the selected one.
+ * `onReselect` when it is the selected one. The `accessory` renders before
+ * the tab list.
  */
 export function TabBar(props: TabBarProps): React.ReactElement {
   const {
@@ -467,38 +468,43 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     maxFontSizeMultiplier,
     minimizeBehavior,
     scrollViewNativeID,
+    accessory,
+    onAccessoryEnvironmentChange,
     android,
     ...viewProps
   } = props;
 
   return (
-    <View {...viewProps} testID={testID} accessibilityRole="tablist">
-      {items.slice(0, 5).map((item, index) => {
-        const selected = item.value === selectedValue;
-        return (
-          <Pressable
-            key={item.value}
-            testID={
-              item.testID ?? (testID ? `${testID}-${item.value}` : undefined)
-            }
-            accessibilityRole="tab"
-            accessibilityLabel={item.accessibilityLabel ?? item.label}
-            accessibilityState={{ selected, disabled: !!item.disabled }}
-            disabled={item.disabled}
-            onPress={() =>
-              selected
-                ? onReselect?.(item.value, index)
-                : onSelect?.(item.value, index)
-            }
-          >
-            <Text>{item.label}</Text>
-            {item.badge != null && item.badge !== '' ? (
-              <Text>{String(item.badge)}</Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
-    </View>
+    <>
+      {accessory}
+      <View {...viewProps} testID={testID} accessibilityRole="tablist">
+        {items.slice(0, 5).map((item, index) => {
+          const selected = item.value === selectedValue;
+          return (
+            <Pressable
+              key={item.value}
+              testID={
+                item.testID ?? (testID ? `${testID}-${item.value}` : undefined)
+              }
+              accessibilityRole="tab"
+              accessibilityLabel={item.accessibilityLabel ?? item.label}
+              accessibilityState={{ selected, disabled: !!item.disabled }}
+              disabled={item.disabled}
+              onPress={() =>
+                selected
+                  ? onReselect?.(item.value, index)
+                  : onSelect?.(item.value, index)
+              }
+            >
+              <Text>{item.label}</Text>
+              {item.badge != null && item.badge !== '' ? (
+                <Text>{String(item.badge)}</Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+    </>
   );
 }
 

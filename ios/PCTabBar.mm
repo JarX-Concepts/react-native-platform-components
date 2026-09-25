@@ -38,7 +38,8 @@ static inline bool ItemsEqual(
         x.selectedIconType != y.selectedIconType || x.selectedIconName != y.selectedIconName ||
         x.selectedIconUri != y.selectedIconUri || x.selectedIconScale != y.selectedIconScale ||
         x.selectedIconTinted != y.selectedIconTinted || x.badge != y.badge ||
-        x.accessibilityLabel != y.accessibilityLabel || x.testID != y.testID) {
+        x.accessibilityLabel != y.accessibilityLabel || x.testID != y.testID ||
+        x.role != y.role || x.systemItem != y.systemItem) {
       return false;
     }
   }
@@ -124,8 +125,34 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
       if (!strongSelf) return;
       [strongSelf updateMeasurements];
     };
+
+    _view.onAccessoryLayout = ^(CGRect frame, NSString *environment) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCTabBarEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      PCTabBarEventEmitter::OnAccessoryLayout payload = {
+          .x = frame.origin.x,
+          .y = frame.origin.y,
+          .width = frame.size.width,
+          .height = frame.size.height,
+          .environment = environment.UTF8String,
+      };
+      eventEmitter->onAccessoryLayout(payload);
+    };
   }
   return self;
+}
+
+/// Only the bar and its accessory take touches: the empty room around them
+/// (above a minimized bar, beside the accessory) passes them on to the
+/// content behind.
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  UIView *hit = [super hitTest:point withEvent:event];
+  return hit == self ? nil : hit;
 }
 
 - (void)updateProps:(Props::Shared const &)props
@@ -158,6 +185,8 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
         @"badge" : NSStringFromStd(item.badge, @""),
         @"accessibilityLabel" : NSStringFromStd(item.accessibilityLabel, @""),
         @"testID" : NSStringFromStd(item.testID, @""),
+        @"role" : NSStringFromStd(item.role, @""),
+        @"systemItem" : NSStringFromStd(item.systemItem, @""),
       }];
     }
     _view.items = arr;
@@ -194,9 +223,12 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
   if (!prevProps || newProps.scrollViewNativeID != prevProps->scrollViewNativeID) {
     _view.scrollViewNativeID = NSStringFromStd(newProps.scrollViewNativeID, @"");
   }
+  if (!prevProps || newProps.accessoryID != prevProps->accessoryID) {
+    _view.accessoryID = NSStringFromStd(newProps.accessoryID, @"");
+  }
 
   // maxFontSizeMultiplier: tab bar titles don't follow Dynamic Type on iOS
-  // androidIndicatorColor / androidRippleColor: Android only
+  // androidIndicator… / androidRippleColor / androidItemLayout: Android only
 
   [super updateProps:props oldProps:oldProps];
 
