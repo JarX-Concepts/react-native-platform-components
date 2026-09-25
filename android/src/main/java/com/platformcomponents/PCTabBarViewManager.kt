@@ -135,6 +135,11 @@ class PCTabBarViewManager :
     view.applyItemLayout(value ?: "")
   }
 
+  // The accessory view above the bar, by nativeID: it slides away with the bar
+  override fun setAccessoryID(view: PCTabBarView, value: String?) {
+    view.applyAccessoryID(value ?: "")
+  }
+
   override fun setMinimizeBehavior(view: PCTabBarView, value: String?) {
     view.applyMinimize(value ?: "", view.scrollViewNativeID)
   }

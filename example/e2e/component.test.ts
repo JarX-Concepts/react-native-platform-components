@@ -17,6 +17,66 @@ const scrollToId = async (
     .scroll(200, direction);
 };
 
+// The Tab Bar demo's section titles, top to bottom. Its feeds are
+// ScrollViews of their own and its bars take drags, so on iOS a scroll of the
+// page that starts on one of those moves that instead; a swipe that starts on
+// a title moves the page. (Android hands a nested scroll on to the page.)
+const TAB_BAR_SECTIONS = [
+  'TAB BAR',
+  'FLOATING',
+  'MINIMIZE ON SCROLL',
+  'ACCESSORY',
+  'CONTROLS',
+];
+
+const isVisible = async (matcher: Detox.NativeMatcher) => {
+  try {
+    await expect(element(matcher)).toBeVisible();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Moves the Tab Bar demo by about `amount` of the screen, swiping on a
+// section title: the lowest one on screen to go down, the highest to go up.
+const swipeTabBarDemo = async (direction: 'down' | 'up', amount = 0.3) => {
+  if (isAndroid()) {
+    await element(by.id('demo-scroll')).scroll(amount * 1000, direction);
+    return;
+  }
+  const titles =
+    direction === 'down' ? [...TAB_BAR_SECTIONS].reverse() : TAB_BAR_SECTIONS;
+  for (const title of titles) {
+    if (await isVisible(by.text(title))) {
+      await element(by.text(title)).swipe(
+        direction === 'down' ? 'up' : 'down',
+        'slow',
+        amount
+      );
+      // Let the page come to rest: a tap on a decelerating page only stops it
+      await pause(1000);
+      return;
+    }
+  }
+  await element(by.id('demo-scroll')).scroll(200, direction);
+};
+
+const swipeTabBarDemoTo = async (
+  testID: string,
+  direction: 'down' | 'up' = 'down'
+) => {
+  if (isAndroid()) {
+    await scrollToId(testID, direction);
+    return;
+  }
+  for (let step = 0; step < 12; step++) {
+    if (await isVisible(by.id(testID))) return;
+    await swipeTabBarDemo(direction);
+  }
+  await expect(element(by.id(testID))).toBeVisible();
+};
+
 // Tap a segment by its spoken label, which works for text and icon segments.
 const tapSegment = async (label: string) => {
   if (isAndroid()) {
@@ -710,7 +770,7 @@ describe('Platform Components Example', () => {
     // (iOS 26: the system minimized bar; Android: the bar slides away), and
     // scrolling back up restores it
     await scrollToId('tab-feed');
-    await element(by.id('demo-scroll')).scroll(150, 'down');
+    await swipeTabBarDemo('down', 0.15);
     await pause(400);
     await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
     await pause(1200);
@@ -725,43 +785,109 @@ describe('Platform Components Example', () => {
     await expectText('tab-bar-value', 'search');
     await pause(600);
 
+    // Accessory: a mini player on a bar with a system item and the search
+    // tab. iOS 26 hosts it as the bar's bottom accessory, which moves inline
+    // beside the minimized bar; elsewhere it's a row above the bar
+    await swipeTabBarDemoTo('tab-accessory-env');
+    // Page swipes can scroll the player feed as well (Android scrolls
+    // nested), which slides the bar and accessory away; scrolling the feed
+    // back up brings them back
+    await waitFor(element(by.id('tab-accessory-play')))
+      .toBeVisible()
+      .whileElement(by.id('tab-player-feed'))
+      .scroll(150, 'up');
+    // The page may still be springing back from its end, where a tap only
+    // stops it
+    await pause(1500);
+    await element(by.id('tab-accessory-play')).tap();
+    await expectText('tab-accessory-state', 'playing, track 1');
+    await pause(400);
+    await element(by.id('tab-player-favorites')).tap();
+    await expectText('tab-player-value', 'favorites');
+    await pause(400);
+    await element(by.id('tab-player-search')).tap();
+    await expectText('tab-player-value', 'search');
+    await pause(400);
+    // Hosted (iOS 26), the content sits in the bar's own accessory view
+    let hosted = false;
+    if (!isAndroid()) {
+      try {
+        await expect(
+          element(by.id('tab-accessory').withAncestor(by.id('tab-bar-player')))
+        ).toExist();
+        hosted = true;
+      } catch {}
+    }
+    await element(by.id('tab-player-feed')).scroll(300, 'down', NaN, 0.5);
+    await pause(1200);
+    if (hosted) {
+      // Inline beside the minimized bar, and still a player
+      await expectText('tab-accessory-env', 'inline');
+      await element(by.id('tab-accessory-play')).tap();
+      await expectText('tab-accessory-state', 'paused, track 1');
+    } else if (isAndroid()) {
+      // Slid away with the bar
+      await expect(element(by.id('tab-accessory'))).not.toBeVisible();
+    }
+    // Back up: expanded, the accessory regular again (a short swipe, so
+    // Android doesn't hand the rest on to the page)
+    await element(by.id('tab-player-feed')).swipe(
+      'down',
+      'slow',
+      0.25,
+      0.5,
+      0.3
+    );
+    await pause(1200);
+    await expectText('tab-accessory-env', 'regular');
+    await waitFor(element(by.id('tab-accessory-next')))
+      .toBeVisible()
+      .withTimeout(4000);
+    await element(by.id('tab-accessory-next')).tap();
+    await expectText(
+      'tab-accessory-state',
+      `${hosted ? 'paused' : 'playing'}, track 2`
+    );
+    await pause(600);
+
     // Label visibility, badges and custom colors
-    await scrollToId('tab-labels-labeled');
+    await swipeTabBarDemoTo('tab-labels-labeled');
     await element(by.id('tab-labels-labeled')).tap();
     await pause(700);
     await element(by.id('tab-labels-unlabeled')).tap();
     await pause(700);
     await element(by.id('tab-labels-auto')).tap();
     await pause(500);
-    await scrollToId('tab-unread-switch');
+    await swipeTabBarDemoTo('tab-unread-switch');
     await element(by.id('tab-unread-switch')).tap();
     await pause(600);
-    await scrollToId('tab-dot-switch');
+    await swipeTabBarDemoTo('tab-dot-switch');
     await element(by.id('tab-dot-switch')).tap();
     await pause(600);
-    await scrollToId('tab-styled-switch');
+    await swipeTabBarDemoTo('tab-styled-switch');
     await element(by.id('tab-styled-switch')).tap();
     await pause(900);
     if (isAndroid()) {
       // The Material active indicator: off and on, a circle, and icons
       // beside their labels
-      await scrollToId('tab-indicator-switch');
+      await swipeTabBarDemoTo('tab-indicator-switch');
       await element(by.id('tab-indicator-switch')).tap();
       await pause(600);
       await element(by.id('tab-indicator-switch')).tap();
       await pause(400);
-      await scrollToId('tab-indicator-shape-circle');
+      await swipeTabBarDemoTo('tab-indicator-shape-circle');
       await element(by.id('tab-indicator-shape-circle')).tap();
       await pause(600);
-      await scrollToId('tab-item-layout-horizontal');
+      await swipeTabBarDemoTo('tab-item-layout-horizontal');
       await element(by.id('tab-item-layout-horizontal')).tap();
       await pause(900);
     }
-    await scrollToId('tab-bar', 'up');
+    await swipeTabBarDemoTo('tab-bar', 'up');
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(900);
-  });
+    // Five bars, a mini player and the Android controls: a long flow
+  }, 240000);
 
   it('should test Button functionality', async () => {
     await selectDemo('Button');

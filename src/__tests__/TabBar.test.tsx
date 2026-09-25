@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 
 import { TabBar } from '../index';
@@ -10,6 +10,25 @@ jest.mock('../TabBarNativeComponent', () => {
     default: jest.fn((props) => React.createElement('PCTabBar', props)),
   };
 });
+
+jest.mock('../TabBarAccessoryNativeComponent', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: jest.fn((props) =>
+      React.createElement('PCTabBarAccessory', props)
+    ),
+  };
+});
+
+// iOS 26 (Liquid Glass) hosts the accessory natively; switched per test
+let mockLiquidGlass = false;
+jest.mock('../LiquidGlass', () => ({
+  ...jest.requireActual('../LiquidGlass'),
+  get isLiquidGlassSupported() {
+    return mockLiquidGlass;
+  },
+}));
 
 const NativeTabBar = jest.requireMock('../TabBarNativeComponent')
   .default as jest.Mock;
@@ -48,6 +67,7 @@ describe('TabBar', () => {
   beforeEach(() => {
     NativeTabBar.mockClear();
     Platform.OS = 'ios';
+    mockLiquidGlass = false;
   });
 
   it('applies the defaults', () => {
@@ -59,6 +79,7 @@ describe('TabBar', () => {
     expect(props.onTabPress).toBeUndefined();
     expect(props.minimizeBehavior).toBe('');
     expect(props.scrollViewNativeID).toBe('');
+    expect(props.accessoryID).toBe('');
     expect(props).toMatchObject({
       androidIndicator: '',
       androidIndicatorShape: '',
@@ -67,6 +88,7 @@ describe('TabBar', () => {
       androidIndicatorHeight: 0,
       androidItemLayout: '',
     });
+    expect(props.onAccessoryLayout).toBeUndefined();
     act(() => tree.unmount());
   });
 
@@ -125,6 +147,87 @@ describe('TabBar', () => {
       androidIndicatorCornerRadius: 0,
       androidItemLayout: 'auto',
     });
+    act(() => tree.unmount());
+  });
+
+  it('renders the accessory above the bar where it is not hosted', () => {
+    Platform.OS = 'android';
+    const tree = render(
+      <TabBar
+        items={ITEMS}
+        selectedValue="home"
+        style={{ position: 'absolute' }}
+        testID="bar"
+        accessory={<Text>Now playing</Text>}
+      />
+    );
+    const props = lastNativeProps();
+    // The bar slides the accessory away with it, found by its nativeID
+    expect(props.accessoryID).not.toBe('');
+    expect(props.onAccessoryLayout).toBeUndefined();
+    expect(props.style).toBeUndefined();
+    expect(props.testID).toBe('bar');
+    const accessory = tree.root.find(
+      (node) => node.props.nativeID === props.accessoryID
+    );
+    expect(accessory.findByType(Text).props.children).toBe('Now playing');
+    // The wrapper takes the bar's style
+    const wrapper = tree.root.find(
+      (node) =>
+        typeof node.type !== 'string' &&
+        (node.props.style as { position?: string } | undefined)?.position ===
+          'absolute'
+    );
+    expect(wrapper).toBeDefined();
+    expect(
+      tree.root.findAll((node) => String(node.type) === 'PCTabBarAccessory')
+    ).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+
+  it('hosts the accessory natively on iOS 26 and follows its layout', () => {
+    mockLiquidGlass = true;
+    const onEnvironment = jest.fn();
+    const tree = render(
+      <TabBar
+        items={ITEMS}
+        selectedValue="home"
+        accessory={<Text>Now playing</Text>}
+        onAccessoryEnvironmentChange={onEnvironment}
+      />
+    );
+    const props = lastNativeProps();
+    const host = () => tree.root.findByType('PCTabBarAccessory' as never);
+    expect(host().props.accessoryID).toBe(props.accessoryID);
+    expect(props.accessoryID).not.toBe('');
+    expect(host().findByType(Text).props.children).toBe('Now playing');
+
+    const layout = (environment: string, x: number, width: number) =>
+      act(() => {
+        lastNativeProps().onAccessoryLayout({
+          nativeEvent: { x, y: 0, width, height: 48, environment },
+        });
+      });
+    layout('regular', 21, 358);
+    expect(host().props.style).toContainEqual({
+      left: 21,
+      top: 0,
+      width: 358,
+      height: 48,
+    });
+    // Regular is where it starts; only a change is reported
+    expect(onEnvironment).not.toHaveBeenCalled();
+    layout('inline', 84, 230);
+    expect(onEnvironment).toHaveBeenLastCalledWith('inline');
+    expect(host().props.style).toContainEqual({
+      left: 84,
+      top: 0,
+      width: 230,
+      height: 48,
+    });
+    layout('regular', 21, 358);
+    expect(onEnvironment).toHaveBeenLastCalledWith('regular');
+    expect(onEnvironment).toHaveBeenCalledTimes(2);
     act(() => tree.unmount());
   });
 

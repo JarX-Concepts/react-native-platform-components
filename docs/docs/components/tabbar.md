@@ -51,6 +51,8 @@ const [tab, setTab] = useState('home');
 | `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`  | Label font                                                                                     |
 | `minimizeBehavior`      | `'automatic' \| 'never' \| 'onScrollDown' \| 'onScrollUp'` | Gets the bar out of the way as the content scrolls. See [Minimize on scroll](#minimize-on-scroll) |
 | `scrollViewNativeID`    | `string`                                               | The `nativeID` of the ScrollView or FlatList that drives `minimizeBehavior`                     |
+| `accessory`             | `ReactNode`                                            | A view carried with the bar, such as a mini player. See [Bottom accessory](#bottom-accessory)   |
+| `onAccessoryEnvironmentChange` | `(environment: 'regular' \| 'inline') => void` | iOS 26: the accessory moved into its row above the bar (`'regular'`) or beside the minimized bar (`'inline'`) |
 | `maxFontSizeMultiplier` | `number`                                               | Cap on the label font scale, as on `Text`. Android only; iOS tab labels have a fixed size      |
 | `testID`                | `string`                                               | Test identifier of the bar                                                                     |
 
@@ -200,9 +202,43 @@ const bar = <TabBar items={items} selectedValue={tab} onSelect={setTab} barColor
 
 The Android bar slides down by its own height; place it at the bottom edge, or inside a view with `overflow: 'hidden'`, so it leaves the screen rather than covering content below it. A ScrollView nested in another vertical ScrollView needs `nestedScrollEnabled` on Android to scroll at all.
 
+### Bottom accessory
+
+`accessory` puts a view of yours on the bar, such as the mini player of a music app.
+
+- **iOS 26**: the tab bar's bottom accessory (`UITabBarController.bottomAccessory`, a `UITabAccessory`). The system draws it as a glass row above the bar, and while the bar is minimized (see [Minimize on scroll](#minimize-on-scroll)) it moves inline, beside the minimized tab. Your view is laid out at the accessory's size and follows it as it changes; `onAccessoryEnvironmentChange` reports the move (`'inline'`, then `'regular'` again), so you can switch to a compact layout.
+- **Android and iOS before 26**: a plain view above the bar. There's no system accessory, so your view draws its own background. On Android it slides away together with the bar under `minimizeBehavior`.
+
+The bar's height includes the accessory's row, so place it as you would the bar alone. The accessory is a regular React view: presses, `testID`s and state work as anywhere else.
+
+| iOS 26 | iOS 26, minimized | iOS 18 |
+| --- | --- | --- |
+| ![The accessory above the bar on iOS 26](/img/components/tabbar/accessory-ios.webp) | ![The accessory inline beside the minimized bar](/img/components/tabbar/accessory-inline-ios.webp) | ![The accessory as a view above the bar on iOS 18](/img/components/tabbar/accessory-ios18.webp) |
+
+```tsx
+const [environment, setEnvironment] = useState<TabBarAccessoryEnvironment>('regular');
+
+<TabBar
+  items={items}
+  selectedValue={tab}
+  onSelect={setTab}
+  minimizeBehavior="onScrollDown"
+  scrollViewNativeID="library"
+  accessory={
+    <MiniPlayer
+      compact={environment === 'inline'}
+      style={isLiquidGlassSupported ? undefined : styles.playerCard}
+    />
+  }
+  onAccessoryEnvironmentChange={setEnvironment}
+/>
+```
+
+On iOS 26 the accessory content is hosted by UIKit and your view sits inside the system's glass capsule, so give it no background of its own there (`isLiquidGlassSupported` tells the two apart). The row is 48pt tall; lay the content out with flexbox rather than fixed widths, since the inline accessory is narrower.
+
 ### Placement and safe areas
 
-The bar is a view in your layout: it fills the width it's given and takes the height the platform wants for it (49pt on iOS before 26, 83pt with the iOS 26 floating spacing, 80dp on Android). It doesn't pad itself for the home indicator or the Android navigation bar; at the bottom of the screen, add the bottom inset around it, for example with `react-native-safe-area-context`:
+The bar is a view in your layout: it fills the width it's given and takes the height the platform wants for it (49pt on iOS before 26, 83pt with the iOS 26 floating spacing, 80dp on Android), plus the accessory's row when it has one. It doesn't pad itself for the home indicator or the Android navigation bar; at the bottom of the screen, add the bottom inset around it, for example with `react-native-safe-area-context`:
 
 ```tsx
 const insets = useSafeAreaInsets();

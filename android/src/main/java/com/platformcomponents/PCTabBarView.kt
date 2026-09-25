@@ -49,6 +49,7 @@ class PCTabBarView(context: Context) :
   var itemLayout: String = "" // "" | "vertical" | "horizontal" | "auto"
   var minimizeBehavior: String = "" // "" | "automatic" | "never" | "onScrollDown" | "onScrollUp"
   var scrollViewNativeID: String = ""
+  var accessoryID: String = "" // nativeID of the accessory view above the bar
 
   // --- Events ---
   var onTabPress: ((index: Int, value: String, reselected: Boolean) -> Unit)? = null
@@ -135,6 +136,12 @@ class PCTabBarView(context: Context) :
     requestLayout()
   }
 
+  fun applyAccessoryID(value: String) {
+    if (accessoryID == value) return
+    if (barHidden) setBarHidden(false)
+    accessoryID = value
+  }
+
   // ---- Hide on scroll ----
   // Android has no minimized tab bar; the Material behavior is the bar
   // sliding away while the content scrolls (HideBottomViewOnScrollBehavior),
@@ -189,17 +196,27 @@ class PCTabBarView(context: Context) :
     setBarHidden(hide)
   }
 
+  /** The accessory view above the bar (TabBar's `accessory`), if any. */
+  private fun accessoryView(): View? =
+    if (accessoryID.isEmpty() || !isAttachedToWindow) null
+    else ReactFindViewUtil.findView(rootView, accessoryID)
+
   private fun setBarHidden(hide: Boolean) {
     if (barHidden == hide) return
     barHidden = hide
-    animate().cancel()
-    animate()
-      .translationY(if (hide) height.toFloat() else 0f)
-      .setDuration(if (hide) 175L else 225L)
-      .setInterpolator(
-        if (hide) android.view.animation.AccelerateInterpolator() else android.view.animation.DecelerateInterpolator()
-      )
-      .start()
+    // An accessory above the bar slides away with it, as one bottom group
+    val accessory = accessoryView()
+    val distance = height + (accessory?.height ?: 0)
+    for (view in listOfNotNull(this, accessory)) {
+      view.animate().cancel()
+      view.animate()
+        .translationY(if (hide) distance.toFloat() else 0f)
+        .setDuration(if (hide) 175L else 225L)
+        .setInterpolator(
+          if (hide) android.view.animation.AccelerateInterpolator() else android.view.animation.DecelerateInterpolator()
+        )
+        .start()
+    }
   }
 
   // ---- Touch ----

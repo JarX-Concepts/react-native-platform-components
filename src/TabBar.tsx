@@ -1,8 +1,19 @@
 // TabBar.tsx
-import React, { useCallback, useMemo } from 'react';
-import type { ColorValue, NativeSyntheticEvent, ViewProps } from 'react-native';
+import React, { useCallback, useId, useMemo, useRef, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  type ColorValue,
+  type NativeSyntheticEvent,
+  type ViewProps,
+} from 'react-native';
 
-import NativeTabBar, { type TabBarSelectEvent } from './TabBarNativeComponent';
+import NativeTabBar, {
+  type TabBarAccessoryLayoutEvent,
+  type TabBarSelectEvent,
+} from './TabBarNativeComponent';
+import NativeTabBarAccessory from './TabBarAccessoryNativeComponent';
+import { isLiquidGlassSupported } from './LiquidGlass';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import {
   MAX_TAB_ITEMS,
@@ -36,6 +47,12 @@ export type TabBarLabelVisibility =
  */
 export type TabBarMinimizeBehavior =
   'automatic' | 'never' | 'onScrollDown' | 'onScrollUp';
+
+/**
+ * Where the iOS 26 bottom accessory sits: `regular`, its own row above the
+ * bar, or `inline`, beside the minimized bar.
+ */
+export type TabBarAccessoryEnvironment = 'regular' | 'inline';
 
 /**
  * Android: the tab layout. `vertical` puts the icon above the label,
@@ -116,6 +133,28 @@ export interface TabBarProps extends ViewProps {
    */
   scrollViewNativeID?: string;
 
+  /**
+   * A view carried with the bar, such as a mini player.
+   *
+   * - iOS 26: the tab bar's bottom accessory (`UITabAccessory`), a glass row
+   *   above the bar that moves inline beside the bar while it's minimized.
+   *   Your view is laid out at the accessory's size.
+   * - Android and iOS before 26: a plain view above the bar, drawn by you.
+   *   On Android it slides away with the bar under `minimizeBehavior`.
+   *
+   * The bar's height includes the accessory.
+   */
+  accessory?: React.ReactNode;
+
+  /**
+   * Called when the iOS 26 accessory moves between `'regular'` (its row
+   * above the bar) and `'inline'` (beside the minimized bar), to switch to a
+   * compact layout. Elsewhere the accessory is always regular.
+   */
+  onAccessoryEnvironmentChange?: (
+    environment: TabBarAccessoryEnvironment
+  ) => void;
+
   /** Android-specific configuration. */
   android?: {
     /** Color of the active indicator pill behind the selected icon. */
@@ -147,6 +186,13 @@ export interface TabBarProps extends ViewProps {
   testID?: string;
 }
 
+type AccessoryFrame = Readonly<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}>;
+
 export function TabBar(props: TabBarProps): React.ReactElement {
   const {
     items,
@@ -162,7 +208,10 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     maxFontSizeMultiplier,
     minimizeBehavior,
     scrollViewNativeID,
+    accessory,
+    onAccessoryEnvironmentChange,
     android,
+    style,
     ...viewProps
   } = props;
 
@@ -191,9 +240,44 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     [labelStyle]
   );
 
+  // --- Accessory ---
+  // iOS 26 hosts it in UIKit's accessory: the content mounts into the
+  // accessory view, laid out at the size and place native reports. Elsewhere
+  // it is a plain view above the bar.
+  const hasAccessory =
+    accessory !== undefined && accessory !== null && accessory !== false;
+  const hostsAccessory = hasAccessory && isLiquidGlassSupported;
+  const accessoryID = `pc-tab-accessory${useId()}`;
+  const [accessoryFrame, setAccessoryFrame] = useState<AccessoryFrame | null>(
+    null
+  );
+  const environment = useRef<TabBarAccessoryEnvironment>('regular');
+
+  const handleAccessoryLayout = useCallback(
+    (event: NativeSyntheticEvent<TabBarAccessoryLayoutEvent>) => {
+      const { x, y, width, height } = event.nativeEvent;
+      setAccessoryFrame((current) =>
+        current &&
+        current.x === x &&
+        current.y === y &&
+        current.width === width &&
+        current.height === height
+          ? current
+          : { x, y, width, height }
+      );
+      const next: TabBarAccessoryEnvironment =
+        event.nativeEvent.environment === 'inline' ? 'inline' : 'regular';
+      if (next !== environment.current) {
+        environment.current = next;
+        onAccessoryEnvironmentChange?.(next);
+      }
+    },
+    [onAccessoryEnvironmentChange]
+  );
+
   const indicatorShape = android?.indicatorShape;
 
-  return (
+  const bar = (
     <NativeTabBar
       items={nativeItems}
       selectedValue={selectedValue ?? ''}
@@ -207,6 +291,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       minimizeBehavior={minimizeBehavior ?? ''}
       scrollViewNativeID={scrollViewNativeID ?? ''}
+      accessoryID={hasAccessory ? accessoryID : ''}
       androidIndicatorColor={android?.indicatorColor}
       androidRippleColor={android?.rippleColor}
       androidIndicator={
@@ -222,7 +307,57 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       androidIndicatorHeight={android?.indicatorHeight ?? 0}
       androidItemLayout={android?.itemLayout ?? ''}
       onTabPress={onSelect || onReselect ? handleTabPress : undefined}
+      onAccessoryLayout={hostsAccessory ? handleAccessoryLayout : undefined}
+      style={hasAccessory ? undefined : style}
       {...viewProps}
     />
   );
+
+  if (!hasAccessory) {
+    return bar;
+  }
+
+  if (hostsAccessory) {
+    // The inner view has no padding, so the accessory's offsets are in the
+    // bar's coordinates. The content's place in the layout matches where
+    // UIKit shows it, for touch handling that measures views.
+    return (
+      <View style={style} pointerEvents="box-none">
+        <View pointerEvents="box-none">
+          {bar}
+          <NativeTabBarAccessory
+            accessoryID={accessoryID}
+            style={[
+              styles.hostedAccessory,
+              accessoryFrame
+                ? {
+                    left: accessoryFrame.x,
+                    top: accessoryFrame.y,
+                    width: accessoryFrame.width,
+                    height: accessoryFrame.height,
+                  }
+                : styles.accessoryPlaceholder,
+            ]}
+          >
+            {accessory}
+          </NativeTabBarAccessory>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={style} pointerEvents="box-none">
+      <View nativeID={accessoryID} collapsable={false}>
+        {accessory}
+      </View>
+      {bar}
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  hostedAccessory: { position: 'absolute' },
+  // Until the first layout: the accessory's usual row across the bar
+  accessoryPlaceholder: { left: 0, right: 0, top: 0, height: 48 },
+});

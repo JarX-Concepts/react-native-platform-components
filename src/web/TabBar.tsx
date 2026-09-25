@@ -8,7 +8,8 @@ import { cssColor, cssFont, usePrimaryColor } from './shared';
 
 /**
  * A `tablist` of `<button>` tabs, icon over label, with the selected tab's
- * icon in a pill as on the Material navigation bar.
+ * icon in a pill as on the Material navigation bar. An `accessory` is a
+ * plain view above the bar.
  */
 export function TabBar(props: TabBarProps): React.ReactElement {
   const {
@@ -25,6 +26,8 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     maxFontSizeMultiplier,
     minimizeBehavior,
     scrollViewNativeID,
+    accessory,
+    onAccessoryEnvironmentChange,
     android,
     style,
     ...viewProps
@@ -36,8 +39,10 @@ export function TabBar(props: TabBarProps): React.ReactElement {
   const horizontal = android?.itemLayout === 'horizontal';
   const indicatorRadius =
     typeof android?.indicatorShape === 'number' ? android.indicatorShape : 16;
+  const hasAccessory =
+    accessory !== undefined && accessory !== null && accessory !== false;
 
-  return (
+  const bar = (
     <View
       {...viewProps}
       role="tablist"
@@ -46,7 +51,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
           flexDirection: 'row',
           backgroundColor: cssColor(barColor) ?? 'rgba(118, 118, 128, 0.08)',
         },
-        style,
+        hasAccessory ? null : style,
       ]}
     >
       {items.slice(0, 5).map((item, index) => {
@@ -132,6 +137,14 @@ export function TabBar(props: TabBarProps): React.ReactElement {
           </button>
         );
       })}
+    </View>
+  );
+
+  if (!hasAccessory) return bar;
+  return (
+    <View style={style}>
+      <View>{accessory}</View>
+      {bar}
     </View>
   );
 }
