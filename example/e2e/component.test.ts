@@ -18,9 +18,10 @@ const scrollToId = async (
 };
 
 // The Tab Bar demo's section titles, top to bottom. Its feeds are
-// ScrollViews of their own and its bars take drags, so on iOS a scroll of the
-// page that starts on one of those moves that instead; a swipe that starts on
-// a title moves the page. (Android hands a nested scroll on to the page.)
+// ScrollViews of their own and its bars take drags, so a scroll of the page
+// that starts on one of those moves that instead: on iOS only the feed, on
+// Android the feed first (hiding its bar) and the page with what's left. A
+// drag that starts on a title moves only the page.
 const TAB_BAR_SECTIONS = [
   'TAB BAR',
   'FLOATING',
@@ -29,22 +30,18 @@ const TAB_BAR_SECTIONS = [
   'CONTROLS',
 ];
 
-const isVisible = async (matcher: Detox.NativeMatcher) => {
+const isVisible = async (matcher: Detox.NativeMatcher, pct?: number) => {
   try {
-    await expect(element(matcher)).toBeVisible();
+    await expect(element(matcher)).toBeVisible(pct);
     return true;
   } catch {
     return false;
   }
 };
 
-// Moves the Tab Bar demo by about `amount` of the screen, swiping on a
+// iOS: moves the Tab Bar demo by about `amount` of the screen, swiping on a
 // section title: the lowest one on screen to go down, the highest to go up.
 const swipeTabBarDemo = async (direction: 'down' | 'up', amount = 0.3) => {
-  if (isAndroid()) {
-    await element(by.id('demo-scroll')).scroll(amount * 1000, direction);
-    return;
-  }
   const titles =
     direction === 'down' ? [...TAB_BAR_SECTIONS].reverse() : TAB_BAR_SECTIONS;
   for (const title of titles) {
@@ -67,7 +64,7 @@ const swipeTabBarDemoTo = async (
   direction: 'down' | 'up' = 'down'
 ) => {
   if (isAndroid()) {
-    await scrollToId(testID, direction);
+    await androidTabBarDemoTo([testID]);
     return;
   }
   for (let step = 0; step < 12; step++) {
@@ -75,6 +72,93 @@ const swipeTabBarDemoTo = async (
     await swipeTabBarDemo(direction);
   }
   await expect(element(by.id(testID))).toBeVisible();
+};
+
+// Screen frame of an element: in pixels on Android
+const frameOf = async (matcher: Detox.NativeMatcher) =>
+  ((await element(matcher).getAttributes()) as Detox.AndroidElementAttributes)
+    .frame;
+
+// Android: moves the Tab Bar demo until the elements with `ids` lie inside
+// the page, clear of its top and bottom tenth (the status bar and the gesture
+// area). Where the page drags start decides the state the demo's feeds end up
+// in (see TAB_BAR_SECTIONS), so each drag starts on a section title, measured
+// afresh, and moves the page by the distance still needed with Detox's
+// fling-free scroll. The feeds then only move when the flow scrolls them.
+const androidTabBarDemoTo = async (ids: string[]) => {
+  const page = await frameOf(by.id('demo-scroll'));
+  const top = page.y + page.height * 0.1;
+  const bottom = page.y + page.height * 0.9;
+  // Detox scrolls by dp; the demo's feeds are 360dp tall
+  const density = (await frameOf(by.id('tab-feed'))).height / 360;
+  let last: number | undefined;
+  for (let step = 0; step < 8; step++) {
+    let regionTop = Infinity;
+    let regionBottom = -Infinity;
+    for (const id of ids) {
+      const frame = await frameOf(by.id(id));
+      regionTop = Math.min(regionTop, frame.y);
+      regionBottom = Math.max(regionBottom, frame.y + frame.height);
+    }
+    // At the page's end the region stops moving
+    if (regionTop === last) break;
+    last = regionTop;
+    // Up the screen (Detox scrolls 'down') or down it, a little past the
+    // margin so rounding doesn't leave it a pixel short
+    const needed =
+      regionBottom > bottom
+        ? regionBottom - bottom + 8 * density
+        : regionTop < top
+          ? regionTop - top - 8 * density
+          : 0;
+    if (needed === 0) return;
+    const down = needed > 0;
+    // The title with the most room for the drag between the margins: the
+    // lowest one inside them to move the page up, the highest to move it down
+    const titles = down ? [...TAB_BAR_SECTIONS].reverse() : TAB_BAR_SECTIONS;
+    let anchor: number | undefined;
+    for (const title of titles) {
+      const frame = await frameOf(by.text(title));
+      const middle = frame.y + frame.height / 2;
+      if (middle > top && middle < bottom) {
+        anchor = middle;
+        break;
+      }
+    }
+    if (anchor === undefined) break;
+    const room = down ? anchor - top : bottom - anchor;
+    await element(by.id('demo-scroll')).scroll(
+      Math.max(1, Math.round(Math.min(Math.abs(needed), room) / density)),
+      down ? 'down' : 'up',
+      0.5,
+      (anchor - page.y) / page.height
+    );
+    await pause(200);
+  }
+  for (const id of ids) {
+    await expect(element(by.id(id))).toBeVisible();
+  }
+};
+
+// Android: shows a feed of the Tab Bar demo (with `ids` around it) at its
+// first row, where its bar shows. The page moves never touch the feeds, so
+// this is a check more than a step. A feed found scrolled goes back up:
+// Detox's scroll does nothing once the feed is at its top, and only the scroll
+// that reaches the top hands what's left of it on to the page, which then
+// moves back into place.
+const androidTabBarFeedAtTop = async (
+  feedId: string,
+  firstRow: string,
+  ids: string[]
+) => {
+  for (let round = 0; round < 6; round++) {
+    await androidTabBarDemoTo(ids);
+    if (await isVisible(by.text(firstRow), 100)) return;
+    for (let step = 0; step < 4; step++) {
+      await element(by.id(feedId)).scroll(300, 'up', NaN, 0.5);
+    }
+  }
+  await expect(element(by.text(firstRow))).toBeVisible(100);
 };
 
 // Tap a segment by its spoken label, which works for text and icon segments.
@@ -1022,18 +1106,29 @@ describe('Platform Components Example', () => {
     // Minimize on scroll: scrolling the feed down minimizes the bar over it
     // (iOS 26: the system minimized bar; Android: the bar slides away), and
     // scrolling back up restores it
-    await scrollToId('tab-feed');
-    await swipeTabBarDemo('down', 0.15);
-    await pause(400);
-    await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
-    await pause(1200);
     if (isAndroid()) {
+      // The feed from its top: the scroll down hides the bar, and the scroll
+      // back up stops short of the top, so none of it moves the page
+      await androidTabBarFeedAtTop('tab-feed', 'Post 1', ['tab-feed']);
+      await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
       // Slid away. (iOS 26 keeps the expanded buttons in its hierarchy while
       // minimized, and iOS before 26 has no minimized bar.)
-      await expect(element(by.id('tab-search-minimize'))).not.toBeVisible();
+      await waitFor(element(by.id('tab-search-minimize')))
+        .not.toBeVisible()
+        .withTimeout(5000);
+      await element(by.id('tab-feed')).scroll(150, 'up', NaN, 0.5);
+      await waitFor(element(by.id('tab-search-minimize')))
+        .toBeVisible()
+        .withTimeout(5000);
+    } else {
+      await scrollToId('tab-feed');
+      await swipeTabBarDemo('down', 0.15);
+      await pause(400);
+      await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
+      await pause(1200);
+      await element(by.id('tab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+      await pause(1200);
     }
-    await element(by.id('tab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
-    await pause(1200);
     await element(by.id('tab-search-minimize')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(600);
@@ -1041,17 +1136,21 @@ describe('Platform Components Example', () => {
     // Accessory: a mini player on a bar with a system item and the search
     // tab. iOS 26 hosts it as the bar's bottom accessory, which moves inline
     // beside the minimized bar; elsewhere it's a row above the bar
-    await swipeTabBarDemoTo('tab-accessory-env');
-    // Page swipes can scroll the player feed as well (Android scrolls
-    // nested), which slides the bar and accessory away; scrolling the feed
-    // back up brings them back
+    if (isAndroid()) {
+      // The whole section, the feed at its top with the bar and player showing
+      await androidTabBarFeedAtTop('tab-player-feed', 'Track 1', [
+        'tab-player-feed',
+        'tab-accessory-env',
+      ]);
+    } else {
+      await swipeTabBarDemoTo('tab-accessory-env');
+      // The page may still be springing back from its end, where a tap only
+      // stops it
+      await pause(1500);
+    }
     await waitFor(element(by.id('tab-accessory-play')))
       .toBeVisible()
-      .whileElement(by.id('tab-player-feed'))
-      .scroll(150, 'up');
-    // The page may still be springing back from its end, where a tap only
-    // stops it
-    await pause(1500);
+      .withTimeout(5000);
     await element(by.id('tab-accessory-play')).tap();
     await expectText('tab-accessory-state', 'playing, track 1');
     await pause(400);
@@ -1079,22 +1178,26 @@ describe('Platform Components Example', () => {
       await element(by.id('tab-accessory-play')).tap();
       await expectText('tab-accessory-state', 'paused, track 1');
     } else if (isAndroid()) {
-      // Slid away with the bar. On a slow emulator the first scroll can end
-      // before the bar starts hiding, so keep scrolling until it's gone.
+      // Slid away with the bar. The feed scrolled from its top, so the
+      // scroll down always hides them; the slide takes a moment.
       await waitFor(element(by.id('tab-accessory')))
         .not.toBeVisible()
-        .whileElement(by.id('tab-player-feed'))
-        .scroll(150, 'down');
+        .withTimeout(5000);
+      await expect(element(by.id('tab-player-listen'))).not.toBeVisible();
     }
-    // Back up: expanded, the accessory regular again (a short swipe, so
-    // Android doesn't hand the rest on to the page)
-    await element(by.id('tab-player-feed')).swipe(
-      'down',
-      'slow',
-      0.25,
-      0.5,
-      0.3
-    );
+    // Back up: expanded, the accessory regular again (short of the feed's
+    // top, so Android doesn't hand the rest on to the page)
+    if (isAndroid()) {
+      await element(by.id('tab-player-feed')).scroll(150, 'up', NaN, 0.5);
+    } else {
+      await element(by.id('tab-player-feed')).swipe(
+        'down',
+        'slow',
+        0.25,
+        0.5,
+        0.3
+      );
+    }
     await pause(1200);
     await expectText('tab-accessory-env', 'regular');
     await waitFor(element(by.id('tab-accessory-next')))
