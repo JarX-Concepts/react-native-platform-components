@@ -80,16 +80,16 @@ export function newestRecording(platform, testName) {
 }
 
 /**
- * Seconds to the largest scene change in the first 12 seconds of a recording
- * (the switch from the launch screen to the demo), plus a short margin.
- * Mirrors navigation_trim in scripts/generate-readme-gifs.sh.
+ * Seconds to the largest scene change between `from` and `window` seconds
+ * into a recording (the switch from the launch screen to the demo), plus a
+ * short margin. Mirrors navigation_trim in scripts/generate-readme-gifs.sh.
  */
-export function navigationTrim(file) {
+export function navigationTrim(file, window = 12, from = 1.5) {
   const result = spawnSync(
     'ffmpeg',
     [
-      '-hide_banner', '-t', '12', '-i', file,
-      '-vf', "select='gt(scene,0.01)*gte(t,1.5)',metadata=print:key=lavfi.scene_score",
+      '-hide_banner', '-t', String(window), '-i', file,
+      '-vf', `select='gt(scene,0.01)*gte(t,${from})',metadata=print:key=lavfi.scene_score`,
       '-f', 'null', '-',
     ],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
