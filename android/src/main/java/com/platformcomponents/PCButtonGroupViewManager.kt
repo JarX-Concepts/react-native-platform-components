@@ -3,6 +3,7 @@ package com.platformcomponents
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
@@ -58,6 +59,17 @@ class PCButtonGroupViewManager :
     view.onSelectionChange = { values ->
       dispatcher?.dispatchEvent(SelectionEvent(view.id, values))
     }
+    fun dispatch(name: String, fill: WritableMap.() -> Unit = {}) {
+      dispatcher?.dispatchEvent(MenuEvent(UIManagerHelper.getSurfaceId(view), view.id, name, fill))
+    }
+    view.onMenuSelect = { id, title ->
+      dispatch("topMenuSelect") {
+        putString("id", id)
+        putString("title", title)
+      }
+    }
+    view.onMenuOpen = { dispatch("topMenuOpen") }
+    view.onMenuClose = { dispatch("topMenuClose") }
   }
 
   // buttons: array of {label, value, disabled, iconType, iconName, iconUri,
@@ -152,9 +164,27 @@ class PCButtonGroupViewManager :
     )
   }
 
-  // android: {overflow, material}
+  // "none" | "menu" | "wrap"
+  override fun setOverflow(view: PCButtonGroupView, value: String?) {
+    view.applyOverflow(value)
+  }
+
+  // "true" | "false": MaterialSplitButton
+  override fun setSplit(view: PCButtonGroupView, value: String?) {
+    view.applySplit(value == "true")
+  }
+
+  // menu: the split button's flattened menu items
+  override fun setMenu(view: PCButtonGroupView, value: ReadableArray?) {
+    view.applyMenu(PCMenuSupport.parseItems(value))
+  }
+
+  override fun setMenuAccessibilityLabel(view: PCButtonGroupView, value: String?) {
+    view.applyMenuAccessibilityLabel(value ?: "")
+  }
+
+  // android: {material}
   override fun setAndroid(view: PCButtonGroupView, value: ReadableMap?) {
-    view.applyOverflow(value?.stringOr("overflow", "none"))
     view.applyMaterial(value?.stringOr("material", "expressive"))
   }
 
@@ -172,6 +202,20 @@ class PCButtonGroupViewManager :
       }
       rctEventEmitter.receiveEvent(viewTag, eventName, payload)
     }
+  }
+
+  private class MenuEvent(
+    surfaceId: Int,
+    viewTag: Int,
+    private val name: String,
+    private val fill: WritableMap.() -> Unit
+  ) : Event<MenuEvent>(surfaceId, viewTag) {
+    override fun canCoalesce(): Boolean = false
+
+    override fun getEventName(): String = name
+
+    // Fabric reads the payload from here
+    override fun getEventData(): WritableMap = Arguments.createMap().apply(fill)
   }
 
   private class SelectionEvent(

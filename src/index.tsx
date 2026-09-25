@@ -5,6 +5,7 @@ export * from './SegmentedControl';
 export * from './TabBar';
 export * from './Button';
 export * from './ButtonGroup';
+export * from './SplitButton';
 export * from './FloatingToolbar';
 export * from './LiquidGlass';
 export * from './TextField';
