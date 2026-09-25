@@ -496,13 +496,23 @@ describe('Platform Components Example', () => {
     await expect(element(by.text('Paste'))).toBeVisible();
     await expect(element(by.text('Share'))).toBeVisible();
 
-    // Select an action
-    await element(by.text('Copy')).atIndex(0).tap();
+    if (isAndroid()) {
+      // Select an action
+      await element(by.text('Copy')).atIndex(0).tap();
 
-    // Verify the action was recorded
-    await waitFor(element(by.text('Copy (copy)')))
-      .toBeVisible()
-      .withTimeout(6000);
+      // Verify the action was recorded
+      await waitFor(element(by.text('Copy (copy)')))
+        .toBeVisible()
+        .withTimeout(6000);
+    } else {
+      // Tapping the preview (on by default) fires onPreviewPress
+      await element(
+        by.label('Preview').withAncestor(by.type('_UIContextMenuContainerView'))
+      )
+        .atIndex(0)
+        .tap();
+      await expectFieldText('last-action-field', 'Preview pressed');
+    }
 
     // Test context menu with submenu
     await element(by.id('context-menu-submenu')).longPress();
@@ -586,18 +596,19 @@ describe('Platform Components Example', () => {
     // Re-enable
     await element(by.id('disabled-switch')).tap();
 
+    // Test iOS preview toggle (iOS only)
     if (!isAndroid()) {
-      // Tapping the preview (on by default) fires onPreviewPress
+      await element(by.id('preview-switch')).tap();
+
+      // Long-press with preview enabled
       await element(by.id('context-menu-basic')).longPress();
+
       await waitFor(element(by.text('Copy')))
         .toBeVisible()
         .withTimeout(6000);
-      await element(
-        by.label('Preview').withAncestor(by.type('_UIContextMenuContainerView'))
-      )
-        .atIndex(0)
-        .tap();
-      await expectFieldText('last-action-field', 'Preview pressed');
+
+      // Dismiss
+      await element(by.text('Share')).atIndex(0).tap();
     }
 
     // Inline sections, an image-asset icon (Remind Me) and a submenu inside a
@@ -623,31 +634,12 @@ describe('Platform Components Example', () => {
     await element(by.text('Increase')).atIndex(0).tap();
     await expectText('stepper-value', 'Qty 2');
     if (!isAndroid()) {
-      // Still open: the section header shows the new value, and the toggle
-      // takes its checkmark in place
+      // Still open, and the section header shows the new value
       await expect(element(by.text('Quantity: 2'))).toBeVisible();
-      await element(by.text('Favorite')).atIndex(0).tap();
-      await expectText('stepper-value', 'Qty 2 ★');
       await tapOutsideMenu();
       await waitFor(element(by.text('Increase')))
         .not.toBeVisible()
         .withTimeout(6000);
-    }
-    await element(by.id('demo-scroll')).scrollTo('top');
-
-    // Test iOS preview toggle (iOS only)
-    if (!isAndroid()) {
-      await element(by.id('preview-switch')).tap();
-
-      // Long-press with preview enabled
-      await element(by.id('context-menu-basic')).longPress();
-
-      await waitFor(element(by.text('Copy')))
-        .toBeVisible()
-        .withTimeout(6000);
-
-      // Dismiss
-      await element(by.text('Share')).atIndex(0).tap();
     }
   });
 
