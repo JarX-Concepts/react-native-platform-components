@@ -143,9 +143,9 @@ The Material 3 bar marks the selected tab with the active indicator, a pill behi
 
 `android.itemLayout: 'horizontal'` puts each icon beside its label, the Material 3 Expressive layout for wide bars; its indicator wraps the icon and label. `'auto'` picks horizontal when the bar is at least 600dp wide (a tablet, or a phone in landscape) and vertical below that.
 
-| Circle indicator | Horizontal tabs (`'auto'`, landscape) |
-| --- | --- |
-| ![A circle active indicator](/img/components/tabbar/indicator-circle-android.webp) | ![Horizontal tabs on a wide bar](/img/components/tabbar/horizontal-android.webp) |
+| No indicator | Circle indicator | Horizontal tabs (`'auto'`, landscape) |
+| --- | --- | --- |
+| ![The bar without the active indicator](/img/components/tabbar/indicator-off-android.webp) | ![A circle active indicator](/img/components/tabbar/indicator-circle-android.webp) | ![Horizontal tabs on a wide bar](/img/components/tabbar/horizontal-android.webp) |
 
 ```tsx
 <TabBar
@@ -211,9 +211,9 @@ The Android bar slides down by its own height; place it at the bottom edge, or i
 
 The bar's height includes the accessory's row, so place it as you would the bar alone. The accessory is a regular React view: presses, `testID`s and state work as anywhere else.
 
-| iOS 26 | iOS 26, minimized | iOS 18 |
-| --- | --- | --- |
-| ![The accessory above the bar on iOS 26](/img/components/tabbar/accessory-ios.webp) | ![The accessory inline beside the minimized bar](/img/components/tabbar/accessory-inline-ios.webp) | ![The accessory as a view above the bar on iOS 18](/img/components/tabbar/accessory-ios18.webp) |
+| iOS 26 | iOS 26, minimized | iOS 18 | Android |
+| --- | --- | --- | --- |
+| ![The accessory above the bar on iOS 26](/img/components/tabbar/accessory-ios.webp) | ![The accessory inline beside the minimized bar](/img/components/tabbar/accessory-inline-ios.webp) | ![The accessory as a view above the bar on iOS 18](/img/components/tabbar/accessory-ios18.webp) | ![The accessory as a view above the bar on Android](/img/components/tabbar/accessory-android.webp) |
 
 ```tsx
 const [environment, setEnvironment] = useState<TabBarAccessoryEnvironment>('regular');
