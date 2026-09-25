@@ -90,6 +90,12 @@ export interface NavigationRailNativeProps extends ViewProps {
   /** Android: ripple shown while pressing a destination. */
   androidRippleColor?: ColorValue;
 
+  /**
+   * Haptic played when a destination is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
+
   /** Fired when a destination is pressed. */
   onItemPress?: BubblingEventHandler<NavigationRailSelectEvent>;
 }

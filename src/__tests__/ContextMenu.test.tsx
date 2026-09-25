@@ -104,6 +104,7 @@ describe('flattenMenuActions', () => {
       disabled: 'false',
       keepsMenuPresented: 'false',
       state: '',
+      haptics: '',
     });
     expect(count).toMatchObject({
       subtitle: 'By one',
@@ -128,6 +129,15 @@ describe('flattenMenuActions', () => {
       iconType: 'drawable',
       iconName: 'doc.on.doc',
     });
+  });
+
+  it("carries an action's own haptics", () => {
+    const [warn, plain] = flattenMenuActions([
+      { id: 'delete', title: 'Delete', haptics: 'warning' },
+      { id: 'copy', title: 'Copy' },
+    ]);
+    expect(warn).toMatchObject({ haptics: 'warning' });
+    expect(plain).toMatchObject({ haptics: '' });
   });
 
   it('keeps an action with an empty subactions list an action', () => {

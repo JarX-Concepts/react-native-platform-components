@@ -14,6 +14,7 @@ import NativeTabBar, {
 } from './TabBarNativeComponent';
 import NativeTabBarAccessory from './TabBarAccessoryNativeComponent';
 import { isLiquidGlassSupported } from './LiquidGlass';
+import type { Haptics } from './haptics';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import {
   MAX_TAB_ITEMS,
@@ -89,6 +90,13 @@ export interface TabBarProps extends ViewProps {
    * conventional "scroll to top" or "back to root" gesture.
    */
   onReselect?: (value: string, index: number) => void;
+
+  /**
+   * Haptic played when the user presses a tab, including the selected one
+   * (a reselect). Default: none, like the native tab bars. See
+   * {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /** How labels show. Default: `'auto'`. See {@link TabBarLabelVisibility}. */
   labelVisibility?: TabBarLabelVisibility;
@@ -199,6 +207,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     selectedValue,
     onSelect,
     onReselect,
+    haptics,
     labelVisibility,
     activeTintColor,
     inactiveTintColor,
@@ -306,6 +315,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       androidIndicatorWidth={android?.indicatorWidth ?? 0}
       androidIndicatorHeight={android?.indicatorHeight ?? 0}
       androidItemLayout={android?.itemLayout ?? ''}
+      haptics={haptics ?? ''}
       onTabPress={onSelect || onReselect ? handleTabPress : undefined}
       onAccessoryLayout={hostsAccessory ? handleAccessoryLayout : undefined}
       style={hasAccessory ? undefined : style}

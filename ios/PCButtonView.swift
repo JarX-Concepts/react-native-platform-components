@@ -102,6 +102,10 @@ public final class PCButtonView: UIView {
         }
     }
 
+    /// The `haptics` prop: PCButton.mm plays it on a press (a toggle's
+    /// included), the menu handler on a pick
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPress: (() -> Void)?
@@ -186,6 +190,7 @@ public final class PCButtonView: UIView {
         button.onMenuClose = { [weak self] in self?.onMenuClose?() }
 
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
+        button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
         // Rebuild the configuration when isEnabled flips (custom disabled
         // colors) or a toggle's isSelected does (see toggleVariant)
         button.configurationUpdateHandler = { [weak self] button in
@@ -207,6 +212,11 @@ public final class PCButtonView: UIView {
             onSelectedChange?(!controlledSelected)
         }
         onPress?()
+    }
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
     }
 
     // MARK: - Toggle
@@ -246,7 +256,11 @@ public final class PCButtonView: UIView {
             title: "",
             items: items,
             onImageLoaded: { [weak self] in self?.updateMenu() },
-            handler: { [weak self] item in self?.onMenuSelect?(item.id, item.title) }
+            handler: { [weak self] item in
+                guard let self else { return }
+                self.haptics.perform(in: self, override: item.haptics)
+                self.onMenuSelect?(item.id, item.title)
+            }
         )
     }
 

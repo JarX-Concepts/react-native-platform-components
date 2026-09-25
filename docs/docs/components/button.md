@@ -44,6 +44,7 @@ import { Button } from 'react-native-platform-components';
 | `labelStyle`         | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font. See [Styling](#styling)                                                      |
 | `maxFontSizeMultiplier` | `number`                                              | Cap on the label's text-size scaling, as on `Text`. `0` / unset = no cap. See [Styling](#styling) |
 | `accessibilityLabel` | `string`                                                 | Screen-reader label. Defaults to `label`; give icon-only buttons one                     |
+| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played on a press (a toggle's included) and on a menu pick, not when a menu opens or while `loading` or disabled. See [Haptics](/guides/haptics). Default: none |
 | `onPress`            | `() => void`                                             | Called when the button is pressed. A button with a `menu` opens the menu instead         |
 | `selected`           | `boolean`                                                | Makes the button a toggle, with this as its controlled state. See [Toggle](#toggle)     |
 | `onSelectedChange`   | `(selected: boolean) => void`                            | Called when a toggle is pressed, with the state it asks for                             |

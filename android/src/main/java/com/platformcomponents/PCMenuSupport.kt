@@ -55,7 +55,9 @@ object PCMenuSupport {
     /** iOS only; Android popups close on every press */
     val keepsMenuPresented: Boolean,
     /** "" | "off" | "on" | "mixed" */
-    val state: String
+    val state: String,
+    /** The item's own `haptics`; "" = the component's */
+    val haptics: String = ""
   ) {
     val isAction: Boolean get() = kind != "menu" && kind != "section"
   }
@@ -79,7 +81,8 @@ object PCMenuSupport {
           destructive = map.stringOr("destructive", "false") == "true",
           disabled = map.stringOr("disabled", "false") == "true",
           keepsMenuPresented = map.stringOr("keepsMenuPresented", "false") == "true",
-          state = map.stringOr("state", "")
+          state = map.stringOr("state", ""),
+          haptics = map.stringOr("haptics", "")
         )
       )
     }

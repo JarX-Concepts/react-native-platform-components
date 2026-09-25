@@ -54,7 +54,10 @@ class PCButtonViewManager :
       dispatcher?.dispatchEvent(ButtonEvent(UIManagerHelper.getSurfaceId(view), view.id, name, fill))
     }
 
-    view.onPress = { dispatch("topButtonPress") }
+    view.onPress = {
+      PCHaptics.perform(view, view.haptics)
+      dispatch("topButtonPress")
+    }
     view.onSelectedChange = { selected -> dispatch("topSelectedChange") { putBoolean("selected", selected) } }
     view.onMenuSelect = { id, title ->
       dispatch("topMenuSelect") {
@@ -154,6 +157,11 @@ class PCButtonViewManager :
 
   override fun setSpokenLabel(view: PCButtonView, value: String?) {
     view.applySpokenLabel(value ?: "")
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCButtonView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   // "expressive" (default) | "m3"

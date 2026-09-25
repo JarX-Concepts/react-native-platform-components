@@ -11,6 +11,7 @@ import {
 import NativeNavigationRail, {
   type NavigationRailSelectEvent,
 } from './NavigationRailNativeComponent';
+import type { Haptics } from './haptics';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import type { TabBarBadgeStyle, TabBarLabelVisibility } from './TabBar';
 import { toNativeTabItems, type TabBarItemProps } from './tabItems';
@@ -45,6 +46,13 @@ export interface NavigationRailProps extends ViewProps {
 
   /** Called when the user presses the destination that is already selected. */
   onReselect?: (value: string, index: number) => void;
+
+  /**
+   * Haptic played when the user presses a destination, including the
+   * selected one (a reselect), as on TabBar. Default: none, like the native
+   * rail. See {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /**
    * How labels show. Default: `'auto'`, which labels every destination;
@@ -115,6 +123,7 @@ export function NavigationRail(props: NavigationRailProps): React.ReactElement {
     selectedValue,
     onSelect,
     onReselect,
+    haptics,
     labelVisibility,
     menuGravity,
     expanded,
@@ -174,6 +183,7 @@ export function NavigationRail(props: NavigationRailProps): React.ReactElement {
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       androidIndicatorColor={android?.indicatorColor}
       androidRippleColor={android?.rippleColor}
+      haptics={haptics ?? ''}
       onItemPress={onSelect || onReselect ? handleItemPress : undefined}
       {...viewProps}
     >

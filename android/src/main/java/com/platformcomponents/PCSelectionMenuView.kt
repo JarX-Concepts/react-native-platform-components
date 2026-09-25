@@ -76,6 +76,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   // Embedded M3 only: the field accepts typing and filters the options.
   var androidSearchable: Boolean = false
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onSelect: ((index: Int, label: String, data: String) -> Unit)? = null
   var onRequestClose: (() -> Unit)? = null

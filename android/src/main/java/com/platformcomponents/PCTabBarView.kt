@@ -51,6 +51,9 @@ class PCTabBarView(context: Context) :
   var scrollViewNativeID: String = ""
   var accessoryID: String = "" // nativeID of the accessory view above the bar
 
+  /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
+  var haptics: String = ""
+
   // --- Events ---
   var onTabPress: ((index: Int, value: String, reselected: Boolean) -> Unit)? = null
 

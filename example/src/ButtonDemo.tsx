@@ -8,7 +8,9 @@ import {
   type ButtonSize,
   type ButtonVariant,
   type ContextMenuAction,
+  type Haptics,
   type PlatformIcon,
+  SelectionMenu,
   SplitButton,
 } from 'react-native-platform-components';
 import { Divider, Row, Section, ui } from './DemoUI';
@@ -20,6 +22,19 @@ const VARIANTS: ButtonVariant[] = [
   'text',
   'elevated',
 ];
+
+// Haptic played on press; 'default' leaves the prop unset.
+const HAPTICS = [
+  'default',
+  'selection',
+  'light',
+  'medium',
+  'heavy',
+  'success',
+  'warning',
+  'error',
+  'none',
+].map((value) => ({ label: value, data: value }));
 
 const SIZES: { label: string; value: ButtonSize }[] = [
   { label: 'XS', value: 'xsmall' },
@@ -134,6 +149,8 @@ const REPLY_MENU: ContextMenuAction[] = [
     title: 'Delete',
     image: { ios: 'trash', android: 'delete' },
     attributes: { destructive: true },
+    // Its own haptic, in place of the button's
+    haptics: 'warning',
   },
 ];
 const SAVE_MENU: ContextMenuAction[] = [
@@ -220,12 +237,15 @@ export function ButtonDemo(): React.JSX.Element {
     italic && 'italic',
     alerts && 'alerts',
   ].filter(Boolean);
+  const [haptics, setHaptics] = useState('default');
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
+  const hapticsProp = haptics === 'default' ? undefined : (haptics as Haptics);
   const common = {
     size,
     shape,
     disabled,
+    haptics: hapticsProp,
     android: { material: expressive ? 'expressive' : 'm3' } as const,
   };
 
@@ -400,6 +420,7 @@ export function ButtonDemo(): React.JSX.Element {
             onSelectionChange={setRange}
             shape={shape}
             disabled={disabled}
+            haptics={hapticsProp}
           />
         </View>
         <Divider />
@@ -413,6 +434,7 @@ export function ButtonDemo(): React.JSX.Element {
             onSelectionChange={setFormat}
             shape={shape}
             disabled={disabled}
+            haptics={hapticsProp}
           />
         </View>
         <Divider />
@@ -468,6 +490,17 @@ export function ButtonDemo(): React.JSX.Element {
       </Section>
 
       <Section title="Controls">
+        <Row label="Haptics">
+          <SelectionMenu
+            testID="haptics-menu"
+            style={ui.alignEnd}
+            options={HAPTICS}
+            selected={haptics}
+            presentation="embedded"
+            onSelect={setHaptics}
+          />
+        </Row>
+        <Divider />
         <View style={styles.groupRow}>
           <ButtonGroup
             testID="size-picker"
@@ -748,6 +781,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
           <SplitButton
@@ -759,6 +793,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
         </View>
@@ -773,6 +808,7 @@ export function ButtonDemo(): React.JSX.Element {
             onMenuSelect={(id) => setSplitAction(id)}
             size={size}
             disabled={disabled}
+            haptics={hapticsProp}
             android={common.android}
           />
         </View>

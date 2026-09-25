@@ -139,6 +139,10 @@ using namespace platformcomponents;
     }
   }
 
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = [NSString stringWithUTF8String:newProps.haptics.c_str()];
+  }
+
   // iOS-specific props
   const auto &newIOS = newProps.ios;
   const auto &oldIOS = prevProps ? prevProps->ios : PCContextMenuIosStruct{};

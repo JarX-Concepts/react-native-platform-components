@@ -110,6 +110,10 @@ public final class PCButtonGroupView: UIView {
         didSet { chevronButton?.accessibilityLabel = menuAccessibilityLabel.isEmpty ? nil : menuAccessibilityLabel }
     }
 
+    /// The `haptics` prop: PCButtonGroup.mm plays it on a press (an overflow
+    /// pick included), the split menu handler on a pick
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     public var onPress: ((Int, String) -> Void)? // (index, value)
@@ -204,6 +208,7 @@ public final class PCButtonGroupView: UIView {
             let button = UIButton(type: .system)
             button.tag = index
             button.addTarget(self, action: #selector(tapped(_:)), for: .touchUpInside)
+            button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
             // Before the overflow button, which stays last
             stack.insertArrangedSubview(button, at: index)
             uiButtons.append(button)
@@ -298,7 +303,11 @@ public final class PCButtonGroupView: UIView {
             title: "",
             items: splitItems,
             onImageLoaded: { [weak self] in self?.updateSplitMenu() },
-            handler: { [weak self] item in self?.onMenuSelect?(item.id, item.title) }
+            handler: { [weak self] item in
+                guard let self else { return }
+                self.haptics.perform(in: self, override: item.haptics)
+                self.onMenuSelect?(item.id, item.title)
+            }
         ))
     }
 
@@ -385,6 +394,11 @@ public final class PCButtonGroupView: UIView {
     }
 
     // MARK: - Selection
+
+    /// Readies the haptic for the press that is likely to follow.
+    @objc private func touchedDown() {
+        haptics.prepare(in: self)
+    }
 
     @objc private func tapped(_ sender: UIButton) {
         press(at: sender.tag)

@@ -19,6 +19,7 @@ import {
   type PlatformIconSource,
 } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
 // Android: Minimum height to ensure visibility.
@@ -116,6 +117,13 @@ export interface SegmentedControlProps extends ViewProps {
 
   /** Whether the entire control is disabled */
   disabled?: boolean;
+
+  /**
+   * Haptic played when the user changes the selection (a tap that selects or
+   * clears a segment), not when `selectedValue` changes. Default: none, like
+   * the native controls. See {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /**
    * How labels and icons combine. Default: `'auto'`.
@@ -219,6 +227,7 @@ export function SegmentedControl(
     labelStyle,
     maxFontSizeMultiplier,
     badgeStyle,
+    haptics,
     onSelect,
     onDeselect,
     ios,
@@ -313,6 +322,7 @@ export function SegmentedControl(
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       badgeBackgroundColor={badgeStyle?.backgroundColor}
       badgeTextColor={badgeStyle?.color}
+      haptics={haptics ?? ''}
       onSelect={onSelect || onDeselect ? handleSelect : undefined}
       ios={nativeIos}
       android={nativeAndroid}

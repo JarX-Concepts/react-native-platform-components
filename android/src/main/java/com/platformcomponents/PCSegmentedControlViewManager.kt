@@ -48,6 +48,7 @@ class PCSegmentedControlViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onSelect = { index, value ->
+      PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(SelectEvent(view.id, index, value))
     }
   }
@@ -140,6 +141,11 @@ class PCSegmentedControlViewManager :
 
   override fun setInteractivity(view: PCSegmentedControlView, value: String?) {
     view.applyInteractivity(value)
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCSegmentedControlView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setAndroid(view: PCSegmentedControlView, value: ReadableMap?) {

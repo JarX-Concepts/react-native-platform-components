@@ -21,6 +21,7 @@ export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
+export type * from './haptics';
 export type * from './NativeTheme';
 
 export * from './labelStyle';

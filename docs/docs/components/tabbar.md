@@ -41,6 +41,7 @@ const [tab, setTab] = useState('home');
 | ----------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `items`                 | `TabBarItem[]`                                         | The tabs, at most five. See [TabBarItem](#tabbaritem)                                          |
 | `selectedValue`         | `string \| null`                                       | The selected tab's `value`; `null` for none                                                    |
+| `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses a tab, a reselect included. See [Haptics](/guides/haptics). Default: none |
 | `onSelect`              | `(value: string, index: number) => void`               | A tab was pressed                                                                              |
 | `onReselect`            | `(value: string, index: number) => void`               | The selected tab was pressed again, the usual "scroll to top" or "back to root" gesture        |
 | `labelVisibility`       | `'auto' \| 'labeled' \| 'selected' \| 'unlabeled'`     | How labels show. See [Labels](#labels). Default: `'auto'`                                      |

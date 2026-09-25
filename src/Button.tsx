@@ -9,6 +9,7 @@ import NativeButton, {
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import { flattenMenuActions, type ContextMenuAction } from './menuItems';
+import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
@@ -145,6 +146,14 @@ export interface ButtonProps extends ViewProps {
   accessibilityLabel?: string;
 
   /**
+   * Haptic played when the user presses the button, flips a toggle or
+   * picks a menu item (not when a menu button opens its menu); not while
+   * `loading` or disabled. Default: none, like the native buttons. See
+   * {@link Haptics}.
+   */
+  haptics?: Haptics;
+
+  /**
    * Called when the button is pressed. A button with a `menu` opens the menu
    * instead.
    */
@@ -241,6 +250,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     labelStyle,
     maxFontSizeMultiplier,
     accessibilityLabel,
+    haptics,
     onPress,
     selected,
     onSelectedChange,
@@ -336,6 +346,7 @@ export function Button(props: ButtonProps): React.ReactElement {
       selectedEventCount={selectedEventCount}
       menu={nativeMenu}
       ios={nativeIOS}
+      haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       onSelectedChange={isToggle ? handleSelectedChange : undefined}
       onMenuSelect={onMenuSelect ? handleMenuSelect : undefined}

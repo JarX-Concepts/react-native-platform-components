@@ -113,6 +113,8 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCButtonGroupEventEmitter>(strongSelf->_eventEmitter);
       if (!eventEmitter) return;
@@ -273,6 +275,10 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
 
   if (!prevProps || newProps.menuAccessibilityLabel != prevProps->menuAccessibilityLabel) {
     _view.menuAccessibilityLabel = NSStringFromStd(newProps.menuAccessibilityLabel, @"");
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
   // androidRippleColor / androidStrokeColor / android: Android only

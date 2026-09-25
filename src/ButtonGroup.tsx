@@ -10,6 +10,7 @@ import NativeButtonGroup, {
 } from './ButtonGroupNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
@@ -106,6 +107,12 @@ export interface ButtonGroupProps extends ViewProps {
   overflow?: ButtonGroupOverflow;
 
   /**
+   * Haptic played when a button is pressed, in every selection mode.
+   * Default: none, like the native buttons. See {@link Haptics}.
+   */
+  haptics?: Haptics;
+
+  /**
    * Called when a button is pressed, in every selection mode.
    * @param value - The button's value
    * @param index - The button's index
@@ -159,6 +166,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     tintColor,
     labelStyle,
     overflow,
+    haptics,
     onPress,
     onSelectionChange,
     android,
@@ -231,6 +239,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
       overflow={overflow ?? android?.overflow ?? 'none'}
+      haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       onGroupSelectionChange={
         onSelectionChange ? handleSelectionChange : undefined

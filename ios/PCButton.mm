@@ -105,6 +105,8 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
 
+      [strongSelf->_view.haptics performIn:strongSelf->_view];
+
       auto eventEmitter =
           std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
       if (!eventEmitter) return;
@@ -261,6 +263,10 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
       newProps.ios.symbolEffectTrigger != prevProps->ios.symbolEffectTrigger) {
     [_view setSymbolEffect:NSStringFromStd(newProps.ios.symbolEffect, @"")
                    trigger:NSStringFromStd(newProps.ios.symbolEffectTrigger, @"")];
+  }
+
+  if (!prevProps || newProps.haptics != prevProps->haptics) {
+    _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
   // androidRippleColor / androidStrokeColor: Android only

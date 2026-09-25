@@ -68,6 +68,11 @@ class PCContextMenuViewManager :
     // Android ignores iOS config
   }
 
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCContextMenuView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
+  }
+
   override fun setAndroid(view: PCContextMenuView, value: ReadableMap?) {
     if (value == null) {
       view.applyAndroidAnchorPosition(null)

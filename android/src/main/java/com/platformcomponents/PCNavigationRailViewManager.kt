@@ -52,6 +52,7 @@ class PCNavigationRailViewManager :
 
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCNavigationRailView) {
     view.onItemPress = { index, value, reselected ->
+      PCHaptics.perform(view, view.haptics)
       UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)?.dispatchEvent(
         ItemPressEvent(UIManagerHelper.getSurfaceId(view), view.id, index, value, reselected)
       )
@@ -140,6 +141,11 @@ class PCNavigationRailViewManager :
         style = value?.stringOr("fontStyle", "") ?: ""
       )
     )
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCNavigationRailView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setMaxFontSizeMultiplier(view: PCNavigationRailView, value: Double) {

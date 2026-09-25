@@ -65,6 +65,7 @@ export type * from './TabBar';
 export type * from './FloatingActionButton';
 export type * from './NavigationRail';
 export type * from './sharedTypes';
+export type * from './haptics';
 export type * from './NativeTheme';
 export type {
   SegmentedControlBadgeStyle,
@@ -362,6 +363,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     maxFontSizeMultiplier,
     accessibilityLabel,
     accessibilityState,
+    haptics,
     onPress,
     selected,
     onSelectedChange,
@@ -417,6 +419,7 @@ export function FloatingActionButton(
     tintColor,
     disabled,
     accessibilityLabel,
+    haptics,
     onPress,
     scrollViewNativeID,
     accessibilityState,
@@ -460,6 +463,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     tintColor,
     labelStyle,
     overflow,
+    haptics,
     android,
     ...viewProps
   } = props;
@@ -528,6 +532,7 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    haptics,
     onPress,
     onMenuSelect,
     onMenuOpen,
@@ -575,6 +580,7 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     scrollViewNativeID,
     accessory,
     onAccessoryEnvironmentChange,
+    haptics,
     android,
     ...viewProps
   } = props;
@@ -625,6 +631,7 @@ export function NavigationRail(props: NavigationRailProps): React.ReactElement {
     selectedValue,
     onSelect,
     onReselect,
+    haptics,
     header,
     testID,
     labelVisibility,
@@ -690,6 +697,7 @@ export function SegmentedControl(
     onDeselect,
     disabled,
     testID,
+    haptics,
     ios,
     android,
     labelVisibility,
@@ -796,6 +804,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     placeholder,
     presentation,
     visible,
+    haptics,
     onSelect,
     onRequestClose,
     testID,
@@ -851,6 +860,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger,
+    haptics,
     ios,
     android,
     ...viewProps

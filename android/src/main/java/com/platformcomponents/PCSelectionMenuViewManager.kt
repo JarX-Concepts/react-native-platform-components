@@ -50,6 +50,7 @@ class PCSelectionMenuViewManager :
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
 
     view.onSelect = { index, label, data ->
+      PCHaptics.perform(view, view.haptics)
       dispatcher?.dispatchEvent(SelectEvent(view.id, index, label, data))
     }
 
@@ -96,6 +97,11 @@ class PCSelectionMenuViewManager :
 
   override fun setVisible(view: PCSelectionMenuView, value: String?) {
     view.applyVisible(value)
+  }
+
+  // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
+  override fun setHaptics(view: PCSelectionMenuView, value: String?) {
+    view.haptics = PCHaptics.configure(view, value)
   }
 
   override fun setAndroid(view: PCSelectionMenuView, value: ReadableMap?) {

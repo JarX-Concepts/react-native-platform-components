@@ -55,6 +55,8 @@ export type ButtonMenuItem = Readonly<{
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 }>;
 
 /** Event emitted when a toggle button is pressed. */
@@ -160,6 +162,12 @@ export interface ButtonNativeProps extends ViewProps {
   menu?: ReadonlyArray<ButtonMenuItem>;
 
   ios?: ButtonIOSProps;
+
+  /**
+   * Haptic played when the button is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
 
   /** Fired when the button is pressed. */
   onButtonPress?: BubblingEventHandler<Readonly<{}>>;

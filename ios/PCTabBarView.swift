@@ -91,6 +91,9 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
         }
     }
 
+    /// The `haptics` prop; PCTabBar.mm plays it on a tab press
+    public let haptics = PCHaptics()
+
     // MARK: - Events back to ObjC++
 
     /// (index, value, reselected)

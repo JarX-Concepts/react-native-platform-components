@@ -249,6 +249,7 @@ export function TabBarDemo(): React.JSX.Element {
         <TabBar
           testID="tab-bar"
           items={items}
+          haptics="selection"
           selectedValue={tab}
           onSelect={select}
           onReselect={(value) => setLastEvent(`reselect: ${value}`)}

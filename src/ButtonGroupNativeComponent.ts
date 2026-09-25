@@ -71,6 +71,8 @@ export type ButtonGroupMenuItem = Readonly<{
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 }>;
 
 /** Event emitted when a split button menu item is picked. */
@@ -153,6 +155,12 @@ export interface ButtonGroupNativeProps extends ViewProps {
 
   /** Screen-reader label of the split button's menu button. */
   menuAccessibilityLabel?: string;
+
+  /**
+   * Haptic played when a button is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
 
   /** Fired when a button is pressed. */
   onButtonPress?: BubblingEventHandler<ButtonGroupPressEvent>;

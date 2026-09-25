@@ -9,6 +9,7 @@ import NativeButtonGroup, {
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import { flattenMenuActions, type ContextMenuAction } from './menuItems';
+import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
 /**
@@ -56,6 +57,13 @@ export interface SplitButtonProps extends ViewProps {
 
   /** Label font. */
   labelStyle?: LabelStyle;
+
+  /**
+   * Haptic played when the main button is pressed or a menu item is picked
+   * (not when the menu opens); a menu item's own `haptics` wins. Default:
+   * none, like the native buttons. See {@link Haptics}.
+   */
+  haptics?: Haptics;
 
   /** Called when the main button is pressed. */
   onPress?: () => void;
@@ -111,6 +119,7 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    haptics,
     onPress,
     onMenuSelect,
     onMenuOpen,
@@ -177,6 +186,7 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
       overflow="none"
+      haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       onMenuSelect={onMenuSelect ? handleMenuSelect : undefined}
       onMenuOpen={onMenuOpen ? handleMenuOpen : undefined}

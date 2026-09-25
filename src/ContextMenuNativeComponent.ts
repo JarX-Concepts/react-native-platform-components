@@ -40,6 +40,8 @@ export type ContextMenuItem = Readonly<{
   keepsMenuPresented: string;
   /** '' | 'off' | 'on' | 'mixed' */
   state: string;
+  /** The action's own haptics; '' = the component's */
+  haptics: string;
 }>;
 
 /**
@@ -101,6 +103,12 @@ export interface ContextMenuProps extends ViewProps {
    * - 'tap': Single tap opens the menu
    */
   trigger?: string; // ContextMenuTrigger
+
+  /**
+   * Haptic played when an action is pressed: '' (none added) | 'none' | 'selection' |
+   * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
+   */
+  haptics?: string;
 
   /**
    * Fired when user presses an action.

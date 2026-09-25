@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'guides/android-theme',
+        'guides/haptics',
         'guides/icons',
         'guides/theming',
         'guides/testing',

@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import type { ColorValue, ViewProps } from 'react-native';
 
 import NativeFloatingActionButton from './FloatingActionButtonNativeComponent';
+import type { Haptics } from './haptics';
 import { resolveIcon, type PlatformIcon } from './icons';
 
 /**
@@ -58,6 +59,12 @@ export interface FloatingActionButtonProps extends ViewProps {
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
 
+  /**
+   * Haptic played when the button is pressed. Default: none, like the
+   * native buttons. See {@link Haptics}.
+   */
+  haptics?: Haptics;
+
   /** Called when the button is pressed. */
   onPress?: () => void;
 
@@ -85,6 +92,7 @@ export function FloatingActionButton(
     tintColor,
     disabled,
     accessibilityLabel,
+    haptics,
     onPress,
     scrollViewNativeID,
     ...viewProps
@@ -105,6 +113,7 @@ export function FloatingActionButton(
       interactivity={disabled ? 'disabled' : 'enabled'}
       spokenLabel={accessibilityLabel ?? ''}
       scrollViewNativeID={scrollViewNativeID ?? ''}
+      haptics={haptics ?? ''}
       onFabPress={onPress ? handlePress : undefined}
       {...viewProps}
     />
