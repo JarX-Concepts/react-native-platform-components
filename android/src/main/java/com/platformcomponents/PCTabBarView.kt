@@ -11,13 +11,14 @@ import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.util.ReactFindViewUtil
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.platformcomponents.PCNavigationBarSupport.Indicator
 import com.platformcomponents.PCNavigationBarSupport.Item
 import com.platformcomponents.PCNavigationBarSupport.LabelFont
 
 /**
- * A Material 3 navigation bar (BottomNavigationView): icons over labels, the
- * active indicator pill, badges. Selection is controlled from JS; a press
- * reports the tab and whether it was already selected.
+ * A Material 3 navigation bar (BottomNavigationView): icons over (or beside)
+ * labels, the active indicator, badges. Selection is controlled from JS; a
+ * press reports the tab and whether it was already selected.
  *
  * The bar is rebuilt for every prop that Material only reads at construction
  * or when the menu is inflated; it keeps no state of its own besides the
@@ -44,6 +45,8 @@ class PCTabBarView(context: Context) :
   var indicatorColor: Int? = null
   var rippleColor: Int? = null
   var labelFont: LabelFont = LabelFont()
+  var indicator: Indicator = Indicator()
+  var itemLayout: String = "" // "" | "vertical" | "horizontal" | "auto"
   var minimizeBehavior: String = "" // "" | "automatic" | "never" | "onScrollDown" | "onScrollUp"
   var scrollViewNativeID: String = ""
 
@@ -116,6 +119,20 @@ class PCTabBarView(context: Context) :
     if (labelFont == value) return
     labelFont = value
     rebuildUI()
+  }
+
+  fun applyIndicator(value: Indicator) {
+    if (indicator == value) return
+    indicator = value
+    // Back to the theme's indicator for the fields left unset
+    rebuildUI()
+  }
+
+  fun applyItemLayout(value: String) {
+    if (itemLayout == value) return
+    itemLayout = value
+    bar?.let { PCNavigationBarSupport.applyItemLayout(it, itemLayout, width) }
+    requestLayout()
   }
 
   // ---- Hide on scroll ----
@@ -236,6 +253,8 @@ class PCTabBarView(context: Context) :
     }
 
     PCNavigationBarSupport.applyColors(b, activeTintColor, inactiveTintColor, indicatorColor, rippleColor, barColor)
+    PCNavigationBarSupport.applyIndicator(b, indicator)
+    PCNavigationBarSupport.applyItemLayout(b, itemLayout, width)
     // Select or reselect is decided against selectedValue: with no tab
     // selected the widget still counts its last one as selected
     b.setOnItemSelectedListener { item ->
@@ -314,6 +333,7 @@ class PCTabBarView(context: Context) :
     val width = MeasureSpec.getSize(widthMeasureSpec).let {
       if (it > 0) it else (PCConstants.FALLBACK_WIDTH_DP * resources.displayMetrics.density).toInt()
     }
+    PCNavigationBarSupport.applyItemLayout(b, itemLayout, width)
     b.measure(
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
@@ -334,6 +354,7 @@ class PCTabBarView(context: Context) :
   fun reportIntrinsicSize() {
     val b = bar ?: return
     val width = if (width > 0) width else (PCConstants.FALLBACK_WIDTH_DP * resources.displayMetrics.density).toInt()
+    PCNavigationBarSupport.applyItemLayout(b, itemLayout, width)
     b.measure(
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)

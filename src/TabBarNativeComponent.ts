@@ -89,6 +89,22 @@ export interface TabBarNativeProps extends ViewProps {
   /** Android: ripple shown while pressing a tab. */
   androidRippleColor?: ColorValue;
 
+  /** Android: 'true' | 'false' ('' = shown), the active indicator. */
+  androidIndicator?: string;
+
+  /** Android: '' (pill) | 'pill' | 'circle' | 'rounded' (androidIndicatorCornerRadius). */
+  androidIndicatorShape?: string;
+
+  /** Android: corner radius of a 'rounded' indicator, in dp. */
+  androidIndicatorCornerRadius?: Double;
+
+  /** Android: indicator size in dp; 0 = the Material default. */
+  androidIndicatorWidth?: Double;
+  androidIndicatorHeight?: Double;
+
+  /** Android: '' | 'vertical' | 'horizontal' | 'auto', icon above or beside the label. */
+  androidItemLayout?: string;
+
   /** Fired when a tab is pressed. */
   onTabPress?: BubblingEventHandler<TabBarSelectEvent>;
 }

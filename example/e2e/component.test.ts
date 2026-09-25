@@ -742,6 +742,21 @@ describe('Platform Components Example', () => {
     await scrollToId('tab-styled-switch');
     await element(by.id('tab-styled-switch')).tap();
     await pause(900);
+    if (isAndroid()) {
+      // The Material active indicator: off and on, a circle, and icons
+      // beside their labels
+      await scrollToId('tab-indicator-switch');
+      await element(by.id('tab-indicator-switch')).tap();
+      await pause(600);
+      await element(by.id('tab-indicator-switch')).tap();
+      await pause(400);
+      await scrollToId('tab-indicator-shape-circle');
+      await element(by.id('tab-indicator-shape-circle')).tap();
+      await pause(600);
+      await scrollToId('tab-item-layout-horizontal');
+      await element(by.id('tab-item-layout-horizontal')).tap();
+      await pause(900);
+    }
     await scrollToId('tab-bar', 'up');
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');

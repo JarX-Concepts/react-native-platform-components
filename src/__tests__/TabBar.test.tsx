@@ -59,6 +59,14 @@ describe('TabBar', () => {
     expect(props.onTabPress).toBeUndefined();
     expect(props.minimizeBehavior).toBe('');
     expect(props.scrollViewNativeID).toBe('');
+    expect(props).toMatchObject({
+      androidIndicator: '',
+      androidIndicatorShape: '',
+      androidIndicatorCornerRadius: 0,
+      androidIndicatorWidth: 0,
+      androidIndicatorHeight: 0,
+      androidItemLayout: '',
+    });
     act(() => tree.unmount());
   });
 
@@ -77,6 +85,46 @@ describe('TabBar', () => {
     expect(search).toMatchObject({ role: 'search', systemItem: '' });
     expect(fav).toMatchObject({ role: '', systemItem: 'favorites' });
     expect(home).toMatchObject({ role: '', systemItem: '' });
+    act(() => tree.unmount());
+  });
+
+  it('maps the Android indicator and item layout', () => {
+    const tree = render(
+      <TabBar
+        items={ITEMS}
+        selectedValue="home"
+        android={{
+          indicator: false,
+          indicatorShape: 8,
+          indicatorWidth: 48,
+          indicatorHeight: 40,
+          itemLayout: 'horizontal',
+        }}
+      />
+    );
+    expect(lastNativeProps()).toMatchObject({
+      androidIndicator: 'false',
+      androidIndicatorShape: 'rounded',
+      androidIndicatorCornerRadius: 8,
+      androidIndicatorWidth: 48,
+      androidIndicatorHeight: 40,
+      androidItemLayout: 'horizontal',
+    });
+    act(() => {
+      tree.update(
+        <TabBar
+          items={ITEMS}
+          selectedValue="home"
+          android={{ indicatorShape: 'circle', itemLayout: 'auto' }}
+        />
+      );
+    });
+    expect(lastNativeProps()).toMatchObject({
+      androidIndicator: '',
+      androidIndicatorShape: 'circle',
+      androidIndicatorCornerRadius: 0,
+      androidItemLayout: 'auto',
+    });
     act(() => tree.unmount());
   });
 

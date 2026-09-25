@@ -109,6 +109,32 @@ class PCTabBarViewManager :
     )
   }
 
+  // Active indicator: 'true' | 'false' ('' = shown), shape, size in dp
+  override fun setAndroidIndicator(view: PCTabBarView, value: String?) {
+    view.applyIndicator(view.indicator.copy(enabled = value != "false"))
+  }
+
+  override fun setAndroidIndicatorShape(view: PCTabBarView, value: String?) {
+    view.applyIndicator(view.indicator.copy(shape = value ?: ""))
+  }
+
+  override fun setAndroidIndicatorCornerRadius(view: PCTabBarView, value: Double) {
+    view.applyIndicator(view.indicator.copy(cornerRadius = value.toFloat()))
+  }
+
+  override fun setAndroidIndicatorWidth(view: PCTabBarView, value: Double) {
+    view.applyIndicator(view.indicator.copy(width = value.toFloat()))
+  }
+
+  override fun setAndroidIndicatorHeight(view: PCTabBarView, value: Double) {
+    view.applyIndicator(view.indicator.copy(height = value.toFloat()))
+  }
+
+  // '' | 'vertical' | 'horizontal' | 'auto'
+  override fun setAndroidItemLayout(view: PCTabBarView, value: String?) {
+    view.applyItemLayout(value ?: "")
+  }
+
   override fun setMinimizeBehavior(view: PCTabBarView, value: String?) {
     view.applyMinimize(value ?: "", view.scrollViewNativeID)
   }

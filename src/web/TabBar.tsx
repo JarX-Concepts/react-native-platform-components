@@ -33,6 +33,9 @@ export function TabBar(props: TabBarProps): React.ReactElement {
   const primary = usePrimaryColor();
   const activeColor = cssColor(activeTintColor) ?? primary;
   const inactiveColor = cssColor(inactiveTintColor) ?? 'GrayText';
+  const horizontal = android?.itemLayout === 'horizontal';
+  const indicatorRadius =
+    typeof android?.indicatorShape === 'number' ? android.indicatorShape : 16;
 
   return (
     <View
@@ -70,8 +73,9 @@ export function TabBar(props: TabBarProps): React.ReactElement {
             style={{
               flex: 1,
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: horizontal ? 'row' : 'column',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 4,
               padding: '10px 4px',
               border: 'none',
@@ -91,11 +95,12 @@ export function TabBar(props: TabBarProps): React.ReactElement {
                 position: 'relative',
                 display: 'flex',
                 padding: '4px 20px',
-                borderRadius: 16,
-                backgroundColor: isSelected
-                  ? (cssColor(android?.indicatorColor) ??
-                    'rgba(118, 118, 128, 0.16)')
-                  : 'transparent',
+                borderRadius: indicatorRadius,
+                backgroundColor:
+                  isSelected && android?.indicator !== false
+                    ? (cssColor(android?.indicatorColor) ??
+                      'rgba(118, 118, 128, 0.16)')
+                    : 'transparent',
               }}
             >
               <Icon icon={icon} color={color} size={24} />

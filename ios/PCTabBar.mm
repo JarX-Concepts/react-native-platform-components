@@ -199,7 +199,7 @@ static UIFont *FontFromLabelStyle(const PCTabBarLabelStyleStruct &style) {
   }
 
   // maxFontSizeMultiplier: tab bar titles don't follow Dynamic Type on iOS
-  // androidIndicatorColor / androidRippleColor: Android only
+  // androidIndicator… / androidRippleColor / androidItemLayout: Android only
 
   [super updateProps:props oldProps:oldProps];
 

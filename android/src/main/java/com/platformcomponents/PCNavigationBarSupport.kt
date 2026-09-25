@@ -17,14 +17,17 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import com.facebook.react.views.text.ReactTypefaceUtils
 import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.shape.RelativeCornerSize
+import com.google.android.material.shape.ShapeAppearanceModel
 import com.platformcomponents.PCButtonSupport.doubleOr
 import com.platformcomponents.PCButtonSupport.stringOr
+import kotlin.math.roundToInt
 
 /**
  * Tabs on a Material navigation bar (NavigationBarView, the base of
  * BottomNavigationView and NavigationRailView): the item model as the specs
- * send it, and building the menu, icons, badges, colors, test ids and label
- * fonts.
+ * send it, and building the menu, icons, badges, colors, active indicator,
+ * test ids and label fonts.
  */
 object PCNavigationBarSupport {
 
@@ -49,6 +52,16 @@ object PCNavigationBarSupport {
     val weight: String = "",
     val style: String = "",
     val maxFontSizeMultiplier: Float = 0f
+  )
+
+  /** The active indicator; 0 = the Material default size. */
+  data class Indicator(
+    val enabled: Boolean = true,
+    /** "" | "pill" | "circle" | "rounded" (cornerRadius) */
+    val shape: String = "",
+    val cornerRadius: Float = 0f,
+    val width: Float = 0f,
+    val height: Float = 0f
   )
 
   /** Menu item id of the tab at [index]; 0 means "no id" to the menu. */
@@ -94,6 +107,25 @@ object PCNavigationBarSupport {
     "selected" -> NavigationBarView.LABEL_VISIBILITY_SELECTED
     "unlabeled" -> NavigationBarView.LABEL_VISIBILITY_UNLABELED
     else -> NavigationBarView.LABEL_VISIBILITY_AUTO
+  }
+
+  /**
+   * Icons above the labels ("vertical"), or beside them ("horizontal",
+   * Material 3 Expressive), centered in the bar; "auto" is horizontal from
+   * 600dp, the medium window width.
+   */
+  fun applyItemLayout(bar: NavigationBarView, layout: String, widthPx: Int) {
+    val horizontal = when (layout) {
+      "horizontal" -> true
+      "auto" -> widthPx / bar.resources.displayMetrics.density >= 600f
+      else -> false
+    }
+    val iconGravity =
+      if (horizontal) NavigationBarView.ITEM_ICON_GRAVITY_START else NavigationBarView.ITEM_ICON_GRAVITY_TOP
+    if (bar.itemIconGravity == iconGravity) return
+    bar.itemIconGravity = iconGravity
+    bar.itemGravity =
+      if (horizontal) NavigationBarView.ITEM_GRAVITY_CENTER else NavigationBarView.ITEM_GRAVITY_TOP_CENTER
   }
 
   /**
@@ -150,6 +182,28 @@ object PCNavigationBarSupport {
     indicator?.let { bar.itemActiveIndicatorColor = ColorStateList.valueOf(it) }
     ripple?.let { bar.itemRippleColor = ColorStateList.valueOf(it) }
     background?.let { bar.setBackgroundColor(it) }
+  }
+
+  /** The active indicator's visibility, size and shape. */
+  fun applyIndicator(bar: NavigationBarView, indicator: Indicator) {
+    bar.isItemActiveIndicatorEnabled = indicator.enabled
+    val density = bar.resources.displayMetrics.density
+    fun px(dp: Float) = (dp * density).roundToInt()
+    if (indicator.height > 0) {
+      bar.itemActiveIndicatorHeight = px(indicator.height)
+      bar.itemActiveIndicatorExpandedHeight = px(indicator.height)
+    }
+    // Horizontal tabs keep an indicator that wraps the icon and label
+    when {
+      indicator.shape == "circle" -> bar.itemActiveIndicatorWidth = bar.itemActiveIndicatorHeight
+      indicator.width > 0 -> bar.itemActiveIndicatorWidth = px(indicator.width)
+    }
+    val shape = when (indicator.shape) {
+      "pill", "circle" -> ShapeAppearanceModel.builder().setAllCornerSizes(RelativeCornerSize(0.5f)).build()
+      "rounded" -> ShapeAppearanceModel.builder().setAllCornerSizes(indicator.cornerRadius * density).build()
+      else -> null
+    }
+    shape?.let { bar.itemActiveIndicatorShapeAppearance = it }
   }
 
   /** Material badges: a number, text, or a dot. */

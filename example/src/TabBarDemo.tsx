@@ -1,10 +1,18 @@
 // TabBarDemo.tsx
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import {
   FloatingToolbar,
   TabBar,
   isLiquidGlassSupported,
+  type TabBarItemLayout,
   type TabBarItemProps,
   type TabBarLabelVisibility,
 } from 'react-native-platform-components';
@@ -56,10 +64,25 @@ const LABEL_VISIBILITY_OPTIONS: {
   { label: 'Unlabeled', value: 'unlabeled' },
 ];
 
+type IndicatorShapeOption = 'pill' | 'circle' | 'rounded';
+const INDICATOR_SHAPE_OPTIONS: {
+  label: string;
+  value: IndicatorShapeOption;
+}[] = [
+  { label: 'Pill', value: 'pill' },
+  { label: 'Circle', value: 'circle' },
+  { label: 'Rounded', value: 'rounded' },
+];
+
+const ITEM_LAYOUT_OPTIONS: { label: string; value: TabBarItemLayout }[] = [
+  { label: 'Vertical', value: 'vertical' },
+  { label: 'Horizontal', value: 'horizontal' },
+  { label: 'Auto', value: 'auto' },
+];
+
 const BRAND = '#FF6B35';
 const FEED = Array.from({ length: 30 }, (_, i) => `Post ${i + 1}`);
 const STYLED_BADGE = { backgroundColor: '#1E88E5' };
-const STYLED_ANDROID = { indicatorColor: '#FFE0D1' };
 
 export function TabBarDemo(): React.JSX.Element {
   const colors = useDemoColors();
@@ -70,12 +93,32 @@ export function TabBarDemo(): React.JSX.Element {
   const [styled, setStyled] = useState(false);
   const [labelVisibility, setLabelVisibility] =
     useState<TabBarLabelVisibility>('auto');
+  const [indicator, setIndicator] = useState(true);
+  const [indicatorShape, setIndicatorShape] =
+    useState<IndicatorShapeOption>('pill');
+  const [itemLayout, setItemLayout] = useState<TabBarItemLayout>('vertical');
   const items = useMemo(() => tabs(unread, dot), [unread, dot]);
   const select = (value: string) => {
     setTab(value);
     setLastEvent(`select: ${value}`);
     if (value === 'inbox') setUnread(0);
   };
+
+  const android = useMemo(
+    () => ({
+      indicatorColor: styled ? '#FFE0D1' : undefined,
+      indicator,
+      // A corner radius in dp, or a named shape; the bar keeps its height, so
+      // the indicator keeps the Material height
+      indicatorShape:
+        indicatorShape === 'rounded'
+          ? 8
+          : (indicatorShape as 'pill' | 'circle'),
+      indicatorWidth: indicatorShape === 'rounded' ? 48 : undefined,
+      itemLayout,
+    }),
+    [styled, indicator, indicatorShape, itemLayout]
+  );
 
   // The same tabs, with their own ids, for the floating bar
   const floatingItems = useMemo(
@@ -110,7 +153,7 @@ export function TabBarDemo(): React.JSX.Element {
           onReselect={(value) => setLastEvent(`reselect: ${value}`)}
           labelVisibility={labelVisibility}
           activeTintColor={styled ? BRAND : undefined}
-          android={styled ? STYLED_ANDROID : undefined}
+          android={android}
           badgeStyle={styled ? STYLED_BADGE : undefined}
         />
         <Divider />
@@ -212,6 +255,38 @@ export function TabBarDemo(): React.JSX.Element {
             onValueChange={setStyled}
           />
         </Row>
+        {Platform.OS === 'android' ? (
+          <>
+            {/* The Material active indicator and item layout */}
+            <Divider />
+            <Row label="Indicator">
+              <Switch
+                style={ui.alignEnd}
+                testID="tab-indicator-switch"
+                value={indicator}
+                onValueChange={setIndicator}
+              />
+            </Row>
+            <Divider />
+            <View style={styles.chips}>
+              <ChipTabs
+                testID="tab-indicator-shape"
+                value={indicatorShape}
+                options={INDICATOR_SHAPE_OPTIONS}
+                onChange={setIndicatorShape}
+              />
+            </View>
+            <Divider />
+            <View style={styles.chips}>
+              <ChipTabs
+                testID="tab-item-layout"
+                value={itemLayout}
+                options={ITEM_LAYOUT_OPTIONS}
+                onChange={setItemLayout}
+              />
+            </View>
+          </>
+        ) : null}
       </Section>
     </>
   );

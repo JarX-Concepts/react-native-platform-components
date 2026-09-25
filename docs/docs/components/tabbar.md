@@ -71,10 +71,15 @@ const [tab, setTab] = useState('home');
 
 ### Android Props (`android`)
 
-| Prop             | Type         | Description                                           |
-| ---------------- | ------------ | ----------------------------------------------------- |
-| `indicatorColor` | `ColorValue` | The active indicator pill behind the selected icon    |
-| `rippleColor`    | `ColorValue` | Ripple shown while pressing a tab                     |
+| Prop              | Type                             | Description                                                                                  |
+| ----------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `indicatorColor`  | `ColorValue`                     | The active indicator pill behind the selected icon                                           |
+| `rippleColor`     | `ColorValue`                     | Ripple shown while pressing a tab                                                            |
+| `indicator`       | `boolean`                        | Whether the selected tab shows the active indicator. Default: `true`                         |
+| `indicatorShape`  | `'pill' \| 'circle' \| number`   | The indicator's shape; a number is a corner radius in dp. Default: `'pill'`                  |
+| `indicatorWidth`  | `number`                         | Indicator width in dp. Default: the Material width (64)                                      |
+| `indicatorHeight` | `number`                         | Indicator height in dp. Default: the Material height (32)                                    |
+| `itemLayout`      | `'vertical' \| 'horizontal' \| 'auto'` | Icon above or beside the label. Default: `'vertical'`. See [Active indicator and horizontal tabs](#active-indicator-and-horizontal-tabs-android) |
 
 ### Selection
 
@@ -129,6 +134,27 @@ A system item's title follows your app's localizations, as the system apps' do. 
 The bar takes the tint color on iOS and the Material 3 colors on Android, including a brand color set with [`useNativeTheme`](/guides/theming). `activeTintColor` and `inactiveTintColor` override the tab colors, `android.indicatorColor` the pill.
 
 `barColor` replaces the bar background: the system chrome on iOS before 26, the Material surface container on Android. `'transparent'` puts the bar on your own background. On iOS 26 the bar is always its floating Liquid Glass capsule; `barColor` doesn't replace the glass.
+
+### Active indicator and horizontal tabs (Android)
+
+The Material 3 bar marks the selected tab with the active indicator, a pill behind its icon. `android.indicator: false` turns it off, leaving the selected tab to its color. `android.indicatorShape` reshapes it: `'pill'` (the default, fully rounded ends), `'circle'` (a circle the indicator's height across) or a number, the corner radius in dp of a rounded rectangle. `indicatorWidth` and `indicatorHeight` size it in dp; the bar keeps its 80dp height, so an indicator taller than the default 32dp crowds the label.
+
+`android.itemLayout: 'horizontal'` puts each icon beside its label, the Material 3 Expressive layout for wide bars; its indicator wraps the icon and label. `'auto'` picks horizontal when the bar is at least 600dp wide (a tablet, or a phone in landscape) and vertical below that.
+
+| Circle indicator | Horizontal tabs (`'auto'`, landscape) |
+| --- | --- |
+| ![A circle active indicator](/img/components/tabbar/indicator-circle-android.webp) | ![Horizontal tabs on a wide bar](/img/components/tabbar/horizontal-android.webp) |
+
+```tsx
+<TabBar
+  items={items}
+  selectedValue={tab}
+  onSelect={setTab}
+  android={{ indicatorShape: 'circle', itemLayout: 'auto' }}
+/>
+```
+
+iOS has no equivalent settings: its selection look is the system's.
 
 ### Floating tabs
 

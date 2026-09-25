@@ -37,6 +37,20 @@ export type TabBarLabelVisibility =
 export type TabBarMinimizeBehavior =
   'automatic' | 'never' | 'onScrollDown' | 'onScrollUp';
 
+/**
+ * Android: the tab layout. `vertical` puts the icon above the label,
+ * `horizontal` beside it (Material 3 Expressive, for wide bars), and `auto`
+ * picks horizontal when the bar is at least 600dp wide.
+ */
+export type TabBarItemLayout = 'vertical' | 'horizontal' | 'auto';
+
+/**
+ * Android: the shape of the active indicator. `pill` (default) has fully
+ * rounded ends; `circle` is a circle the indicator's height across; a number
+ * is the corner radius, in dp, of a rounded rectangle.
+ */
+export type TabBarIndicatorShape = 'pill' | 'circle' | number;
+
 /** Badge colors. Both default to the platform look. */
 export interface TabBarBadgeStyle {
   backgroundColor?: ColorValue;
@@ -109,6 +123,24 @@ export interface TabBarProps extends ViewProps {
 
     /** Ripple shown while pressing a tab. */
     rippleColor?: ColorValue;
+
+    /** Whether the selected tab shows the active indicator. Default: `true`. */
+    indicator?: boolean;
+
+    /** Shape of the active indicator. Default: `'pill'`. See {@link TabBarIndicatorShape}. */
+    indicatorShape?: TabBarIndicatorShape;
+
+    /**
+     * Width of the active indicator, in dp. Default: the Material width
+     * (64). Horizontal tabs size their indicator to the icon and label.
+     */
+    indicatorWidth?: number;
+
+    /** Height of the active indicator, in dp. Default: the Material height (32). */
+    indicatorHeight?: number;
+
+    /** Icon above or beside the label. Default: `'vertical'`. See {@link TabBarItemLayout}. */
+    itemLayout?: TabBarItemLayout;
   };
 
   /** Test identifier of the bar. */
@@ -159,6 +191,8 @@ export function TabBar(props: TabBarProps): React.ReactElement {
     [labelStyle]
   );
 
+  const indicatorShape = android?.indicatorShape;
+
   return (
     <NativeTabBar
       items={nativeItems}
@@ -175,6 +209,18 @@ export function TabBar(props: TabBarProps): React.ReactElement {
       scrollViewNativeID={scrollViewNativeID ?? ''}
       androidIndicatorColor={android?.indicatorColor}
       androidRippleColor={android?.rippleColor}
+      androidIndicator={
+        android?.indicator === undefined ? '' : String(android.indicator)
+      }
+      androidIndicatorShape={
+        typeof indicatorShape === 'number' ? 'rounded' : (indicatorShape ?? '')
+      }
+      androidIndicatorCornerRadius={
+        typeof indicatorShape === 'number' ? indicatorShape : 0
+      }
+      androidIndicatorWidth={android?.indicatorWidth ?? 0}
+      androidIndicatorHeight={android?.indicatorHeight ?? 0}
+      androidItemLayout={android?.itemLayout ?? ''}
       onTabPress={onSelect || onReselect ? handleTabPress : undefined}
       {...viewProps}
     />
