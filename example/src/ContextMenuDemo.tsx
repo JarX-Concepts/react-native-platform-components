@@ -230,18 +230,6 @@ export function ContextMenuDemo(): React.JSX.Element {
           />
         </Row>
 
-        <Divider />
-        <Row label="Haptics">
-          <SegmentedControl
-            testID="haptics-picker"
-            segments={HAPTICS_SEGMENTS}
-            selectedValue={haptics ?? 'default'}
-            onSelect={(value) =>
-              setHaptics(value === 'default' ? undefined : (value as Haptics))
-            }
-          />
-        </Row>
-
         {Platform.OS === 'ios' && (
           <>
             <Divider />
@@ -458,6 +446,21 @@ export function ContextMenuDemo(): React.JSX.Element {
               </Text>
             </View>
           </ContextMenu>
+        </Row>
+      </Section>
+
+      {/* Haptic on an action press for every menu above; 'None' also drops
+          Android's long-press haptic */}
+      <Section title="Haptics">
+        <Row label="Haptics">
+          <SegmentedControl
+            testID="haptics-picker"
+            segments={HAPTICS_SEGMENTS}
+            selectedValue={haptics ?? 'default'}
+            onSelect={(value) =>
+              setHaptics(value === 'default' ? undefined : (value as Haptics))
+            }
+          />
         </Row>
       </Section>
     </>

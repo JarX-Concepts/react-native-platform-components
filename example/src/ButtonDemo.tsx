@@ -490,6 +490,17 @@ export function ButtonDemo(): React.JSX.Element {
       </Section>
 
       <Section title="Controls">
+        <Row label="Haptics">
+          <SelectionMenu
+            testID="haptics-menu"
+            style={ui.alignEnd}
+            options={HAPTICS}
+            selected={haptics}
+            presentation="embedded"
+            onSelect={setHaptics}
+          />
+        </Row>
+        <Divider />
         <View style={styles.groupRow}>
           <ButtonGroup
             testID="size-picker"
@@ -520,17 +531,6 @@ export function ButtonDemo(): React.JSX.Element {
             testID="disabled-switch"
             value={disabled}
             onValueChange={setDisabled}
-          />
-        </Row>
-        <Divider />
-        <Row label="Haptics">
-          <SelectionMenu
-            testID="haptics-menu"
-            style={ui.alignEnd}
-            options={HAPTICS}
-            selected={haptics}
-            presentation="embedded"
-            onSelect={setHaptics}
           />
         </Row>
         {Platform.OS === 'android' && (
