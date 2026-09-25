@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -326,6 +326,47 @@ export function Example() {
   const [tab, setTab] = React.useState('home');
 
   return <TabBar items={tabs} selectedValue={tab} onSelect={setTab} />;
+}
+```
+
+### NavigationRail
+
+```tsx
+import { Button, NavigationRail } from 'react-native-platform-components';
+import { Text, View } from 'react-native';
+
+const destinations = [
+  { label: 'Home', value: 'home', icon: { ios: 'house', android: 'home' } },
+  { label: 'Search', value: 'search', icon: { ios: 'magnifyingglass', android: 'search' } },
+  { label: 'Inbox', value: 'inbox', icon: { ios: 'bell', android: 'notifications' }, badge: 3 },
+];
+
+export function Example() {
+  const [destination, setDestination] = React.useState('home');
+
+  return (
+    // The rail at the start of a row, the screen beside it
+    <View style={{ flex: 1, flexDirection: 'row' }}>
+      <NavigationRail
+        items={destinations}
+        selectedValue={destination}
+        onSelect={setDestination}
+        header={
+          <Button
+            icon={{ ios: 'square.and.pencil', android: 'edit' }}
+            accessibilityLabel="Compose"
+            variant="tonal"
+            size="medium"
+            shape="square"
+            onPress={() => console.log('Compose')}
+          />
+        }
+      />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text>{destination}</Text>
+      </View>
+    </View>
+  );
 }
 ```
 

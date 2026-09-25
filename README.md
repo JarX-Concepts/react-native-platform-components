@@ -5,7 +5,7 @@
 [![CI](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml/badge.svg)](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/react-native-platform-components.svg)](./LICENSE)
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <a href="https://jarx-concepts.github.io/react-native-platform-components">
@@ -51,6 +51,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**ContextMenu**](https://jarx-concepts.github.io/react-native-platform-components/components/contextmenu) | `UIContextMenuInteraction` | `PopupMenu` | `zeego` (through two more native packages) |
 | [**SegmentedControl**](https://jarx-concepts.github.io/react-native-platform-components/components/segmentedcontrol) | `UISegmentedControl` | Material 3 Expressive connected buttons, or classic segmented buttons | `@react-native-segmented-control/segmented-control` (JavaScript on Android) |
 | [**TabBar**](https://jarx-concepts.github.io/react-native-platform-components/components/tabbar) | `UITabBar`, the floating Liquid Glass bar on iOS 26 | Material 3 navigation bar | React Navigation's bottom tabs (JavaScript); `react-native-bottom-tabs` (tied to its navigator) |
+| [**NavigationRail**](https://jarx-concepts.github.io/react-native-platform-components/components/navigationrail) | A column of tab-style `UIButton`s (iOS has no rail; use TabBar on iPhone) | Material 3 Expressive `NavigationRailView`: header, badges, menu gravity, expanded rail | React Navigation's drawer or a custom view (JavaScript) |
 | [**Button**](https://jarx-concepts.github.io/react-native-platform-components/components/button) | `UIButton` configurations, Liquid Glass variants on iOS 26 | Material 3 Expressive `MaterialButton`: five sizes, shape morph | `react-native-paper` (Material 3, not Expressive, in JavaScript) |
 | [**ButtonGroup**](https://jarx-concepts.github.io/react-native-platform-components/components/buttongroup) | A row of `UIButton`s | Material 3 Expressive button groups, single or multiple selection | `react-native-paper` segmented buttons (JavaScript) |
 | [**FloatingToolbar**](https://jarx-concepts.github.io/react-native-platform-components/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
