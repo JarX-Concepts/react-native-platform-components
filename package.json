@@ -237,10 +237,12 @@
         "PCContextMenu": "PCContextMenu",
         "PCSegmentedControl": "PCSegmentedControl",
         "PCTabBar": "PCTabBar",
+        "PCTabBarAccessory": "PCTabBarAccessory",
         "PCButton": "PCButton",
         "PCButtonGroup": "PCButtonGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
         "PCLiquidGlass": "PCLiquidGlass",
+        "PCLiquidGlassContainer": "PCLiquidGlassContainer",
         "PCTextField": "PCTextField"
       }
     }

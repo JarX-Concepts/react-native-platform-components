@@ -79,6 +79,14 @@ export interface LiquidGlassNativeProps extends ViewProps {
   cornerRadius?: WithDefault<Float, 0>;
 
   /**
+   * Corner shape: 'capsule' | 'concentric' | '' (the cornerRadius).
+   * On iOS 26 it maps to UIView.cornerConfiguration; elsewhere 'capsule'
+   * rounds to half the shorter side and 'concentric' uses cornerRadius.
+   * @default ''
+   */
+  cornerStyle?: WithDefault<string, ''>;
+
+  /**
    * iOS-specific props.
    */
   ios?: LiquidGlassIOSProps;

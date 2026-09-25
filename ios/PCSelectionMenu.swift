@@ -100,7 +100,9 @@ public final class PCSelectionMenuView: UIControl {
     private func setup() {
         backgroundColor = .clear
         updateEnabled()
-        updateAnchorMode()
+        // The anchor (inline button or headless menu button) is installed when
+        // the anchorMode prop arrives, so an embedded menu never creates the
+        // headless button.
         sync()
     }
 
@@ -174,7 +176,10 @@ public final class PCSelectionMenuView: UIControl {
         guard menuButton != nil || headlessMenuButton != nil else { return }
         let menu = (interactivity == "disabled" || parsedOptions.isEmpty) ? nil : buildMenu()
         menuButton?.menu = menu
-        headlessMenuButton?.setMenu(menu)
+        // The headless menu shows the options as they were when it opened. A
+        // pick rebuilds it (selectedData) while it is closing, and a closing
+        // menu is left alone.
+        headlessMenuButton?.setMenu(menu, updatingVisibleMenu: false)
     }
 
     /// A single-selection system menu of the options, with their subtitles and
