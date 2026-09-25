@@ -237,9 +237,12 @@ object PCNavigationBarSupport {
    * tabs are added; call again after a layout to style new ones.
    */
   fun applyTestIDsAndFonts(bar: NavigationBarView, items: List<Item>, font: LabelFont) {
+    // In the menu view only: a rail's header holds React views, whose ids
+    // (React tags) can equal a tab's id
+    val menuView = bar.menuView as? ViewGroup ?: return
     val count = minOf(items.size, bar.maxItemCount)
     for (index in 0 until count) {
-      val itemView = bar.findViewById<View>(itemId(index)) ?: continue
+      val itemView = menuView.findViewById<View>(itemId(index)) ?: continue
       itemView.tag = items[index].testID.ifEmpty { null }
       styleLabels(itemView, font)
     }
