@@ -3,6 +3,17 @@ title: "FloatingActionButton"
 description: "Material floating action button for React Native: FloatingActionButton and ExtendedFloatingActionButton on Android, with the four sizes and shrink on scroll. iOS renders a round prominent (Liquid Glass) UIButton."
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-floatingactionbutton.gif" height="480" alt="FloatingActionButton on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-floatingactionbutton.gif" height="480" alt="FloatingActionButton on Android" /></td>
+  </tr>
+</table>
+
 The Material **floating action button** (FAB): the screen's primary action, floating over the content. Android renders the real Material widgets, **FloatingActionButton** for an icon and **ExtendedFloatingActionButton** with a label, which shrinks to its icon and extends again with Material's own animation.
 
 iOS has no floating action button. There, `FloatingActionButton` renders the system's prominent button in a round shape: a `UIButton` with the `.prominentGlass()` configuration on iOS 26 (Liquid Glass) and `.filled()` before, a circle with the icon, or a capsule with the icon and label. It is not a Material look-alike.

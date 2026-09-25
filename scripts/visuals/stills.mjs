@@ -73,8 +73,8 @@ const ROWS = [
   {
     height: 400,
     tiles: [
-      { key: 'datepicker', platform: 'ios', span: 4, fit: 'contain' },
-      { key: 'datepicker', platform: 'android', span: 2, fit: 'contain' },
+      { key: 'datepicker', platform: 'ios', span: 3, fit: 'contain', position: 'center' },
+      { key: 'datepicker', platform: 'android', span: 3, fit: 'contain', position: 'center' },
       { key: 'textfield', platform: 'ios', span: 3 },
       { key: 'textfield', platform: 'android', span: 3 },
     ],
@@ -96,7 +96,16 @@ const ROWS = [
     ],
   },
   {
-    height: 320,
+    height: 380,
+    tiles: [
+      { key: 'navigationrail', platform: 'ios', span: 3 },
+      { key: 'navigationrail', platform: 'android', span: 3 },
+      { key: 'floatingactionbutton', platform: 'ios', span: 3 },
+      { key: 'floatingactionbutton', platform: 'android', span: 3 },
+    ],
+  },
+  {
+    height: 350,
     tiles: [
       { key: 'contextmenu', platform: 'ios', span: 3, position: 'center' },
       { key: 'contextmenu', platform: 'android', span: 3, position: 'center' },
@@ -224,8 +233,8 @@ function socialHtml() {
 <body>
   <div class="copy">
     <h1><small>react-native-platform-components</small>Native components for React Native, on both platforms</h1>
-    <p>TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, FloatingToolbar and LiquidGlass. Real UIKit and Material 3 Expressive widgets behind one typed API.</p>
-    <div class="tags"><span class="tag ios">iOS · UIKit &amp; SwiftUI</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
+    <p>TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. Real UIKit and Material 3 Expressive widgets behind one typed API.</p>
+    <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>
 </body></html>`;

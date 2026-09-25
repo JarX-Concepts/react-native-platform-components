@@ -16,7 +16,7 @@ pod install
 ```
 
 - Minimum iOS version: **iOS 15.1+** (React Native sets this floor; the podspec follows it)
-- Uses `UIDatePicker`, SwiftUI Menu, and `UIContextMenuInteraction`
+- Uses UIKit: `UIDatePicker`, `UIMenu`, `UIContextMenuInteraction`, `UITabBar`, `UIButton` and friends
 
 ### Android
 

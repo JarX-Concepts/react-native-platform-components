@@ -5,20 +5,20 @@
 [![CI](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml/badge.svg)](https://github.com/JarX-Concepts/react-native-platform-components/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/react-native-platform-components.svg)](./LICENSE)
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit and SwiftUI on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <a href="https://jarx-concepts.github.io/react-native-platform-components">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-dark.webp" />
-      <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
+      <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, TabBar, NavigationRail, FloatingActionButton, ContextMenu, LiquidGlass, FloatingToolbar and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
     </picture>
   </a>
 </p>
 <p align="center"><sub>Every tile is the platform's own widget, captured from the example app. The <a href="https://jarx-concepts.github.io/react-native-platform-components">docs site</a> has full recordings of each component on both platforms; <a href="https://jarx-concepts.github.io/react-native-platform-components/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>
 
 <p align="center">
-  <a href="https://jarx-concepts.github.io/react-native-platform-components"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/showreel.gif" width="640" alt="Showreel: the native theme changing brand color and switching to dark mode, then DatePicker, TextField, SegmentedControl, Button, ContextMenu, SelectionMenu, FloatingToolbar and LiquidGlass in use, iOS on the left and Android on the right" /></a>
+  <a href="https://jarx-concepts.github.io/react-native-platform-components"><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/showreel.gif" width="640" alt="Showreel: the native theme changing brand color and switching to dark mode, then DatePicker, TextField, SegmentedControl, TabBar, NavigationRail, Button, FloatingActionButton, ContextMenu, SelectionMenu, FloatingToolbar and LiquidGlass in use, iOS on the left and Android on the right" /></a>
 </p>
 <p align="center"><sub>iOS on the left, Android on the right. Recorded by the Detox suite in <code>example/</code>.</sub></p>
 

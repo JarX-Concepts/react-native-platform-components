@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // Builds the README showreel from the newest Detox recording of each flow:
 // one clip per component, cropped to the component with iOS on the left and
-// Android on the right, cross-fading from one to the next and ending on a
-// title card.
+// Android on the right, one after the other and ending on a title card. The
+// video cross-fades between clips; the GIF cuts, because a cross-fade changes
+// every pixel of a dozen frames, which in a GIF costs more than all the clips
+// together.
 //
 //   assets/showreel.gif             for the README (GitHub and npm)
 //   docs/static/video/showreel.mp4  for the documentation site
@@ -12,7 +14,7 @@
 // the captions and panel frames. Run the flows first (see
 // scripts/generate-readme-gifs.sh), then:
 //   node scripts/visuals/showreel.mjs
-// CLIP_SECONDS (default 4) is the length of a component's clip; the Theme
+// CLIP_SECONDS (default 3.5) is the length of a component's clip; the Theme
 // clip sets its own. GIF_WIDTH (default 928) sets the GIF's width; the README
 // shows it at half that, so it stays crisp on a retina display.
 import fs from 'node:fs';
@@ -34,8 +36,8 @@ import { COMPONENTS } from './shots.mjs';
 const W = 1160;
 const H = 760;
 const FPS = 30;
-const GIF_FPS = 12;
-const CLIP_SECONDS = parseFloat(process.env.CLIP_SECONDS || '4.0');
+const GIF_FPS = 15;
+const CLIP_SECONDS = parseFloat(process.env.CLIP_SECONDS || '3.5');
 const XFADE = 0.45;
 const BG = '#f6f8fa';
 const PANEL_TOP = 134;
@@ -265,20 +267,28 @@ ffmpeg(['-i', master, '-c:v', 'libx264', '-preset', 'slow', '-crf', '24', '-pix_
 const poster = path.join(videoDir, 'showreel.jpg');
 ffmpeg(['-ss', '0.6', '-i', master, '-frames:v', '1', '-q:v', '4', poster]);
 
+// The GIF's clips, back to back without the cross-fades
+const cuts = path.join(work, 'cuts.mp4');
+{
+  const list = path.join(work, 'clips.txt');
+  fs.writeFileSync(list, clips.map((c) => `file '${c.file}'`).join('\n') + '\n');
+  ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', cuts]);
+}
 const gifWidth = parseInt(process.env.GIF_WIDTH || '928', 10);
 const gif = path.join(ASSETS_DIR, 'showreel.gif');
 const palette = path.join(work, 'palette.png');
 const pre = `fps=${GIF_FPS},scale=${gifWidth}:-2:flags=lanczos`;
-ffmpeg(['-i', master, '-vf', `${pre},palettegen=stats_mode=diff`, palette]);
+ffmpeg(['-i', cuts, '-vf', `${pre},palettegen=stats_mode=diff`, palette]);
 ffmpeg([
-  '-i', master, '-i', palette,
+  '-i', cuts, '-i', palette,
   '-filter_complex', `${pre}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
   gif,
 ]);
 
-const total = clips.reduce((s, c) => s + c.duration, 0) - XFADE * (clips.length - 1);
-console.log(`  ${path.relative(process.cwd(), gif)} (${fmtBytes(fs.statSync(gif).size)}, ${total.toFixed(1)}s, ${clips.length - 1} components)`);
-console.log(`  ${path.relative(process.cwd(), mp4)} (${fmtBytes(fs.statSync(mp4).size)})`);
+const gifTotal = clips.reduce((s, c) => s + c.duration, 0);
+const total = gifTotal - XFADE * (clips.length - 1);
+console.log(`  ${path.relative(process.cwd(), gif)} (${fmtBytes(fs.statSync(gif).size)}, ${gifTotal.toFixed(1)}s, ${clips.length - 1} components)`);
+console.log(`  ${path.relative(process.cwd(), mp4)} (${fmtBytes(fs.statSync(mp4).size)}, ${total.toFixed(1)}s)`);
 console.log(`  ${path.relative(process.cwd(), poster)} (${fmtBytes(fs.statSync(poster).size)})`);
 if (keepWork) console.log(`  work dir: ${work}`);
 else fs.rmSync(work, { recursive: true, force: true });
