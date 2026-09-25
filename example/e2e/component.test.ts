@@ -1336,7 +1336,11 @@ describe('Platform Components Example', () => {
     await pause(900);
     await tapRailItem('rail-search');
     await expectText('rail-value', 'search');
-    await tapRailItem('rail-header-button');
+    // tapRailItem scrolls up only until the header counts as visible, which
+    // can leave it under the Android status bar, where the tap lands on the
+    // system bar instead; scroll the page to the top
+    await element(by.id('demo-scroll')).scrollTo('top');
+    await element(by.id('rail-header-button')).tap();
     await expectText('rail-last-event', 'header: compose');
   });
 
