@@ -80,14 +80,47 @@ describe('FloatingToolbar', () => {
     const props = lastNativeProps();
     expect(props.color).toBe('#112233');
     // The Jest preset runs as iOS
-    expect(props.ios).toEqual({ effect: 'clear' });
+    expect(props.ios).toEqual({
+      effect: 'clear',
+      interactive: false,
+      scrollEdgeEffect: '',
+    });
     expect(props.android).toBeUndefined();
     act(() => tree.unmount());
   });
 
   it('defaults the iOS effect to regular', () => {
     const tree = render(<FloatingToolbar ios={{}} />);
-    expect(lastNativeProps().ios).toEqual({ effect: 'regular' });
+    expect(lastNativeProps().ios).toEqual({
+      effect: 'regular',
+      interactive: false,
+      scrollEdgeEffect: '',
+    });
+    act(() => tree.unmount());
+  });
+
+  it('is not linked to a ScrollView by default', () => {
+    const tree = render(<FloatingToolbar />);
+    expect(lastNativeProps()).toMatchObject({
+      scrollViewNativeID: '',
+      hideOnScroll: false,
+    });
+    act(() => tree.unmount());
+  });
+
+  it('passes the linked ScrollView, hide on scroll and the iOS 26 glass options', () => {
+    const tree = render(
+      <FloatingToolbar
+        scrollViewNativeID="feed"
+        hideOnScroll
+        ios={{ interactive: true, scrollEdgeEffect: 'hard' }}
+      />
+    );
+    expect(lastNativeProps()).toMatchObject({
+      scrollViewNativeID: 'feed',
+      hideOnScroll: true,
+      ios: { effect: 'regular', interactive: true, scrollEdgeEffect: 'hard' },
+    });
     act(() => tree.unmount());
   });
 });

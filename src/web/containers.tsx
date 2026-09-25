@@ -40,13 +40,18 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   return <View {...viewProps}>{children}</View>;
 }
 
-/** A pill-shaped surface that lays out its children in a row or column. */
+/**
+ * A pill-shaped surface that lays out its children in a row or column. It
+ * doesn't follow a linked ScrollView (`scrollViewNativeID`, `hideOnScroll`).
+ */
 export function FloatingToolbar(
   props: FloatingToolbarProps
 ): React.ReactElement {
   const {
     orientation = 'horizontal',
     color,
+    scrollViewNativeID,
+    hideOnScroll,
     ios,
     android,
     children,
