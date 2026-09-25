@@ -4,6 +4,7 @@ import { Platform, Switch } from 'react-native';
 import {
   SelectionMenu,
   type AndroidMaterialMode,
+  type SelectionMenuOption,
 } from 'react-native-platform-components';
 import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
 
@@ -62,6 +63,34 @@ const US_STATES = [
 
 const STATE_OPTIONS = US_STATES.map((s) => ({ label: s, data: s }));
 
+// Options with icons (SF Symbols / drawables and an image asset) and subtitles
+const NOTIFY_OPTIONS: SelectionMenuOption[] = [
+  {
+    label: 'Push',
+    data: 'push',
+    subtitle: 'On this device',
+    icon: { type: 'image', source: require('./assets/bell.png') },
+  },
+  {
+    label: 'Email',
+    data: 'email',
+    subtitle: 'A daily digest',
+    icon: { ios: 'envelope', android: 'send' },
+  },
+  {
+    label: 'Calendar',
+    data: 'calendar',
+    subtitle: 'Events only',
+    icon: { ios: 'calendar', android: 'calendar' },
+  },
+  {
+    label: 'Off',
+    data: 'off',
+    subtitle: 'No notifications',
+    icon: { ios: 'bell.slash', android: 'remove_circle' },
+  },
+];
+
 export function SelectionMenuDemo(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -70,6 +99,10 @@ export function SelectionMenuDemo(): React.JSX.Element {
   const [embedded, setEmbedded] = useState(false);
 
   const [material, setMaterial] = useState<AndroidMaterialMode>('system');
+  const [searchable, setSearchable] = useState(false);
+
+  const [notify, setNotify] = useState<string | null>('push');
+  const [notifyOpen, setNotifyOpen] = useState(false);
 
   const selectedLabel = useMemo(() => selected ?? 'None', [selected]);
 
@@ -125,6 +158,15 @@ export function SelectionMenuDemo(): React.JSX.Element {
                 onSelect={(data) => setMaterial(data as AndroidMaterialMode)}
               />
             </Row>
+            <Divider />
+            <Row label="Searchable">
+              <Switch
+                style={ui.alignEnd}
+                testID="searchable-switch"
+                value={searchable}
+                onValueChange={setSearchable}
+              />
+            </Row>
           </>
         )}
       </Section>
@@ -156,7 +198,9 @@ export function SelectionMenuDemo(): React.JSX.Element {
               disabled={disabled}
               placeholder="Select a state"
               presentation="embedded"
-              android={Platform.OS === 'android' ? { material } : undefined}
+              android={
+                Platform.OS === 'android' ? { material, searchable } : undefined
+              }
               // modal-only props omitted on purpose
               onSelect={(data) => setSelected(data)}
             />
@@ -225,6 +269,51 @@ export function SelectionMenuDemo(): React.JSX.Element {
             </Row>
           </>
         )}
+      </Section>
+
+      <Section title="Rich Options">
+        <Row label="Notify">
+          {embedded ? (
+            <SelectionMenu
+              testID="notify-menu-embedded"
+              style={ui.alignEnd}
+              options={NOTIFY_OPTIONS}
+              selected={notify}
+              disabled={disabled}
+              placeholder="Notify by"
+              presentation="embedded"
+              android={Platform.OS === 'android' ? { material } : undefined}
+              onSelect={(data) => setNotify(data)}
+            />
+          ) : (
+            <>
+              <ActionField
+                testID="notify-field"
+                text={
+                  NOTIFY_OPTIONS.find((o) => o.data === notify)?.label ?? 'None'
+                }
+                disabled={disabled}
+                onPress={() => {
+                  if (disabled) return;
+                  setNotifyOpen(true);
+                }}
+              />
+              <SelectionMenu
+                testID="notify-menu-modal"
+                options={NOTIFY_OPTIONS}
+                selected={notify}
+                disabled={disabled}
+                presentation="modal"
+                visible={notifyOpen}
+                onSelect={(data) => {
+                  setNotify(data);
+                  setNotifyOpen(false);
+                }}
+                onRequestClose={() => setNotifyOpen(false)}
+              />
+            </>
+          )}
+        </Row>
       </Section>
     </>
   );

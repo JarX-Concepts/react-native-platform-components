@@ -15,6 +15,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -86,6 +87,7 @@ class PCTextFieldView(context: Context) :
   var autoCorrect: Boolean = true
   var secure: Boolean = false
   var multiline: Boolean = false
+  var submitBehavior: String = "" // "" | "submit" | "blurAndSubmit" | "newline"
   var fieldEnabled: Boolean = true
   var autoFocus: Boolean = false
   var selectTextOnFocus: Boolean = false
@@ -119,6 +121,7 @@ class PCTextFieldView(context: Context) :
   var onChange: ((text: String, eventCount: Int) -> Unit)? = null
   var onFocusChange: ((focused: Boolean, text: String) -> Unit)? = null
   var onSubmit: ((text: String) -> Unit)? = null
+  var onSelectionChange: ((start: Int, end: Int) -> Unit)? = null
   var onTrailingIconPress: (() -> Unit)? = null
   var onPress: (() -> Unit)? = null
 
@@ -128,6 +131,13 @@ class PCTextFieldView(context: Context) :
   private var settingTextInternally = false
   private var initialTextApplied = false
   private var autoFocusDone = false
+
+  // The selection JS last heard of, so a change is reported once. Text and
+  // selection set from JS update it without an event. Declared before init:
+  // the edit text reports selections while rebuildUI() builds it.
+  private var reportedSelectionStart = -1
+  private var reportedSelectionEnd = -1
+  private var applyingSelection = false
 
   // --- UI ---
   /** The top-level widget: the TextInputLayout, or the system field's column. */
@@ -299,6 +309,17 @@ class PCTextFieldView(context: Context) :
     applyInputType()
   }
 
+  fun applySubmitBehavior(value: String) {
+    if (submitBehavior == value) return
+    submitBehavior = value
+    // The IME asks for the enter key's action when input starts
+    val edit = editText ?: return
+    if (multiline && edit.isFocused) {
+      val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+      imm?.restartInput(edit)
+    }
+  }
+
   fun applyInteractivity(value: String?) {
     val next = value != "disabled"
     if (fieldEnabled == next) return
@@ -455,6 +476,23 @@ class PCTextFieldView(context: Context) :
     setTextInternal(value, moveCursorToEnd = false)
   }
 
+  /**
+   * A selection from JS, clamped to the text. Dropped like a stale
+   * [setTextFromJS] when the user has edited since [eventCount].
+   */
+  fun setSelectionFromJS(eventCount: Int, start: Int, end: Int) {
+    if (eventCount < nativeEventCount) return
+    val edit = editText ?: return
+    val length = edit.length()
+    val from = start.coerceIn(0, length)
+    val to = end.coerceIn(from, length)
+    applyingSelection = true
+    edit.setSelection(from, to)
+    applyingSelection = false
+    reportedSelectionStart = edit.selectionStart
+    reportedSelectionEnd = edit.selectionEnd
+  }
+
   // ---- Touch ----
 
   // The widgets have generated view ids, which React Native's touch handling
@@ -591,6 +629,8 @@ class PCTextFieldView(context: Context) :
     val length = edit.length()
     edit.setSelection(if (selection in 0..length) selection else length)
     settingTextInternally = false
+    reportedSelectionStart = edit.selectionStart
+    reportedSelectionEnd = edit.selectionEnd
 
     edit.addTextChangedListener(textWatcher)
     // Focus changes are reported from FieldEditText.onFocusChanged: the Material
@@ -602,17 +642,35 @@ class PCTextFieldView(context: Context) :
     requestLayout()
   }
 
+  /** What the return key does; a single-line field has no newline to insert. */
+  private val returnKeyBehavior: String
+    get() = when {
+      submitBehavior == "submit" -> "submit"
+      multiline && submitBehavior != "blurAndSubmit" -> "newline"
+      else -> "blurAndSubmit"
+    }
+
   private fun onEditorAction(actionId: Int, event: KeyEvent?): Boolean {
-    // Multi-line fields keep the return key for newlines
-    if (multiline) return false
+    val behavior = returnKeyBehavior
+    // Multi-line fields keep the return key for newlines unless they submit
+    if (behavior == "newline") return false
     // A hardware / IME Enter reports IME_ACTION_UNSPECIFIED twice (key down and up)
     if (actionId == EditorInfo.IME_ACTION_UNSPECIFIED && event != null && event.action != KeyEvent.ACTION_DOWN) {
       return true
     }
     onSubmit?.invoke(text)
-    // Single-line fields blur on submit, as the core TextInput does by default
-    blurFromJS()
+    // Fields blur on submit unless submitBehavior is 'submit', as the core
+    // TextInput does; returning true keeps the keyboard up otherwise
+    if (behavior == "blurAndSubmit") blurFromJS()
     return true
+  }
+
+  private fun selectionChanged(start: Int, end: Int) {
+    if (settingTextInternally || applyingSelection) return
+    if (start == reportedSelectionStart && end == reportedSelectionEnd) return
+    reportedSelectionStart = start
+    reportedSelectionEnd = end
+    onSelectionChange?.invoke(start, end)
   }
 
   private fun setTextInternal(value: String, moveCursorToEnd: Boolean) {
@@ -629,6 +687,9 @@ class PCTextFieldView(context: Context) :
     val length = edit.length()
     edit.setSelection(if (moveCursorToEnd || wasAtEnd) length else cursor.coerceIn(0, length))
     settingTextInternally = false
+    // The cursor moved with the text; JS knows, so there is no event
+    reportedSelectionStart = edit.selectionStart
+    reportedSelectionEnd = edit.selectionEnd
   }
 
   // ---- Decorations ----
@@ -1157,6 +1218,24 @@ class PCTextFieldView(context: Context) :
     override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
       super.onFocusChanged(focused, direction, previouslyFocusedRect)
       onFocusChange?.invoke(focused, this@PCTextFieldView.text)
+    }
+
+    override fun onSelectionChanged(selStart: Int, selEnd: Int) {
+      super.onSelectionChanged(selStart, selEnd)
+      selectionChanged(selStart, selEnd)
+    }
+
+    /**
+     * A multi-line field that submits on return asks the IME for its action
+     * key (Send, Done) in place of Enter, which TextView turns off for
+     * multi-line input.
+     */
+    override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+      val connection = super.onCreateInputConnection(outAttrs)
+      if (multiline && returnKeyBehavior != "newline") {
+        outAttrs.imeOptions = outAttrs.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION.inv()
+      }
+      return connection
     }
 
     override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {

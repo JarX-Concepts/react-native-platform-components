@@ -3,6 +3,7 @@ import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 import type {
   BubblingEventHandler,
+  DirectEventHandler,
   Double,
   Int32,
   WithDefault,
@@ -29,6 +30,8 @@ export type TabBarItem = Readonly<{
   badge: string; // badge text, '' = no badge
   accessibilityLabel: string; // '' = the label
   testID: string; // '' = none
+  role: string; // '' | 'search'
+  systemItem: string; // '' | a UITabBarItem.SystemItem name ('favorites', …)
 }>;
 
 /** A press on a tab. `reselected` is 'true' when the tab was already selected. */
@@ -36,6 +39,18 @@ export type TabBarSelectEvent = Readonly<{
   index: Int32;
   value: string;
   reselected: string; // 'true' | 'false'
+}>;
+
+/**
+ * iOS 26: where the hosted bottom accessory sits, in the bar's coordinates,
+ * and its environment.
+ */
+export type TabBarAccessoryLayoutEvent = Readonly<{
+  x: Double;
+  y: Double;
+  width: Double;
+  height: Double;
+  environment: string; // 'regular' | 'inline'
 }>;
 
 /** Label font. Empty strings / 0 mean "platform default". */
@@ -87,6 +102,29 @@ export interface TabBarNativeProps extends ViewProps {
   /** Android: ripple shown while pressing a tab. */
   androidRippleColor?: ColorValue;
 
+  /** Android: 'true' | 'false' ('' = shown), the active indicator. */
+  androidIndicator?: string;
+
+  /** Android: '' (pill) | 'pill' | 'circle' | 'rounded' (androidIndicatorCornerRadius). */
+  androidIndicatorShape?: string;
+
+  /** Android: corner radius of a 'rounded' indicator, in dp. */
+  androidIndicatorCornerRadius?: Double;
+
+  /** Android: indicator size in dp; 0 = the Material default. */
+  androidIndicatorWidth?: Double;
+  androidIndicatorHeight?: Double;
+
+  /** Android: '' | 'vertical' | 'horizontal' | 'auto', icon above or beside the label. */
+  androidItemLayout?: string;
+
+  /**
+   * Links the bar to its accessory view (PCTabBarAccessory with the same
+   * id): iOS 26 hosts it as the tab bar's bottom accessory; Android slides
+   * it away with the bar. '' = none.
+   */
+  accessoryID?: string;
+
   /**
    * Haptic played when a tab is pressed: '' (none added) | 'none' | 'selection' |
    * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
@@ -95,6 +133,9 @@ export interface TabBarNativeProps extends ViewProps {
 
   /** Fired when a tab is pressed. */
   onTabPress?: BubblingEventHandler<TabBarSelectEvent>;
+
+  /** iOS 26: the hosted accessory moved, resized or changed environment. */
+  onAccessoryLayout?: DirectEventHandler<TabBarAccessoryLayoutEvent>;
 }
 
 export default codegenNativeComponent<TabBarNativeProps>(

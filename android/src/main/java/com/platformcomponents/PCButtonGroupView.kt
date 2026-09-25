@@ -1,24 +1,31 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.text.TextUtils
 import android.view.ContextThemeWrapper
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.ReactCompoundViewGroup
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonGroup
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.button.MaterialSplitButton
 
 /**
  * A Material 3 Expressive button group: MaterialButtonGroup for plain actions,
- * MaterialButtonToggleGroup for single / multiple selection. Rebuilt whenever
- * a prop the widgets read at construction changes.
+ * MaterialButtonToggleGroup for single / multiple selection, and
+ * MaterialSplitButton in split mode (SplitButton). Rebuilt whenever a prop the
+ * widgets read at construction changes.
  */
 class PCButtonGroupView(context: Context) :
   FrameLayout(context),
@@ -38,6 +45,9 @@ class PCButtonGroupView(context: Context) :
 
   companion object {
     private const val TAG = "PCButtonGroup"
+
+    /** Minimum width of the split button's buttons (the touch target size). */
+    private const val SPLIT_MIN_WIDTH_DP = 48
   }
 
   // --- State Wrapper for Fabric state updates ---
@@ -59,6 +69,10 @@ class PCButtonGroupView(context: Context) :
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var overflow: String = "none" // "none" | "menu" | "wrap"
   var expressive: Boolean = true // android.material: "expressive" | "m3"
+  var split: Boolean = false // MaterialSplitButton: the first button and a menu button
+  /** The split button's flattened menu items (see PCMenuSupport) */
+  var menuItems: List<PCMenuSupport.Item> = emptyList()
+  var menuAccessibilityLabel: String = ""
 
   // --- Styling (null / empty = Material theme default) ---
   var containerColor: Int? = null
@@ -76,9 +90,13 @@ class PCButtonGroupView(context: Context) :
   // --- Events ---
   var onPress: ((index: Int, value: String) -> Unit)? = null
   var onSelectionChange: ((values: List<String>) -> Unit)? = null
+  var onMenuSelect: ((id: String, title: String) -> Unit)? = null
+  var onMenuOpen: (() -> Unit)? = null
+  var onMenuClose: (() -> Unit)? = null
 
   // --- UI ---
   private var group: MaterialButtonGroup? = null
+  private var popupMenu: PopupMenu? = null
   private val buttonIdToIndex: MutableMap<Int, Int> = mutableMapOf()
   private var suppressCallbacks = false
   private var selectionEmitPending = false
@@ -179,6 +197,22 @@ class PCButtonGroupView(context: Context) :
     rebuildUI()
   }
 
+  fun applySplit(value: Boolean) {
+    if (split == value) return
+    split = value
+    rebuildUI()
+  }
+
+  fun applyMenu(value: List<PCMenuSupport.Item>) {
+    menuItems = value
+  }
+
+  fun applyMenuAccessibilityLabel(value: String) {
+    if (menuAccessibilityLabel == value) return
+    menuAccessibilityLabel = value
+    splitMenuButton()?.contentDescription = value.ifEmpty { null }
+  }
+
   fun applyMaterial(value: String?) {
     val parsed = PCExpressive.parseExpressive(value)
     if (expressive == parsed) return
@@ -224,6 +258,7 @@ class PCButtonGroupView(context: Context) :
 
   override fun onDetachedFromWindow() {
     PCNativeTheme.removeListener(nativeThemeListener)
+    popupMenu?.dismiss()
     super.onDetachedFromWindow()
   }
 
@@ -254,7 +289,14 @@ class PCButtonGroupView(context: Context) :
     val groupContext = if (overlay != 0) ContextThemeWrapper(base, overlay) else base
 
     val g: MaterialButtonGroup =
-      if (toggle) {
+      if (split) {
+        // Material's split button style (a small gap and inner corners that
+        // round while the menu is open) over the Expressive widget styles
+        MaterialSplitButton(if (expressive) ContextThemeWrapper(base, R.style.PCExpressiveOverlay) else base).apply {
+          // Laid out like the other groups, without the style's vertical padding
+          setPadding(0, 0, 0, 0)
+        }
+      } else if (toggle) {
         MaterialButtonToggleGroup(groupContext).apply {
           isSingleSelection = selection == "single"
           isSelectionRequired = selectionRequired
@@ -269,12 +311,14 @@ class PCButtonGroupView(context: Context) :
       g.spacing = (spacing * resources.displayMetrics.density).toInt()
     }
     g.overflowMode = when (overflow) {
-      "menu" -> MaterialButtonGroup.OVERFLOW_MODE_MENU
-      "wrap" -> MaterialButtonGroup.OVERFLOW_MODE_WRAP
+      "menu" -> if (split) MaterialButtonGroup.OVERFLOW_MODE_NONE else MaterialButtonGroup.OVERFLOW_MODE_MENU
+      "wrap" -> if (split) MaterialButtonGroup.OVERFLOW_MODE_NONE else MaterialButtonGroup.OVERFLOW_MODE_WRAP
       else -> MaterialButtonGroup.OVERFLOW_MODE_NONE
     }
 
-    for ((index, item) in items.withIndex()) {
+    // A split button is one button and its menu button
+    val shown = if (split) items.take(1) else items
+    for ((index, item) in shown.withIndex()) {
       val iconOnly = item.label.isEmpty() && item.icon.isPresent
 
       val button = PCExpressive.createButton(
@@ -311,6 +355,8 @@ class PCButtonGroupView(context: Context) :
       g.addView(button, params)
     }
 
+    if (split && shown.isNotEmpty()) addSplitMenuButton(g as MaterialSplitButton, base, g.getChildAt(0) as MaterialButton)
+
     if (g is MaterialButtonToggleGroup) {
       g.addOnButtonCheckedListener { _, _, _ ->
         if (suppressCallbacks) return@addOnButtonCheckedListener
@@ -326,6 +372,112 @@ class PCButtonGroupView(context: Context) :
     updateSelection()
     updateEnabled()
     requestLayout()
+  }
+
+  // ---- Split button ----
+
+  /**
+   * The trailing button of a split button: Material's chevron in a button of
+   * the leading button's style, which MaterialSplitButton makes checkable.
+   * Checking it opens the menu and turns the chevron; closing the menu
+   * unchecks it. It keeps the leading button's colors while checked, as
+   * Material's split button styles do, so only the chevron and the inner
+   * corners change.
+   */
+  private fun addSplitMenuButton(g: MaterialSplitButton, base: Context, leading: MaterialButton) {
+    val metrics = splitMetrics(if (expressive) size else "small")
+    val density = resources.displayMetrics.density
+    fun dp(value: Int) = (value * density).toInt()
+
+    val menuButton = PCExpressive.createButton(base, variant, size, "round", false, 0, expressive).apply {
+      id = View.generateViewId()
+      icon = ContextCompat.getDrawable(context, MaterialR.drawable.m3_split_button_chevron_avd)
+      iconSize = dp(metrics.iconSize)
+      iconPadding = 0
+      iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+      setPaddingRelative(dp(metrics.menuStart), paddingTop, dp(metrics.menuEnd), paddingBottom)
+      // The touch target size, as Material's split button styles set, in
+      // place of the button styles' minimum width
+      minWidth = dp(SPLIT_MIN_WIDTH_DP)
+      minimumWidth = dp(SPLIT_MIN_WIDTH_DP)
+      contentDescription = menuAccessibilityLabel.ifEmpty { null }
+      isEnabled = interactivity == "enabled"
+    }
+    leading.setPaddingRelative(dp(metrics.leadingStart), leading.paddingTop, dp(metrics.leadingEnd), leading.paddingBottom)
+    leading.minWidth = dp(SPLIT_MIN_WIDTH_DP)
+    leading.minimumWidth = dp(SPLIT_MIN_WIDTH_DP)
+
+    g.addView(menuButton, MaterialButtonGroup.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 0f))
+    menuButton.backgroundTintList = uncheckable(leading.backgroundTintList)
+    menuButton.iconTint = uncheckable(leading.iconTint ?: leading.textColors)
+    menuButton.strokeColor = uncheckable(leading.strokeColor)
+    menuButton.strokeWidth = leading.strokeWidth
+    menuButton.rippleColor = leading.rippleColor
+    menuButton.addOnCheckedChangeListener { button, checked -> if (checked) showSplitMenu(button) }
+  }
+
+  /**
+   * A button's enabled and disabled colors, without the checked states the
+   * Material toggle colors add, so a checkable button keeps them.
+   */
+  private fun uncheckable(colors: ColorStateList?): ColorStateList? {
+    colors ?: return null
+    val disabled = intArrayOf(-android.R.attr.state_enabled)
+    return ColorStateList(
+      arrayOf(disabled, intArrayOf()),
+      intArrayOf(
+        colors.getColorForState(disabled, colors.defaultColor),
+        colors.getColorForState(intArrayOf(android.R.attr.state_enabled), colors.defaultColor)
+      )
+    )
+  }
+
+  private fun splitMenuButton(): MaterialButton? =
+    (group as? MaterialSplitButton)?.getChildAt(1) as? MaterialButton
+
+  /** Spacing and icon size of the split button sizes, in dp (Material 1.14 tokens). */
+  private data class SplitMetrics(
+    val leadingStart: Int,
+    val leadingEnd: Int,
+    val iconSize: Int,
+    val menuStart: Int,
+    val menuEnd: Int
+  )
+
+  private fun splitMetrics(size: String): SplitMetrics = when (size) {
+    "xsmall" -> SplitMetrics(12, 10, 22, 13, 13)
+    "medium" -> SplitMetrics(24, 24, 26, 15, 15)
+    "large" -> SplitMetrics(48, 48, 38, 29, 29)
+    "xlarge" -> SplitMetrics(64, 64, 50, 43, 43)
+    else -> SplitMetrics(16, 12, 22, 13, 13)
+  }
+
+  /** A PopupMenu anchored to the menu button, built like ContextMenu's. */
+  private fun showSplitMenu(anchor: MaterialButton) {
+    if (popupMenu != null) return
+    val items = menuItems
+    // Aligned to the split button's end edge
+    val popup = PopupMenu(context, anchor, Gravity.END)
+    popupMenu = popup
+    val hasIcons = PCMenuSupport.populate(context, popup.menu, items) { popupMenu === popup }
+    popup.setForceShowIcon(hasIcons)
+
+    popup.setOnMenuItemClickListener { menuItem ->
+      // Submenu headers open their submenu; they aren't picks
+      val item = PCMenuSupport.itemFor(menuItem, items)
+      if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      onMenuSelect?.invoke(item.id, item.title)
+      true
+    }
+    popup.setOnDismissListener {
+      if (popupMenu === popup) popupMenu = null
+      // Turns the chevron back
+      anchor.isChecked = false
+      onMenuClose?.invoke()
+    }
+
+    onMenuOpen?.invoke()
+    popup.show()
   }
 
   private fun scheduleSelectionEmit() {
@@ -366,6 +518,7 @@ class PCButtonGroupView(context: Context) :
       val index = buttonIdToIndex[button.id] ?: continue
       button.isEnabled = enabled && !items[index].disabled
     }
+    splitMenuButton()?.isEnabled = enabled
   }
 
   // ---- Layout ----

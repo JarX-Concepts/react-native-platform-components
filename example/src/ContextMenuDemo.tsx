@@ -1,5 +1,5 @@
 // ContextMenuDemo.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   ContextMenu,
@@ -91,6 +91,65 @@ const ACTIONS_WITH_STATE: ContextMenuAction[] = [
   },
 ];
 
+const BELL = require('./assets/bell.png');
+
+// Inline sections (separated groups), an image-asset icon and a submenu
+// inside a section.
+const SECTION_ACTIONS: ContextMenuAction[] = [
+  {
+    id: 'section-edit',
+    title: '',
+    displayInline: true,
+    subactions: [
+      {
+        id: 'copy',
+        title: 'Copy',
+        image: { ios: 'doc.on.doc', android: 'content_copy' },
+      },
+      {
+        id: 'duplicate',
+        title: 'Duplicate',
+        image: { ios: 'plus.square.on.square', android: 'crop_square' },
+      },
+    ],
+  },
+  {
+    id: 'section-share',
+    title: 'Share',
+    displayInline: true,
+    subactions: [
+      {
+        id: 'remind',
+        title: 'Remind Me',
+        subtitle: 'Icon from an image asset',
+        image: { type: 'image', source: BELL },
+      },
+      {
+        id: 'send',
+        title: 'Send To',
+        image: { ios: 'paperplane', android: 'send' },
+        subactions: [
+          { id: 'send-messages', title: 'Messages' },
+          { id: 'send-mail', title: 'Mail' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'section-danger',
+    title: '',
+    displayInline: true,
+    subactions: [
+      {
+        id: 'delete',
+        title: 'Delete',
+        image: { ios: 'trash', android: 'delete' },
+        attributes: { destructive: true },
+      },
+    ],
+  },
+];
+
 const HAPTICS_SEGMENTS = [
   { label: 'Default', value: 'default' },
   { label: 'Light', value: 'light' },
@@ -107,9 +166,53 @@ export function ContextMenuDemo(): React.JSX.Element {
   // Modal mode state
   const [modalOpen, setModalOpen] = useState(false);
 
+  // A stepper and a toggle that keep the menu open (iOS 16+; Android menus
+  // close on every press)
+  const [quantity, setQuantity] = useState(1);
+  const [favorite, setFavorite] = useState(false);
+
+  const stepperActions = useMemo<ContextMenuAction[]>(
+    () => [
+      {
+        id: 'quantity',
+        title: `Quantity: ${quantity}`,
+        displayInline: true,
+        subactions: [
+          {
+            id: 'decrease',
+            title: 'Decrease',
+            image: { ios: 'minus', android: 'remove_circle' },
+            attributes: { keepsMenuPresented: true, disabled: quantity <= 0 },
+          },
+          {
+            id: 'increase',
+            title: 'Increase',
+            image: { ios: 'plus', android: 'add_circle' },
+            attributes: { keepsMenuPresented: true },
+          },
+        ],
+      },
+      {
+        id: 'favorite',
+        title: 'Favorite',
+        image: { ios: favorite ? 'star.fill' : 'star' },
+        state: favorite ? 'on' : 'off',
+        attributes: { keepsMenuPresented: true },
+      },
+    ],
+    [quantity, favorite]
+  );
+
   const handleAction = (actionId: string, actionTitle: string) => {
     console.log('Action pressed:', actionId, actionTitle);
     setLastAction(`${actionTitle} (${actionId})`);
+  };
+
+  const handleStepperAction = (actionId: string, actionTitle: string) => {
+    if (actionId === 'increase') setQuantity((q) => q + 1);
+    if (actionId === 'decrease') setQuantity((q) => Math.max(0, q - 1));
+    if (actionId === 'favorite') setFavorite((f) => !f);
+    handleAction(actionId, actionTitle);
   };
 
   return (
@@ -173,6 +276,7 @@ export function ContextMenuDemo(): React.JSX.Element {
             disabled={disabled}
             haptics={haptics}
             onPressAction={handleAction}
+            onPreviewPress={() => setLastAction('Preview pressed')}
             ios={{ enablePreview }}
             style={styles.fullFlex}
           >
@@ -311,6 +415,43 @@ export function ContextMenuDemo(): React.JSX.Element {
           >
             <View style={styles.dangerDemoBox}>
               <Text style={styles.demoText}>Destructive actions</Text>
+            </View>
+          </ContextMenu>
+        </Row>
+      </Section>
+
+      <Section title="Sections & Stepper">
+        <Row label="Sections">
+          <ContextMenu
+            testID="context-menu-sections"
+            title="Document"
+            actions={SECTION_ACTIONS}
+            disabled={disabled}
+            onPressAction={handleAction}
+            ios={{ enablePreview }}
+            style={styles.fullFlex}
+          >
+            <View style={styles.demoBox}>
+              <Text style={styles.demoText}>Grouped actions</Text>
+            </View>
+          </ContextMenu>
+        </Row>
+
+        <Divider />
+
+        <Row label="Stepper">
+          <ContextMenu
+            testID="context-menu-stepper"
+            actions={stepperActions}
+            disabled={disabled}
+            trigger="tap"
+            onPressAction={handleStepperAction}
+            style={styles.fullFlex}
+          >
+            <View style={styles.demoBox}>
+              <Text testID="stepper-value" style={styles.demoText}>
+                {`Qty ${quantity}${favorite ? ' ★' : ''}`}
+              </Text>
             </View>
           </ContextMenu>
         </Row>

@@ -1,7 +1,7 @@
 {
   "name": "react-native-platform-components",
   "version": "1.4.0",
-  "description": "Native UI components for React Native, the real platform widgets on both iOS and Android: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass. UIKit and SwiftUI on iOS, Material 3 Expressive on Android. Fabric, TypeScript, Expo config plugin.",
+  "description": "Native UI components for React Native, the real platform widgets on both iOS and Android: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. UIKit and SwiftUI on iOS, Material 3 Expressive on Android. Fabric, TypeScript, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "browser": "./lib/module/index.web.js",
@@ -124,10 +124,14 @@
     "uitabbar",
     "bottom-navigation",
     "navigation-bar",
+    "navigation-rail",
+    "navigationrail",
     "button",
     "buttons",
     "button-group",
     "toggle-buttons",
+    "floating-action-button",
+    "fab",
     "floating-toolbar",
     "toolbar",
     "uibutton",
@@ -237,10 +241,14 @@
         "PCContextMenu": "PCContextMenu",
         "PCSegmentedControl": "PCSegmentedControl",
         "PCTabBar": "PCTabBar",
+        "PCTabBarAccessory": "PCTabBarAccessory",
+        "PCNavigationRail": "PCNavigationRail",
+        "PCFloatingActionButton": "PCFloatingActionButton",
         "PCButton": "PCButton",
         "PCButtonGroup": "PCButtonGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
         "PCLiquidGlass": "PCLiquidGlass",
+        "PCLiquidGlassContainer": "PCLiquidGlassContainer",
         "PCTextField": "PCTextField"
       }
     }

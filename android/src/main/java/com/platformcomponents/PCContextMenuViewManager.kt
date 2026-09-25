@@ -53,70 +53,9 @@ class PCContextMenuViewManager :
     view.applyMenuTitle(value)
   }
 
+  // actions: the flattened menu items (src/menuItems.ts)
   override fun setActions(view: PCContextMenuView, value: ReadableArray?) {
-    val out = ArrayList<PCContextMenuView.Action>()
-    if (value != null) {
-      for (i in 0 until value.size()) {
-        val m = value.getMap(i) ?: continue
-        out.add(parseAction(m))
-      }
-    }
-    view.applyActions(out)
-  }
-
-  private fun parseAction(map: ReadableMap): PCContextMenuView.Action {
-    val id = map.getStringOrEmpty("id")
-    val title = map.getStringOrEmpty("title")
-    val subtitle = map.getStringOrNull("subtitle")
-    val image = map.getStringOrNull("image")
-    val imageColor = map.getStringOrNull("imageColor")
-    val state = map.getStringOrNull("state")
-
-    // Parse attributes
-    var destructive = false
-    var disabled = false
-    var hidden = false
-    if (map.hasKey("attributes") && !map.isNull("attributes")) {
-      val attrs = map.getMap("attributes")
-      if (attrs != null) {
-        destructive = attrs.getStringOrEmpty("destructive") == "true"
-        disabled = attrs.getStringOrEmpty("disabled") == "true"
-        hidden = attrs.getStringOrEmpty("hidden") == "true"
-      }
-    }
-
-    // Parse subactions recursively
-    val subactions = ArrayList<PCContextMenuView.Action>()
-    if (map.hasKey("subactions") && !map.isNull("subactions")) {
-      val subs = map.getArray("subactions")
-      if (subs != null) {
-        for (j in 0 until subs.size()) {
-          val subMap = subs.getMap(j) ?: continue
-          subactions.add(parseAction(subMap))
-        }
-      }
-    }
-
-    return PCContextMenuView.Action(
-      id = id,
-      title = title,
-      subtitle = subtitle,
-      image = image,
-      imageColor = imageColor,
-      destructive = destructive,
-      disabled = disabled,
-      hidden = hidden,
-      state = state,
-      subactions = subactions
-    )
-  }
-
-  private fun ReadableMap.getStringOrEmpty(key: String): String {
-    return if (hasKey(key) && !isNull(key)) getString(key) ?: "" else ""
-  }
-
-  private fun ReadableMap.getStringOrNull(key: String): String? {
-    return if (hasKey(key) && !isNull(key)) getString(key) else null
+    view.applyActions(PCMenuSupport.parseItems(value))
   }
 
   override fun setInteractivity(view: PCContextMenuView, value: String?) {

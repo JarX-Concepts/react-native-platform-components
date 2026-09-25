@@ -1,10 +1,14 @@
 // Button.tsx
-import React, { useCallback, useMemo } from 'react';
-import type { ColorValue, ViewProps } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import type { ColorValue, NativeSyntheticEvent, ViewProps } from 'react-native';
 
-import NativeButton from './ButtonNativeComponent';
+import NativeButton, {
+  type ButtonMenuSelectEvent,
+  type ButtonSelectedChangeEvent,
+} from './ButtonNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
+import { flattenMenuActions, type ContextMenuAction } from './menuItems';
 import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 
@@ -20,9 +24,12 @@ import type { AndroidMaterialStyle } from './sharedTypes';
  * | `elevated` | Elevated button                 | `.gray()`                      |
  * | `glass`    | Filled tonal button             | `.glass()` (iOS 26+), else `.gray()` |
  * | `prominentGlass` | Filled button             | `.prominentGlass()` (iOS 26+), else `.filled()` |
+ * | `clearGlass` | Filled tonal button           | `.clearGlass()` (iOS 26+), else `.gray()` |
+ * | `prominentClearGlass` | Filled button        | `.prominentClearGlass()` (iOS 26+), else `.filled()` |
  *
  * The glass variants are the iOS 26 Liquid Glass buttons; `color` tints
- * the prominent glass and `tintColor` colors the label and icon.
+ * the prominent glass and `tintColor` colors the label and icon. Clear glass
+ * is more transparent, for buttons over photos and other rich content.
  */
 export type ButtonVariant =
   | 'filled'
@@ -31,7 +38,9 @@ export type ButtonVariant =
   | 'text'
   | 'elevated'
   | 'glass'
-  | 'prominentGlass';
+  | 'prominentGlass'
+  | 'clearGlass'
+  | 'prominentClearGlass';
 
 /**
  * Button size. Material 3 Expressive defines five sizes; iOS maps them onto
@@ -45,8 +54,15 @@ export type ButtonSize = 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge';
  */
 export type ButtonShape = 'round' | 'square';
 
-/** Which side of the label the icon sits on. */
-export type ButtonIconPosition = 'leading' | 'trailing';
+/** Where the icon sits relative to the label. */
+export type ButtonIconPosition = 'leading' | 'trailing' | 'top' | 'bottom';
+
+/**
+ * An animated SF Symbol effect (iOS 17+). `wiggle`, `rotate` and `breathe`
+ * need iOS 18; on earlier versions they do nothing.
+ */
+export type ButtonSymbolEffect =
+  'bounce' | 'pulse' | 'variableColor' | 'wiggle' | 'rotate' | 'breathe';
 
 export interface ButtonProps extends ViewProps {
   /** Button text. Omit for an icon-only button. */
@@ -56,8 +72,10 @@ export interface ButtonProps extends ViewProps {
   icon?: PlatformIcon;
 
   /**
-   * Which side of the label the icon sits on. Default: `'leading'`.
-   * iOS: `imagePlacement`. Android: `iconGravity` (`textEnd` for trailing).
+   * Where the icon sits relative to the label. Default: `'leading'`.
+   * iOS: `imagePlacement`. Android: `iconGravity` (`textEnd` for trailing,
+   * `textTop` for top). Material has no bottom gravity, so `'bottom'` puts the
+   * icon on top on Android.
    */
   iconPosition?: ButtonIconPosition;
 
@@ -128,13 +146,69 @@ export interface ButtonProps extends ViewProps {
   accessibilityLabel?: string;
 
   /**
-   * Haptic played when the button is pressed, not while `loading` or
-   * disabled. Default: none, like the native buttons. See {@link Haptics}.
+   * Haptic played when the user presses the button, flips a toggle or
+   * picks a menu item (not when a menu button opens its menu); not while
+   * `loading` or disabled. Default: none, like the native buttons. See
+   * {@link Haptics}.
    */
   haptics?: Haptics;
 
-  /** Called when the button is pressed. */
+  /**
+   * Called when the button is pressed. A button with a `menu` opens the menu
+   * instead.
+   */
   onPress?: () => void;
+
+  /**
+   * Makes the button a toggle, with this as its controlled state. A press
+   * calls `onSelectedChange` with the opposite value; the button shows the
+   * new state once `selected` changes, and goes back if it doesn't.
+   *
+   * iOS: `changesSelectionAsPrimaryAction` and `isSelected`, with the
+   * configuration's selected look. Android: a checkable `MaterialButton`
+   * (`isChecked`), with the Material toggle button colors and shape.
+   */
+  selected?: boolean;
+
+  /** Called when a toggle button is pressed, with the state it asks for. */
+  onSelectedChange?: (selected: boolean) => void;
+
+  /**
+   * A menu the button opens when pressed, in place of `onPress`. Same items
+   * as ContextMenu: submenus, sections, icons, states and attributes.
+   *
+   * iOS: `UIButton.menu` with `showsMenuAsPrimaryAction`. Android: a
+   * `PopupMenu` anchored to the button.
+   */
+  menu?: readonly ContextMenuAction[];
+
+  /** Called when a menu item is picked, with its id and title. */
+  onMenuSelect?: (id: string, title: string) => void;
+
+  /** Called when the menu opens. */
+  onMenuOpen?: () => void;
+
+  /** Called when the menu closes. */
+  onMenuClose?: () => void;
+
+  /**
+   * iOS-specific configuration
+   */
+  ios?: {
+    /**
+     * Animates the SF Symbol icon (`UIImageView.addSymbolEffect`, iOS 17+;
+     * `wiggle`, `rotate` and `breathe` need iOS 18). Without
+     * `symbolEffectTrigger` the effect repeats until it is unset. Ignored
+     * for image icons and on Android.
+     */
+    symbolEffect?: ButtonSymbolEffect;
+
+    /**
+     * Plays `symbolEffect` once each time this value changes, instead of
+     * repeating it. The first value doesn't play.
+     */
+    symbolEffectTrigger?: number | string;
+  };
 
   /**
    * Android-specific configuration
@@ -178,6 +252,13 @@ export function Button(props: ButtonProps): React.ReactElement {
     accessibilityLabel,
     haptics,
     onPress,
+    selected,
+    onSelectedChange,
+    menu,
+    onMenuSelect,
+    onMenuOpen,
+    onMenuClose,
+    ios,
     android,
     accessibilityState,
     ...viewProps
@@ -189,10 +270,50 @@ export function Button(props: ButtonProps): React.ReactElement {
     [labelStyle]
   );
 
+  const nativeMenu = useMemo(
+    () => (menu ? flattenMenuActions(menu) : []),
+    [menu]
+  );
+
   const handlePress = useCallback(() => {
     if (loading) return;
     onPress?.();
   }, [onPress, loading]);
+
+  // Controlled toggle, like React Native's Switch: every press re-renders
+  // with a new event count, so native applies `selected` again and a state
+  // the parent didn't take goes back.
+  const [selectedEventCount, setSelectedEventCount] = useState(0);
+  const handleSelectedChange = useCallback(
+    (e: NativeSyntheticEvent<ButtonSelectedChangeEvent>) => {
+      setSelectedEventCount((count) => count + 1);
+      onSelectedChange?.(e.nativeEvent.selected);
+    },
+    [onSelectedChange]
+  );
+
+  const handleMenuSelect = useCallback(
+    (e: NativeSyntheticEvent<ButtonMenuSelectEvent>) => {
+      onMenuSelect?.(e.nativeEvent.id, e.nativeEvent.title);
+    },
+    [onMenuSelect]
+  );
+
+  const handleMenuOpen = useCallback(() => onMenuOpen?.(), [onMenuOpen]);
+  const handleMenuClose = useCallback(() => onMenuClose?.(), [onMenuClose]);
+
+  const nativeIOS = useMemo(
+    () => ({
+      symbolEffect: ios?.symbolEffect ?? '',
+      symbolEffectTrigger:
+        ios?.symbolEffectTrigger === undefined
+          ? ''
+          : String(ios.symbolEffectTrigger),
+    }),
+    [ios?.symbolEffect, ios?.symbolEffectTrigger]
+  );
+
+  const isToggle = selected !== undefined;
 
   const mergedAccessibilityState = useMemo(
     () =>
@@ -221,8 +342,16 @@ export function Button(props: ButtonProps): React.ReactElement {
       labelStyle={nativeLabelStyle}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       spokenLabel={accessibilityLabel ?? ''}
+      selected={isToggle ? (selected ? 'true' : 'false') : ''}
+      selectedEventCount={selectedEventCount}
+      menu={nativeMenu}
+      ios={nativeIOS}
       haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
+      onSelectedChange={isToggle ? handleSelectedChange : undefined}
+      onMenuSelect={onMenuSelect ? handleMenuSelect : undefined}
+      onMenuOpen={onMenuOpen ? handleMenuOpen : undefined}
+      onMenuClose={onMenuClose ? handleMenuClose : undefined}
       accessibilityState={mergedAccessibilityState}
       {...viewProps}
     />

@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, Button, ButtonGroup, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -329,6 +329,47 @@ export function Example() {
 }
 ```
 
+### NavigationRail
+
+```tsx
+import { Button, NavigationRail } from 'react-native-platform-components';
+import { Text, View } from 'react-native';
+
+const destinations = [
+  { label: 'Home', value: 'home', icon: { ios: 'house', android: 'home' } },
+  { label: 'Search', value: 'search', icon: { ios: 'magnifyingglass', android: 'search' } },
+  { label: 'Inbox', value: 'inbox', icon: { ios: 'bell', android: 'notifications' }, badge: 3 },
+];
+
+export function Example() {
+  const [destination, setDestination] = React.useState('home');
+
+  return (
+    // The rail at the start of a row, the screen beside it
+    <View style={{ flex: 1, flexDirection: 'row' }}>
+      <NavigationRail
+        items={destinations}
+        selectedValue={destination}
+        onSelect={setDestination}
+        header={
+          <Button
+            icon={{ ios: 'square.and.pencil', android: 'edit' }}
+            accessibilityLabel="Compose"
+            variant="tonal"
+            size="medium"
+            shape="square"
+            onPress={() => console.log('Compose')}
+          />
+        }
+      />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text>{destination}</Text>
+      </View>
+    </View>
+  );
+}
+```
+
 ---
 
 ### Button
@@ -398,6 +439,52 @@ export function Example() {
         onSelectionChange={setRange}
       />
     </>
+  );
+}
+```
+
+### SplitButton
+
+```tsx
+import { SplitButton } from 'react-native-platform-components';
+
+export function Example() {
+  return (
+    <SplitButton
+      label="Reply"
+      menu={[
+        { id: 'reply-all', title: 'Reply All' },
+        { id: 'forward', title: 'Forward' },
+      ]}
+      menuAccessibilityLabel="Reply options"
+      onPress={() => console.log('reply')}
+      onMenuSelect={(id) => console.log(id)}
+    />
+  );
+}
+```
+
+### FloatingActionButton
+
+```tsx
+import { FloatingActionButton } from 'react-native-platform-components';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export function Example() {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Your content */}
+      <FloatingActionButton
+        icon={{ ios: 'pencil', android: 'edit' }}
+        label="Compose"
+        onPress={() => console.log('Compose')}
+        // The app places the button: bottom end, clear of the safe area
+        style={{ position: 'absolute', right: 16, bottom: insets.bottom + 16 }}
+      />
+    </View>
   );
 }
 ```

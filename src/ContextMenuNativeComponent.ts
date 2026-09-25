@@ -1,61 +1,45 @@
 // ContextMenuNativeComponent.ts
 import type { HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler } from './codegenTypes';
+import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 
 /**
- * Attributes for a context menu action.
+ * One menu item. The JS action tree is flattened (see `menuItems.ts`): each
+ * item points at its parent submenu or section by index, so menus nest to any
+ * depth without a recursive codegen type. Every field is set; empty strings
+ * mean "none" and flags are 'true' | 'false'.
  */
-export type ContextMenuActionAttributes = Readonly<{
-  /** Whether the action is destructive (red styling) */
-  destructive?: string; // 'true' | 'false'
-  /** Whether the action is disabled (grayed out) */
-  disabled?: string; // 'true' | 'false'
-  /** Whether the action is hidden */
-  hidden?: string; // 'true' | 'false'
-}>;
-
-/**
- * A leaf subaction (no further nesting to avoid codegen recursion issues).
- */
-export type ContextMenuSubaction = Readonly<{
+export type ContextMenuItem = Readonly<{
   /** Unique identifier returned in callbacks */
   id: string;
-  /** Display title */
+  /** Display title (a section's header on iOS) */
   title: string;
   /** Secondary text (iOS only) */
-  subtitle?: string;
-  /** Icon name (SF Symbol on iOS, drawable resource on Android) */
-  image?: string;
+  subtitle: string;
+  /** Index of the parent submenu or section; -1 at the top level */
+  parent: Int32;
+  /** 'action' | 'menu' | 'section' */
+  kind: string;
+  /** '' | 'sfSymbol' | 'drawable' | 'image' */
+  iconType: string;
+  /** SF Symbol / asset name (iOS) or drawable resource name (Android) */
+  iconName: string;
+  /** Resolved image URI when iconType === 'image' */
+  iconUri: string;
+  /** Resolved image scale when iconType === 'image' */
+  iconScale: Double;
+  /** 'true' | 'false': draw the image as a tinted template */
+  iconTinted: string;
   /** Tint color for the icon (hex string, e.g., "#FF0000") */
-  imageColor?: string;
-  /** Action attributes */
-  attributes?: ContextMenuActionAttributes;
-  /** Checkmark state: 'off' | 'on' | 'mixed' */
-  state?: string;
-}>;
-
-/**
- * A single action in the context menu.
- * Actions can be nested one level via `subactions` for submenus.
- */
-export type ContextMenuAction = Readonly<{
-  /** Unique identifier returned in callbacks */
-  id: string;
-  /** Display title */
-  title: string;
-  /** Secondary text (iOS only) */
-  subtitle?: string;
-  /** Icon name (SF Symbol on iOS, drawable resource on Android) */
-  image?: string;
-  /** Tint color for the icon (hex string, e.g., "#FF0000") */
-  imageColor?: string;
-  /** Action attributes */
-  attributes?: ContextMenuActionAttributes;
-  /** Checkmark state: 'off' | 'on' | 'mixed' */
-  state?: string;
-  /** Nested actions for submenu (one level deep) */
-  subactions?: ReadonlyArray<ContextMenuSubaction>;
+  imageColor: string;
+  /** 'true' | 'false' */
+  destructive: string;
+  /** 'true' | 'false' */
+  disabled: string;
+  /** 'true' | 'false' (iOS 16+) */
+  keepsMenuPresented: string;
+  /** '' | 'off' | 'on' | 'mixed' */
+  state: string;
 }>;
 
 /**
@@ -102,9 +86,9 @@ export interface ContextMenuProps extends ViewProps {
   title?: string;
 
   /**
-   * Menu actions.
+   * Menu items, flattened (see ContextMenuItem).
    */
-  actions: ReadonlyArray<ContextMenuAction>;
+  actions: ReadonlyArray<ContextMenuItem>;
 
   /**
    * Enabled / disabled state.
@@ -138,6 +122,11 @@ export interface ContextMenuProps extends ViewProps {
    * Fired when menu closes.
    */
   onMenuClose?: BubblingEventHandler<Readonly<{}>>;
+
+  /**
+   * iOS: fired when the user taps the preview (with enablePreview).
+   */
+  onPreviewPress?: BubblingEventHandler<Readonly<{}>>;
 
   ios?: IOSProps;
   android?: AndroidProps;

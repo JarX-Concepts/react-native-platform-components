@@ -10,10 +10,14 @@ export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './SegmentedControl';
 export type * from './TabBar';
+export type * from './FloatingActionButton';
+export type * from './NavigationRail';
 export type * from './Button';
 export type * from './ButtonGroup';
+export type * from './SplitButton';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
+export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
@@ -24,15 +28,23 @@ export * from './labelStyle';
 
 export { Button } from './web/Button';
 export { ButtonGroup } from './web/ButtonGroup';
+export { SplitButton } from './web/SplitButton';
 export { DatePicker } from './web/DatePicker';
+export {
+  DateRangePicker,
+  isDateRangePickerSupported,
+} from './web/DateRangePicker';
 export { SegmentedControl } from './web/SegmentedControl';
 export { TabBar } from './web/TabBar';
+export { FloatingActionButton } from './web/FloatingActionButton';
+export { NavigationRail } from './web/NavigationRail';
 export { SelectionMenu } from './web/SelectionMenu';
 export { TextField } from './web/TextField';
 export {
   ContextMenu,
   FloatingToolbar,
   LiquidGlass,
+  LiquidGlassContainer,
   isLiquidGlassSupported,
 } from './web/containers';
 export { setNativeTheme, useNativeTheme } from './web/NativeTheme';

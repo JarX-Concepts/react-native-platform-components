@@ -1,28 +1,53 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.RippleDrawable
 import android.text.InputType
+import android.text.TextUtils
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
+import android.widget.Filter
+import android.widget.Filterable
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.widget.TextViewCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
 import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
+import com.google.android.material.R as MaterialR
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
+import java.util.Locale
 
 class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollViewHelper.HasStateWrapper {
 
-  data class Option(val label: String, val data: String)
+  data class Option(
+    val label: String,
+    val data: String,
+    val subtitle: String = "",
+    val icon: PCButtonSupport.Icon = PCButtonSupport.NO_ICON
+  ) {
+    /** Has content beyond a label, which needs the rich dropdown rows. */
+    val isRich: Boolean get() = subtitle.isNotEmpty() || icon.isPresent
+  }
 
   companion object {
     private const val TAG = "PCSelectionMenu"
@@ -47,6 +72,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   // Only used to choose inline rendering style.
   var androidMaterial: String? = "system" // "system" | "m3"
+
+  // Embedded M3 only: the field accepts typing and filters the options.
+  var androidSearchable: Boolean = false
 
   /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
   var haptics: String = ""
@@ -317,6 +345,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (anchorMode == "inline") rebuildUI()
   }
 
+  fun applyAndroidSearchable(value: Boolean) {
+    if (androidSearchable == value) return
+    androidSearchable = value
+    if (anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3) rebuildUI()
+  }
+
+  /** The embedded M3 field takes typing to filter the options. */
+  private val isSearchable: Boolean
+    get() = androidSearchable && anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3
+
   // ---- UI building ----
 
   private fun rebuildUI() {
@@ -392,15 +430,32 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
-        // Keep it a real text editor so the popup behaves modally
-        inputType = InputType.TYPE_CLASS_TEXT
+        if (isSearchable) {
+          // Typing filters the options (see OptionAdapter). The text is only a
+          // query: selection still comes from picking an option.
+          inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+          imeOptions = EditorInfo.IME_ACTION_DONE
+          // The first tap selects the label, so typing replaces it
+          setSelectAllOnFocus(true)
+          setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+              clearFocus()
+              true
+            } else {
+              false
+            }
+          }
+        } else {
+          // Keep it a real text editor so the popup behaves modally
+          inputType = InputType.TYPE_CLASS_TEXT
 
-        // Prevent keyboard
-        showSoftInputOnFocus = false
+          // Prevent keyboard
+          showSoftInputOnFocus = false
 
-        // Optional: keep it from being typed into
-        keyListener = null
-        isCursorVisible = false
+          // Optional: keep it from being typed into
+          keyListener = null
+          isCursorVisible = false
+        }
 
         // Highlight the selected option in the dropdown, like the M3 exposed dropdown menu.
         // The adapter from setSimpleItems() marks the item whose text matches the field.
@@ -414,10 +469,15 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
         setOnClickListener { showDropDown() }
 
         setOnItemClickListener { _, _, position, _ ->
-          val opt = options.getOrNull(position) ?: return@setOnItemClickListener
+          // A filtered list's positions differ from the options'
+          val opt = (adapter as? OptionAdapter)?.getItem(position)
+            ?: options.getOrNull(position)
+            ?: return@setOnItemClickListener
+          val index = options.indexOf(opt)
           selectedData = opt.data
-          onSelect?.invoke(position, opt.label, opt.data)
+          onSelect?.invoke(index, opt.label, opt.data)
           detachInlineDropdownOverlay()
+          if (isSearchable) clearFocus()
         }
 
         setOnTouchListener { _, e ->
@@ -429,6 +489,21 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       }
 
       til.addView(actv)
+      if (isSearchable) {
+        // Set after the field joins the layout, whose dropdown icon installs its
+        // own focus listener; that one still runs first.
+        val materialFocusListener = actv.onFocusChangeListener
+        actv.setOnFocusChangeListener { view, hasFocus ->
+          materialFocusListener?.onFocusChange(view, hasFocus)
+          if (hasFocus) return@setOnFocusChangeListener
+          // Leaving the field: the query goes, and the field shows the
+          // selected option again (or the placeholder)
+          actv.dismissDropDown()
+          showSelectedText()
+          val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+          imm?.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+      }
       addView(til)
       inlineLayout = til
     } else {
@@ -553,14 +628,23 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   private fun refreshAdapters() {
     val labels = options.map { it.label }
+    val rich = options.any { it.isRich }
 
     inlineText?.let { actv ->
-      // Material's simple-item adapter highlights the selected option (simpleItemSelectedColor).
-      actv.setSimpleItems(labels.toTypedArray())
+      if (rich || isSearchable) {
+        // Icon + label + subtitle rows, filtered by the typed query
+        actv.setAdapter(OptionAdapter(actv.context, options))
+      } else {
+        // Material's simple-item adapter highlights the selected option (simpleItemSelectedColor).
+        actv.setSimpleItems(labels.toTypedArray())
+      }
     }
 
     inlineSpinner?.let { sp ->
       suppressInlineSpinnerCallbacks(sp)
+      // The platform Spinner keeps its own rows (labels only): its dropdown is
+      // sized to its widest row and anchored at the field's start, so rich
+      // rows would run off the screen's edge.
       val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
       sp.adapter = adapter
@@ -577,15 +661,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private fun refreshSelections() {
     val idx = options.indexOfFirst { it.data == selectedData }
 
-    inlineText?.let { actv ->
-      if (idx >= 0) {
-        // Show selected value
-        actv.setText(options[idx].label, false)
-      } else {
-        // Clear text to show placeholder
-        actv.setText("", false)
-      }
-    }
+    // A searchable field keeps the user's query while it has focus
+    if (!(isSearchable && inlineText?.hasFocus() == true)) showSelectedText()
 
     inlineSpinner?.let { sp ->
       if (options.isEmpty()) return
@@ -602,6 +679,170 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     // Re-measure after selection change so Fabric state reflects new text width
     if (anchorMode == "inline") {
       post { updateFrameSizeState() }
+    }
+  }
+
+  /** The embedded M3 field shows the selected option's label, or empty for the placeholder. */
+  private fun showSelectedText() {
+    val actv = inlineText ?: return
+    val label = options.firstOrNull { it.data == selectedData }?.label ?: ""
+    actv.setText(label, false)
+    // The next open lists every option until the user types again
+    (actv.adapter as? OptionAdapter)?.resetFilter()
+  }
+
+  // ---- Rich dropdown rows ----
+
+  /**
+   * Rows for the M3 exposed dropdown when options have icons or subtitles, or
+   * the field is searchable: a leading icon, the label and a second line,
+   * laid out like a Material list item. The selected row is highlighted like
+   * Material's simple items, and the list filters by the typed query (a
+   * case-insensitive prefix of the label or of any word in it, as
+   * ArrayAdapter does).
+   */
+  private inner class OptionAdapter(
+    private val themed: Context,
+    private val all: List<Option>
+  ) : BaseAdapter(), Filterable {
+    private var shown: List<Option> = all
+    private val showsIcons = all.any { it.icon.isPresent }
+    private val icons = HashMap<Int, Drawable?>()
+    private val density = themed.resources.displayMetrics.density
+
+    init {
+      // Resolve icons up front; ones that load in the background redraw the list
+      all.forEachIndexed { index, option ->
+        if (!option.icon.isPresent) return@forEachIndexed
+        var sync = true
+        PCMenuSupport.loadIcon(themed, option.icon) { drawable ->
+          icons[index] = drawable
+          if (!sync) notifyDataSetChanged()
+        }
+        sync = false
+      }
+    }
+
+    fun resetFilter() {
+      if (shown === all) return
+      shown = all
+      notifyDataSetChanged()
+    }
+
+    override fun getCount(): Int = shown.size
+    override fun getItem(position: Int): Option? = shown.getOrNull(position)
+    override fun getItemId(position: Int): Long = position.toLong()
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+      val option = shown[position]
+      val holder = (convertView?.tag as? RowHolder) ?: RowHolder()
+      val selected = option.data == selectedData && selectedData.isNotEmpty()
+
+      holder.icon.visibility = if (showsIcons) View.VISIBLE else View.GONE
+      holder.icon.setImageDrawable(icons[all.indexOf(option)])
+      holder.label.text = option.label
+      holder.subtitle.text = option.subtitle
+      holder.subtitle.visibility = if (option.subtitle.isEmpty()) View.GONE else View.VISIBLE
+      holder.root.minimumHeight = dp(if (option.subtitle.isEmpty()) 48 else 64)
+      holder.root.background = if (selected) selectedBackground() else itemBackground()
+      holder.root.isSelected = selected
+      return holder.root
+    }
+
+    private fun dp(value: Int): Int = (value * density).toInt()
+
+    private fun selectedBackground(): Drawable {
+      val color = MaterialColors.getColor(themed, MaterialR.attr.colorSecondaryContainer, 0)
+      val ripple = MaterialColors.getColor(themed, MaterialR.attr.colorOnSecondaryContainer, 0)
+      return RippleDrawable(
+        ColorStateList.valueOf(ripple and 0x1FFFFFFF),
+        ColorDrawable(color),
+        null
+      )
+    }
+
+    private fun itemBackground(): Drawable? {
+      val value = TypedValue()
+      if (!themed.theme.resolveAttribute(android.R.attr.selectableItemBackground, value, true)) return null
+      return themed.getDrawable(value.resourceId)
+    }
+
+    private fun textAppearance(attr: Int, fallback: Int): Int {
+      val value = TypedValue()
+      return if (themed.theme.resolveAttribute(attr, value, true) && value.resourceId != 0) {
+        value.resourceId
+      } else {
+        fallback
+      }
+    }
+
+    private inner class RowHolder {
+      val icon = ImageView(themed).apply {
+        layoutParams = LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(16) }
+        scaleType = ImageView.ScaleType.FIT_CENTER
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+      }
+      val label = TextView(themed).apply {
+        TextViewCompat.setTextAppearance(
+          this,
+          textAppearance(MaterialR.attr.textAppearanceBodyLarge, android.R.style.TextAppearance_Material_Subhead)
+        )
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
+      }
+      val subtitle = TextView(themed).apply {
+        TextViewCompat.setTextAppearance(
+          this,
+          textAppearance(MaterialR.attr.textAppearanceBodyMedium, android.R.style.TextAppearance_Material_Body1)
+        )
+        MaterialColors.getColor(themed, MaterialR.attr.colorOnSurfaceVariant, 0)
+          .takeIf { it != 0 }
+          ?.let { setTextColor(it) }
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
+      }
+      val root = LinearLayout(themed).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPaddingRelative(dp(16), dp(8), dp(16), dp(8))
+        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        addView(icon)
+        addView(
+          LinearLayout(themed).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            addView(label)
+            addView(subtitle)
+          }
+        )
+        tag = this@RowHolder
+      }
+    }
+
+    override fun getFilter(): Filter = object : Filter() {
+      override fun performFiltering(constraint: CharSequence?): FilterResults {
+        val query = constraint?.toString()?.trim()?.lowercase(Locale.getDefault()).orEmpty()
+        val matches = if (!isSearchable || query.isEmpty()) all else all.filter { matches(it.label, query) }
+        return FilterResults().apply {
+          values = matches
+          count = matches.size
+        }
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+        shown = (results?.values as? List<Option>) ?: all
+        if (shown.isNotEmpty()) notifyDataSetChanged() else notifyDataSetInvalidated()
+      }
+
+      override fun convertResultToString(resultValue: Any?): CharSequence =
+        (resultValue as? Option)?.label ?: ""
+    }
+
+    /** ArrayAdapter's rule: the label, or one of its words, starts with the query. */
+    private fun matches(label: String, query: String): Boolean {
+      val lower = label.lowercase(Locale.getDefault())
+      return lower.startsWith(query) || lower.split(' ').any { it.startsWith(query) }
     }
   }
 
@@ -642,6 +883,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
           if (event.action == android.view.MotionEvent.ACTION_DOWN) {
             inlineText?.dismissDropDown()
             detachInlineDropdownOverlay()
+            // A tap outside also leaves a searchable field
+            if (isSearchable) inlineText?.clearFocus()
           }
           true
         }
@@ -719,10 +962,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     menu.clear()
     val selectedIdx = options.indexOfFirst { it.data == selectedData }
     options.forEachIndexed { index, opt ->
-      menu.add(HEADLESS_GROUP_ID, index, index, opt.label).isChecked = index == selectedIdx
+      val item = menu.add(HEADLESS_GROUP_ID, index, index, opt.label)
+      item.isChecked = index == selectedIdx
+      // PopupMenu rows have one line, so only the icon is shown (no subtitle)
+      if (opt.icon.isPresent) {
+        PCMenuSupport.loadIcon(context, opt.icon) { drawable ->
+          if (drawable != null && headlessMenu === popup) item.icon = drawable
+        }
+      }
     }
     // Single-choice group: the menu draws a native radio indicator on each row.
     menu.setGroupCheckable(HEADLESS_GROUP_ID, true, true)
+    popup.setForceShowIcon(options.any { it.icon.isPresent })
   }
 
   private fun suppressInlineSpinnerCallbacks(sp: Spinner) {

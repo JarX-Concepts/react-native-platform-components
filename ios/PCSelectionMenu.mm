@@ -31,8 +31,18 @@ static inline bool OptionsEqual(
   for (size_t i = 0; i < a.size(); i++) {
     if (a[i].label != b[i].label) return false;
     if (a[i].data != b[i].data) return false;
+    if (a[i].subtitle != b[i].subtitle) return false;
+    if (a[i].iconType != b[i].iconType) return false;
+    if (a[i].iconName != b[i].iconName) return false;
+    if (a[i].iconUri != b[i].iconUri) return false;
+    if (a[i].iconScale != b[i].iconScale) return false;
+    if (a[i].iconTinted != b[i].iconTinted) return false;
   }
   return true;
+}
+
+static inline NSString *ToNSString(const std::string &value) {
+  return value.empty() ? @"" : [NSString stringWithUTF8String:value.c_str()];
 }
 } // namespace
 
@@ -112,17 +122,20 @@ static inline bool OptionsEqual(
   const auto prevProps =
       std::static_pointer_cast<const PCSelectionMenuProps>(oldProps);
 
-  // options: [{label,data}]
+  // options: [{label, data, subtitle, icon fields}]
   if (!prevProps || !OptionsEqual(newProps.options, prevProps->options)) {
     NSMutableArray *arr = [NSMutableArray new];
     for (const auto &opt : newProps.options) {
-      NSString *label = opt.label.empty()
-                            ? @""
-                            : [NSString stringWithUTF8String:opt.label.c_str()];
-      NSString *data = opt.data.empty()
-                           ? @""
-                           : [NSString stringWithUTF8String:opt.data.c_str()];
-      [arr addObject:@{@"label" : label, @"data" : data}];
+      [arr addObject:@{
+        @"label" : ToNSString(opt.label),
+        @"data" : ToNSString(opt.data),
+        @"subtitle" : ToNSString(opt.subtitle),
+        @"iconType" : ToNSString(opt.iconType),
+        @"iconName" : ToNSString(opt.iconName),
+        @"iconUri" : ToNSString(opt.iconUri),
+        @"iconScale" : @(opt.iconScale),
+        @"iconTinted" : ToNSString(opt.iconTinted),
+      }];
     }
     _view.options = arr;
   }

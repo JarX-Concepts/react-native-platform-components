@@ -4,12 +4,14 @@ import { View } from 'react-native';
 
 import type { SelectionMenuProps } from '../SelectionMenu';
 import { Dialog } from './Dialog';
+import { Icon } from './Icon';
 import { eventValue, usePrimaryColor } from './shared';
 
 /**
- * `embedded` renders a `<select>`. `modal` stays headless like on native: while
- * `visible`, it opens the options in a `<dialog>`; picking one calls
- * `onSelect`, and Escape or a click outside calls `onRequestClose`.
+ * `embedded` renders a `<select>` (labels only). `modal` stays headless like on
+ * native: while `visible`, it opens the options in a `<dialog>`, with their
+ * image icons and subtitles; picking one calls `onSelect`, and Escape or a
+ * click outside calls `onRequestClose`. `android.searchable` is ignored.
  */
 export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
@@ -96,6 +98,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    gap: 12,
                     minHeight: 44,
                     padding: '0 12px',
                     border: 'none',
@@ -109,7 +112,18 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
                     cursor: 'pointer',
                   }}
                 >
-                  {option.label}
+                  <Icon
+                    icon={option.icon}
+                    color={isSelected ? primary : 'CanvasText'}
+                  />
+                  <span style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>{option.label}</span>
+                    {option.subtitle ? (
+                      <span style={{ fontSize: 13, opacity: 0.7 }}>
+                        {option.subtitle}
+                      </span>
+                    ) : null}
+                  </span>
                 </button>
               );
             })}

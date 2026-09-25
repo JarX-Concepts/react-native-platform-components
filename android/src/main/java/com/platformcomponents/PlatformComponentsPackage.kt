@@ -20,8 +20,11 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCButtonGroupViewManager(),
           PCFloatingToolbarViewManager(),
           PCLiquidGlassViewManager(),
+          PCLiquidGlassContainerViewManager(),
           PCTextFieldViewManager(),
           PCTabBarViewManager(),
+          PCNavigationRailViewManager(),
+          PCFloatingActionButtonViewManager(),
       )
   }
 

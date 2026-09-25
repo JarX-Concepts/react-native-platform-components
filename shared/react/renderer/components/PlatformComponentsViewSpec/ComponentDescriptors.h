@@ -12,3 +12,5 @@
 #include "PCButtonGroupComponentDescriptors-custom.h"
 #include "PCTextFieldComponentDescriptors-custom.h"
 #include "PCTabBarComponentDescriptors-custom.h"
+#include "PCNavigationRailComponentDescriptors-custom.h"
+#include "PCFloatingActionButtonComponentDescriptors-custom.h"

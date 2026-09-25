@@ -19,11 +19,12 @@ object PCExpressive {
 
   /**
    * The Liquid Glass variants are iOS 26 styles; Android takes the closest
-   * Material emphasis: `glass` is tonal, `prominentGlass` is filled.
+   * Material emphasis: `glass` and `clearGlass` are tonal, `prominentGlass`
+   * and `prominentClearGlass` are filled.
    */
   fun parseVariant(value: String?): Variant =
     when (value) {
-      "tonal", "glass" -> Variant.TONAL
+      "tonal", "glass", "clearGlass" -> Variant.TONAL
       "outlined" -> Variant.OUTLINED
       "text" -> Variant.TEXT
       "elevated" -> Variant.ELEVATED

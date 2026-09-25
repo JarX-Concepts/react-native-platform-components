@@ -1,7 +1,9 @@
 package com.platformcomponents
 
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.StateWrapper
@@ -9,7 +11,6 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.events.Event
-import com.facebook.react.uimanager.events.RCTEventEmitter
 import com.facebook.react.viewmanagers.PCButtonManagerDelegate
 import com.facebook.react.viewmanagers.PCButtonManagerInterface
 import com.platformcomponents.PCButtonSupport.doubleOr
@@ -49,11 +50,29 @@ class PCButtonViewManager :
 
   override fun addEventEmitters(reactContext: ThemedReactContext, view: PCButtonView) {
     val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, view.id)
+    fun dispatch(name: String, fill: WritableMap.() -> Unit = {}) {
+      dispatcher?.dispatchEvent(ButtonEvent(UIManagerHelper.getSurfaceId(view), view.id, name, fill))
+    }
 
     view.onPress = {
       PCHaptics.perform(view, view.haptics)
-      dispatcher?.dispatchEvent(PressEvent(view.id))
+      dispatch("topButtonPress")
     }
+    view.onSelectedChange = { selected -> dispatch("topSelectedChange") { putBoolean("selected", selected) } }
+    view.onMenuSelect = { id, title ->
+      dispatch("topMenuSelect") {
+        putString("id", id)
+        putString("title", title)
+      }
+    }
+    view.onMenuOpen = { dispatch("topMenuOpen") }
+    view.onMenuClose = { dispatch("topMenuClose") }
+  }
+
+  /** The checked state follows `selected` once every prop of an update is in. */
+  override fun onAfterUpdateTransaction(view: PCButtonView) {
+    super.onAfterUpdateTransaction(view)
+    view.syncChecked()
   }
 
   override fun setLabel(view: PCButtonView, value: String?) {
@@ -150,11 +169,36 @@ class PCButtonViewManager :
     view.applyMaterial(value)
   }
 
+  // "" (not a toggle) | "true" | "false"
+  override fun setSelected(view: PCButtonView, value: String?) {
+    view.applySelected(value ?: "")
+  }
+
+  // Bumped by JS after every onSelectedChange; the update it causes runs
+  // onAfterUpdateTransaction, which shows `selected` again
+  override fun setSelectedEventCount(view: PCButtonView, value: Int) {}
+
+  // menu: the flattened menu items
+  override fun setMenu(view: PCButtonView, value: ReadableArray?) {
+    view.applyMenu(PCMenuSupport.parseItems(value))
+  }
+
+  // ios: symbol effects, iOS only
+  override fun setIos(view: PCButtonView, value: ReadableMap?) {}
+
   // --- Events ---
-  private class PressEvent(surfaceId: Int) : Event<PressEvent>(surfaceId) {
-    override fun getEventName(): String = "topButtonPress"
-    override fun dispatch(rctEventEmitter: RCTEventEmitter) {
-      rctEventEmitter.receiveEvent(viewTag, eventName, Arguments.createMap())
-    }
+  private class ButtonEvent(
+    surfaceId: Int,
+    viewTag: Int,
+    private val name: String,
+    private val fill: WritableMap.() -> Unit
+  ) : Event<ButtonEvent>(surfaceId, viewTag) {
+    // Every press counts; two quick presses must not merge into one
+    override fun canCoalesce(): Boolean = false
+
+    override fun getEventName(): String = name
+
+    // Fabric reads the payload from here
+    override fun getEventData(): WritableMap = Arguments.createMap().apply(fill)
   }
 }

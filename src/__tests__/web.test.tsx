@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { TextInput } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import renderer, {
   act,
   type ReactTestInstance,
@@ -13,6 +13,11 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  DateRangePicker,
+  FloatingActionButton,
+  LiquidGlass,
+  LiquidGlassContainer,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -110,6 +115,51 @@ describe('Button (web)', () => {
     expect(style.borderRadius).toBe(6);
   });
 
+  it('stacks the icon for top and bottom placement', () => {
+    const tree = render(<Button label="Share" iconPosition="top" />);
+    let style = tree.root.findByType('button').props.style;
+    expect(style.flexDirection).toBe('column');
+    expect(style.height).toBeUndefined();
+    act(() => tree.update(<Button label="Share" iconPosition="bottom" />));
+    style = tree.root.findByType('button').props.style;
+    expect(style.flexDirection).toBe('column-reverse');
+  });
+
+  it('is a toggle with aria-pressed', () => {
+    const onSelectedChange = jest.fn();
+    const tree = render(
+      <Button
+        label="Bold"
+        selected={false}
+        onSelectedChange={onSelectedChange}
+      />
+    );
+    const button = tree.root.findByType('button');
+    expect(button.props['aria-pressed']).toBe(false);
+    click(button);
+    expect(onSelectedChange).toHaveBeenCalledWith(true);
+
+    act(() => tree.update(<Button label="Bold" selected />));
+    expect(tree.root.findByType('button').props['aria-pressed']).toBe(true);
+  });
+
+  it('warns once about a menu and calls onPress', () => {
+    resetWarnings();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        label="Sort"
+        menu={[{ id: 'name', title: 'Name' }]}
+        onPress={onPress}
+      />
+    );
+    click(tree.root.findByType('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
   it('uses the theme color for filled buttons', () => {
     function App() {
       useNativeTheme({ colors: { primary: '#123456' } });
@@ -162,6 +212,61 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('FloatingActionButton (web)', () => {
+  it('renders a <button> with the label while extended', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <FloatingActionButton icon="pencil" label="Compose" onPress={onPress} />
+    );
+    const button = tree.root.findByType('button');
+    expect(button.props['aria-label']).toBe('Compose');
+    expect(button.props.children).toContain('Compose');
+    click(button);
+    expect(onPress).toHaveBeenCalledTimes(1);
+
+    act(() =>
+      tree.update(
+        <FloatingActionButton icon="pencil" label="Compose" extended={false} />
+      )
+    );
+    expect(tree.root.findByType('button').props.children).not.toContain(
+      'Compose'
+    );
+  });
+});
+
+describe('NavigationRail (web)', () => {
+  it('selects and reselects destinations, with the header above', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <NavigationRail
+        header={<button type="button">Compose</button>}
+        items={[
+          { label: 'Home', value: 'home', testID: 'rail-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+        labelVisibility="selected"
+      />
+    );
+    const [compose, home, inbox] = tree.root.findAllByType('button');
+    expect(compose!.props.children).toBe('Compose');
+    expect(home!.props.role).toBe('tab');
+    expect(home!.props['aria-selected']).toBe(true);
+    expect(home!.props['data-testid']).toBe('rail-home');
+    // Only the selected destination is labeled
+    expect(inbox!.props.children).toContain(null);
+
+    click(inbox!);
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    click(home!);
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
   });
 });
 
@@ -306,6 +411,43 @@ describe('DatePicker (web)', () => {
     expect(onClosed).toHaveBeenCalledTimes(2);
   });
 
+  it('yearAndMonth: a month input that gives the first of the month', () => {
+    expect(inputTypeForMode('yearAndMonth')).toBe('month');
+    expect(formatInputValue(date, 'month')).toBe('2026-09');
+    expect(parseInputValue('2027-02', 'month', date)).toEqual(
+      new Date(2027, 1, 1, 14, 30)
+    );
+    expect(parseInputValue('2027-02-01', 'month', date)).toBeNull();
+  });
+
+  it('DateRangePicker: start and end inputs, Done reports the range', () => {
+    const onConfirm = jest.fn();
+    const onClosed = jest.fn();
+    const tree = render(
+      <DateRangePicker
+        visible
+        startDate={new Date(2026, 8, 24, 9, 0)}
+        endDate={null}
+        onConfirm={onConfirm}
+        onClosed={onClosed}
+      />
+    );
+    const [startInput, endInput] = tree.root.findAllByType('input');
+    expect(startInput!.props.value).toBe('2026-09-24');
+    expect(endInput!.props.min).toBe('2026-09-24');
+    const done = () => tree.root.findAllByType('button')[1]!;
+    // No end yet
+    expect(done().props.disabled).toBe(true);
+
+    act(() => endInput!.props.onChange({ target: { value: '2026-09-28' } }));
+    click(done());
+    expect(onConfirm).toHaveBeenCalledWith({
+      startDate: new Date(2026, 8, 24),
+      endDate: new Date(2026, 8, 28),
+    });
+    expect(onClosed).toHaveBeenCalledTimes(1);
+  });
+
   it('countDownTimer: reports the time input as durationSeconds', () => {
     const onConfirm = jest.fn();
     const tree = render(
@@ -432,6 +574,41 @@ describe('TextField (web)', () => {
     expect(onChangeText).toHaveBeenCalledWith('');
   });
 
+  it('maps submitBehavior onto the web TextInput', () => {
+    const onSubmitEditing = jest.fn();
+    let tree = render(<TextField onSubmitEditing={onSubmitEditing} />);
+    let input = tree.root.findByType(TextInput);
+    expect(input.props.submitBehavior).toBe('blurAndSubmit');
+    expect(input.props.blurOnSubmit).toBe(true);
+
+    tree = render(<TextField submitBehavior="submit" />);
+    expect(tree.root.findByType(TextInput).props.blurOnSubmit).toBe(false);
+
+    // A multi-line field that submits on Enter keeps Shift+Enter for newlines
+    tree = render(
+      <TextField
+        multiline
+        value="hi"
+        submitBehavior="submit"
+        onSubmitEditing={onSubmitEditing}
+      />
+    );
+    input = tree.root.findByType(TextInput);
+    const preventDefault = jest.fn();
+    act(() =>
+      input.props.onKeyPress({
+        nativeEvent: { key: 'Enter', shiftKey: true },
+        preventDefault,
+      })
+    );
+    expect(onSubmitEditing).not.toHaveBeenCalled();
+    act(() =>
+      input.props.onKeyPress({ nativeEvent: { key: 'Enter' }, preventDefault })
+    );
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(onSubmitEditing.mock.calls[0][0].nativeEvent.text).toBe('hi');
+  });
+
   it('toggles password visibility', () => {
     const tree = render(<TextField secureTextEntry passwordToggle />);
     expect(tree.root.findByType(TextInput).props.secureTextEntry).toBe(true);
@@ -458,5 +635,45 @@ describe('ContextMenu (web)', () => {
     expect(tree.root.findByType('button').props['aria-label']).toBe('Inside');
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+describe('LiquidGlass (web)', () => {
+  const host = (tree: ReactTestRenderer, testID: string) =>
+    tree.root.find(
+      (node) => typeof node.type === 'string' && node.props.testID === testID
+    );
+  const radiusOf = (tree: ReactTestRenderer) =>
+    StyleSheet.flatten(host(tree, 'glass').props.style)?.borderRadius;
+
+  it('rounds a capsule fully and uses the radius otherwise', () => {
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle="capsule" />))
+    ).toBe(9999);
+    expect(
+      radiusOf(
+        render(
+          <LiquidGlass
+            testID="glass"
+            cornerStyle="concentric"
+            cornerRadius={8}
+          />
+        )
+      )
+    ).toBe(8);
+    expect(
+      radiusOf(render(<LiquidGlass testID="glass" cornerStyle={20} />))
+    ).toBe(20);
+  });
+
+  it('renders the container as a plain view around its children', () => {
+    const tree = render(
+      <LiquidGlassContainer spacing={16} testID="group">
+        <LiquidGlass testID="glass" />
+      </LiquidGlassContainer>
+    );
+    const group = host(tree, 'group');
+    expect(group.props.spacing).toBeUndefined();
+    expect(host(tree, 'glass')).toBeDefined();
   });
 });

@@ -54,6 +54,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    overflow,
     onPress,
     onSelectionChange,
     android,
@@ -71,6 +72,8 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
   const radius = shape === 'square' ? 12 : metrics.height / 2;
   const innerRadius = 8;
   const gap = spacing ?? (connected ? 2 : 8);
+  // Browsers have no overflow menu; 'wrap' wraps the row
+  const wrap = (overflow ?? android?.overflow) === 'wrap';
 
   const handlePress = (value: string, index: number) => {
     onPress?.(value, index);
@@ -92,7 +95,15 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     <View
       {...viewProps}
       role={selection === 'single' ? 'radiogroup' : 'group'}
-      style={[{ flexDirection: 'row', gap, alignSelf: 'flex-start' }, style]}
+      style={[
+        {
+          flexDirection: 'row',
+          flexWrap: wrap ? 'wrap' : 'nowrap',
+          gap,
+          alignSelf: 'flex-start',
+        },
+        style,
+      ]}
     >
       {buttons.map((button, index) => {
         const isSelected = selectable && selected.includes(button.value);

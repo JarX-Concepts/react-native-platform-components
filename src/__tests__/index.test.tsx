@@ -1,6 +1,14 @@
 import renderer, { act } from 'react-test-renderer';
 
-import { DatePicker, LiquidGlass, SelectionMenu } from '../index';
+import { Platform } from 'react-native';
+
+import {
+  DatePicker,
+  DateRangePicker,
+  LiquidGlass,
+  SelectionMenu,
+  isDateRangePickerSupported,
+} from '../index';
 
 jest.mock('../DatePickerNativeComponent', () => {
   const React = require('react');
@@ -96,6 +104,36 @@ describe('DatePicker', () => {
     });
   });
 
+  it('maps is24Hour, the Android input mode and yearAndMonth', () => {
+    let tree: ReturnType<typeof renderer.create>;
+    act(() => {
+      tree = renderer.create(
+        <DatePicker
+          date={null}
+          mode="yearAndMonth"
+          is24Hour
+          android={{ material: 'm3', inputMode: 'text' }}
+        />
+      );
+    });
+    let props = NativeDatePicker.mock.calls.at(-1)[0];
+    expect(props.mode).toBe('yearAndMonth');
+    expect(props.hourFormat).toBe('24');
+    expect(props.android.inputMode).toBe('text');
+
+    act(() => tree.update(<DatePicker date={null} is24Hour={false} />));
+    props = NativeDatePicker.mock.calls.at(-1)[0];
+    expect(props.hourFormat).toBe('12');
+
+    act(() => tree.update(<DatePicker date={null} />));
+    props = NativeDatePicker.mock.calls.at(-1)[0];
+    // The device setting
+    expect(props.hourFormat).toBe('');
+    act(() => {
+      tree.unmount();
+    });
+  });
+
   it('omits visible and onClosed when not modal', () => {
     const onClosed = jest.fn();
     let tree: ReturnType<typeof renderer.create>;
@@ -114,6 +152,90 @@ describe('DatePicker', () => {
     expect(props.presentation).toBe('embedded');
     expect(props.visible).toBeUndefined();
     expect(props.onClosed).toBeUndefined();
+    act(() => {
+      tree.unmount();
+    });
+  });
+});
+
+describe('DateRangePicker', () => {
+  const originalOS = Platform.OS;
+
+  beforeEach(() => {
+    NativeDatePicker.mockClear();
+  });
+
+  afterEach(() => {
+    Platform.OS = originalOS;
+  });
+
+  it('renders nothing on iOS and warns once it is shown', () => {
+    // The Jest preset runs as iOS, where the module decided at load time
+    expect(isDateRangePickerSupported).toBe(false);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    let tree: ReturnType<typeof renderer.create>;
+    act(() => {
+      tree = renderer.create(<DateRangePicker visible={false} />);
+    });
+    expect(tree!.toJSON()).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+
+    act(() => tree.update(<DateRangePicker visible />));
+    expect(NativeDatePicker).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toContain('isDateRangePickerSupported');
+    warn.mockRestore();
+    act(() => {
+      tree.unmount();
+    });
+  });
+
+  it('drives the native picker in dateRange mode on Android', () => {
+    Platform.OS = 'android';
+    const start = new Date(2026, 8, 24);
+    const end = new Date(2026, 8, 28);
+    const onConfirm = jest.fn();
+    const onClosed = jest.fn();
+    let tree: ReturnType<typeof renderer.create>;
+    act(() => {
+      tree = renderer.create(
+        <DateRangePicker
+          visible
+          startDate={start}
+          endDate={end}
+          minDate={null}
+          onConfirm={onConfirm}
+          onClosed={onClosed}
+          android={{ inputMode: 'text', positiveButtonTitle: 'Save' }}
+        />
+      );
+    });
+    const props = NativeDatePicker.mock.calls.at(-1)[0];
+    expect(props.mode).toBe('dateRange');
+    expect(props.presentation).toBe('modal');
+    expect(props.visible).toBe('open');
+    expect(props.dateMs).toBe(start.getTime());
+    expect(props.endDateMs).toBe(end.getTime());
+    expect(props.minDateMs).toBe(Number.MIN_SAFE_INTEGER);
+    expect(props.android).toMatchObject({
+      material: 'm3',
+      inputMode: 'text',
+      positiveButtonTitle: 'Save',
+    });
+
+    act(() => {
+      props.onConfirm({
+        nativeEvent: {
+          timestampMs: start.getTime(),
+          endTimestampMs: end.getTime(),
+          confirmed: true,
+          durationSeconds: 0,
+        },
+      });
+      props.onClosed({ nativeEvent: {} });
+    });
+    expect(onConfirm).toHaveBeenCalledWith({ startDate: start, endDate: end });
+    expect(onClosed).toHaveBeenCalledTimes(1);
     act(() => {
       tree.unmount();
     });
@@ -166,7 +288,7 @@ describe('SelectionMenu', () => {
     const props = NativeSelectionMenu.mock.calls[0][0];
     expect(props.anchorMode).toBe('headless');
     expect(props.visible).toBe('open');
-    expect(props.android).toEqual({ material: 'm3' });
+    expect(props.android).toEqual({ material: 'm3', searchable: 'false' });
     act(() => {
       tree.unmount();
     });

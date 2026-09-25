@@ -13,7 +13,10 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  FloatingActionButton,
   LiquidGlass,
+  LiquidGlassContainer,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -155,6 +158,38 @@ describe('TextField (mock)', () => {
     press(byTestID(tree, 'due'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it('passes submitBehavior and selection, and presses toolbar buttons', () => {
+    const onItemPress = jest.fn();
+    const onBlur = jest.fn();
+    const onSelectionChange = jest.fn();
+    const tree = render(
+      <TextField
+        testID="qty"
+        multiline
+        submitBehavior="submit"
+        selection={{ start: 1 }}
+        onSelectionChange={onSelectionChange}
+        onBlur={onBlur}
+        ios={{
+          keyboardToolbar: {
+            items: ['flexibleSpace', { id: 'plus', icon: 'plus' }],
+            done: true,
+            onItemPress,
+          },
+        }}
+      />
+    );
+    const input = tree.root.findByType(TextInput);
+    expect(input.props.submitBehavior).toBe('submit');
+    expect(input.props.selection).toEqual({ start: 1, end: 1 });
+    expect(input.props.onSelectionChange).toBe(onSelectionChange);
+
+    press(byTestID(tree, 'qty-toolbar-plus'));
+    expect(onItemPress).toHaveBeenCalledWith('plus');
+    press(byTestID(tree, 'qty-toolbar-done'));
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Button (mock)', () => {
@@ -181,6 +216,109 @@ describe('Button (mock)', () => {
     const tree = render(<Button testID="save" label="Save" loading />);
     const button = byTestID(tree, 'save');
     expect(button.props.accessibilityState).toMatchObject({ busy: true });
+  });
+
+  it('is a toggle button with selected', () => {
+    const onSelectedChange = jest.fn();
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        testID="bold"
+        label="Bold"
+        selected={false}
+        onSelectedChange={onSelectedChange}
+        onPress={onPress}
+      />
+    );
+    const button = byTestID(tree, 'bold');
+    expect(button.props.accessibilityRole).toBe('togglebutton');
+    expect(button.props.accessibilityState).toMatchObject({ checked: false });
+
+    press(button);
+    expect(onSelectedChange).toHaveBeenCalledWith(true);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes menu events through fireEvent, not presses', () => {
+    const onPress = jest.fn();
+    const onMenuSelect = jest.fn();
+    const tree = render(
+      <Button
+        testID="sort"
+        label="Sort"
+        menu={[{ id: 'name', title: 'Name' }]}
+        onPress={onPress}
+        onMenuSelect={onMenuSelect}
+      />
+    );
+    const button = byTestID(tree, 'sort');
+    press(button);
+    expect(onPress).not.toHaveBeenCalled();
+
+    fire(button, 'menuSelect', 'name', 'Name');
+    expect(onMenuSelect).toHaveBeenCalledWith('name', 'Name');
+  });
+});
+
+describe('FloatingActionButton (mock)', () => {
+  it('is a pressable labeled by its label', () => {
+    const onPress = jest.fn();
+    const tree = render(
+      <FloatingActionButton
+        testID="compose"
+        icon="pencil"
+        label="Compose"
+        onPress={onPress}
+      />
+    );
+    const fab = byTestID(tree, 'compose');
+    expect(fab.props.accessibilityRole).toBe('button');
+    expect(fab.props.accessibilityLabel).toBe('Compose');
+    expect(texts(tree)).toEqual(['Compose']);
+
+    press(fab);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the label when shrunk and respects disabled', () => {
+    const tree = render(
+      <FloatingActionButton
+        testID="compose"
+        icon="pencil"
+        label="Compose"
+        extended={false}
+        disabled
+      />
+    );
+    expect(texts(tree)).toEqual([]);
+    expect(byTestID(tree, 'compose').props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
+  });
+});
+
+describe('NavigationRail (mock)', () => {
+  it('renders the header and selects destinations', () => {
+    const onSelect = jest.fn();
+    const onReselect = jest.fn();
+    const tree = render(
+      <NavigationRail
+        testID="rail"
+        header={<Text>Compose</Text>}
+        items={[
+          { label: 'Home', value: 'home', testID: 'rail-home' },
+          { label: 'Inbox', value: 'inbox', badge: 2 },
+        ]}
+        selectedValue="home"
+        onSelect={onSelect}
+        onReselect={onReselect}
+      />
+    );
+    expect(texts(tree)).toEqual(['Compose', 'Home', 'Inbox', '2']);
+    press(byTestID(tree, 'rail-inbox'));
+    expect(onSelect).toHaveBeenCalledWith('inbox', 1);
+    press(byTestID(tree, 'rail-home'));
+    expect(onReselect).toHaveBeenCalledWith('home', 0);
   });
 });
 
@@ -329,14 +467,31 @@ describe('menus, pickers and containers (mock)', () => {
     expect(onPressAction).toHaveBeenCalledWith('delete', 'Delete');
   });
 
+  it('DateRangePicker renders a view that takes onConfirm', () => {
+    expect(Mock.isDateRangePickerSupported).toBe(true);
+    const onConfirm = jest.fn();
+    const tree = render(
+      <Mock.DateRangePicker testID="range" visible onConfirm={onConfirm} />
+    );
+    const range = {
+      startDate: new Date(2026, 8, 24),
+      endDate: new Date(2026, 8, 28),
+    };
+    fire(byTestID(tree, 'range'), 'confirm', range);
+    expect(onConfirm).toHaveBeenCalledWith(range);
+  });
+
   it('DatePicker and LiquidGlass render views', () => {
     const onConfirm = jest.fn();
     const onPress = jest.fn();
     const tree = render(
-      <LiquidGlass testID="glass" onPress={onPress}>
-        <DatePicker testID="date" date={null} onConfirm={onConfirm} />
-      </LiquidGlass>
+      <LiquidGlassContainer testID="group" spacing={20}>
+        <LiquidGlass testID="glass" cornerStyle="capsule" onPress={onPress}>
+          <DatePicker testID="date" date={null} onConfirm={onConfirm} />
+        </LiquidGlass>
+      </LiquidGlassContainer>
     );
+    expect(byTestID(tree, 'group').props.spacing).toBeUndefined();
     press(byTestID(tree, 'glass'));
     expect(onPress).toHaveBeenCalledWith({ x: 0, y: 0 });
     const date = new Date(2026, 8, 23);

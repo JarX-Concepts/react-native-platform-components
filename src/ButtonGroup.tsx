@@ -22,7 +22,14 @@ import type { AndroidMaterialStyle } from './sharedTypes';
  */
 export type ButtonGroupSelection = 'none' | 'single' | 'multiple';
 
-/** What happens to buttons that don't fit the group's width (Android). */
+/**
+ * What happens to buttons that don't fit the group's width.
+ *
+ * - `none` (default): they are clipped.
+ * - `menu`: the trailing ones move into an overflow menu. Android: the
+ *   `MaterialButtonGroup` overflow menu. iOS: a "…" button with a `UIMenu`.
+ * - `wrap`: they wrap onto more rows (Android only; iOS clips them).
+ */
 export type ButtonGroupOverflow = 'none' | 'menu' | 'wrap';
 
 export interface ButtonGroupButtonProps {
@@ -93,6 +100,13 @@ export interface ButtonGroupProps extends ViewProps {
   labelStyle?: LabelStyle;
 
   /**
+   * What happens to buttons that don't fit the group's width. Default:
+   * `'none'`. See {@link ButtonGroupOverflow}. A pick from the overflow menu
+   * counts as a press of its button (`onPress`, and the selection).
+   */
+  overflow?: ButtonGroupOverflow;
+
+  /**
    * Haptic played when a button is pressed, in every selection mode.
    * Default: none, like the native buttons. See {@link Haptics}.
    */
@@ -115,11 +129,7 @@ export interface ButtonGroupProps extends ViewProps {
    * Android-specific configuration
    */
   android?: {
-    /**
-     * What happens to buttons that don't fit: `'none'` (clipped), `'menu'`
-     * (moved into an overflow menu) or `'wrap'` (wrapped onto more rows).
-     * Default: `'none'`.
-     */
+    /** @deprecated Use the cross-platform `overflow` prop. */
     overflow?: ButtonGroupOverflow;
 
     /** Ripple color shown while pressing a button. */
@@ -155,6 +165,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     color,
     tintColor,
     labelStyle,
+    overflow,
     haptics,
     onPress,
     onSelectionChange,
@@ -202,11 +213,8 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
   );
 
   const nativeAndroid = useMemo(
-    () => ({
-      overflow: android?.overflow ?? 'none',
-      material: android?.material ?? 'expressive',
-    }),
-    [android]
+    () => ({ material: android?.material ?? 'expressive' }),
+    [android?.material]
   );
 
   const isConnected = connected ?? selectionMode !== 'none';
@@ -230,6 +238,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
       androidRippleColor={android?.rippleColor}
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
+      overflow={overflow ?? android?.overflow ?? 'none'}
       haptics={haptics ?? ''}
       onButtonPress={onPress ? handlePress : undefined}
       onGroupSelectionChange={

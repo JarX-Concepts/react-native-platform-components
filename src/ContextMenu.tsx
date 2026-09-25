@@ -3,45 +3,15 @@ import React, { useCallback, useMemo } from 'react';
 import { type ViewProps } from 'react-native';
 
 import NativeContextMenu, {
-  type ContextMenuAction as NativeAction,
-  type ContextMenuSubaction as NativeSubaction,
   type ContextMenuPressActionEvent,
 } from './ContextMenuNativeComponent';
+import { flattenMenuActions, type ContextMenuAction } from './menuItems';
 import type { Haptics } from './haptics';
 
-/**
- * Attributes for a context menu action.
- */
-export interface ContextMenuActionAttributes {
-  /** Whether the action is destructive (red styling) */
-  destructive?: boolean;
-  /** Whether the action is disabled (grayed out) */
-  disabled?: boolean;
-  /** Whether the action is hidden */
-  hidden?: boolean;
-}
-
-/**
- * A single action in the context menu.
- */
-export interface ContextMenuAction {
-  /** Unique identifier returned in callbacks */
-  id: string;
-  /** Display title */
-  title: string;
-  /** Secondary text (iOS only) */
-  subtitle?: string;
-  /** Icon name (SF Symbol on iOS, drawable resource on Android) */
-  image?: string;
-  /** Tint color for the icon (hex string or named color) */
-  imageColor?: string;
-  /** Action attributes */
-  attributes?: ContextMenuActionAttributes;
-  /** Checkmark state */
-  state?: 'off' | 'on' | 'mixed';
-  /** Nested actions for submenu */
-  subactions?: readonly ContextMenuAction[];
-}
+export type {
+  ContextMenuAction,
+  ContextMenuActionAttributes,
+} from './menuItems';
 
 export interface ContextMenuProps extends ViewProps {
   /** Menu title (shown as header on iOS) */
@@ -79,6 +49,14 @@ export interface ContextMenuProps extends ViewProps {
   /** Called when the menu closes */
   onMenuClose?: () => void;
 
+  /**
+   * iOS only: called when the user taps the menu's preview (with
+   * `ios.enablePreview`), after the menu has dismissed. Use it to open the
+   * item, like tapping a preview in Photos or Mail. Maps to
+   * `contextMenuInteraction(_:willPerformPreviewActionForMenuWith:animator:)`.
+   */
+  onPreviewPress?: () => void;
+
   /** The content to wrap */
   children: React.ReactNode;
 
@@ -107,50 +85,6 @@ export interface ContextMenuProps extends ViewProps {
   testID?: string;
 }
 
-/**
- * Convert user-friendly subaction to native format (no further nesting).
- */
-function normalizeSubaction(action: ContextMenuAction): NativeSubaction {
-  return {
-    id: action.id,
-    title: action.title,
-    subtitle: action.subtitle,
-    image: action.image,
-    imageColor: action.imageColor,
-    attributes: action.attributes
-      ? {
-          destructive: action.attributes.destructive ? 'true' : 'false',
-          disabled: action.attributes.disabled ? 'true' : 'false',
-          hidden: action.attributes.hidden ? 'true' : 'false',
-        }
-      : undefined,
-    state: action.state,
-  };
-}
-
-/**
- * Convert user-friendly action to native format.
- * Note: Only one level of nesting is supported by the native component.
- */
-function normalizeAction(action: ContextMenuAction): NativeAction {
-  return {
-    id: action.id,
-    title: action.title,
-    subtitle: action.subtitle,
-    image: action.image,
-    imageColor: action.imageColor,
-    attributes: action.attributes
-      ? {
-          destructive: action.attributes.destructive ? 'true' : 'false',
-          disabled: action.attributes.disabled ? 'true' : 'false',
-          hidden: action.attributes.hidden ? 'true' : 'false',
-        }
-      : undefined,
-    state: action.state,
-    subactions: action.subactions?.map(normalizeSubaction),
-  };
-}
-
 export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   const {
     style,
@@ -162,13 +96,14 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     onPressAction,
     onMenuOpen,
     onMenuClose,
+    onPreviewPress,
     children,
     ios,
     android,
     ...viewProps
   } = props;
 
-  const nativeActions = useMemo(() => actions.map(normalizeAction), [actions]);
+  const nativeActions = useMemo(() => flattenMenuActions(actions), [actions]);
 
   const handlePressAction = useCallback(
     (e: { nativeEvent: ContextMenuPressActionEvent }) => {
@@ -185,6 +120,10 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   const handleMenuClose = useCallback(() => {
     onMenuClose?.();
   }, [onMenuClose]);
+
+  const handlePreviewPress = useCallback(() => {
+    onPreviewPress?.();
+  }, [onPreviewPress]);
 
   const nativeIOS = useMemo(() => {
     if (!ios) return undefined;
@@ -212,6 +151,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
       onPressAction={onPressAction ? handlePressAction : undefined}
       onMenuOpen={onMenuOpen ? handleMenuOpen : undefined}
       onMenuClose={onMenuClose ? handleMenuClose : undefined}
+      onPreviewPress={onPreviewPress ? handlePreviewPress : undefined}
       ios={nativeIOS}
       android={nativeAndroid}
       {...viewProps}

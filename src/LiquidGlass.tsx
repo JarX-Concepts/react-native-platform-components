@@ -15,6 +15,11 @@ export type {
   LiquidGlassPressEvent,
 };
 
+/**
+ * Corner shape of the glass: `'capsule'`, `'concentric'`, or a fixed radius.
+ */
+export type LiquidGlassCornerStyle = 'capsule' | 'concentric' | number;
+
 function resolveLiquidGlassSupport(): boolean {
   if (Platform.OS !== 'ios') {
     return false;
@@ -49,6 +54,20 @@ export interface LiquidGlassProps extends ViewProps {
    * @default 0
    */
   cornerRadius?: number;
+
+  /**
+   * Corner shape, set through `UIView.cornerConfiguration` on iOS 26.
+   * - `'capsule'`: fully rounded short sides that follow the view's size
+   *   (`.capsule()`). Half the shorter side elsewhere.
+   * - `'concentric'`: each corner concentric with the matching corner of the
+   *   enclosing shape, such as a parent `LiquidGlass` or the screen
+   *   (`.containerConcentric()`). `cornerRadius` is the minimum on iOS 26
+   *   and the radius elsewhere.
+   * - a number: a fixed radius, the same as `cornerRadius`.
+   *
+   * Default: `cornerRadius`.
+   */
+  cornerStyle?: LiquidGlassCornerStyle;
 
   /**
    * iOS-specific props for the glass effect.
@@ -123,6 +142,7 @@ export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
   const {
     style,
     cornerRadius = 0,
+    cornerStyle,
     ios,
     android,
     children,
@@ -160,7 +180,10 @@ export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
   return (
     <NativeLiquidGlass
       style={style}
-      cornerRadius={cornerRadius}
+      cornerRadius={
+        typeof cornerStyle === 'number' ? cornerStyle : cornerRadius
+      }
+      cornerStyle={typeof cornerStyle === 'string' ? cornerStyle : ''}
       ios={nativeIos}
       android={nativeAndroid}
       onGlassPress={onPress ? handlePress : undefined}

@@ -37,6 +37,10 @@ class PCLiquidGlassViewManager :
         view.cornerRadius = value
     }
 
+    override fun setCornerStyle(view: PCLiquidGlassView, value: String?) {
+        view.cornerStyle = value ?: ""
+    }
+
     override fun setIos(view: PCLiquidGlassView, value: ReadableMap?) {
         // iOS props are ignored on Android
     }

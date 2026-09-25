@@ -17,6 +17,66 @@ const scrollToId = async (
     .scroll(200, direction);
 };
 
+// The Tab Bar demo's section titles, top to bottom. Its feeds are
+// ScrollViews of their own and its bars take drags, so on iOS a scroll of the
+// page that starts on one of those moves that instead; a swipe that starts on
+// a title moves the page. (Android hands a nested scroll on to the page.)
+const TAB_BAR_SECTIONS = [
+  'TAB BAR',
+  'FLOATING',
+  'MINIMIZE ON SCROLL',
+  'ACCESSORY',
+  'CONTROLS',
+];
+
+const isVisible = async (matcher: Detox.NativeMatcher) => {
+  try {
+    await expect(element(matcher)).toBeVisible();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Moves the Tab Bar demo by about `amount` of the screen, swiping on a
+// section title: the lowest one on screen to go down, the highest to go up.
+const swipeTabBarDemo = async (direction: 'down' | 'up', amount = 0.3) => {
+  if (isAndroid()) {
+    await element(by.id('demo-scroll')).scroll(amount * 1000, direction);
+    return;
+  }
+  const titles =
+    direction === 'down' ? [...TAB_BAR_SECTIONS].reverse() : TAB_BAR_SECTIONS;
+  for (const title of titles) {
+    if (await isVisible(by.text(title))) {
+      await element(by.text(title)).swipe(
+        direction === 'down' ? 'up' : 'down',
+        'slow',
+        amount
+      );
+      // Let the page come to rest: a tap on a decelerating page only stops it
+      await pause(1000);
+      return;
+    }
+  }
+  await element(by.id('demo-scroll')).scroll(200, direction);
+};
+
+const swipeTabBarDemoTo = async (
+  testID: string,
+  direction: 'down' | 'up' = 'down'
+) => {
+  if (isAndroid()) {
+    await scrollToId(testID, direction);
+    return;
+  }
+  for (let step = 0; step < 12; step++) {
+    if (await isVisible(by.id(testID))) return;
+    await swipeTabBarDemo(direction);
+  }
+  await expect(element(by.id(testID))).toBeVisible();
+};
+
 // Tap a segment by its spoken label, which works for text and icon segments.
 const tapSegment = async (label: string) => {
   if (isAndroid()) {
@@ -137,29 +197,94 @@ const expectText = async (testID: string, text: string) => {
     .withTimeout(8000);
 };
 
+// A view's width (points on iOS, pixels on Android)
+const widthOf = async (testID: string): Promise<number> => {
+  const attributes = (await element(by.id(testID)).getAttributes()) as {
+    width?: number;
+    frame?: { width: number };
+  };
+  return attributes.frame?.width ?? attributes.width ?? 0;
+};
+
+// Polls a view's width until it passes the check
+const waitForWidth = async (
+  testID: string,
+  check: (width: number) => boolean,
+  timeout = 8000
+) => {
+  const start = Date.now();
+  let width = await widthOf(testID);
+  while (!check(width)) {
+    if (Date.now() - start > timeout) {
+      throw new Error(`${testID}: width ${width} never passed the check`);
+    }
+    await pause(250);
+    width = await widthOf(testID);
+  }
+};
+
+// Dismisses an open iOS menu with a tap away from it, in the page's empty left
+// margin. An in-app tap: device.tap() starts an XCUITest runner, which takes
+// tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
+// underneath (the page's scroll view there); before iOS 26 the menu's
+// full-screen container takes it.
+const tapOutsideMenu = async () => {
+  try {
+    await element(by.id('demo-scroll')).tap({ x: 8, y: 600 });
+  } catch {
+    await element(by.type('_UIContextMenuContainerView'))
+      .atIndex(0)
+      .tap({ x: 8, y: 600 });
+  }
+};
+
+// An item of an open menu. On iOS it is looked up inside the menu, clear of
+// a (hidden) button with the same title, such as one folded into an overflow
+// menu.
+const menuItem = (label: string) =>
+  isAndroid()
+    ? element(by.text(label))
+    : element(
+        by.text(label).withAncestor(by.type('_UIContextMenuContainerView'))
+      );
+
+// The demo's ActionField carries its testID on the pressable around the text
+const expectFieldText = async (testID: string, text: string) => {
+  await waitFor(element(by.text(text).withAncestor(by.id(testID))))
+    .toBeVisible()
+    .withTimeout(8000);
+};
+
 export const ensureModalMode = async (enabled: boolean) => {
   const toggle = element(by.id('modal-switch'));
   const button = element(by.id('picker-toggle-button'));
 
-  // The switch mounts (or unmounts) the picker's Open/Close button, so that
-  // button's presence is what says which mode the demo is in
-  const inModalMode = async () => {
+  // The switch's own value says which mode the demo is in. The Open/Close
+  // button it mounts can be there but covered (by a popover or menu that is
+  // still going away), which a visibility check reads as "not modal".
+  const isOn = async () => {
     try {
-      await expect(button).toBeVisible();
+      await expect(toggle).toHaveToggleValue(true);
       return true;
     } catch {
       return false;
     }
   };
 
-  if ((await inModalMode()) === enabled) return;
+  if ((await isOn()) === enabled) return;
   await toggle.tap();
+  // A tap that lands while the screen is still settling can be dropped;
+  // the switch shows it, so tap once more
+  if ((await isOn()) !== enabled) {
+    await pause(500);
+    if ((await isOn()) !== enabled) await toggle.tap();
+  }
   // React re-renders before the button appears or goes, so poll for it rather
   // than asserting straight after the tap
   if (enabled) {
     await waitFor(button).toBeVisible().withTimeout(10000);
   } else {
-    await waitFor(button).not.toBeVisible().withTimeout(10000);
+    await waitFor(button).not.toExist().withTimeout(10000);
   }
 };
 
@@ -208,6 +333,12 @@ describe('Platform Components Example', () => {
       execSync(
         `"${adbPath()}" -s ${device.id} shell settings put secure show_ime_with_hard_keyboard 0`
       );
+      // The searchable SelectionMenu takes typing; on a fresh emulator the
+      // keyboard's first appearance otherwise opens Gboard's "Try out your
+      // stylus" sheet over the app
+      execSync(
+        `"${adbPath()}" -s ${device.id} shell settings put secure stylus_handwriting_enabled 0`
+      );
     }
     if (process.env.E2E_CLEAN_STATUS_BAR) {
       await cleanStatusBar();
@@ -223,18 +354,29 @@ describe('Platform Components Example', () => {
       .withTimeout(5000);
   });
 
+  // The first flow runs on a simulator that is still cold, and CI's iOS
+  // runner has taken 96 to 133 s for it, while its steps take about 27 s
+  // locally (CI's log shows the app busy with layout and animations), so it
+  // gets more than the 120 s default
   it('should test Date Picker functionality', async () => {
+    // The demo titles the Android dialogs' negative button. On iOS the
+    // picker presents in a popover, and the Cancel item of its own confirm
+    // toolbar is the only control above the overlay. A tap aimed at the demo
+    // behind it never lands: the app stops answering Detox, which waits on
+    // that one tap until the test times out.
+    const cancelControl = () =>
+      isAndroid()
+        ? element(by.text('Custom Cancel')).atIndex(0)
+        : element(by.label('Cancel')).atIndex(0);
+
+    // Opens the modal and waits for it, rather than for a fixed time
+    const openModal = async () => {
+      await element(by.id('picker-toggle-button')).tap();
+      await waitFor(cancelControl()).toBeVisible().withTimeout(10000);
+    };
+
     const dismissModal = async () => {
-      if (isAndroid()) {
-        // The demo titles the dialog's negative button
-        await element(by.text('Custom Cancel')).atIndex(0).tap();
-      } else {
-        // The picker presents in a popover, and the Cancel item of its own
-        // confirm toolbar is the only control above the overlay. A tap aimed
-        // at the demo behind it never lands: the app stops answering Detox,
-        // which waits on that one tap until the test times out.
-        await element(by.label('Cancel')).atIndex(0).tap();
-      }
+      await cancelControl().tap();
       // The Open/Close button is hittable again only once the picker has gone
       await waitFor(element(by.id('picker-toggle-button')))
         .toBeVisible()
@@ -254,13 +396,22 @@ describe('Platform Components Example', () => {
     // catching the failure costs a full matcher timeout on every run.
     if (isAndroid()) {
       await selectMenuOption('android-material-menu', 'M3');
+      // The Material pickers open on their text fields
+      await selectMenuOption('android-input-mode-menu', 'Text');
     } else {
       await selectMenuOption('ios-style-menu', 'Inline');
     }
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    // Open the modal
+    await openModal();
+
+    if (isAndroid()) {
+      await expect(
+        element(
+          by.type('com.google.android.material.textfield.TextInputEditText')
+        ).atIndex(0)
+      ).toBeVisible();
+    }
 
     // Dismiss it
     await dismissModal();
@@ -272,33 +423,91 @@ describe('Platform Components Example', () => {
       await selectMenuOption('ios-style-menu', 'Wheels');
     }
 
-    // Set mode to "Time" (then pause)
+    // Set mode to "Time"
     await selectMenuOption('mode-menu', 'Time');
-    await pause(1000);
 
     // Enable the modal mode
     await ensureModalMode(true);
 
-    // Open the modal (then pause)
-    await element(by.id('picker-toggle-button')).tap();
-    await pause(1000);
+    if (isAndroid()) {
+      // A 24-hour clock: the keyboard entry has no AM/PM toggle
+      await selectMenuOption('hour-format-menu', '24-hour');
+    }
+
+    // Open the modal
+    await openModal();
+
+    if (isAndroid()) {
+      await expect(element(by.text('AM'))).not.toBeVisible();
+    }
 
     // Dismiss it
     await dismissModal();
 
-    if (!isAndroid()) {
-      // Countdown from the inline style (UIKit only has countdown wheels),
-      // reporting the duration
-      await ensureModalMode(false);
-      await selectMenuOption('ios-style-menu', 'Inline');
-      await selectMenuOption('mode-menu', 'Countdown');
-      await pause(800);
-      await scrollToId('date-picker');
+    if (isAndroid()) {
+      // The Material range picker opens on its suggested range; saving it
+      // reports both days
+      await scrollToId('range-open-button');
+      await element(by.id('range-open-button')).tap();
+      await waitFor(element(by.text('Custom OK')))
+        .toBeVisible()
+        .withTimeout(10000);
+      await element(by.text('Custom OK')).atIndex(0).tap();
+      await waitFor(element(by.id('range-value')))
+        .not.toHaveText('—')
+        .withTimeout(8000);
+    }
+  }, 180000);
+
+  // UIDatePicker's wheels-only modes (iOS), in a flow of their own to keep
+  // the first flow short
+  it('should test Date Picker wheels', async () => {
+    // Android has no countdown or month-and-year picker
+    if (isAndroid()) return;
+
+    // The app opens on the Date Picker demo, embedded with the inline style
+    // (beforeEach waits for it). Countdown from there (UIKit only has
+    // countdown wheels), reporting the duration
+    await selectMenuOption('mode-menu', 'Countdown');
+    await pause(800);
+    await scrollToId('date-picker');
+
+    // A swiped wheel can leave a run loop block pending that Detox keeps
+    // waiting on after the app has gone idle (the flow then stalled until
+    // it timed out), so the wheel steps run unsynchronized and their checks
+    // poll
+    await device.disableSynchronization();
+    try {
       await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.7, 0.5);
-      await pause(1500);
-      await expect(element(by.id('countdown-duration'))).not.toHaveText(
-        '(none)'
-      );
+      await waitFor(element(by.id('countdown-duration')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
+
+      // Month and year wheels (iOS 17.4+), reporting the month picked
+      await element(by.id('mode-menu')).tap();
+      const yearAndMonth = element(
+        by
+          .text('Year & Month')
+          .withAncestor(by.type('_UIContextMenuContainerView'))
+      ).atIndex(0);
+      await waitFor(yearAndMonth).toBeVisible().withTimeout(5000);
+      await yearAndMonth.tap();
+      await waitFor(element(by.id('year-month-value')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await pause(800);
+      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.3, 0.5);
+      await waitFor(element(by.id('year-month-value')))
+        .not.toHaveText('(none)')
+        .withTimeout(5000);
+      // The pending block belongs to the touch-tracking run loop mode; a
+      // drag on the list runs that mode again and lets it go
+      await element(by.id('demo-scroll'))
+        .scroll(40, 'down', NaN, 0.15)
+        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15));
+      await pause(500);
+    } finally {
+      await device.enableSynchronization();
     }
   });
 
@@ -318,14 +527,36 @@ describe('Platform Components Example', () => {
       .withTimeout(6000);
     await element(by.text('California')).atIndex(0).tap();
 
-    // Verify selection was made (field should show "California")
-    await expect(element(by.text('California'))).toBeVisible();
+    // Verify selection was made (field should show "California"; the menu's
+    // own row may still be fading out)
+    await expectFieldText('state-field-headless', 'California');
 
     // Test clearing the selection
     await element(by.id('clear-state-button')).tap();
 
     // Verify selection was cleared
     await expect(element(by.text('None'))).toBeVisible();
+
+    if (!isAndroid()) {
+      // The headless menu is a system menu: a tap outside dismisses it and
+      // onRequestClose sets the demo's state back to closed
+      await element(by.id('menu-toggle-button')).tap();
+      await waitFor(element(by.text('Alabama')))
+        .toBeVisible()
+        .withTimeout(6000);
+      await tapOutsideMenu();
+      await expectFieldText('menu-toggle-field', 'closed');
+    }
+
+    // Options with icons and subtitles
+    await scrollToId('notify-field');
+    await element(by.id('notify-field')).tap();
+    await waitFor(element(by.text('Email')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Email')).atIndex(0).tap();
+    await expectFieldText('notify-field', 'Email');
+    await element(by.id('demo-scroll')).scrollTo('top');
 
     // Test embedded mode
     await element(by.id('embedded-switch')).tap();
@@ -387,17 +618,45 @@ describe('Platform Components Example', () => {
     await element(by.text('Arkansas')).atIndex(0).tap();
 
     // Verify the selection
-    await expect(element(by.text('Arkansas'))).toBeVisible();
+    await expectFieldText('state-field-headless', 'Arkansas');
 
-    // Set Android material to "M3" (Android only)
-    try {
+    if (isAndroid()) {
+      // The M3 exposed dropdown, searchable: typing filters the options
       await selectMenuOption('android-material-menu', 'M3');
-
       await element(by.id('embedded-switch')).tap();
+      await element(by.id('searchable-switch')).tap();
+      const field = element(
+        by
+          .type('android.widget.EditText')
+          .withAncestor(by.id('state-menu-embedded'))
+      ).atIndex(0);
+      await waitFor(field).toBeVisible().withTimeout(6000);
+      await field.tap();
+      // The keyboard comes up and the window resizes; let the list settle
+      await pause(1000);
+      await field.replaceText('new y');
+      // The filtered list is re-laid out above the keyboard; Espresso doesn't
+      // wait for that window
+      await pause(1500);
+      // The dropdown is a window without focus, which Espresso can't search,
+      // so the one row left ("New York") is tapped through adb: it sits right
+      // under the field, about half a field height down.
+      const { frame } = (await field.getAttributes()) as {
+        frame: { x: number; y: number; width: number; height: number };
+      };
+      const x = Math.round(frame.x + frame.width / 2);
+      const y = Math.round(frame.y + frame.height * 1.55);
+      execSync(`"${adbPath()}" -s ${device.id} shell input tap ${x} ${y}`);
+      // The pick leaves the field and the keyboard goes down
+      await pause(1500);
+      await waitFor(field).toHaveText('New York').withTimeout(6000);
 
-      await element(by.id('state-menu-embedded')).tap();
-    } catch {
-      // Not on Android.
+      // Text that matches nothing goes back to the selection on leaving
+      await field.tap();
+      await field.replaceText('zzz');
+      await field.tapReturnKey();
+      await pause(1500);
+      await waitFor(field).toHaveText('New York').withTimeout(6000);
     }
   });
 
@@ -418,13 +677,23 @@ describe('Platform Components Example', () => {
     await expect(element(by.text('Paste'))).toBeVisible();
     await expect(element(by.text('Share'))).toBeVisible();
 
-    // Select an action
-    await element(by.text('Copy')).atIndex(0).tap();
+    if (isAndroid()) {
+      // Select an action
+      await element(by.text('Copy')).atIndex(0).tap();
 
-    // Verify the action was recorded
-    await waitFor(element(by.text('Copy (copy)')))
-      .toBeVisible()
-      .withTimeout(6000);
+      // Verify the action was recorded
+      await waitFor(element(by.text('Copy (copy)')))
+        .toBeVisible()
+        .withTimeout(6000);
+    } else {
+      // Tapping the preview (on by default) fires onPreviewPress
+      await element(
+        by.label('Preview').withAncestor(by.type('_UIContextMenuContainerView'))
+      )
+        .atIndex(0)
+        .tap();
+      await expectFieldText('last-action-field', 'Preview pressed');
+    }
 
     // Test context menu with submenu
     await element(by.id('context-menu-submenu')).longPress();
@@ -521,6 +790,37 @@ describe('Platform Components Example', () => {
 
       // Dismiss
       await element(by.text('Share')).atIndex(0).tap();
+    }
+
+    // Inline sections, an image-asset icon (Remind Me) and a submenu inside a
+    // section
+    await scrollToId('context-menu-sections');
+    await element(by.id('context-menu-sections')).longPress();
+    await waitFor(element(by.text('Remind Me')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Send To')).atIndex(0).tap();
+    await waitFor(element(by.text('Mail')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Mail')).atIndex(0).tap();
+    await expectFieldText('last-action-field', 'Mail (send-mail)');
+
+    // A stepper that keeps the menu open on iOS; Android closes it per press
+    await scrollToId('context-menu-stepper');
+    await element(by.id('context-menu-stepper')).tap();
+    await waitFor(element(by.text('Increase')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.text('Increase')).atIndex(0).tap();
+    await expectText('stepper-value', 'Qty 2');
+    if (!isAndroid()) {
+      // Still open, and the section header shows the new value
+      await expect(element(by.text('Quantity: 2'))).toBeVisible();
+      await tapOutsideMenu();
+      await waitFor(element(by.text('Increase')))
+        .not.toBeVisible()
+        .withTimeout(6000);
     }
   });
 
@@ -684,7 +984,8 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('tab-bar'))).toBeVisible();
     await pause(600);
 
-    // Tabs by their testID; the Inbox badge clears once it is opened
+    // Tabs by their testID; the Inbox badge clears once it is opened. Search
+    // is the search tab (iOS 26: its own circle at the end of the bar)
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(500);
@@ -709,7 +1010,7 @@ describe('Platform Components Example', () => {
     // (iOS 26: the system minimized bar; Android: the bar slides away), and
     // scrolling back up restores it
     await scrollToId('tab-feed');
-    await element(by.id('demo-scroll')).scroll(150, 'down');
+    await swipeTabBarDemo('down', 0.15);
     await pause(400);
     await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
     await pause(1200);
@@ -724,27 +1025,203 @@ describe('Platform Components Example', () => {
     await expectText('tab-bar-value', 'search');
     await pause(600);
 
+    // Accessory: a mini player on a bar with a system item and the search
+    // tab. iOS 26 hosts it as the bar's bottom accessory, which moves inline
+    // beside the minimized bar; elsewhere it's a row above the bar
+    await swipeTabBarDemoTo('tab-accessory-env');
+    // Page swipes can scroll the player feed as well (Android scrolls
+    // nested), which slides the bar and accessory away; scrolling the feed
+    // back up brings them back
+    await waitFor(element(by.id('tab-accessory-play')))
+      .toBeVisible()
+      .whileElement(by.id('tab-player-feed'))
+      .scroll(150, 'up');
+    // The page may still be springing back from its end, where a tap only
+    // stops it
+    await pause(1500);
+    await element(by.id('tab-accessory-play')).tap();
+    await expectText('tab-accessory-state', 'playing, track 1');
+    await pause(400);
+    await element(by.id('tab-player-favorites')).tap();
+    await expectText('tab-player-value', 'favorites');
+    await pause(400);
+    await element(by.id('tab-player-search')).tap();
+    await expectText('tab-player-value', 'search');
+    await pause(400);
+    // Hosted (iOS 26), the content sits in the bar's own accessory view
+    let hosted = false;
+    if (!isAndroid()) {
+      try {
+        await expect(
+          element(by.id('tab-accessory').withAncestor(by.id('tab-bar-player')))
+        ).toExist();
+        hosted = true;
+      } catch {}
+    }
+    await element(by.id('tab-player-feed')).scroll(300, 'down', NaN, 0.5);
+    await pause(1200);
+    if (hosted) {
+      // Inline beside the minimized bar, and still a player
+      await expectText('tab-accessory-env', 'inline');
+      await element(by.id('tab-accessory-play')).tap();
+      await expectText('tab-accessory-state', 'paused, track 1');
+    } else if (isAndroid()) {
+      // Slid away with the bar. On a slow emulator the first scroll can end
+      // before the bar starts hiding, so keep scrolling until it's gone.
+      await waitFor(element(by.id('tab-accessory')))
+        .not.toBeVisible()
+        .whileElement(by.id('tab-player-feed'))
+        .scroll(150, 'down');
+    }
+    // Back up: expanded, the accessory regular again (a short swipe, so
+    // Android doesn't hand the rest on to the page)
+    await element(by.id('tab-player-feed')).swipe(
+      'down',
+      'slow',
+      0.25,
+      0.5,
+      0.3
+    );
+    await pause(1200);
+    await expectText('tab-accessory-env', 'regular');
+    await waitFor(element(by.id('tab-accessory-next')))
+      .toBeVisible()
+      .withTimeout(4000);
+    await element(by.id('tab-accessory-next')).tap();
+    await expectText(
+      'tab-accessory-state',
+      `${hosted ? 'paused' : 'playing'}, track 2`
+    );
+    await pause(600);
+
     // Label visibility, badges and custom colors
-    await scrollToId('tab-labels-labeled');
+    await swipeTabBarDemoTo('tab-labels-labeled');
     await element(by.id('tab-labels-labeled')).tap();
     await pause(700);
     await element(by.id('tab-labels-unlabeled')).tap();
     await pause(700);
     await element(by.id('tab-labels-auto')).tap();
     await pause(500);
-    await scrollToId('tab-unread-switch');
+    await swipeTabBarDemoTo('tab-unread-switch');
     await element(by.id('tab-unread-switch')).tap();
     await pause(600);
-    await scrollToId('tab-dot-switch');
+    await swipeTabBarDemoTo('tab-dot-switch');
     await element(by.id('tab-dot-switch')).tap();
     await pause(600);
-    await scrollToId('tab-styled-switch');
+    await swipeTabBarDemoTo('tab-styled-switch');
     await element(by.id('tab-styled-switch')).tap();
     await pause(900);
-    await scrollToId('tab-bar', 'up');
+    if (isAndroid()) {
+      // The Material active indicator: off and on, a circle, and icons
+      // beside their labels
+      await swipeTabBarDemoTo('tab-indicator-switch');
+      await element(by.id('tab-indicator-switch')).tap();
+      await pause(600);
+      await element(by.id('tab-indicator-switch')).tap();
+      await pause(400);
+      await swipeTabBarDemoTo('tab-indicator-shape-circle');
+      await element(by.id('tab-indicator-shape-circle')).tap();
+      await pause(600);
+      await swipeTabBarDemoTo('tab-item-layout-horizontal');
+      await element(by.id('tab-item-layout-horizontal')).tap();
+      await pause(900);
+    }
+    await swipeTabBarDemoTo('tab-bar', 'up');
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(900);
+    // Five bars, a mini player and the Android controls: a long flow (80 s
+    // on CI's Android emulator, 100 s on its iOS simulator)
+  }, 180000);
+
+  it('should test Navigation Rail functionality', async () => {
+    await selectDemo('Navigation Rail');
+    await expect(element(by.id('rail'))).toBeVisible();
+
+    // The rail's width, in points on iOS and pixels on Android
+    const railWidth = async () => {
+      const attributes = (await element(by.id('rail')).getAttributes()) as {
+        width?: number;
+        frame?: { width: number };
+      };
+      return attributes.frame?.width ?? attributes.width ?? 0;
+    };
+    const tapRailItem = async (testID: string) => {
+      await waitFor(element(by.id(testID)))
+        .toBeVisible()
+        .whileElement(by.id('demo-scroll'))
+        .scroll(200, 'up');
+      await element(by.id(testID)).tap();
+    };
+
+    // Destinations by testID; the selected one again is a reselect, and
+    // opening the Inbox clears its badge
+    await tapRailItem('rail-search');
+    await expectText('rail-value', 'search');
+    await element(by.id('rail-search')).tap();
+    await expectText('rail-last-event', 'reselect: search');
+    await element(by.id('rail-inbox')).tap();
+    await expectText('rail-value', 'inbox');
+    await pause(500);
+
+    // The header (a Button) sits in the rail and takes its own presses
+    await element(by.id('rail-header-button')).tap();
+    await expectText('rail-last-event', 'header: compose');
+
+    // Menu gravity moves the destinations; they stay where the taps land
+    for (const gravity of ['center', 'bottom', 'top']) {
+      await scrollToId(`rail-gravity-${gravity}`);
+      await element(by.id(`rail-gravity-${gravity}`)).tap();
+      await pause(600);
+      await tapRailItem('rail-profile');
+      await expectText('rail-value', 'profile');
+      await tapRailItem('rail-home');
+      await expectText('rail-value', 'home');
+    }
+
+    // Expanded: the rail widens, and narrows again collapsed
+    const collapsedWidth = await railWidth();
+    await scrollToId('rail-expanded-switch');
+    await element(by.id('rail-expanded-switch')).tap();
+    await pause(1200);
+    const expandedWidth = await railWidth();
+    if (expandedWidth <= collapsedWidth * 1.5) {
+      throw new Error(
+        `rail: expanded width ${expandedWidth} vs collapsed ${collapsedWidth}`
+      );
+    }
+    await tapRailItem('rail-photos');
+    await expectText('rail-value', 'photos');
+    await scrollToId('rail-expanded-switch');
+    await element(by.id('rail-expanded-switch')).tap();
+    await pause(1200);
+    if ((await railWidth()) !== collapsedWidth) {
+      throw new Error('rail: the collapsed width did not come back');
+    }
+
+    // Label modes, the header off and on, badges and custom colors
+    await scrollToId('rail-labels-selected');
+    await element(by.id('rail-labels-selected')).tap();
+    await pause(600);
+    await element(by.id('rail-labels-unlabeled')).tap();
+    await pause(600);
+    await element(by.id('rail-labels-auto')).tap();
+    await pause(400);
+    await scrollToId('rail-header-switch');
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
+    await scrollToId('rail-unread-switch');
+    await element(by.id('rail-unread-switch')).tap();
+    await pause(500);
+    await scrollToId('rail-styled-switch');
+    await element(by.id('rail-styled-switch')).tap();
+    await pause(900);
+    await tapRailItem('rail-search');
+    await expectText('rail-value', 'search');
+    await tapRailItem('rail-header-button');
+    await expectText('rail-last-event', 'header: compose');
   });
 
   it('should test Button functionality', async () => {
@@ -782,19 +1259,86 @@ describe('Platform Components Example', () => {
       'month · bold'
     );
 
-    // The multi-select group sits below the fold on a phone
+    // The multi-select group sits below the fold on a phone. Its labels are
+    // looked up inside it: the Toggle section has buttons with the same ones.
+    const formatButton = (label: string) =>
+      element(by.text(label).withAncestor(by.id('button-group-multiple')));
     await scrollToId('button-group-multiple');
-    await element(by.text('Italic')).atIndex(0).tap();
+    await formatButton('Italic').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · bold, italic'
     );
 
-    await element(by.text('Bold')).atIndex(0).tap();
+    await formatButton('Bold').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · italic'
     );
+
+    // Toggle buttons report the state a press asks for; the locked one's
+    // parent never takes it, so it stays off
+    await scrollToId('button-toggle-value');
+    await element(by.id('button-toggle')).tap();
+    await expectText('button-toggle-value', 'favorite, bold · locked 0');
+    await element(by.id('button-toggle-filled')).tap();
+    await expectText('button-toggle-value', 'favorite · locked 0');
+    await element(by.id('button-toggle-icon')).tap();
+    await expectText('button-toggle-value', 'favorite, alerts · locked 0');
+    await element(by.id('button-toggle-locked')).tap();
+    await expectText('button-toggle-value', 'favorite, alerts · locked 1');
+
+    // A button with a menu opens it instead of pressing
+    await scrollToId('button-menu-value');
+    await element(by.id('button-menu')).tap();
+    await waitFor(element(by.text('Date')))
+      .toBeVisible()
+      .withTimeout(6000);
+    if (!isAndroid()) {
+      // On Android the popup window has the focus, and Espresso can't read
+      // the page under it while it is open
+      await expectText('button-menu-value', '(none) · open');
+    }
+    await element(by.text('Date')).atIndex(0).tap();
+    await expectText('button-menu-value', 'date · closed');
+
+    // Icons above and below the label, and clear glass
+    await scrollToId('button-icon-bottom');
+    await element(by.id('button-icon-bottom')).tap();
+    await expectText('button-last-pressed', 'edit (bottom)');
+    await scrollToId('button-clear-glass');
+    await element(by.id('button-clear-glass')).tap();
+    await expectText('button-last-pressed', 'clear glass');
+
+    if (!isAndroid()) {
+      // A symbol effect with a trigger plays on every press
+      await scrollToId('button-bounce-count');
+      await element(by.id('button-symbol-bounce')).tap();
+      await expectText('button-bounce-count', '1');
+    }
+
+    // Split button: the main button presses, the menu button opens its menu
+    await scrollToId('split-value');
+    await element(by.text('Reply')).atIndex(0).tap();
+    await expectText('split-value', 'reply');
+    await element(by.label('Reply options')).atIndex(0).tap();
+    await waitFor(menuItem('Forward')).toBeVisible().withTimeout(6000);
+    await menuItem('Forward').tap();
+    await expectText('split-value', 'forward');
+
+    // Buttons that don't fit fold into an overflow menu; a pick is a press
+    await scrollToId('overflow-value');
+    await element(
+      by
+        .label(isAndroid() ? 'Overflow menu' : 'More')
+        .withAncestor(by.id('button-group-overflow'))
+    )
+      .atIndex(0)
+      .tap();
+    await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
+    await menuItem('Code').tap();
+    await expectText('overflow-value', 'code');
+    await scrollToId('size-picker', 'up');
 
     // Sizes and shapes: cycle the size picker, then square corners. Larger
     // buttons push the picker down, so bring it back before every tap.
@@ -816,7 +1360,66 @@ describe('Platform Components Example', () => {
     await scrollToId('button-filled', 'up');
     await element(by.id('button-filled')).tap();
     await pause(350);
-    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+    await expect(element(by.id('button-last-pressed'))).toHaveText(
+      'clear glass'
+    );
+  });
+
+  it('should test Floating Action Button functionality', async () => {
+    await selectDemo('Floating Action Button');
+    await expect(element(by.id('fab-regular'))).toBeVisible();
+
+    // Every size is a native button that reports presses
+    for (const size of ['small', 'regular', 'medium', 'large']) {
+      await element(by.id(`fab-${size}`)).tap();
+      await expectText('fab-last-pressed', size);
+      await pause(300);
+    }
+
+    // The extended button shrinks to its icon and extends again; the view
+    // follows the button's width
+    await scrollToId('fab-extended-switch');
+    const extendedWidth = await widthOf('fab-extended');
+    await element(by.id('fab-extended-switch')).tap();
+    await waitForWidth('fab-extended', (w) => w < extendedWidth * 0.7);
+    await element(by.id('fab-extended')).tap();
+    await expectText('fab-last-pressed', 'compose');
+    await element(by.id('fab-extended-switch')).tap();
+    await waitForWidth('fab-extended', (w) => w >= extendedWidth - 1);
+
+    // Custom colors, then disabled buttons don't report presses
+    await element(by.id('fab-styled-switch')).tap();
+    await pause(700);
+    await element(by.id('fab-regular')).tap();
+    await expectText('fab-last-pressed', 'regular');
+    await scrollToId('fab-disabled-switch');
+    await element(by.id('fab-disabled-switch')).tap();
+    await pause(500);
+    await element(by.id('fab-extended')).tap();
+    await pause(500);
+    await expect(element(by.id('fab-last-pressed'))).toHaveText('regular');
+    await element(by.id('fab-disabled-switch')).tap();
+    await element(by.id('fab-styled-switch')).tap();
+    await pause(500);
+
+    // Scrolling the feed down shrinks the linked button (the same Compose
+    // button as above), scrolling back up extends it
+    if (isAndroid()) {
+      await scrollToId('fab-feed');
+      await element(by.id('demo-scroll')).scroll(200, 'down');
+    } else {
+      // Drag the page from the top of the screen: the feed fills the middle
+      // and would take the swipe
+      await element(by.id('demo-scroll')).scrollTo('bottom', 0.5, 0.15);
+    }
+    await pause(400);
+    await element(by.id('fab-feed')).scroll(300, 'down', NaN, 0.5);
+    await waitForWidth('fab-scroll', (w) => w < extendedWidth * 0.7);
+    await element(by.id('fab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+    await waitForWidth('fab-scroll', (w) => w >= extendedWidth - 1);
+    await element(by.id('fab-scroll')).tap();
+    await expectText('fab-last-pressed', 'scroll');
+    await pause(600);
   });
 
   it('should test Floating Toolbar functionality', async () => {
@@ -867,6 +1470,41 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('toolbar-last-view'))).toHaveText('years');
     await tapSegment('All');
     await pause(600);
+
+    // A toolbar linked to a ScrollView. Scroll the page from its upper part:
+    // a swipe starting on the nested ScrollView would scroll that instead
+    await waitFor(
+      element(
+        by.id(isAndroid() ? 'hide-on-scroll-switch' : 'edge-effect-picker')
+      )
+    )
+      .toBeVisible()
+      .whileElement(by.id('demo-scroll'))
+      .scroll(200, 'down', 0.5, 0.2);
+    if (!isAndroid()) {
+      // iOS 26 scroll edge effects under the toolbar, and interactive glass
+      for (const effect of ['Soft', 'Hard', 'Hidden', 'Automatic']) {
+        await tapSegment(effect);
+        await pause(500);
+      }
+      await element(by.id('interactive-glass-switch')).tap();
+      await pause(400);
+    }
+
+    // Hide on scroll: away while the content scrolls down, back as it
+    // scrolls up, and usable again
+    await element(by.id('hide-on-scroll-switch')).tap();
+    await pause(400);
+    await element(by.id('toolbar-feed')).scroll(250, 'down', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .not.toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('toolbar-feed')).scroll(100, 'up', 0.5, 0.4);
+    await waitFor(element(by.id('feed-toolbar-share')))
+      .toBeVisible()
+      .withTimeout(3000);
+    await element(by.id('feed-toolbar-edit')).tap();
+    await expectText('feed-last-action', 'edit');
   });
 
   it('should test Liquid Glass functionality', async () => {
@@ -954,6 +1592,35 @@ describe('Platform Components Example', () => {
       await pause(300);
       await element(by.id('liquid-glass-demo-2')).longPress(600);
       await pause(300);
+
+      // LiquidGlassContainer: a button materializes out of the group, the
+      // first one widens, and both morph back
+      await scrollToId('glass-expand-switch');
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await waitFor(element(by.text('♥ Favorite')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await pause(600);
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .not.toExist()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await pause(600);
+
+      // The system spacing keeps them apart; then the demo's 24 again
+      await selectMenuOption('spacing-menu', 'Default');
+      await pause(800);
+      await selectMenuOption('spacing-menu', '24');
+      await pause(600);
+
+      // Concentric and capsule corners
+      await scrollToId('corner-capsule');
+      await expect(element(by.id('corner-concentric'))).toBeVisible();
     }
 
     // Take final screenshot
@@ -1036,6 +1703,7 @@ describe('Platform Components Example', () => {
       await element(by.id('demo-scroll')).scroll(120, 'down', NaN, 0.15);
       await pause(700);
     }
+
     await scrollToId('editable-switch');
 
     if (isAndroid()) {
@@ -1079,6 +1747,98 @@ describe('Platform Components Example', () => {
     await pause(500);
     // No focus event: the last one is still the icon press above
     await expectText('field-last-event', 'icon: due');
+  });
+
+  // The Keyboard section: its own flow, since the Text Field flow is already
+  // long on CI's slower emulator and simulator
+  it('should test Text Field keyboard features', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
+
+    // A drag from near the top of the list, which also puts the keyboard
+    // away as it does for a TextInput. Near the end of the content there is
+    // less to scroll than asked, which is fine here.
+    const dragList = async (distance: number) => {
+      try {
+        await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
+      } catch {
+        // At the end of the content
+      }
+    };
+
+    // Scrolls a field into view. On iOS it then goes into the upper part of
+    // the screen, clear of the keyboard and its toolbar, in one drag sized
+    // from the frame the field reports (the screens differ). Scrolling to
+    // an anchor further down first keeps that drag short.
+    const liftField = async (fieldId: string, anchorId = fieldId) => {
+      await scrollToId(anchorId);
+      if (isAndroid()) return;
+      const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+        frame: { y: number };
+      };
+      const distance = Math.round(frame.y - 200);
+      if (distance > 40) await dragList(distance);
+      await pause(300);
+    };
+
+    // iOS: the number pad's toolbar steps the value, and Done dismisses it
+    if (!isAndroid()) {
+      await liftField('field-quantity', 'field-select-word');
+      await inputOf('field-quantity').tap();
+      await waitFor(element(by.id('toolbar-plus')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-plus')).tap();
+      await expect(inputOf('field-quantity')).toHaveText('2');
+      await element(by.id('toolbar-done')).tap();
+      await expectText('field-last-event', 'blur: quantity');
+    }
+
+    // A chat composer (submitBehavior 'submit'): return sends, and on iOS
+    // the field keeps focus and the keyboard stays up. Android types the
+    // return with a tap that focuses the field, and without a hardware
+    // keyboard (CI) the soft keyboard then stays over the list, where the
+    // scrolls start, so Android does this last.
+    const chatSendsOnReturn = async () => {
+      await liftField('field-chat');
+      await typeInto('field-chat', 'Hello');
+      await inputOf('field-chat').tapReturnKey();
+      await expectText('field-chat-sent', 'Hello');
+      await expect(inputOf('field-chat')).toHaveText('');
+      if (!isAndroid()) {
+        await expectText('field-last-event', 'focus: chat');
+      }
+    };
+    if (!isAndroid()) await chatSendsOnReturn();
+
+    // Selection events from native, and a selection set from JS: on iOS by
+    // a keyboard toolbar button, on Android by the demo's button. On iOS
+    // the chat keyboard is still up; a drag puts it away first.
+    if (!isAndroid()) await dragList(40);
+    await liftField('field-selection');
+    if (isAndroid()) {
+      await typeInto('field-selection', 'Hello there');
+      await scrollToId('field-select-word');
+      await element(by.id('field-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // New text puts the cursor at the start, which native reports; no
+      // tap, so no keyboard
+      await typeInto('field-selection', 'Hi there');
+      await expectText('field-selection-value', '0–0');
+      await chatSendsOnReturn();
+    } else {
+      await inputOf('field-selection').tap();
+      await waitFor(element(by.id('toolbar-select-word')))
+        .toBeVisible()
+        .withTimeout(4000);
+      await element(by.id('toolbar-select-word')).tap();
+      await expectText('field-selection-value', '6–11');
+      // Detox taps the field before typing, which puts the cursor at the end
+      await inputOf('field-selection').typeText('!');
+      await expectText('field-selection-value', '12–12');
+      await element(by.id('toolbar-selection-done')).tap();
+      await pause(500);
+    }
   });
 
   it('should test Theme functionality', async () => {

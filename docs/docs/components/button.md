@@ -30,8 +30,8 @@ import { Button } from 'react-native-platform-components';
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `label`              | `string`                                                 | Button text. Omit for an icon-only button                                                |
 | `icon`               | `PlatformIcon`                                           | Icon next to the label, or alone. See [Icons](#icons)                                    |
-| `iconPosition`       | `'leading' \| 'trailing'`                                | Side of the label the icon sits on. See [Icons](#icons). Default: `'leading'`            |
-| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
+| `iconPosition`       | `'leading' \| 'trailing' \| 'top' \| 'bottom'`            | Where the icon sits relative to the label. See [Icon placement](#icon-placement). Default: `'leading'` |
+| `variant`            | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass' \| 'clearGlass' \| 'prominentClearGlass'` | Emphasis. See [Variants](#variants). Default: `'filled'`                                 |
 | `size`               | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size. See [Sizes](#sizes). Default: `'small'`                                            |
 | `shape`              | `'round' \| 'square'`                                    | Corner shape. See [Shape](#shape). Default: platform default                             |
 | `cornerRadius`       | `number`                                                 | Corner radius in points (dp). Overrides `shape`. See [Shape](#shape)                     |
@@ -44,8 +44,20 @@ import { Button } from 'react-native-platform-components';
 | `labelStyle`         | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font. See [Styling](#styling)                                                      |
 | `maxFontSizeMultiplier` | `number`                                              | Cap on the label's text-size scaling, as on `Text`. `0` / unset = no cap. See [Styling](#styling) |
 | `accessibilityLabel` | `string`                                                 | Screen-reader label. Defaults to `label`; give icon-only buttons one                     |
-| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played on a press, not while `loading` or disabled. See [Haptics](/guides/haptics). Default: none |
-| `onPress`            | `() => void`                                             | Called when the button is pressed                                                        |
+| `onPress`            | `() => void`                                             | Called when the button is pressed. A button with a `menu` opens the menu instead         |
+| `selected`           | `boolean`                                                | Makes the button a toggle, with this as its controlled state. See [Toggle](#toggle)     |
+| `onSelectedChange`   | `(selected: boolean) => void`                            | Called when a toggle is pressed, with the state it asks for                             |
+| `menu`               | `ContextMenuAction[]`                                    | A menu the button opens when pressed. See [Menu](#menu)                                 |
+| `onMenuSelect`       | `(id: string, title: string) => void`                    | Called when a menu item is picked                                                       |
+| `onMenuOpen`         | `() => void`                                             | Called when the menu opens                                                              |
+| `onMenuClose`        | `() => void`                                             | Called when the menu closes                                                             |
+
+### iOS Props (`ios`)
+
+| Prop                  | Type                 | Description                                                                                                 |
+| --------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `symbolEffect`        | `'bounce' \| 'pulse' \| 'variableColor' \| 'wiggle' \| 'rotate' \| 'breathe'` | Animates the SF Symbol icon. See [Symbol effects](#symbol-effects-ios) |
+| `symbolEffectTrigger` | `number \| string`   | Plays `symbolEffect` once each time it changes. Unset, the effect repeats                                   |
 
 ### Android Props (`android`)
 
@@ -69,19 +81,28 @@ Five levels of emphasis, from highest to lowest. Android uses the Material 3 Exp
 
 #### Liquid Glass
 
-Two more variants give the iOS 26 Liquid Glass buttons. Earlier iOS versions and Android fall back to the closest regular style, so the same code works everywhere.
+Four more variants give the iOS 26 Liquid Glass buttons. Earlier iOS versions and Android fall back to the closest regular style, so the same code works everywhere.
 
-| Variant          | iOS 26+              | Before iOS 26 | Android |
-| ---------------- | -------------------- | ------------- | ------- |
-| `glass`          | `.glass()`           | `.gray()`     | Tonal   |
-| `prominentGlass` | `.prominentGlass()`  | `.filled()`   | Filled  |
+| Variant               | iOS 26+                  | Before iOS 26 | Android |
+| --------------------- | ------------------------ | ------------- | ------- |
+| `glass`               | `.glass()`               | `.gray()`     | Tonal   |
+| `prominentGlass`      | `.prominentGlass()`      | `.filled()`   | Filled  |
+| `clearGlass`          | `.clearGlass()`          | `.gray()`     | Tonal   |
+| `prominentClearGlass` | `.prominentClearGlass()` | `.filled()`   | Filled  |
 
-`color` tints the prominent glass (`baseBackgroundColor`) and `tintColor` colors the label and icon, as for `filled`. Pressed and disabled states follow the system glass behavior. In a [ButtonGroup](/components/buttongroup), selected glass buttons use the prominent glass style.
+`color` tints the prominent glass (`baseBackgroundColor`) and `tintColor` colors the label and icon, as for `filled`. Pressed and disabled states follow the system glass behavior. In a [ButtonGroup](/components/buttongroup), selected glass buttons (clear or not) use the prominent glass style.
+
+**Clear glass** is the more transparent Liquid Glass, for buttons over photos, maps and video, where the regular glass would hide too much of the content. UIKit draws `prominentClearGlass` untinted unless you give it a `color`.
 
 ```tsx
 <Button label="Done" variant="prominentGlass" color="#0A84FF" tintColor="white" />
 <Button icon="xmark" variant="glass" accessibilityLabel="Close" />
+<Button icon="square.and.arrow.up" variant="clearGlass" accessibilityLabel="Share" />
 ```
+
+| Clear glass (top) and regular glass (bottom) over a photo, iOS 26 |
+| --- |
+| ![Clear glass buttons above regular glass buttons over a photo on iOS 26](/img/components/button/clear-glass-ios.webp) |
 
 ### Sizes
 
@@ -149,7 +170,104 @@ The icon sits before the label by default. `iconPosition="trailing"` puts it aft
 <Button label="Next" icon="chevron.right" iconPosition="trailing" />
 ```
 
+#### Icon placement
+
+`iconPosition="top"` and `"bottom"` stack the icon above or below the label, and the button measures itself taller to fit both.
+
+| `iconPosition` | iOS (`imagePlacement`) | Android (`iconGravity`) |
+| -------------- | ---------------------- | ----------------------- |
+| `leading`      | `.leading`             | `start`                 |
+| `trailing`     | `.trailing`            | `textEnd`               |
+| `top`          | `.top`                 | `textTop`               |
+| `bottom`       | `.bottom`              | `textTop`: Material has no bottom gravity, so the icon goes on top |
+
+```tsx
+<Button label="Share" icon="square.and.arrow.up" iconPosition="top" variant="tonal" />
+```
+
+| iOS 26 | Android |
+| --- | --- |
+| ![Buttons with the icon above and below the label on iOS 26](/img/components/button/icon-top-ios.webp) | ![Buttons with the icon above the label on Android](/img/components/button/icon-top-android.webp) |
+
 A button with an icon and no label is an **icon button**: on Android it uses the Material 3 Expressive icon button styles (a square container that keeps the `variant`), on iOS an image-only `UIButton`. Always give it an `accessibilityLabel`.
+
+### Toggle
+
+`selected` makes the button a toggle, like Bold in a text editor or a favorite star. It is controlled: a press calls `onSelectedChange` with the opposite of `selected`, and the button shows the new state once `selected` changes. A press the parent doesn't take goes back, as React Native's `Switch` does. `onPress` is still called on every press.
+
+```tsx
+const [bold, setBold] = useState(false);
+
+<Button label="Bold" selected={bold} onSelectedChange={setBold} />
+```
+
+| Platform | Toggle |
+| -------- | ------ |
+| iOS      | `changesSelectionAsPrimaryAction` and `isSelected`, with UIKit's selected look for the configuration: `tonal` becomes filled, and `outlined`, `text`, `elevated` and `glass` become tinted. UIKit has no selected look for `filled`, `prominentGlass` and the clear glass variants, so while off those show `.gray()`, `.glass()` and `.clearGlass()`, and selected clear glass takes `.prominentGlass()`. VoiceOver reads the selected state. |
+| Android  | A checkable `MaterialButton` (`isCheckable`, `isChecked`): the Material 3 toggle button colors, and the Expressive shape morph between the round and square shapes. TalkBack reads the checked state. |
+
+| iOS 26 | Android |
+| --- | --- |
+| ![Toggle buttons on and off on iOS 26](/img/components/button/toggle-ios.webp) | ![Toggle buttons on and off on Android](/img/components/button/toggle-android.webp) |
+
+### Menu
+
+`menu` gives the button a menu that opens when it is pressed, in place of `onPress`, with the same items as [ContextMenu](/components/contextmenu): sections, submenus, icons, checkmarks and destructive actions. `onMenuSelect` reports the picked item's `id` and `title`.
+
+```tsx
+<Button
+  label="Sort"
+  icon="arrow.up.arrow.down"
+  variant="tonal"
+  menu={[
+    {
+      id: 'sort-by',
+      title: 'Sort by',
+      displayInline: true,
+      subactions: [
+        { id: 'name', title: 'Name', state: sortBy === 'name' ? 'on' : 'off' },
+        { id: 'date', title: 'Date', state: sortBy === 'date' ? 'on' : 'off' },
+      ],
+    },
+    { id: 'reset', title: 'Reset', attributes: { destructive: true } },
+  ]}
+  onMenuSelect={(id) => setSortBy(id)}
+/>
+```
+
+| Platform | Menu |
+| -------- | ---- |
+| iOS      | `UIButton.menu` with `showsMenuAsPrimaryAction`, so the system menu opens from the button on touch down. `keepsMenuPresented` actions update the open menu in place |
+| Android  | A `PopupMenu` anchored to the button, with icons shown. It closes on every pick, as Android menus do |
+
+A button with a menu isn't a toggle: a press opens the menu, so leave `selected` unset. The menu stays closed while the button is `disabled` or `loading`.
+
+| iOS 26 | Android |
+| --- | --- |
+| ![The button's menu open on iOS 26](/img/components/button/menu-ios.webp) | ![The button's popup menu open on Android](/img/components/button/menu-android.webp) |
+
+### Symbol effects (iOS)
+
+`ios.symbolEffect` animates an SF Symbol icon with `UIImageView.addSymbolEffect`. Without `ios.symbolEffectTrigger` the effect repeats until you unset it, for a state such as syncing or recording. With a trigger, it plays once each time the trigger changes (the first value doesn't play), for feedback on an event:
+
+```tsx
+// Repeats while syncing
+<Button label="Syncing" icon="arrow.triangle.2.circlepath" ios={{ symbolEffect: syncing ? 'rotate' : undefined }} />
+
+// Bounces once per new message
+<Button icon="bell" accessibilityLabel="Inbox" ios={{ symbolEffect: 'bounce', symbolEffectTrigger: unread }} />
+```
+
+| Effect          | iOS  | Repeating                  | Once |
+| --------------- | ---- | -------------------------- | ---- |
+| `bounce`        | 17+  | 18+ (repeated bounce on 17) | ✓   |
+| `pulse`         | 17+  | ✓                          | ✓    |
+| `variableColor` | 17+  | ✓                          | ✓    |
+| `wiggle`        | 18+  | ✓                          | ✓    |
+| `rotate`        | 18+  | ✓                          | ✓    |
+| `breathe`       | 18+  | ✓                          | ✓    |
+
+Effects the running iOS doesn't have do nothing, and so do image icons (only SF Symbols animate). A repeating effect stops while `loading`. Android has no symbol effects; the prop is ignored there.
 
 ### Styling
 

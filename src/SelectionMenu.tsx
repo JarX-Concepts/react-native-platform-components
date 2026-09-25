@@ -3,14 +3,40 @@ import React, { useCallback, useMemo } from 'react';
 import { Platform, type ViewProps } from 'react-native';
 
 import NativeSelectionMenu, {
-  type SelectionMenuOption,
+  type SelectionMenuNativeOption,
   type SelectionMenuSelectEvent,
 } from './SelectionMenuNativeComponent';
-
-export type { SelectionMenuOption };
+import { resolveIcon, type PlatformIcon } from './icons';
 
 import type { Haptics } from './haptics';
 import type { AndroidMaterialMode, Presentation } from './sharedTypes';
+
+/**
+ * A single option: a label and its data payload, with an optional icon and
+ * second line.
+ */
+export interface SelectionMenuOption {
+  /** Display text */
+  label: string;
+  /** Payload returned by `onSelect`; also what `selected` matches */
+  data: string;
+  /**
+   * Secondary text under the label.
+   * - iOS: `UIAction.subtitle` in the system menu.
+   * - Android: a second line in the rows of the embedded `m3` dropdown.
+   *   The modal `PopupMenu` and the `system` Spinner have one line per item,
+   *   so it's not shown there.
+   */
+  subtitle?: string;
+  /**
+   * Icon next to the label. See {@link PlatformIcon}.
+   * - iOS: `UIAction.image`.
+   * - Android: the modal `PopupMenu` item icon and a leading icon in the
+   *   rows of the embedded `m3` dropdown. The `system` Spinner shows labels
+   *   only.
+   */
+  icon?: PlatformIcon;
+}
 
 export interface SelectionMenuProps extends ViewProps {
   /** Options are label + data (payload) */
@@ -63,10 +89,31 @@ export interface SelectionMenuProps extends ViewProps {
   android?: {
     /** Material preference ('system' | 'm3'). */
     material?: AndroidMaterialMode;
+    /**
+     * Embedded `m3` dropdown only: the field accepts typing and filters the
+     * options by label (case-insensitive prefix of the label or of any word
+     * in it). Picking an option still goes through `onSelect`, and `selected`
+     * stays the source of truth: when the field loses focus, its text goes
+     * back to the selected option's label (or empty, showing the
+     * placeholder). Default `false`.
+     */
+    searchable?: boolean;
   };
 
   /** Test identifier */
   testID?: string;
+}
+
+/** Flattens options for native: icons resolved, every field set. */
+function normalizeSelectionMenuOptions(
+  options: readonly SelectionMenuOption[]
+): SelectionMenuNativeOption[] {
+  return options.map((option) => ({
+    label: option.label,
+    data: option.data,
+    subtitle: option.subtitle ?? '',
+    ...resolveIcon(option.icon),
+  }));
 }
 
 function normalizeSelectedData(selected: string | null): string {
@@ -104,6 +151,11 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     [selected]
   );
 
+  const nativeOptions = useMemo(
+    () => normalizeSelectionMenuOptions(options),
+    [options]
+  );
+
   const nativeVisible = useMemo(
     () => normalizeNativeVisible(presentation, visible),
     [presentation, visible]
@@ -124,7 +176,10 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   // Keep android prop stable and codegen-friendly (string unions live in native spec).
   const nativeAndroid = useMemo(() => {
     if (!android) return undefined;
-    return { material: android.material };
+    return {
+      material: android.material,
+      searchable: android.searchable ? 'true' : 'false',
+    };
   }, [android]);
 
   // On Android, force a fresh native view when structural props change so the
@@ -138,7 +193,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     <NativeSelectionMenu
       key={remountKey}
       style={style}
-      options={options}
+      options={nativeOptions}
       selectedData={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
       placeholder={placeholder}
