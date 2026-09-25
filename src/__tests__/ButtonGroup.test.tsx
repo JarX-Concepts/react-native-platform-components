@@ -67,7 +67,9 @@ describe('ButtonGroup', () => {
     expect(props.selectedValues).toEqual([]);
     expect(props.selectionRequired).toBe('false');
     expect(props.interactivity).toBe('enabled');
-    expect(props.android).toEqual({ overflow: 'none', material: 'expressive' });
+    expect(props.android).toEqual({ material: 'expressive' });
+    expect(props.overflow).toBe('none');
+    expect(props.split).toBeUndefined();
     expect(props.onButtonPress).toBeUndefined();
     expect(props.onGroupSelectionChange).toBeUndefined();
     act(() => tree.unmount());
@@ -139,7 +141,7 @@ describe('ButtonGroup', () => {
     act(() => tree.unmount());
   });
 
-  it('maps android overflow and colors', () => {
+  it('maps overflow, the deprecated android overflow and colors', () => {
     const tree = render(
       <ButtonGroup
         buttons={BUTTONS}
@@ -152,7 +154,8 @@ describe('ButtonGroup', () => {
     const props = lastNativeProps();
     expect(props.spacing).toBe(4);
     expect(props.interactivity).toBe('disabled');
-    expect(props.android).toEqual({ overflow: 'menu', material: 'expressive' });
+    expect(props.overflow).toBe('menu');
+    expect(props.android).toEqual({ material: 'expressive' });
     expect(props.androidRippleColor).toBe('red');
     expect(props.androidStrokeColor).toBe('blue');
     act(() => tree.unmount());
@@ -162,10 +165,21 @@ describe('ButtonGroup', () => {
     const tree = render(
       <ButtonGroup buttons={BUTTONS} android={{ material: 'm3' }} />
     );
-    expect(lastNativeProps().android).toEqual({
-      overflow: 'none',
-      material: 'm3',
-    });
+    expect(lastNativeProps().android).toEqual({ material: 'm3' });
+    act(() => tree.unmount());
+  });
+
+  it('prefers the cross-platform overflow over the android alias', () => {
+    const tree = render(
+      <ButtonGroup
+        buttons={BUTTONS}
+        overflow="menu"
+        android={{ overflow: 'wrap' }}
+      />
+    );
+    expect(lastNativeProps().overflow).toBe('menu');
+    act(() => tree.update(<ButtonGroup buttons={BUTTONS} overflow="wrap" />));
+    expect(lastNativeProps().overflow).toBe('wrap');
     act(() => tree.unmount());
   });
 });

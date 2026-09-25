@@ -212,6 +212,16 @@ const tapOutsideMenu = async () => {
   }
 };
 
+// An item of an open menu. On iOS it is looked up inside the menu, clear of
+// a (hidden) button with the same title, such as one folded into an overflow
+// menu.
+const menuItem = (label: string) =>
+  isAndroid()
+    ? element(by.text(label))
+    : element(
+        by.text(label).withAncestor(by.type('_UIContextMenuContainerView'))
+      );
+
 // The demo's ActionField carries its testID on the pressable around the text
 const expectFieldText = async (testID: string, text: string) => {
   await waitFor(element(by.text(text).withAncestor(by.id(testID))))
@@ -1280,6 +1290,28 @@ describe('Platform Components Example', () => {
       await element(by.id('button-symbol-bounce')).tap();
       await expectText('button-bounce-count', '1');
     }
+
+    // Split button: the main button presses, the menu button opens its menu
+    await scrollToId('split-value');
+    await element(by.text('Reply')).atIndex(0).tap();
+    await expectText('split-value', 'reply');
+    await element(by.label('Reply options')).atIndex(0).tap();
+    await waitFor(menuItem('Forward')).toBeVisible().withTimeout(6000);
+    await menuItem('Forward').tap();
+    await expectText('split-value', 'forward');
+
+    // Buttons that don't fit fold into an overflow menu; a pick is a press
+    await scrollToId('overflow-value');
+    await element(
+      by
+        .label(isAndroid() ? 'Overflow menu' : 'More')
+        .withAncestor(by.id('button-group-overflow'))
+    )
+      .atIndex(0)
+      .tap();
+    await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
+    await menuItem('Code').tap();
+    await expectText('overflow-value', 'code');
     await scrollToId('size-picker', 'up');
 
     // Sizes and shapes: cycle the size picker, then square corners. Larger

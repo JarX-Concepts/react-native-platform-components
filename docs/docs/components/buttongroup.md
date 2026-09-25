@@ -1,6 +1,6 @@
 ---
 title: "ButtonGroup"
-description: "Native button group for React Native: Material 3 Expressive standard and connected button groups on Android, a row of UIButtons on iOS, with single and multiple selection."
+description: "Native button group and split button for React Native: Material 3 Expressive standard and connected button groups and MaterialSplitButton on Android, a row of UIButtons on iOS, with single and multiple selection and an overflow menu."
 ---
 
 <table>
@@ -14,7 +14,7 @@ description: "Native button group for React Native: Material 3 Expressive standa
   </tr>
 </table>
 
-A row of related buttons using **MaterialButtonGroup** and **MaterialButtonToggleGroup** (Material 3 Expressive) on Android and a row of **UIButton**s on iOS. Use it for a set of actions, or for single / multiple selection.
+A row of related buttons using **MaterialButtonGroup** and **MaterialButtonToggleGroup** (Material 3 Expressive) on Android and a row of **UIButton**s on iOS. Use it for a set of actions, or for single / multiple selection. Buttons that don't fit can fold into an [overflow menu](#overflow). For a main action with an attached menu, use [SplitButton](#splitbutton).
 
 ```tsx
 import { ButtonGroup } from 'react-native-platform-components';
@@ -46,7 +46,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | Prop                | Type                                                     | Description                                                                                                  |
 | ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `buttons`           | `ButtonGroupButton[]`                                    | Buttons to display                                                                                           |
-| `variant`           | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass'` | Emphasis of every button. See [Button variants](/components/button#variants). Default: `'outlined'`          |
+| `variant`           | `'filled' \| 'tonal' \| 'outlined' \| 'text' \| 'elevated' \| 'glass' \| 'prominentGlass' \| 'clearGlass' \| 'prominentClearGlass'` | Emphasis of every button. See [Button variants](/components/button#variants). Default: `'outlined'`          |
 | `size`              | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size of every button. Default: `'small'`                                                                     |
 | `shape`             | `'round' \| 'square'`                                    | Corner shape of every button. Default: platform default                                                      |
 | `connected`         | `boolean`                                                | Connected group. See [Standard and connected](#standard-and-connected). Default: `true` when selecting       |
@@ -58,7 +58,8 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `color`             | `ColorValue`                                             | Container (background) color of the buttons                                                                  |
 | `tintColor`         | `ColorValue`                                             | Label and icon color of the buttons                                                                          |
 | `labelStyle`        | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font                                                                                                   |
-| `onPress`           | `(value: string, index: number) => void`                 | Called when a button is pressed, in every selection mode                                                     |
+| `overflow`          | `'none' \| 'menu' \| 'wrap'`                             | What happens to buttons that don't fit. See [Overflow](#overflow). Default: `'none'`                         |
+| `onPress`           | `(value: string, index: number) => void`                 | Called when a button is pressed (or picked from the overflow menu), in every selection mode                 |
 | `onSelectionChange` | `(values: string[]) => void`                             | Called when the selection changes, with the selected values in button order                                  |
 
 ### ButtonGroupButton
@@ -75,7 +76,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 
 | Prop          | Type                           | Description                                                                                                                   |
 | ------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `overflow`    | `'none' \| 'menu' \| 'wrap'`   | Buttons that don't fit are clipped (default), moved into an overflow menu (`MaterialButtonGroup` overflow), or wrapped onto more rows |
+| `overflow`    | `'none' \| 'menu' \| 'wrap'`   | **Deprecated**: use the cross-platform [`overflow`](#overflow) prop, which wins when both are set |
 | `rippleColor` | `ColorValue`                   | Ripple shown while pressing a button                                                                                          |
 | `strokeColor` | `ColorValue`                   | Outline color (`outlined` variant)                                                                                            |
 | `material`    | `'m3' \| 'expressive'`        | Material style: Material 3 Expressive (default) or the classic Material 3 group, which has one size and shape. See [Button](/components/button#material-style) |
@@ -115,6 +116,99 @@ const [format, setFormat] = useState<string[]>(['bold']);
 />
 ```
 
+### Overflow
+
+`overflow` decides what happens to the buttons that don't fit the group's width:
+
+| `overflow` | Android | iOS |
+| ---------- | ------- | --- |
+| `'none'` (default) | Clipped | Clipped |
+| `'menu'` | `MaterialButtonGroup` overflow mode: the trailing buttons move into the group's overflow menu (a `PopupMenu` behind a ⋮ button) | The trailing buttons fold into a "…" button (`ellipsis`) at the end of the row, with a `UIMenu` of the hidden buttons |
+| `'wrap'` | The buttons wrap onto more rows | Clipped: UIKit has no wrapping button row |
+
+A pick from the overflow menu is a press of that button: `onPress` is called with its value and index, and in a selecting group the selection changes as for a tap. The menu shows each hidden button's label (or `accessibilityLabel`), its icon, its disabled state, and on iOS a checkmark on the selected ones.
+
+The group reports the width of all its buttons, so it takes the space its container gives it and folds what doesn't fit. On iOS the fold is recomputed on every layout, so a wider container (rotation, iPad split view) shows more buttons again. `android.overflow` still works as a deprecated alias.
+
+```tsx
+<ButtonGroup
+  buttons={[
+    { label: 'Undo', value: 'undo' },
+    { label: 'Redo', value: 'redo' },
+    { label: 'Indent', value: 'indent' },
+    { label: 'Outdent', value: 'outdent' },
+    { label: 'Link', value: 'link' },
+    { label: 'Quote', value: 'quote' },
+    { label: 'Code', value: 'code' },
+  ]}
+  variant="tonal"
+  overflow="menu"
+  onPress={(value) => run(value)}
+/>
+```
+
+| iOS 26 | iOS 26, menu open | Android, menu open |
+| --- | --- | --- |
+| ![Four buttons and a "…" button on iOS 26](/img/components/buttongroup/overflow-ios.webp) | ![The overflow menu with the hidden buttons on iOS 26](/img/components/buttongroup/overflow-menu-ios.webp) | ![Material's overflow menu with the hidden buttons on Android](/img/components/buttongroup/overflow-menu-android.webp) |
+
 ### Styling
 
 `color`, `tintColor`, `labelStyle` and the Android colors apply to every button; see [Button styling](/components/button#styling). Without them the buttons take their colors from the theme, including the brand color set with [`useNativeTheme`](/guides/theming) on Android.
+
+## SplitButton
+
+A main action with an attached menu, like "Send ▾": the main button calls `onPress`, and the trailing button opens a menu with the same items as [ContextMenu](/components/contextmenu).
+
+```tsx
+import { SplitButton } from 'react-native-platform-components';
+
+<SplitButton
+  label="Reply"
+  menu={[
+    { id: 'reply-all', title: 'Reply All', image: { ios: 'arrowshape.turn.up.left.2', android: 'reply_all' } },
+    { id: 'forward', title: 'Forward', image: { ios: 'arrowshape.turn.up.right', android: 'forward' } },
+    { id: 'delete', title: 'Delete', image: { ios: 'trash', android: 'delete' }, attributes: { destructive: true } },
+  ]}
+  menuAccessibilityLabel="Reply options"
+  onPress={reply}
+  onMenuSelect={(id) => handle(id)}
+/>
+```
+
+| Platform | Split button |
+| -------- | ------------ |
+| Android  | Material 3 `MaterialSplitButton`: the main button and a trailing button with Material's chevron (`m3_split_button_chevron_avd`), joined with a small gap and small inner corners. The trailing button is checked while the `PopupMenu` is open, which turns the chevron up and rounds its inner corners, as Material's split button does; it keeps the main button's colors. Spacing and chevron size follow the Material split button tokens for each `size` |
+| iOS      | UIKit has no split button, so it is a `UIButton` joined to a chevron (`chevron.down`) `UIButton` that shows its `UIMenu` as the primary action (`showsMenuAsPrimaryAction`), 2pt apart like a connected [ButtonGroup](#standard-and-connected). Both take the variant's `UIButton.Configuration` |
+
+It is a separate component rather than a ButtonGroup option because a split button is one action, not a group: it has one label and icon, no selection and no overflow. It is built on the same native view as ButtonGroup.
+
+| iOS 26 | iOS 26, menu open |
+| --- | --- |
+| ![Split buttons in the filled, tonal and outlined variants on iOS 26](/img/components/buttongroup/split-ios.webp) | ![A split button's menu open on iOS 26](/img/components/buttongroup/split-menu-ios.webp) |
+
+| Android | Android, menu open |
+| --- | --- |
+| ![Material split buttons in the filled, tonal and outlined variants on Android](/img/components/buttongroup/split-android.webp) | ![A Material split button's menu open, the chevron turned up, on Android](/img/components/buttongroup/split-menu-android.webp) |
+
+### Props
+
+| Prop                     | Type                                                     | Description                                                                                  |
+| ------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `label`                  | `string`                                                 | Text of the main button                                                                      |
+| `icon`                   | `PlatformIcon`                                           | Icon of the main button. See [Button icons](/components/button#icons)                        |
+| `accessibilityLabel`     | `string`                                                 | Screen-reader label of the main button. Defaults to `label`                                  |
+| `menu`                   | `ContextMenuAction[]`                                    | The menu the trailing button opens (required)                                                |
+| `menuAccessibilityLabel` | `string`                                                 | Screen-reader label of the trailing button. Default: `'More options'`                        |
+| `variant`                | `'filled' \| 'tonal' \| 'outlined' \| 'elevated' \| 'glass' \| 'prominentGlass' \| 'clearGlass' \| 'prominentClearGlass'` | Emphasis. `text` has no container to split. Default: `'filled'` |
+| `size`                   | `'xsmall' \| 'small' \| 'medium' \| 'large' \| 'xlarge'` | Size. Default: `'small'`                                                                  |
+| `disabled`               | `boolean`                                                | Disables both buttons                                                                        |
+| `color`                  | `ColorValue`                                             | Container (background) color                                                                 |
+| `tintColor`              | `ColorValue`                                             | Label and icon color                                                                         |
+| `labelStyle`             | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Label font                                                                                   |
+| `onPress`                | `() => void`                                             | Called when the main button is pressed                                                       |
+| `onMenuSelect`           | `(id: string, title: string) => void`                    | Called when a menu item is picked                                                            |
+| `onMenuOpen`             | `() => void`                                             | Called when the menu opens                                                                   |
+| `onMenuClose`            | `() => void`                                             | Called when the menu closes                                                                  |
+| `android`                | `{ rippleColor?, strokeColor?, material? }`              | As on [Button](/components/button#android-props-android)                                     |
+
+SplitButton has no `shape` prop: Material's split button is always round on the outside, and on iOS the buttons keep UIKit's corner style. On the web only the main button renders.

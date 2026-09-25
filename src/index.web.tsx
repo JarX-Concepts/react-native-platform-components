@@ -13,6 +13,7 @@ export type * from './TabBar';
 export type * from './NavigationRail';
 export type * from './Button';
 export type * from './ButtonGroup';
+export type * from './SplitButton';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -25,6 +26,7 @@ export * from './labelStyle';
 
 export { Button } from './web/Button';
 export { ButtonGroup } from './web/ButtonGroup';
+export { SplitButton } from './web/SplitButton';
 export { DatePicker } from './web/DatePicker';
 export {
   DateRangePicker,

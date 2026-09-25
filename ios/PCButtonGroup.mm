@@ -21,8 +21,10 @@
 #import "PCButtonGroupComponentDescriptors-custom.h"
 #import "PCButtonGroupShadowNode-custom.h"
 #import "PCButtonGroupState-custom.h"
+#import "PCMenuItems.h"
 
 using namespace facebook::react;
+using namespace platformcomponents;
 
 namespace {
 static inline bool ButtonsEqual(
@@ -137,6 +139,39 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
       eventEmitter->onGroupSelectionChange(payload);
     };
 
+    _view.onMenuSelect = ^(NSString *itemId, NSString *title) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonGroupEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuSelect({.id = itemId.UTF8String, .title = title.UTF8String});
+    };
+
+    _view.onMenuOpen = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonGroupEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuOpen({});
+    };
+
+    _view.onMenuClose = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonGroupEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuClose({});
+    };
+
     _view.onNeedsRemeasure = ^{
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
@@ -150,6 +185,11 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
            oldProps:(Props::Shared const &)oldProps {
   const auto &newProps = *std::static_pointer_cast<const PCButtonGroupProps>(props);
   const auto prevProps = std::static_pointer_cast<const PCButtonGroupProps>(oldProps);
+
+  // split: 'true' | 'false'. Before the buttons, which it shapes.
+  if (!prevProps || newProps.split != prevProps->split) {
+    _view.split = (newProps.split == "true");
+  }
 
   // buttons: [{label, value, disabled, iconType, iconName, iconUri, iconScale,
   //            iconTinted, accessibilityLabel}]
@@ -219,6 +259,20 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
   if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
     _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  }
+
+  // overflow: 'none' | 'menu' | 'wrap' (Android only)
+  if (!prevProps || newProps.overflow != prevProps->overflow) {
+    _view.overflow = NSStringFromStd(newProps.overflow, @"none");
+  }
+
+  // menu: the split button's flattened menu items
+  if (!prevProps || !PCMenuItemsEqual(newProps.menu, prevProps->menu)) {
+    _view.menuItems = PCMenuItemsToArray(newProps.menu);
+  }
+
+  if (!prevProps || newProps.menuAccessibilityLabel != prevProps->menuAccessibilityLabel) {
+    _view.menuAccessibilityLabel = NSStringFromStd(newProps.menuAccessibilityLabel, @"");
   }
 
   // androidRippleColor / androidStrokeColor / android: Android only
