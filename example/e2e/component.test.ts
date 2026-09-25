@@ -248,6 +248,46 @@ const menuItem = (label: string) =>
         by.text(label).withAncestor(by.type('_UIContextMenuContainerView'))
       );
 
+// Long-presses a context menu target until the menu shows `item`. On a slow
+// CI simulator the first long press can land while the page is still
+// settling (just after switching demos) and open nothing; one longer press
+// is retried before failing.
+const openMenuByLongPress = async (targetID: string, item: string) => {
+  for (let attempt = 1; ; attempt++) {
+    await element(by.id(targetID)).longPress(attempt === 1 ? undefined : 1500);
+    try {
+      await waitFor(element(by.text(item)))
+        .toBeVisible()
+        .withTimeout(6000);
+      return;
+    } catch (error) {
+      if (attempt >= 2) throw error;
+    }
+  }
+};
+
+// Swipes the picker wheel at `wheelX` (a fraction of the picker's width)
+// until the value it reports changes from `unset`. A
+// single short swipe on a slow CI simulator sometimes settles back on the same
+// row; three swipes that change nothing still fail.
+const swipeWheelUntilSet = async (
+  valueID: string,
+  wheelX: number,
+  unset = '(none)'
+) => {
+  for (let attempt = 1; ; attempt++) {
+    await element(by.id('date-picker')).swipe('up', 'slow', 0.15, wheelX, 0.5);
+    try {
+      await waitFor(element(by.id(valueID)))
+        .not.toHaveText(unset)
+        .withTimeout(5000);
+      return;
+    } catch (error) {
+      if (attempt >= 3) throw error;
+    }
+  }
+};
+
 // The demo's ActionField carries its testID on the pressable around the text
 const expectFieldText = async (testID: string, text: string) => {
   await waitFor(element(by.text(text).withAncestor(by.id(testID))))
@@ -478,10 +518,7 @@ describe('Platform Components Example', () => {
     // poll
     await device.disableSynchronization();
     try {
-      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.7, 0.5);
-      await waitFor(element(by.id('countdown-duration')))
-        .not.toHaveText('(none)')
-        .withTimeout(5000);
+      await swipeWheelUntilSet('countdown-duration', 0.7);
 
       // Month and year wheels (iOS 17.4+), reporting the month picked
       await element(by.id('mode-menu')).tap();
@@ -496,10 +533,7 @@ describe('Platform Components Example', () => {
         .toBeVisible()
         .withTimeout(5000);
       await pause(800);
-      await element(by.id('date-picker')).swipe('up', 'slow', 0.15, 0.3, 0.5);
-      await waitFor(element(by.id('year-month-value')))
-        .not.toHaveText('(none)')
-        .withTimeout(5000);
+      await swipeWheelUntilSet('year-month-value', 0.3);
       // The pending block belongs to the touch-tracking run loop mode; a
       // drag on the list runs that mode again and lets it go
       await element(by.id('demo-scroll'))
@@ -667,13 +701,8 @@ describe('Platform Components Example', () => {
     // Verify we're on the ContextMenu screen
     await expect(element(by.text('Long-press me'))).toBeVisible();
 
-    // Test basic context menu with long-press
-    await element(by.id('context-menu-basic')).longPress();
-
-    // Wait for menu to appear and verify actions are visible
-    await waitFor(element(by.text('Copy')))
-      .toBeVisible()
-      .withTimeout(6000);
+    // Long-press the basic menu and check its actions
+    await openMenuByLongPress('context-menu-basic', 'Copy');
     await expect(element(by.text('Paste'))).toBeVisible();
     await expect(element(by.text('Share'))).toBeVisible();
 
@@ -696,12 +725,7 @@ describe('Platform Components Example', () => {
     }
 
     // Test context menu with submenu
-    await element(by.id('context-menu-submenu')).longPress();
-
-    // Wait for menu to appear
-    await waitFor(element(by.text('Edit')))
-      .toBeVisible()
-      .withTimeout(6000);
+    await openMenuByLongPress('context-menu-submenu', 'Edit');
 
     // On iOS, tap Edit to see submenu; on Android submenus work differently
     if (!isAndroid()) {
@@ -717,11 +741,7 @@ describe('Platform Components Example', () => {
     await pause(500);
 
     // Test destructive actions
-    await element(by.id('context-menu-destructive')).longPress();
-
-    await waitFor(element(by.text('Delete Forever')))
-      .toBeVisible()
-      .withTimeout(6000);
+    await openMenuByLongPress('context-menu-destructive', 'Delete Forever');
 
     // Dismiss the menu by tapping outside or selecting an action
     await element(by.text('Archive')).atIndex(0).tap();
@@ -782,11 +802,7 @@ describe('Platform Components Example', () => {
       await element(by.id('preview-switch')).tap();
 
       // Long-press with preview enabled
-      await element(by.id('context-menu-basic')).longPress();
-
-      await waitFor(element(by.text('Copy')))
-        .toBeVisible()
-        .withTimeout(6000);
+      await openMenuByLongPress('context-menu-basic', 'Copy');
 
       // Dismiss
       await element(by.text('Share')).atIndex(0).tap();
@@ -795,10 +811,7 @@ describe('Platform Components Example', () => {
     // Inline sections, an image-asset icon (Remind Me) and a submenu inside a
     // section
     await scrollToId('context-menu-sections');
-    await element(by.id('context-menu-sections')).longPress();
-    await waitFor(element(by.text('Remind Me')))
-      .toBeVisible()
-      .withTimeout(6000);
+    await openMenuByLongPress('context-menu-sections', 'Remind Me');
     await element(by.text('Send To')).atIndex(0).tap();
     await waitFor(element(by.text('Mail')))
       .toBeVisible()
@@ -1363,7 +1376,9 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('button-last-pressed'))).toHaveText(
       'clear glass'
     );
-  });
+    // Toggles, menus, split buttons and overflow: about 50-80 s on CI's
+    // iOS simulator, over 120 s on a slow runner
+  }, 180000);
 
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
