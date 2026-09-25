@@ -886,8 +886,9 @@ describe('Platform Components Example', () => {
     await element(by.id('tab-search')).tap();
     await expectText('tab-bar-value', 'search');
     await pause(900);
-    // Five bars, a mini player and the Android controls: a long flow
-  }, 240000);
+    // Five bars, a mini player and the Android controls: a long flow, near
+    // four minutes on a busy Android emulator
+  }, 300000);
 
   it('should test Button functionality', async () => {
     await selectDemo('Button');
