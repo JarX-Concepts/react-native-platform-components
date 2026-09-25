@@ -362,6 +362,20 @@ describe('menus, pickers and containers (mock)', () => {
     expect(onPressAction).toHaveBeenCalledWith('delete', 'Delete');
   });
 
+  it('DateRangePicker renders a view that takes onConfirm', () => {
+    expect(Mock.isDateRangePickerSupported).toBe(true);
+    const onConfirm = jest.fn();
+    const tree = render(
+      <Mock.DateRangePicker testID="range" visible onConfirm={onConfirm} />
+    );
+    const range = {
+      startDate: new Date(2026, 8, 24),
+      endDate: new Date(2026, 8, 28),
+    };
+    fire(byTestID(tree, 'range'), 'confirm', range);
+    expect(onConfirm).toHaveBeenCalledWith(range);
+  });
+
   it('DatePicker and LiquidGlass render views', () => {
     const onConfirm = jest.fn();
     const onPress = jest.fn();

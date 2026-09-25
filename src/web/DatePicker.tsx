@@ -30,7 +30,9 @@ const INPUT_STYLE = {
  * `<dialog>` with Cancel/Done buttons, like the iOS popover: changes report
  * `confirmed: false`, Done reports `confirmed: true`, and Cancel, Escape or a
  * click outside call `onClosed`. In `countDownTimer` mode the input is a time
- * input and `onConfirm`'s `durationSeconds` is its hours and minutes.
+ * input and `onConfirm`'s `durationSeconds` is its hours and minutes;
+ * `yearAndMonth` is a month input. The browser's input has its own clock, so
+ * `is24Hour` and `android.inputMode` don't apply.
  */
 export function DatePicker(props: DatePickerProps): React.ReactElement {
   const {
