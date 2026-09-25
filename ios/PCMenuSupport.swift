@@ -75,8 +75,6 @@ struct PCMenuItem {
 ///
 /// Must be used from the main thread.
 enum PCMenuSupport {
-    static let rootIdentifier = UIMenu.Identifier("com.platformcomponents.menu.root")
-
     /// Parses the array of dictionaries ObjC++ bridges.
     static func items(from array: [Any]) -> [PCMenuItem] {
         array.enumerated().compactMap { index, any in
@@ -85,7 +83,8 @@ enum PCMenuSupport {
         }
     }
 
-    /// The root menu.
+    /// The root menu. Its identifier is UIKit's own, different for every
+    /// build; `updatedVisibleMenu` finds it through the menu it replaces.
     ///
     /// - `onImageLoaded`: called when an image icon that wasn't cached has
     ///   loaded; build the menu again then (it is cached from now on).
@@ -99,7 +98,6 @@ enum PCMenuSupport {
     ) -> UIMenu {
         UIMenu(
             title: title,
-            identifier: rootIdentifier,
             options: options,
             children: elements(for: items, onImageLoaded: onImageLoaded, handler: handler)
         )
@@ -201,10 +199,12 @@ enum PCMenuSupport {
         return image
     }
 
-    /// The menu in `root` with the identifier of the menu that is showing
-    /// (the root or an open submenu), for `updateVisibleMenu`. Falls back to
-    /// the visible menu, unchanged, when it no longer exists.
-    static func updatedVisibleMenu(_ visible: UIMenu, in root: UIMenu) -> UIMenu {
+    /// The menu in `root` that replaces the one showing, for
+    /// `updateVisibleMenu`: `root` itself when the root of `oldRoot` is
+    /// showing, else the submenu with the visible submenu's identifier. Falls
+    /// back to the visible menu, unchanged, when it no longer exists.
+    static func updatedVisibleMenu(_ visible: UIMenu, in root: UIMenu, replacing oldRoot: UIMenu? = nil) -> UIMenu {
+        if let oldRoot, visible.identifier == oldRoot.identifier { return root }
         func find(_ menu: UIMenu) -> UIMenu? {
             if menu.identifier == visible.identifier { return menu }
             for case let child as UIMenu in menu.children {
@@ -250,13 +250,16 @@ final class PCMenuButton: UIButton {
         showsMenuAsPrimaryAction = true
     }
 
-    /// Replaces the menu, updating it in place while it is open (for actions
-    /// that keep the menu presented).
-    func setMenu(_ newMenu: UIMenu?) {
+    /// Replaces the menu. While it is open, `updatingVisibleMenu` also
+    /// updates it in place (for actions that keep the menu presented); pass
+    /// false when the change comes from a pick, while the menu is closing.
+    func setMenu(_ newMenu: UIMenu?, updatingVisibleMenu: Bool = true) {
+        let oldMenu = menu
         menu = newMenu
-        guard isMenuVisible, let newMenu, let interaction = contextMenuInteraction else { return }
+        guard updatingVisibleMenu, isMenuVisible, let newMenu,
+              let interaction = contextMenuInteraction else { return }
         interaction.updateVisibleMenu { visible in
-            PCMenuSupport.updatedVisibleMenu(visible, in: newMenu)
+            PCMenuSupport.updatedVisibleMenu(visible, in: newMenu, replacing: oldMenu)
         }
     }
 
@@ -276,7 +279,9 @@ final class PCMenuButton: UIButton {
         return true
     }
 
+    /// Closes the menu if it is open; a closed menu's interaction is left alone.
     func dismissMenu() {
+        guard isMenuVisible else { return }
         contextMenuInteraction?.dismissMenu()
     }
 

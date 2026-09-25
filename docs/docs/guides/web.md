@@ -17,6 +17,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `SplitButton`      | The main button alone: there is no web menu (a warning is logged once)                                                                                                         |
 | `SegmentedControl` | A radio group of `<button>`s in a track, like the iOS control                                                                                                                  |
 | `TabBar`           | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                   |
+| `NavigationRail`   | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above |
 | `FloatingToolbar`  | A pill-shaped surface that lays out its children                                                                                                                               |
 | `LiquidGlass`      | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                               |
 | `ContextMenu`      | Its children, without a menu (see below)                                                                                                                                       |

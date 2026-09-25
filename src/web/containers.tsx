@@ -1,13 +1,15 @@
 // web/containers.tsx
 //
-// The components that wrap children: ContextMenu, FloatingToolbar and
-// LiquidGlass. They keep their layout on web and render their children.
+// The components that wrap children: ContextMenu, FloatingToolbar,
+// LiquidGlass and LiquidGlassContainer. They keep their layout on web and
+// render their children.
 import React from 'react';
 import { View } from 'react-native';
 
 import type { ContextMenuProps } from '../ContextMenu';
 import type { FloatingToolbarProps } from '../FloatingToolbar';
 import type { LiquidGlassProps } from '../LiquidGlass';
+import type { LiquidGlassContainerProps } from '../LiquidGlassContainer';
 import { warnOnce } from './shared';
 
 /**
@@ -39,13 +41,18 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   return <View {...viewProps}>{children}</View>;
 }
 
-/** A pill-shaped surface that lays out its children in a row or column. */
+/**
+ * A pill-shaped surface that lays out its children in a row or column. It
+ * doesn't follow a linked ScrollView (`scrollViewNativeID`, `hideOnScroll`).
+ */
 export function FloatingToolbar(
   props: FloatingToolbarProps
 ): React.ReactElement {
   const {
     orientation = 'horizontal',
     color,
+    scrollViewNativeID,
+    hideOnScroll,
     ios,
     android,
     children,
@@ -81,21 +88,43 @@ export function FloatingToolbar(
  * `false` on web, as on Android.
  */
 export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
-  const { cornerRadius, ios, android, children, style, ...viewProps } = props;
+  const {
+    cornerRadius,
+    cornerStyle,
+    ios,
+    android,
+    children,
+    style,
+    ...viewProps
+  } = props;
+
+  // A capsule is fully rounded; concentric corners use cornerRadius
+  const radius =
+    cornerStyle === 'capsule'
+      ? 9999
+      : typeof cornerStyle === 'number'
+        ? cornerStyle
+        : cornerRadius;
 
   return (
     <View
       {...viewProps}
       style={[
-        cornerRadius
-          ? { borderRadius: cornerRadius, overflow: 'hidden' }
-          : null,
+        radius ? { borderRadius: radius, overflow: 'hidden' } : null,
         style,
       ]}
     >
       {children}
     </View>
   );
+}
+
+/** A plain view: glass only merges on iOS 26. */
+export function LiquidGlassContainer(
+  props: LiquidGlassContainerProps
+): React.ReactElement {
+  const { spacing, children, ...viewProps } = props;
+  return <View {...viewProps}>{children}</View>;
 }
 
 export const isLiquidGlassSupported = false;
