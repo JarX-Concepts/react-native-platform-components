@@ -13,6 +13,7 @@ import type {
   TextFieldProps,
   TextFieldRef,
 } from '../TextField';
+import { resolveSubmitBehavior } from '../submitBehavior';
 import { Icon } from './Icon';
 import { usePrimaryColor } from './shared';
 
@@ -39,6 +40,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       onFocus,
       onBlur,
       onSubmitEditing,
+      submitBehavior,
+      onSelectionChange,
+      selection,
       label,
       placeholder,
       supportingText,
@@ -114,7 +118,20 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       blur: () => inputRef.current?.blur(),
       clear: () => changeText(''),
       isFocused: () => inputRef.current?.isFocused() ?? false,
+      setSelection: (start: number, end?: number) => {
+        // react-native-web's TextInput ref is the DOM input
+        const node = inputRef.current as unknown as {
+          setSelectionRange?: (start: number, end: number) => void;
+        } | null;
+        node?.setSelectionRange?.(start, end ?? start);
+      },
     }));
+
+    // The keyboard toolbar and password rules are iOS only
+    const returnKey = resolveSubmitBehavior(submitBehavior, multiline);
+    // react-native-web submits a multi-line field only when it also blurs;
+    // Enter without Shift submits one that keeps focus
+    const submitsOnEnter = multiline && returnKey === 'submit';
 
     const showClear =
       editable &&
@@ -185,8 +202,34 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
               onBlur?.(textEvent(text));
             }}
             onSubmitEditing={
-              multiline ? undefined : () => onSubmitEditing?.(textEvent(text))
+              multiline && returnKey !== 'blurAndSubmit'
+                ? undefined
+                : () => onSubmitEditing?.(textEvent(text))
             }
+            submitBehavior={returnKey}
+            blurOnSubmit={returnKey === 'blurAndSubmit'}
+            onKeyPress={
+              submitsOnEnter
+                ? (event) => {
+                    const { key, shiftKey } = event.nativeEvent as {
+                      key: string;
+                      shiftKey?: boolean;
+                    };
+                    if (key !== 'Enter' || shiftKey) return;
+                    event.preventDefault();
+                    onSubmitEditing?.(textEvent(text));
+                  }
+                : undefined
+            }
+            selection={
+              selection
+                ? {
+                    start: selection.start,
+                    end: selection.end ?? selection.start,
+                  }
+                : undefined
+            }
+            onSelectionChange={onSelectionChange}
             placeholder={placeholder}
             placeholderTextColor={placeholderTextColor}
             maxLength={maxLength}
