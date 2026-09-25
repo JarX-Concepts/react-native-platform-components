@@ -1245,19 +1245,64 @@ describe('Platform Components Example', () => {
       'month · bold'
     );
 
-    // The multi-select group sits below the fold on a phone
+    // The multi-select group sits below the fold on a phone. Its labels are
+    // looked up inside it: the Toggle section has buttons with the same ones.
+    const formatButton = (label: string) =>
+      element(by.text(label).withAncestor(by.id('button-group-multiple')));
     await scrollToId('button-group-multiple');
-    await element(by.text('Italic')).atIndex(0).tap();
+    await formatButton('Italic').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · bold, italic'
     );
 
-    await element(by.text('Bold')).atIndex(0).tap();
+    await formatButton('Bold').tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · italic'
     );
+
+    // Toggle buttons report the state a press asks for; the locked one's
+    // parent never takes it, so it stays off
+    await scrollToId('button-toggle-value');
+    await element(by.id('button-toggle')).tap();
+    await expectText('button-toggle-value', 'favorite, bold · locked 0');
+    await element(by.id('button-toggle-filled')).tap();
+    await expectText('button-toggle-value', 'favorite · locked 0');
+    await element(by.id('button-toggle-icon')).tap();
+    await expectText('button-toggle-value', 'favorite, alerts · locked 0');
+    await element(by.id('button-toggle-locked')).tap();
+    await expectText('button-toggle-value', 'favorite, alerts · locked 1');
+
+    // A button with a menu opens it instead of pressing
+    await scrollToId('button-menu-value');
+    await element(by.id('button-menu')).tap();
+    await waitFor(element(by.text('Date')))
+      .toBeVisible()
+      .withTimeout(6000);
+    if (!isAndroid()) {
+      // On Android the popup window has the focus, and Espresso can't read
+      // the page under it while it is open
+      await expectText('button-menu-value', '(none) · open');
+    }
+    await element(by.text('Date')).atIndex(0).tap();
+    await expectText('button-menu-value', 'date · closed');
+
+    // Icons above and below the label, and clear glass
+    await scrollToId('button-icon-bottom');
+    await element(by.id('button-icon-bottom')).tap();
+    await expectText('button-last-pressed', 'edit (bottom)');
+    await scrollToId('button-clear-glass');
+    await element(by.id('button-clear-glass')).tap();
+    await expectText('button-last-pressed', 'clear glass');
+
+    if (!isAndroid()) {
+      // A symbol effect with a trigger plays on every press
+      await scrollToId('button-bounce-count');
+      await element(by.id('button-symbol-bounce')).tap();
+      await expectText('button-bounce-count', '1');
+    }
+    await scrollToId('size-picker', 'up');
 
     // Sizes and shapes: cycle the size picker, then square corners. Larger
     // buttons push the picker down, so bring it back before every tap.
@@ -1279,7 +1324,9 @@ describe('Platform Components Example', () => {
     await scrollToId('button-filled', 'up');
     await element(by.id('button-filled')).tap();
     await pause(350);
-    await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
+    await expect(element(by.id('button-last-pressed'))).toHaveText(
+      'clear glass'
+    );
   });
 
   it('should test Floating Action Button functionality', async () => {

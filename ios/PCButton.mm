@@ -21,8 +21,10 @@
 #import "PCButtonComponentDescriptors-custom.h"
 #import "PCButtonShadowNode-custom.h"
 #import "PCButtonState-custom.h"
+#import "PCMenuItems.h"
 
 using namespace facebook::react;
+using namespace platformcomponents;
 
 namespace {
 static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback) {
@@ -110,6 +112,50 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
       eventEmitter->onButtonPress({});
     };
 
+    _view.onSelectedChange = ^(BOOL selected) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onSelectedChange({.selected = (bool)selected});
+    };
+
+    _view.onMenuSelect = ^(NSString *itemId, NSString *title) {
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuSelect({.id = itemId.UTF8String, .title = title.UTF8String});
+    };
+
+    _view.onMenuOpen = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuOpen({});
+    };
+
+    _view.onMenuClose = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+
+      auto eventEmitter =
+          std::static_pointer_cast<const PCButtonEventEmitter>(strongSelf->_eventEmitter);
+      if (!eventEmitter) return;
+
+      eventEmitter->onMenuClose({});
+    };
+
     _view.onNeedsRemeasure = ^{
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
@@ -195,6 +241,26 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
 
   if (!prevProps || newProps.spokenLabel != prevProps->spokenLabel) {
     _view.spokenLabel = NSStringFromStd(newProps.spokenLabel, @"");
+  }
+
+  // selected: '' (not a toggle) | 'true' | 'false'. Applied again after
+  // every onSelectedChange (selectedEventCount), so a toggle JS didn't take
+  // goes back.
+  if (!prevProps || newProps.selected != prevProps->selected ||
+      newProps.selectedEventCount != prevProps->selectedEventCount) {
+    [_view syncSelected:NSStringFromStd(newProps.selected, @"")];
+  }
+
+  // menu: the flattened menu items
+  if (!prevProps || !PCMenuItemsEqual(newProps.menu, prevProps->menu)) {
+    _view.menuItems = PCMenuItemsToArray(newProps.menu);
+  }
+
+  // ios: {symbolEffect, symbolEffectTrigger}
+  if (!prevProps || newProps.ios.symbolEffect != prevProps->ios.symbolEffect ||
+      newProps.ios.symbolEffectTrigger != prevProps->ios.symbolEffectTrigger) {
+    [_view setSymbolEffect:NSStringFromStd(newProps.ios.symbolEffect, @"")
+                   trigger:NSStringFromStd(newProps.ios.symbolEffectTrigger, @"")];
   }
 
   // androidRippleColor / androidStrokeColor: Android only

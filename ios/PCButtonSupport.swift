@@ -1,3 +1,4 @@
+import Symbols
 import UIKit
 
 /// UIButton configuration and icon handling shared by PCButtonView and
@@ -50,11 +51,19 @@ enum PCButtonSupport {
     /// | elevated | .gray()       |
     /// | glass          | .glass() on iOS 26+, .gray() before          |
     /// | prominentGlass | .prominentGlass() on iOS 26+, .filled() before |
+    /// | clearGlass          | .clearGlass() on iOS 26+, .gray() before          |
+    /// | prominentClearGlass | .prominentClearGlass() on iOS 26+, .filled() before |
     ///
-    /// Selected glass buttons use the prominent glass style.
+    /// Selected glass buttons, clear or not, use the prominent glass style.
     static func configuration(variant: String, selected: Bool) -> UIButton.Configuration {
-        let glass = variant == "glass" || variant == "prominentGlass"
-        if selected { return glass ? prominentGlass() : .filled() }
+        if selected {
+            switch variant {
+            // Prominent clear glass has no tint unless given a color, so a
+            // selected clear glass button takes the prominent glass too
+            case "glass", "prominentGlass", "clearGlass", "prominentClearGlass": return prominentGlass()
+            default: return .filled()
+            }
+        }
         switch variant {
         case "tonal": return .tinted()
         case "outlined": return .bordered()
@@ -62,7 +71,24 @@ enum PCButtonSupport {
         case "elevated": return .gray()
         case "glass": return glassConfiguration()
         case "prominentGlass": return prominentGlass()
+        case "clearGlass": return clearGlass()
+        case "prominentClearGlass": return prominentClearGlass()
         default: return .filled()
+        }
+    }
+
+    /// The variant a toggle button shows. UIKit gives most configurations a
+    /// selected look of their own (tinted becomes filled; bordered, plain,
+    /// gray and glass become tinted), but none for the prominent styles and
+    /// clear glass. Those toggles show a quieter style while off (filled is
+    /// gray, prominent glass is glass), and clear glass takes the prominent
+    /// glass while on.
+    static func toggleVariant(_ variant: String, selected: Bool) -> String {
+        switch variant {
+        case "filled": return selected ? "filled" : "elevated"
+        case "prominentGlass": return selected ? "prominentGlass" : "glass"
+        case "clearGlass", "prominentClearGlass": return selected ? "prominentGlass" : "clearGlass"
+        default: return variant
         }
     }
 
@@ -78,6 +104,22 @@ enum PCButtonSupport {
     private static func prominentGlass() -> UIButton.Configuration {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) { return .prominentGlass() }
+        #endif
+        return .filled()
+    }
+
+    /// `.clearGlass()` needs the iOS 26 SDK and runtime; `.gray()` otherwise.
+    private static func clearGlass() -> UIButton.Configuration {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return .clearGlass() }
+        #endif
+        return .gray()
+    }
+
+    /// `.prominentClearGlass()` needs the iOS 26 SDK and runtime; `.filled()` otherwise.
+    private static func prominentClearGlass() -> UIButton.Configuration {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) { return .prominentClearGlass() }
         #endif
         return .filled()
     }
@@ -205,5 +247,63 @@ enum PCButtonSupport {
     /// keep their own colors.
     static func decorate(_ image: UIImage, tinted: Bool) -> UIImage {
         image.withRenderingMode(tinted ? .alwaysTemplate : .alwaysOriginal)
+    }
+}
+
+/// SF Symbol effects for Button's `ios.symbolEffect`, through
+/// `UIImageView.addSymbolEffect`. `bounce`, `pulse` and `variableColor` need
+/// iOS 17; `wiggle`, `rotate` and `breathe` iOS 18. Unknown names and effects
+/// the running iOS doesn't have do nothing.
+@available(iOS 17.0, *)
+enum PCSymbolEffects {
+    /// Adds the effect: repeating until the image view's effects are
+    /// removed, or played once.
+    static func add(_ name: String, to view: UIImageView, repeating: Bool) {
+        switch name {
+        case "bounce":
+            if repeating {
+                if #available(iOS 18.0, *) {
+                    indefinite(.bounce, view)
+                } else {
+                    // Bounce is a one-shot effect on iOS 17; repeat it
+                    discrete(.bounce, view, options: .repeating)
+                }
+            } else {
+                discrete(.bounce, view)
+            }
+        case "pulse":
+            repeating ? indefinite(.pulse, view) : discrete(.pulse, view)
+        case "variableColor":
+            repeating ? indefinite(.variableColor, view) : discrete(.variableColor, view)
+        case "wiggle":
+            if #available(iOS 18.0, *) {
+                repeating ? indefinite(.wiggle, view) : discrete(.wiggle, view)
+            }
+        case "rotate":
+            if #available(iOS 18.0, *) {
+                repeating ? indefinite(.rotate, view) : discrete(.rotate, view)
+            }
+        case "breathe":
+            if #available(iOS 18.0, *) {
+                repeating ? indefinite(.breathe, view) : discrete(.breathe, view)
+            }
+        default:
+            break
+        }
+    }
+
+    // Typed entry points, so an effect that is both discrete and indefinite
+    // takes the overload that matches the mode.
+
+    private static func discrete(
+        _ effect: some DiscreteSymbolEffect & SymbolEffect,
+        _ view: UIImageView,
+        options: SymbolEffectOptions = .default
+    ) {
+        view.addSymbolEffect(effect, options: options)
+    }
+
+    private static func indefinite(_ effect: some IndefiniteSymbolEffect & SymbolEffect, _ view: UIImageView) {
+        view.addSymbolEffect(effect)
     }
 }

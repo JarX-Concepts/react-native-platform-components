@@ -200,4 +200,143 @@ describe('Button', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
     act(() => tree.unmount());
   });
+
+  it('passes the clear glass variants and top / bottom icons through', () => {
+    const tree = render(
+      <Button label="Clear" variant="clearGlass" iconPosition="top" />
+    );
+    expect(lastNativeProps().variant).toBe('clearGlass');
+    expect(lastNativeProps().iconPosition).toBe('top');
+    act(() =>
+      tree.update(
+        <Button
+          label="Clear"
+          variant="prominentClearGlass"
+          iconPosition="bottom"
+        />
+      )
+    );
+    expect(lastNativeProps().variant).toBe('prominentClearGlass');
+    expect(lastNativeProps().iconPosition).toBe('bottom');
+    act(() => tree.unmount());
+  });
+
+  it('is not a toggle and has no menu by default', () => {
+    const tree = render(<Button label="Save" />);
+    const props = lastNativeProps();
+    expect(props.selected).toBe('');
+    expect(props.menu).toEqual([]);
+    expect(props.onSelectedChange).toBeUndefined();
+    expect(props.onMenuSelect).toBeUndefined();
+    expect(props.ios).toEqual({ symbolEffect: '', symbolEffectTrigger: '' });
+    act(() => tree.unmount());
+  });
+
+  it('is a controlled toggle: reports the press and re-syncs native', () => {
+    const onSelectedChange = jest.fn();
+    const tree = render(
+      <Button
+        label="Bold"
+        selected={false}
+        onSelectedChange={onSelectedChange}
+      />
+    );
+    expect(lastNativeProps().selected).toBe('false');
+    expect(lastNativeProps().selectedEventCount).toBe(0);
+
+    act(() => {
+      lastNativeProps().onSelectedChange({ nativeEvent: { selected: true } });
+    });
+    expect(onSelectedChange).toHaveBeenCalledWith(true);
+    // The parent kept `false`: native gets it again with a new event count
+    expect(lastNativeProps().selected).toBe('false');
+    expect(lastNativeProps().selectedEventCount).toBe(1);
+
+    act(() => tree.update(<Button label="Bold" selected />));
+    expect(lastNativeProps().selected).toBe('true');
+    act(() => tree.unmount());
+  });
+
+  it('reports toggles to native even without onSelectedChange', () => {
+    const tree = render(<Button label="Bold" selected />);
+    expect(lastNativeProps().onSelectedChange).toEqual(expect.any(Function));
+    act(() => {
+      lastNativeProps().onSelectedChange({ nativeEvent: { selected: false } });
+    });
+    expect(lastNativeProps().selectedEventCount).toBe(1);
+    act(() => tree.unmount());
+  });
+
+  it('flattens the menu and routes the menu events', () => {
+    const onMenuSelect = jest.fn();
+    const onMenuOpen = jest.fn();
+    const onMenuClose = jest.fn();
+    const tree = render(
+      <Button
+        label="Sort"
+        menu={[
+          {
+            id: 'sort',
+            title: 'Sort by',
+            displayInline: true,
+            subactions: [
+              { id: 'name', title: 'Name', state: 'on' },
+              { id: 'date', title: 'Date' },
+            ],
+          },
+          { id: 'reset', title: 'Reset', attributes: { destructive: true } },
+        ]}
+        onMenuSelect={onMenuSelect}
+        onMenuOpen={onMenuOpen}
+        onMenuClose={onMenuClose}
+      />
+    );
+
+    const props = lastNativeProps();
+    expect(
+      props.menu.map((item: { id: string; kind: string; parent: number }) => [
+        item.id,
+        item.kind,
+        item.parent,
+      ])
+    ).toEqual([
+      ['sort', 'section', -1],
+      ['name', 'action', 0],
+      ['date', 'action', 0],
+      ['reset', 'action', -1],
+    ]);
+    expect(props.menu[1].state).toBe('on');
+    expect(props.menu[3].destructive).toBe('true');
+
+    act(() => {
+      props.onMenuOpen({ nativeEvent: {} });
+      props.onMenuSelect({ nativeEvent: { id: 'date', title: 'Date' } });
+      props.onMenuClose({ nativeEvent: {} });
+    });
+    expect(onMenuOpen).toHaveBeenCalledTimes(1);
+    expect(onMenuSelect).toHaveBeenCalledWith('date', 'Date');
+    expect(onMenuClose).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('passes the symbol effect and its trigger as a string', () => {
+    const tree = render(
+      <Button
+        icon="bell"
+        ios={{ symbolEffect: 'bounce', symbolEffectTrigger: 3 }}
+      />
+    );
+    expect(lastNativeProps().ios).toEqual({
+      symbolEffect: 'bounce',
+      symbolEffectTrigger: '3',
+    });
+    act(() =>
+      tree.update(<Button icon="bell" ios={{ symbolEffect: 'pulse' }} />)
+    );
+    expect(lastNativeProps().ios).toEqual({
+      symbolEffect: 'pulse',
+      symbolEffectTrigger: '',
+    });
+    act(() => tree.unmount());
+  });
 });

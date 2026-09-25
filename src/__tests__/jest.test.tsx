@@ -217,6 +217,47 @@ describe('Button (mock)', () => {
     const button = byTestID(tree, 'save');
     expect(button.props.accessibilityState).toMatchObject({ busy: true });
   });
+
+  it('is a toggle button with selected', () => {
+    const onSelectedChange = jest.fn();
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        testID="bold"
+        label="Bold"
+        selected={false}
+        onSelectedChange={onSelectedChange}
+        onPress={onPress}
+      />
+    );
+    const button = byTestID(tree, 'bold');
+    expect(button.props.accessibilityRole).toBe('togglebutton');
+    expect(button.props.accessibilityState).toMatchObject({ checked: false });
+
+    press(button);
+    expect(onSelectedChange).toHaveBeenCalledWith(true);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes menu events through fireEvent, not presses', () => {
+    const onPress = jest.fn();
+    const onMenuSelect = jest.fn();
+    const tree = render(
+      <Button
+        testID="sort"
+        label="Sort"
+        menu={[{ id: 'name', title: 'Name' }]}
+        onPress={onPress}
+        onMenuSelect={onMenuSelect}
+      />
+    );
+    const button = byTestID(tree, 'sort');
+    press(button);
+    expect(onPress).not.toHaveBeenCalled();
+
+    fire(button, 'menuSelect', 'name', 'Name');
+    expect(onMenuSelect).toHaveBeenCalledWith('name', 'Name');
+  });
 });
 
 describe('FloatingActionButton (mock)', () => {
