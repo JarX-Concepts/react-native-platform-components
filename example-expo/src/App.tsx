@@ -12,9 +12,17 @@ import {
   DatePicker,
   SelectionMenu,
   ContextMenu,
+  NavigationRail,
 } from 'react-native-platform-components';
 
-type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu';
+type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu' | 'rail';
+
+const TAB_LABELS: Record<Tab, string> = {
+  datePicker: 'DatePicker',
+  selectionMenu: 'SelectionMenu',
+  contextMenu: 'ContextMenu',
+  rail: 'NavigationRail',
+};
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('datePicker');
@@ -26,26 +34,25 @@ export default function App() {
       <Text style={styles.subtitle}>Expo Dev Client Example</Text>
 
       <View style={styles.tabs}>
-        {(['datePicker', 'selectionMenu', 'contextMenu'] as const).map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'datePicker'
-                ? 'DatePicker'
-                : t === 'selectionMenu'
-                  ? 'SelectionMenu'
-                  : 'ContextMenu'}
-            </Text>
-          </Pressable>
-        ))}
+        {(['datePicker', 'selectionMenu', 'contextMenu', 'rail'] as const).map(
+          (t) => (
+            <Pressable
+              key={t}
+              onPress={() => setTab(t)}
+              style={[styles.tab, tab === t && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                {TAB_LABELS[t]}
+              </Text>
+            </Pressable>
+          )
+        )}
       </View>
 
       {tab === 'datePicker' && <DatePickerDemo />}
       {tab === 'selectionMenu' && <SelectionMenuDemo />}
       {tab === 'contextMenu' && <ContextMenuDemo />}
+      {tab === 'rail' && <NavigationRailDemo />}
 
       <Text style={styles.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -209,6 +216,32 @@ function ContextMenuDemo() {
   );
 }
 
+function NavigationRailDemo() {
+  const [selected, setSelected] = useState('home');
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Navigation Rail</Text>
+      <View style={[styles.card, styles.railCard]}>
+        <NavigationRail
+          items={[
+            { label: 'Home', value: 'home', icon: { ios: 'house' } },
+            {
+              label: 'Search',
+              value: 'search',
+              icon: { ios: 'magnifyingglass' },
+            },
+            { label: 'Inbox', value: 'inbox', icon: { ios: 'bell' }, badge: 2 },
+          ]}
+          selectedValue={selected}
+          onSelect={setSelected}
+        />
+        <Text style={[styles.value, styles.railContent]}>{selected}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -230,6 +263,7 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
     marginBottom: 16,
@@ -306,6 +340,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+  },
+  railCard: {
+    height: 320,
+    flexDirection: 'row',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  railContent: {
+    flex: 1,
+    alignSelf: 'center',
   },
   footer: {
     textAlign: 'center',

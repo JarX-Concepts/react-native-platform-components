@@ -351,4 +351,18 @@
   <style name="PCTextField.Filled.Dense">
     <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.FilledBox.Dense</item>
   </style>
+
+  <!--
+    NavigationRail: the Material 3 Expressive rail, the one with the expanded
+    state (expand() / collapse()), over any Material 3 app theme.
+  -->
+  <style name="PCNavigationRailOverlay" parent="">
+    <item name="navigationRailStyle">@style/Widget.Material3Expressive.NavigationRailView</item>
+  </style>
+  <style name="PCNavigationRailOverlay.Expanded">
+    <item name="navigationRailStyle">@style/PCNavigationRail.Expanded</item>
+  </style>
+  <style name="PCNavigationRail.Expanded" parent="Widget.Material3Expressive.NavigationRailView">
+    <item name="expanded">true</item>
+  </style>
 </resources>
