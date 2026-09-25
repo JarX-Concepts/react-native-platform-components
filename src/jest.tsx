@@ -33,6 +33,7 @@ import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps } from './DatePicker';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
+import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
@@ -53,6 +54,7 @@ export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
+export type * from './LiquidGlassContainer';
 export type * from './TextField';
 export type * from './TabBar';
 export type * from './sharedTypes';
@@ -633,7 +635,15 @@ export function FloatingToolbar(
 
 /** A view with its children; a `Pressable` when `onPress` is set. */
 export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
-  const { cornerRadius, ios, android, onPress, children, ...viewProps } = props;
+  const {
+    cornerRadius,
+    cornerStyle,
+    ios,
+    android,
+    onPress,
+    children,
+    ...viewProps
+  } = props;
 
   if (!onPress) return <View {...viewProps}>{children}</View>;
 
@@ -655,6 +665,14 @@ export function LiquidGlass(props: LiquidGlassProps): React.ReactElement {
       {children}
     </Pressable>
   );
+}
+
+/** A view with its children. */
+export function LiquidGlassContainer(
+  props: LiquidGlassContainerProps
+): React.ReactElement {
+  const { spacing, children, ...viewProps } = props;
+  return <View {...viewProps}>{children}</View>;
 }
 
 /** Always `false` under Jest. */

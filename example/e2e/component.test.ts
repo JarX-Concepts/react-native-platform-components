@@ -954,6 +954,35 @@ describe('Platform Components Example', () => {
       await pause(300);
       await element(by.id('liquid-glass-demo-2')).longPress(600);
       await pause(300);
+
+      // LiquidGlassContainer: a button materializes out of the group, the
+      // first one widens, and both morph back
+      await scrollToId('glass-expand-switch');
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await waitFor(element(by.text('♥ Favorite')))
+        .toBeVisible()
+        .withTimeout(3000);
+      await pause(600);
+      await element(by.id('glass-extra-switch')).tap();
+      await waitFor(element(by.id('glass-extra')))
+        .not.toExist()
+        .withTimeout(3000);
+      await element(by.id('glass-expand-switch')).tap();
+      await pause(600);
+
+      // The system spacing keeps them apart; then the demo's 24 again
+      await selectMenuOption('spacing-menu', 'Default');
+      await pause(800);
+      await selectMenuOption('spacing-menu', '24');
+      await pause(600);
+
+      // Concentric and capsule corners
+      await scrollToId('corner-capsule');
+      await expect(element(by.id('corner-concentric'))).toBeVisible();
     }
 
     // Take final screenshot
