@@ -1,12 +1,13 @@
 // ButtonDemo.tsx
-import React, { useState } from 'react';
-import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Image, Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   Button,
   ButtonGroup,
   type ButtonShape,
   type ButtonSize,
   type ButtonVariant,
+  type ContextMenuAction,
   type PlatformIcon,
 } from 'react-native-platform-components';
 import { Divider, Row, Section, ui } from './DemoUI';
@@ -56,6 +57,68 @@ const BELL_ICON: PlatformIcon = {
   type: 'image',
   source: require('./assets/bell.png'),
 };
+const STAR_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'star' },
+  android: { type: 'drawable', name: 'star' },
+};
+const ALERT_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'bell' },
+  android: { type: 'drawable', name: 'notifications' },
+};
+const SORT_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'arrow.up.arrow.down' },
+  android: { type: 'drawable', name: 'sort' },
+};
+
+type SortKey = 'name' | 'date' | 'size';
+const SORT_KEYS: { id: SortKey; title: string }[] = [
+  { id: 'name', title: 'Name' },
+  { id: 'date', title: 'Date' },
+  { id: 'size', title: 'Size' },
+];
+
+// The same items as ContextMenu: a section with checkmarks, a submenu with
+// icons and a destructive action
+function sortMenu(sortBy: SortKey): ContextMenuAction[] {
+  return [
+    {
+      id: 'sort-by',
+      title: 'Sort by',
+      displayInline: true,
+      subactions: SORT_KEYS.map(({ id, title }) => ({
+        id,
+        title,
+        state: id === sortBy ? 'on' : 'off',
+      })),
+    },
+    {
+      id: 'view',
+      title: 'View as',
+      subactions: [
+        {
+          id: 'list',
+          title: 'List',
+          image: { ios: 'list.bullet', android: 'list_bullet' },
+        },
+        {
+          id: 'grid',
+          title: 'Grid',
+          image: { ios: 'square.grid.2x2', android: 'grid_view' },
+        },
+      ],
+    },
+    {
+      id: 'reset',
+      title: 'Reset',
+      image: { ios: 'trash', android: 'delete' },
+      attributes: { destructive: true },
+    },
+  ];
+}
+
+// A photo behind the clear glass buttons; the color shows while it loads
+const BACKDROP_URI =
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800';
 
 const ACTION_BUTTONS = [
   { label: 'Copy', value: 'copy', icon: COPY_ICON },
@@ -97,6 +160,24 @@ export function ButtonDemo(): React.JSX.Element {
   const [styled, setStyled] = useState(true);
   const [expressive, setExpressive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [favorite, setFavorite] = useState(false);
+  const [bold, setBold] = useState(true);
+  const [italic, setItalic] = useState(false);
+  const [alerts, setAlerts] = useState(false);
+  const [lockedPresses, setLockedPresses] = useState(0);
+  const [sortBy, setSortBy] = useState<SortKey>('name');
+  const [menuPick, setMenuPick] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [bounces, setBounces] = useState(0);
+  const [wiggles, setWiggles] = useState(0);
+
+  const menu = useMemo(() => sortMenu(sortBy), [sortBy]);
+  const toggled = [
+    favorite && 'favorite',
+    bold && 'bold',
+    italic && 'italic',
+    alerts && 'alerts',
+  ].filter(Boolean);
 
   const shape: ButtonShape | undefined = square ? 'square' : undefined;
   const common = {
@@ -391,6 +472,227 @@ export function ButtonDemo(): React.JSX.Element {
           </>
         )}
       </Section>
+
+      {/* Toggles are controlled: the last one's parent never takes the new
+          state, so it goes back */}
+      <Section title="Toggle">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-toggle"
+            label="Favorite"
+            icon={STAR_ICON}
+            variant="tonal"
+            selected={favorite}
+            onSelectedChange={setFavorite}
+            {...common}
+          />
+          <Button
+            testID="button-toggle-filled"
+            label="Bold"
+            selected={bold}
+            onSelectedChange={setBold}
+            {...common}
+          />
+          <Button
+            label="Italic"
+            variant="outlined"
+            selected={italic}
+            onSelectedChange={setItalic}
+            {...common}
+          />
+          <Button
+            testID="button-toggle-icon"
+            icon={ALERT_ICON}
+            variant="outlined"
+            accessibilityLabel="Alerts"
+            selected={alerts}
+            onSelectedChange={setAlerts}
+            {...common}
+          />
+          <Button
+            testID="button-toggle-locked"
+            label="Locked"
+            variant="text"
+            selected={false}
+            onSelectedChange={() => setLockedPresses((count) => count + 1)}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <Row label="Selected">
+          <Text testID="button-toggle-value" style={ui.valueText}>
+            {toggled.join(', ') || '(none)'} · locked {lockedPresses}
+          </Text>
+        </Row>
+      </Section>
+
+      <Section title="Menu">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-menu"
+            label="Sort"
+            icon={SORT_ICON}
+            variant="tonal"
+            menu={menu}
+            onMenuSelect={(id) => {
+              setMenuPick(id);
+              if (SORT_KEYS.some((key) => key.id === id)) {
+                setSortBy(id as SortKey);
+              }
+            }}
+            onMenuOpen={() => setMenuOpen(true)}
+            onMenuClose={() => setMenuOpen(false)}
+            {...common}
+          />
+        </View>
+        <Divider />
+        <Row label="Picked">
+          <Text testID="button-menu-value" style={ui.valueText}>
+            {menuPick ?? '(none)'} · {menuOpen ? 'open' : 'closed'}
+          </Text>
+        </Row>
+      </Section>
+
+      <Section title="Icon Placement">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-icon-top"
+            label="Share"
+            icon={SHARE_ICON}
+            iconPosition="top"
+            variant="tonal"
+            onPress={() => setLastPressed('share (top)')}
+            {...common}
+          />
+          <Button
+            testID="button-icon-bottom"
+            label="Edit"
+            icon={EDIT_ICON}
+            iconPosition="bottom"
+            variant="outlined"
+            onPress={() => setLastPressed('edit (bottom)')}
+            {...common}
+          />
+          <Button
+            label="Send"
+            icon={SEND_ICON}
+            iconPosition="top"
+            onPress={() => setLastPressed('send (top)')}
+            {...common}
+          />
+        </View>
+      </Section>
+
+      {/* Clear glass is for buttons over photos: the backdrop shows the
+          difference from the regular glass */}
+      <Section title="Clear Glass">
+        <View style={styles.backdrop}>
+          <Image
+            source={{ uri: BACKDROP_URI }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+          <View style={styles.wrap}>
+            <Button
+              testID="button-clear-glass"
+              label="Clear"
+              variant="clearGlass"
+              onPress={() => setLastPressed('clear glass')}
+              {...common}
+            />
+            <Button
+              label="Prominent"
+              variant="prominentClearGlass"
+              onPress={() => setLastPressed('prominent clear glass')}
+              {...common}
+            />
+            <Button
+              icon={SHARE_ICON}
+              variant="clearGlass"
+              accessibilityLabel="Share, clear glass"
+              onPress={() => setLastPressed('share (clear glass)')}
+              {...common}
+            />
+          </View>
+          <View style={styles.wrap}>
+            <Button
+              label="Glass"
+              variant="glass"
+              onPress={() => setLastPressed('glass')}
+              {...common}
+            />
+            <Button
+              label="Prominent"
+              variant="prominentGlass"
+              onPress={() => setLastPressed('prominent glass')}
+              {...common}
+            />
+            <Button
+              icon={SHARE_ICON}
+              variant="glass"
+              accessibilityLabel="Share, glass"
+              onPress={() => setLastPressed('share (glass)')}
+              {...common}
+            />
+          </View>
+        </View>
+      </Section>
+
+      {/* SF Symbol effects: a trigger plays the effect once per change,
+          without one it repeats */}
+      {Platform.OS === 'ios' && (
+        <Section title="Symbol Effects">
+          <View style={styles.wrap}>
+            <Button
+              testID="button-symbol-bounce"
+              label="Bounce"
+              icon="bell"
+              variant="tonal"
+              ios={{ symbolEffect: 'bounce', symbolEffectTrigger: bounces }}
+              onPress={() => setBounces((count) => count + 1)}
+              {...common}
+            />
+            <Button
+              label="Wiggle"
+              icon="hand.wave"
+              variant="tonal"
+              ios={{ symbolEffect: 'wiggle', symbolEffectTrigger: wiggles }}
+              onPress={() => setWiggles((count) => count + 1)}
+              {...common}
+            />
+          </View>
+          <Divider />
+          <View style={styles.wrap}>
+            <Button
+              label="Syncing"
+              icon="arrow.triangle.2.circlepath"
+              variant="outlined"
+              ios={{ symbolEffect: 'rotate' }}
+              {...common}
+            />
+            <Button
+              label="Live"
+              icon="dot.radiowaves.left.and.right"
+              variant="outlined"
+              ios={{ symbolEffect: 'variableColor' }}
+              {...common}
+            />
+            <Button
+              icon="heart.fill"
+              accessibilityLabel="Breathe"
+              variant="outlined"
+              ios={{ symbolEffect: 'breathe' }}
+              {...common}
+            />
+          </View>
+          <Divider />
+          <Row label="Bounces">
+            <Text testID="button-bounce-count" style={ui.valueText}>
+              {bounces}
+            </Text>
+          </Row>
+        </Section>
+      )}
     </>
   );
 }
@@ -409,4 +711,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   stretch: { alignSelf: 'stretch' },
+  backdrop: {
+    backgroundColor: '#3B6E8F',
+    paddingVertical: 12,
+  },
 });

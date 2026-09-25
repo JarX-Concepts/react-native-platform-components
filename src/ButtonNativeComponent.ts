@@ -1,7 +1,12 @@
 // ButtonNativeComponent.ts
 import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler, Double, WithDefault } from './codegenTypes';
+import type {
+  BubblingEventHandler,
+  Double,
+  Int32,
+  WithDefault,
+} from './codegenTypes';
 
 /**
  * Icon fields, pre-resolved on the JS side (see icons.ts).
@@ -24,6 +29,60 @@ export type ButtonLabelStyleProps = Readonly<{
   fontStyle?: string; // 'normal' | 'italic'
 }>;
 
+/**
+ * One menu item, the shape of `ContextMenuItem`: the JS action tree is
+ * flattened (see `menuItems.ts`) and each item points at its parent submenu
+ * or section by index. Every field is set; empty strings mean "none" and
+ * flags are 'true' | 'false'.
+ */
+export type ButtonMenuItem = Readonly<{
+  id: string;
+  title: string;
+  subtitle: string;
+  /** Index of the parent submenu or section; -1 at the top level */
+  parent: Int32;
+  /** 'action' | 'menu' | 'section' */
+  kind: string;
+  /** '' | 'sfSymbol' | 'drawable' | 'image' */
+  iconType: string;
+  iconName: string;
+  iconUri: string;
+  iconScale: Double;
+  iconTinted: string;
+  imageColor: string;
+  destructive: string;
+  disabled: string;
+  keepsMenuPresented: string;
+  /** '' | 'off' | 'on' | 'mixed' */
+  state: string;
+}>;
+
+/** Event emitted when a toggle button is pressed. */
+export type ButtonSelectedChangeEvent = Readonly<{
+  /** The selection the press asks for */
+  selected: boolean;
+}>;
+
+/** Event emitted when a menu item is picked. */
+export type ButtonMenuSelectEvent = Readonly<{
+  id: string;
+  title: string;
+}>;
+
+/**
+ * iOS-specific configuration.
+ */
+export type ButtonIOSProps = Readonly<{
+  /** '' | 'bounce' | 'pulse' | 'variableColor' | 'wiggle' | 'rotate' | 'breathe' */
+  symbolEffect?: string;
+
+  /**
+   * '' runs the effect indefinitely; otherwise it plays once each time this
+   * value changes.
+   */
+  symbolEffectTrigger?: string;
+}>;
+
 export interface ButtonNativeProps extends ViewProps {
   /** Button text. Empty for an icon-only button. */
   label?: string;
@@ -31,10 +90,13 @@ export interface ButtonNativeProps extends ViewProps {
   /** Icon shown next to the label, or alone when there is no label. */
   icon?: ButtonIconProps;
 
-  /** 'leading' | 'trailing' */
+  /** 'leading' | 'trailing' | 'top' | 'bottom' */
   iconPosition?: string;
 
-  /** 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' | 'prominentGlass' */
+  /**
+   * 'filled' | 'tonal' | 'outlined' | 'text' | 'elevated' | 'glass' |
+   * 'prominentGlass' | 'clearGlass' | 'prominentClearGlass'
+   */
   variant?: string;
 
   /** 'xsmall' | 'small' | 'medium' | 'large' | 'xlarge' */
@@ -85,8 +147,34 @@ export interface ButtonNativeProps extends ViewProps {
    */
   spokenLabel?: string;
 
+  /** '' (not a toggle) | 'true' | 'false': the controlled toggle state. */
+  selected?: string;
+
+  /**
+   * Bumped by JS after every onSelectedChange, so native applies `selected`
+   * again: a toggle the parent didn't accept goes back.
+   */
+  selectedEventCount?: Int32;
+
+  /** Menu shown when the button is pressed, flattened (see ButtonMenuItem). */
+  menu?: ReadonlyArray<ButtonMenuItem>;
+
+  ios?: ButtonIOSProps;
+
   /** Fired when the button is pressed. */
   onButtonPress?: BubblingEventHandler<Readonly<{}>>;
+
+  /** Fired when a toggle button is pressed, with the state it asks for. */
+  onSelectedChange?: BubblingEventHandler<ButtonSelectedChangeEvent>;
+
+  /** Fired when a menu item is picked. */
+  onMenuSelect?: BubblingEventHandler<ButtonMenuSelectEvent>;
+
+  /** Fired when the menu opens. */
+  onMenuOpen?: BubblingEventHandler<Readonly<{}>>;
+
+  /** Fired when the menu closes. */
+  onMenuClose?: BubblingEventHandler<Readonly<{}>>;
 }
 
 export default codegenNativeComponent<ButtonNativeProps>(

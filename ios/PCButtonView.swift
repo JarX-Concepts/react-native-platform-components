@@ -1,7 +1,9 @@
 import UIKit
 
 /// A native button: `UIButton` with a `UIButton.Configuration` chosen by the
-/// variant, so it takes the system look of the iOS version it runs on.
+/// variant, so it takes the system look of the iOS version it runs on. It can
+/// be a toggle (`changesSelectionAsPrimaryAction`), open a `UIMenu` as its
+/// primary action, and animate its SF Symbol.
 @objcMembers
 public final class PCButtonView: UIView {
     // MARK: - Props (set from ObjC++)
@@ -14,7 +16,8 @@ public final class PCButtonView: UIView {
         }
     }
 
-    /// "filled" | "tonal" | "outlined" | "text" | "elevated" | "glass" | "prominentGlass"
+    /// "filled" | "tonal" | "outlined" | "text" | "elevated" | "glass" |
+    /// "prominentGlass" | "clearGlass" | "prominentClearGlass"
     public var variant: String = "filled" {
         didSet { if oldValue != variant { applyConfiguration() } }
     }
@@ -29,7 +32,7 @@ public final class PCButtonView: UIView {
         didSet { if oldValue != shape { applyConfiguration() } }
     }
 
-    /// "leading" | "trailing"
+    /// "leading" | "trailing" | "top" | "bottom"
     public var iconPosition: String = "leading" {
         didSet { if oldValue != iconPosition { applyConfiguration() } }
     }
@@ -91,9 +94,22 @@ public final class PCButtonView: UIView {
         didSet { updateAccessibilityLabel() }
     }
 
+    /// ObjC++ sets this as an array of dictionaries: the flattened menu items
+    public var menuItems: [Any] = [] {
+        didSet {
+            items = PCMenuSupport.items(from: menuItems)
+            updateMenu()
+        }
+    }
+
     // MARK: - Events back to ObjC++
 
     public var onPress: (() -> Void)?
+    /// A toggle was pressed; the state it asks for.
+    public var onSelectedChange: ((Bool) -> Void)?
+    public var onMenuSelect: ((String, String) -> Void)? // (id, title)
+    public var onMenuOpen: (() -> Void)?
+    public var onMenuClose: (() -> Void)?
 
     /// Called when content changed after layout (an icon finished loading),
     /// so the Fabric measurement can be refreshed.
@@ -101,7 +117,8 @@ public final class PCButtonView: UIView {
 
     // MARK: - Internal
 
-    private let button = UIButton(type: .system)
+    /// Reports when its menu opens and closes (see PCMenuSupport.swift).
+    private let button = PCMenuButton(type: .system)
 
     /// Hidden twin with the idle configuration, measured while loading so the
     /// spinner keeps the button's size.
@@ -116,12 +133,24 @@ public final class PCButtonView: UIView {
     /// Bumped on every icon change so late image loads can't apply a stale icon.
     private var iconGeneration = 0
 
-    /// The enabled state the current configuration was built for.
+    /// The enabled and selected states the current configuration was built for.
     private var configuredEnabled = true
+    private var configuredSelected = false
 
     private var hasDisabledColors: Bool {
         disabledContainerColor != nil || disabledForegroundColor != nil
     }
+
+    /// Whether the button is a toggle, and its controlled state.
+    private var isToggle = false
+    private var controlledSelected = false
+
+    private var items: [PCMenuItem] = []
+    private var hasMenu: Bool { !items.isEmpty }
+
+    /// "" or an effect name; see `setSymbolEffect`.
+    private var symbolEffect = ""
+    private var symbolEffectTrigger = ""
 
     // MARK: - Init
 
@@ -151,18 +180,113 @@ public final class PCButtonView: UIView {
         sizingButton.isAccessibilityElement = false
         addSubview(sizingButton)
 
+        // A menu is the primary action only while there is one
+        button.showsMenuAsPrimaryAction = false
+        button.onMenuOpen = { [weak self] in self?.onMenuOpen?() }
+        button.onMenuClose = { [weak self] in self?.onMenuClose?() }
+
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
-        // Custom disabled colors: rebuild the configuration when isEnabled flips
+        // Rebuild the configuration when isEnabled flips (custom disabled
+        // colors) or a toggle's isSelected does (see toggleVariant)
         button.configurationUpdateHandler = { [weak self] button in
-            guard let self, self.hasDisabledColors, self.configuredEnabled != button.isEnabled else { return }
+            guard let self else { return }
+            let enabledChanged = self.hasDisabledColors && self.configuredEnabled != button.isEnabled
+            let selectedChanged = self.isToggle && self.configuredSelected != button.isSelected
+            guard enabledChanged || selectedChanged else { return }
             button.configuration = self.makeConfiguration()
         }
         applyConfiguration()
     }
 
     @objc private func pressed() {
-        guard !loading else { return }
+        guard !loading, !hasMenu else { return }
+        if isToggle {
+            // A press asks for the opposite of the controlled state. UIKit
+            // flips isSelected right away; syncSelected runs again once JS
+            // has answered, so the controlled value decides.
+            onSelectedChange?(!controlledSelected)
+        }
         onPress?()
+    }
+
+    // MARK: - Toggle
+
+    /// Applies the controlled toggle state: "" (not a toggle) | "true" |
+    /// "false". Called on every change of the prop and after every
+    /// `onSelectedChange`, so a state the parent didn't take goes back.
+    public func syncSelected(_ value: String) {
+        let wasToggle = isToggle
+        isToggle = !value.isEmpty
+        controlledSelected = value == "true"
+        updatePrimaryAction()
+        if button.isSelected != controlledSelected {
+            // The configuration follows in configurationUpdateHandler
+            button.isSelected = controlledSelected
+        } else if wasToggle != isToggle {
+            applyConfiguration()
+        }
+    }
+
+    /// A menu, when there is one, is the primary action; otherwise a toggle
+    /// flips its selection (UIKit's toggle button).
+    private func updatePrimaryAction() {
+        button.showsMenuAsPrimaryAction = hasMenu
+        button.changesSelectionAsPrimaryAction = isToggle && !hasMenu
+    }
+
+    // MARK: - Menu
+
+    private func updateMenu() {
+        button.setMenu(hasMenu ? buildMenu() : nil)
+        updatePrimaryAction()
+    }
+
+    private func buildMenu() -> UIMenu {
+        PCMenuSupport.menu(
+            title: "",
+            items: items,
+            onImageLoaded: { [weak self] in self?.updateMenu() },
+            handler: { [weak self] item in self?.onMenuSelect?(item.id, item.title) }
+        )
+    }
+
+    // MARK: - Symbol effects
+
+    /// Animates the SF Symbol icon. With an empty `trigger` the effect repeats
+    /// until it is unset; otherwise it plays once whenever `trigger` changes
+    /// (not for the first value).
+    public func setSymbolEffect(_ effect: String, trigger: String) {
+        let modeChanged = effect != symbolEffect || trigger.isEmpty != symbolEffectTrigger.isEmpty
+        let triggerChanged = trigger != symbolEffectTrigger
+        symbolEffect = effect
+        symbolEffectTrigger = trigger
+        if modeChanged {
+            restartSymbolEffect()
+        } else if triggerChanged {
+            playSymbolEffectOnce()
+        }
+    }
+
+    /// The image view showing the SF Symbol, or nil for other icons.
+    private var symbolImageView: UIImageView? {
+        guard icon.type == "sfSymbol", !loading, iconImage != nil else { return nil }
+        // The configuration's image view is created on layout
+        button.layoutIfNeeded()
+        return button.imageView
+    }
+
+    /// Removes any effect, then starts the repeating one when there is no
+    /// trigger.
+    private func restartSymbolEffect() {
+        guard #available(iOS 17.0, *) else { return }
+        button.imageView?.removeAllSymbolEffects(animated: false)
+        guard symbolEffectTrigger.isEmpty, let imageView = symbolImageView else { return }
+        PCSymbolEffects.add(symbolEffect, to: imageView, repeating: true)
+    }
+
+    private func playSymbolEffectOnce() {
+        guard #available(iOS 17.0, *), let imageView = symbolImageView else { return }
+        PCSymbolEffects.add(symbolEffect, to: imageView, repeating: false)
     }
 
     /// The title is dropped while loading, so the label is kept explicitly.
@@ -197,12 +321,27 @@ public final class PCButtonView: UIView {
     private func applyConfiguration() {
         button.configuration = makeConfiguration()
         invalidateIntrinsicContentSize()
+        // A repeating effect starts over on the new image (and stops while
+        // loading, which drops the image).
+        if !symbolEffect.isEmpty && symbolEffectTrigger.isEmpty {
+            restartSymbolEffect()
+        }
+    }
+
+    private var imagePlacement: NSDirectionalRectEdge {
+        switch iconPosition {
+        case "trailing": return .trailing
+        case "top": return .top
+        case "bottom": return .bottom
+        default: return .leading
+        }
     }
 
     private func makeConfiguration() -> UIButton.Configuration {
         configuredEnabled = button.isEnabled
+        configuredSelected = button.isSelected
         var config = PCButtonSupport.makeConfiguration(
-            variant: variant,
+            variant: isToggle ? PCButtonSupport.toggleVariant(variant, selected: configuredSelected) : variant,
             selected: false,
             size: size,
             shape: shape,
@@ -211,7 +350,7 @@ public final class PCButtonView: UIView {
             containerColor: containerColor,
             foregroundColor: foregroundColor,
             font: labelFont,
-            imagePlacement: iconPosition == "trailing" ? .trailing : .leading,
+            imagePlacement: imagePlacement,
             cornerRadius: cornerRadius >= 0 ? cornerRadius : nil,
             maxFontSizeMultiplier: maxFontSizeMultiplier,
             traits: traitCollection

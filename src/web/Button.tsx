@@ -11,6 +11,7 @@ import {
   cssColor,
   cssFont,
   usePrimaryColor,
+  warnOnce,
 } from './shared';
 
 /** The Web Animations API surface the spinner uses (no DOM lib here). */
@@ -21,7 +22,11 @@ type AnimatableElement = {
   ) => { cancel: () => void };
 };
 
-/** A `<button>`, styled after the Material 3 button variants. */
+/**
+ * A `<button>`, styled after the Material 3 button variants. A toggle
+ * (`selected`) sets `aria-pressed` and takes the filled look when selected.
+ * Browsers have no native menu, so a button with a `menu` calls `onPress`.
+ */
 export function Button(props: ButtonProps): React.ReactElement {
   const {
     label,
@@ -42,19 +47,59 @@ export function Button(props: ButtonProps): React.ReactElement {
     maxFontSizeMultiplier: _maxFontSizeMultiplier,
     accessibilityLabel,
     onPress,
+    selected,
+    onSelectedChange,
+    menu,
+    onMenuSelect: _onMenuSelect,
+    onMenuOpen: _onMenuOpen,
+    onMenuClose: _onMenuClose,
+    // SF Symbols don't exist on the web
+    ios: _ios,
     android,
     style,
     ...viewProps
   } = props;
 
+  if (menu && menu.length > 0) {
+    warnOnce(
+      'Button.menu',
+      'Button menus have no web implementation; the button calls onPress instead. ' +
+        'See https://jarx-concepts.github.io/react-native-platform-components/guides/web'
+    );
+  }
+
+  const isToggle = selected !== undefined;
   const primary = usePrimaryColor();
   const metrics = BUTTON_SIZES[size] ?? BUTTON_SIZES.small!;
+  // A toggle is filled when selected; a filled toggle is tonal when not, as
+  // Material's toggle buttons are
+  const look = !isToggle
+    ? variant
+    : selected
+      ? 'filled'
+      : variant === 'filled'
+        ? 'tonal'
+        : variant;
   const colors = buttonColors(
-    variant,
+    look,
     primary,
-    cssColor(color),
-    cssColor(tintColor)
+    isToggle && selected ? undefined : cssColor(color),
+    isToggle && selected ? undefined : cssColor(tintColor)
   );
+  const vertical = iconPosition === 'top' || iconPosition === 'bottom';
+  const direction = (
+    {
+      leading: 'row',
+      trailing: 'row-reverse',
+      top: 'column',
+      bottom: 'column-reverse',
+    } as const
+  )[iconPosition];
+
+  const handleClick = () => {
+    if (isToggle) onSelectedChange?.(!selected);
+    onPress?.();
+  };
   // Custom disabled colors replace the default faded look.
   const customDisabled =
     disabled &&
@@ -92,14 +137,18 @@ export function Button(props: ButtonProps): React.ReactElement {
         disabled={disabled}
         aria-label={accessibilityLabel ?? label}
         aria-busy={loading || undefined}
-        onClick={loading ? undefined : onPress}
+        aria-pressed={isToggle ? !!selected : undefined}
+        onClick={loading ? undefined : handleClick}
         style={{
           ...BUTTON_BASE,
           ...colors,
-          height: metrics.height,
+          // An icon above or below the label makes the button taller
+          ...(vertical
+            ? { minHeight: metrics.height, gap: 4 }
+            : { height: metrics.height }),
           minWidth: metrics.height,
-          padding: label ? `0 ${metrics.padding}px` : 0,
-          flexDirection: iconPosition === 'trailing' ? 'row-reverse' : 'row',
+          padding: label ? `${vertical ? 8 : 0}px ${metrics.padding}px` : 0,
+          flexDirection: direction,
           borderRadius:
             cornerRadius ?? (shape === 'square' ? 12 : metrics.height / 2),
           fontSize: metrics.fontSize,

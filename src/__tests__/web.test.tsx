@@ -114,6 +114,51 @@ describe('Button (web)', () => {
     expect(style.borderRadius).toBe(6);
   });
 
+  it('stacks the icon for top and bottom placement', () => {
+    const tree = render(<Button label="Share" iconPosition="top" />);
+    let style = tree.root.findByType('button').props.style;
+    expect(style.flexDirection).toBe('column');
+    expect(style.height).toBeUndefined();
+    act(() => tree.update(<Button label="Share" iconPosition="bottom" />));
+    style = tree.root.findByType('button').props.style;
+    expect(style.flexDirection).toBe('column-reverse');
+  });
+
+  it('is a toggle with aria-pressed', () => {
+    const onSelectedChange = jest.fn();
+    const tree = render(
+      <Button
+        label="Bold"
+        selected={false}
+        onSelectedChange={onSelectedChange}
+      />
+    );
+    const button = tree.root.findByType('button');
+    expect(button.props['aria-pressed']).toBe(false);
+    click(button);
+    expect(onSelectedChange).toHaveBeenCalledWith(true);
+
+    act(() => tree.update(<Button label="Bold" selected />));
+    expect(tree.root.findByType('button').props['aria-pressed']).toBe(true);
+  });
+
+  it('warns once about a menu and calls onPress', () => {
+    resetWarnings();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const onPress = jest.fn();
+    const tree = render(
+      <Button
+        label="Sort"
+        menu={[{ id: 'name', title: 'Name' }]}
+        onPress={onPress}
+      />
+    );
+    click(tree.root.findByType('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
   it('uses the theme color for filled buttons', () => {
     function App() {
       useNativeTheme({ colors: { primary: '#123456' } });
