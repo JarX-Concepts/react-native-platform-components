@@ -28,6 +28,7 @@ NSDictionary *PCMenuItemToDictionary(const Item &item) {
     @"kind" : PCMenuString(item.kind),
     @"iconType" : PCMenuString(item.iconType),
     @"iconName" : PCMenuString(item.iconName),
+    @"iconRequest" : PCMenuString(item.iconRequest),
     @"iconUri" : PCMenuString(item.iconUri),
     @"iconScale" : @(item.iconScale),
     @"iconTinted" : PCMenuString(item.iconTinted),
@@ -53,7 +54,7 @@ template <typename Item>
 bool PCMenuItemEqual(const Item &a, const Item &b) {
   return a.id == b.id && a.title == b.title && a.subtitle == b.subtitle &&
       a.parent == b.parent && a.kind == b.kind && a.iconType == b.iconType &&
-      a.iconName == b.iconName && a.iconUri == b.iconUri &&
+      a.iconName == b.iconName && a.iconRequest == b.iconRequest && a.iconUri == b.iconUri &&
       a.iconScale == b.iconScale && a.iconTinted == b.iconTinted &&
       a.imageColor == b.imageColor && a.destructive == b.destructive &&
       a.disabled == b.disabled &&

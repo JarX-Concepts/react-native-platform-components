@@ -427,8 +427,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         activeInput.resignFirstResponder()
     }
 
-    public func setLeadingIcon(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool) {
-        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
+    public func setLeadingIcon(type: String, name: String, request: String, uri: String, scale: CGFloat, tinted: Bool) {
+        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted, request: request)
         guard next != leadingIcon else { return }
         leadingIcon = next
         leadingIconGeneration += 1
@@ -441,8 +441,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         applyAccessories()
     }
 
-    public func setTrailingIcon(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool) {
-        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
+    public func setTrailingIcon(type: String, name: String, request: String, uri: String, scale: CGFloat, tinted: Bool) {
+        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted, request: request)
         guard next != trailingIcon else { return }
         trailingIcon = next
         trailingIconGeneration += 1

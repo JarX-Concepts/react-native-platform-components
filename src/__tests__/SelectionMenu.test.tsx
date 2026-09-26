@@ -60,9 +60,11 @@ describe('SelectionMenu', () => {
     expect(red).toEqual({
       label: 'Red',
       data: 'r',
+      disabled: 'false',
       subtitle: '',
       iconType: '',
       iconName: '',
+      iconRequest: '',
       iconUri: '',
       iconScale: 1,
       iconTinted: 'true',
@@ -70,10 +72,69 @@ describe('SelectionMenu', () => {
     expect(push).toMatchObject({
       subtitle: 'On this device',
       iconType: 'image',
+      iconRequest: '',
       iconUri: 'file:///bell.png',
       iconScale: 3,
     });
     expect(mail).toMatchObject({ iconType: 'sfSymbol', iconName: 'envelope' });
+    act(() => tree.unmount());
+  });
+
+  it('preserves disabled option indexes and rejects disabled or stale selections', () => {
+    const onSelect = jest.fn();
+    const options = [
+      { label: 'Unavailable', data: 'blocked', disabled: true },
+      { label: 'Available', data: 'ok' },
+    ];
+    const tree = render(
+      <SelectionMenu selected={null} options={options} onSelect={onSelect} />
+    );
+    expect(
+      lastNativeProps().options.map(
+        (option: { disabled: string }) => option.disabled
+      )
+    ).toEqual(['true', 'false']);
+    const select = (index: number, data: string) =>
+      act(() =>
+        lastNativeProps().onSelect({
+          nativeEvent: {
+            index,
+            data,
+            label: options[index]?.label ?? 'Unknown',
+          },
+        })
+      );
+    select(0, 'blocked');
+    select(1, 'old-data');
+    select(9, 'unknown');
+    expect(onSelect).not.toHaveBeenCalled();
+    select(1, 'ok');
+    expect(onSelect).toHaveBeenLastCalledWith('ok', 'Available', 1);
+    onSelect.mockClear();
+    act(() =>
+      tree.update(
+        <SelectionMenu
+          selected="ok"
+          disabled
+          options={options}
+          onSelect={onSelect}
+        />
+      )
+    );
+    select(1, 'ok');
+    expect(onSelect).not.toHaveBeenCalled();
+    act(() =>
+      tree.update(
+        <SelectionMenu
+          selected="blocked"
+          options={options.map((option) => ({ ...option, disabled: false }))}
+          onSelect={onSelect}
+        />
+      )
+    );
+    expect(lastNativeProps().selectedData).toBe('blocked');
+    select(0, 'blocked');
+    expect(onSelect).toHaveBeenLastCalledWith('blocked', 'Unavailable', 0);
     act(() => tree.unmount());
   });
 

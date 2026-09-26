@@ -174,7 +174,8 @@ public final class PCTabBarView: UIView, UITabBarDelegate, UITabBarControllerDel
                     name: (dict[key("iconName")] as? String) ?? "",
                     uri: (dict[key("iconUri")] as? String) ?? "",
                     scale: scale > 0 ? scale : 1,
-                    tinted: (dict[key("iconTinted")] as? String) != "false"
+                    tinted: (dict[key("iconTinted")] as? String) != "false",
+                    request: (dict[key("iconRequest")] as? String) ?? ""
                 )
             }
             return PCTabBarTab(

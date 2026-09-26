@@ -1,6 +1,8 @@
 import { expect } from 'detox';
 import { expect as jestExpect } from '@jest/globals';
-import { isAndroid, selectDemo, selectMenuOption } from './testHelpers';
+import { isAndroid, pause, selectDemo, selectMenuOption } from './testHelpers';
+import { startImageServer } from './imageServer';
+import { expectImageColors } from './imageAssertions';
 
 const expectText = async (testID: string, text: string) => {
   await waitFor(element(by.id(testID)))
@@ -107,7 +109,178 @@ describe('Native regression cases', () => {
     await expectText('regression-image-presses', '1');
   });
 
+  it('keeps unavailable options disabled in embedded and modal menus', async () => {
+    await element(by.id('regression-case-options')).tap();
+    let currentLabel = 'Ready choice';
+    for (const modal of [false, true]) {
+      if (modal) {
+        await element(by.id('regression-menu-mode')).tap();
+        await element(by.id('regression-menu-enable')).tap();
+      }
+      const open = async () => {
+        if (modal) await element(by.id('regression-menu-open')).tap();
+        else
+          await element(
+            by
+              .text(currentLabel)
+              .withAncestor(by.id('regression-disabled-menu'))
+          ).tap();
+        await waitFor(element(by.text('Unavailable choice')).atIndex(0))
+          .toBeVisible()
+          .withTimeout(5000);
+      };
+      await open();
+      // PopupMenu's label stays enabled; its containing menu row owns the
+      // disabled flag. Spinner applies that flag directly to its text row.
+      const androidChoice = element(
+        modal
+          ? by
+              .type('androidx.appcompat.view.menu.ListMenuItemView')
+              .withDescendant(by.text('Unavailable choice'))
+          : by.text('Unavailable choice')
+      ).atIndex(0);
+      if (isAndroid()) {
+        const disabled = await androidChoice.getAttributes();
+        jestExpect('enabled' in disabled && disabled.enabled).toBe(false);
+      } else {
+        await expect(
+          element(
+            by.label('Unavailable choice').and(by.traits(['notEnabled']))
+          ).atIndex(0)
+        ).toExist();
+      }
+      await element(by.text('Another choice')).atIndex(0).tap();
+      await expectText('regression-disabled-request', 'another:2');
+      currentLabel = 'Another choice';
+      await element(by.id('regression-menu-enable')).tap();
+      await open();
+      if (isAndroid()) {
+        const enabled = await androidChoice.getAttributes();
+        jestExpect('enabled' in enabled && enabled.enabled).toBe(true);
+      } else {
+        await expect(
+          element(by.label('Unavailable choice').and(by.traits(['notEnabled'])))
+        ).not.toExist();
+      }
+      await element(by.text('Unavailable choice')).atIndex(0).tap();
+      await expectText('regression-disabled-request', 'unavailable:1');
+      currentLabel = 'Unavailable choice';
+    }
+  });
+
+  it('forwards image credentials and bodies and isolates cached accounts', async () => {
+    const server = await startImageServer();
+    try {
+      await element(by.id('regression-case-images')).tap();
+      await waitFor(element(by.id('regression-request-image')))
+        .toBeVisible()
+        .withTimeout(5000);
+      jestExpect(server.requests).toEqual([
+        { authorization: 'Bearer first', method: 'POST', body: 'size=small' },
+      ]);
+      const icon = element(by.id('regression-request-image'));
+      await expectImageColors(
+        () => icon.takeScreenshot('authenticated-icon-first'),
+        ['blue'],
+        ['orange']
+      );
+      await element(by.id('regression-request-switch')).tap();
+      await waitFor(element(by.id('regression-request-image')))
+        .toBeVisible()
+        .withTimeout(5000);
+      jestExpect(server.requests).toEqual([
+        { authorization: 'Bearer first', method: 'POST', body: 'size=small' },
+        { authorization: 'Bearer second', method: 'POST', body: 'size=small' },
+      ]);
+      await expectImageColors(
+        () => icon.takeScreenshot('authenticated-icon-second'),
+        ['orange'],
+        ['blue']
+      );
+      await element(by.id('regression-request-cache')).tap();
+      await expect(element(by.id('regression-request-image'))).toBeVisible();
+      await expectImageColors(
+        () => icon.takeScreenshot('authenticated-icon-cached'),
+        ['orange'],
+        ['blue']
+      );
+      jestExpect(server.requests).toHaveLength(2);
+      await element(by.id('regression-request-reload')).tap();
+      await waitFor(element(by.id('regression-request-image')))
+        .toBeVisible()
+        .withTimeout(5000);
+      jestExpect(server.requests).toHaveLength(3);
+      jestExpect(server.requests[2]).toEqual(server.requests[1]);
+      await expectImageColors(
+        () => icon.takeScreenshot('authenticated-icon-reloaded'),
+        ['orange'],
+        ['blue']
+      );
+    } finally {
+      await server.close();
+    }
+  });
+
   const itOnIOS = isAndroid() ? it.skip : it;
+  itOnIOS(
+    'retains reload and no-store menu images without refetch loops',
+    async () => {
+      const server = await startImageServer();
+      // Hold an old account response while replacing that same URI's credentials.
+      // Synchronization is restored before inspecting the settled native menu.
+      await device.disableSynchronization();
+      try {
+        await element(by.id('regression-case-images')).tap();
+        await element(by.id('regression-image-mode')).tap();
+        const waitForAccount = async (authorization: string) => {
+          const deadline = Date.now() + 5000;
+          while (
+            !server.menuRequests.some(
+              (entry) => entry.authorization === authorization
+            ) &&
+            Date.now() < deadline
+          ) {
+            await pause(100);
+          }
+          jestExpect(server.menuRequests).toContainEqual({
+            path: '/menu/account',
+            authorization,
+          });
+        };
+        await waitForAccount('Bearer first');
+        await element(by.id('regression-menu-account')).tap();
+        await waitForAccount('Bearer second');
+        server.releaseFirstMenuImage();
+        await device.enableSynchronization();
+
+        for (const opening of [1, 2]) {
+          await element(by.text('Request menu')).tap();
+          await waitFor(element(by.text('Reload icon')).atIndex(0))
+            .toBeVisible()
+            .withTimeout(5000);
+          await expectImageColors(
+            () => device.takeScreenshot(`request-menu-${opening}`),
+            ['blue', 'orange', 'green'],
+            ['purple']
+          );
+          await element(by.text('Reload icon')).atIndex(0).tap();
+        }
+        jestExpect(
+          server.menuRequests.filter(({ path }) => path === '/menu/reload')
+        ).toHaveLength(1);
+        jestExpect(
+          server.menuRequests.filter(({ path }) => path === '/menu/no-store')
+        ).toHaveLength(1);
+        jestExpect(
+          server.menuRequests.filter(({ path }) => path === '/menu/account')
+        ).toHaveLength(2);
+      } finally {
+        await server.close();
+        await device.enableSynchronization();
+      }
+    }
+  );
+
   itOnIOS(
     'retains focus and selection when switching the iOS input between line modes',
     async () => {

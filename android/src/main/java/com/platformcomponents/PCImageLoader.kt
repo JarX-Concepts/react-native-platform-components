@@ -13,6 +13,8 @@ import android.util.LruCache
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.math.roundToInt
 
 /**
@@ -30,6 +32,9 @@ object PCImageLoader {
   private val executor = Executors.newFixedThreadPool(2)
   private val mainHandler = Handler(Looper.getMainLooper())
   private val cache = LruCache<String, Bitmap>(32)
+  private val cacheLock = Any()
+  private var nextGeneration = 0L
+  private val generations = mutableMapOf<String, Long>()
 
   /**
    * Loads [uri] and delivers the bitmap on the main thread. [scale] is the
@@ -38,17 +43,29 @@ object PCImageLoader {
    *
    * Cached images are delivered synchronously.
    */
-  fun load(context: Context, uri: String, scale: Float, callback: (Bitmap?) -> Unit) {
-    val key = "$uri@${scale}x"
-    cache.get(key)?.let {
+  fun load(context: Context, uri: String, scale: Float, request: String = "", callback: (Bitmap?) -> Unit) {
+    val options = try { if (request.isEmpty()) JSONObject() else JSONObject(request) }
+      catch (_: Exception) { callback(null); return }
+    val policy = options.optString("cache", "default")
+    options.remove("cache")
+    val key = JSONArray().put(uri).put(scale.toDouble()).put(options).toString()
+    val cached = if (policy == "reload") null else cache.get(key)
+    cached?.let {
       callback(it)
       return
+    }
+    if (policy == "only-if-cached") { callback(null); return }
+    val generation = synchronized(cacheLock) {
+      nextGeneration += 1
+      generations[key] = nextGeneration
+      nextGeneration
     }
 
     val appContext = context.applicationContext
     executor.execute {
+      var canCache = true
       val bitmap = try {
-        decode(appContext, uri)
+        decode(appContext, uri, options) { canCache = it }
       } catch (e: Exception) {
         // Image URIs may carry credentials or signed query parameters.
         Log.w(TAG, "Failed to load image (${e.javaClass.simpleName})")
@@ -56,20 +73,37 @@ object PCImageLoader {
       }
       if (bitmap != null) {
         bitmap.density = (scale.coerceAtLeast(0.01f) * DisplayMetrics.DENSITY_DEFAULT).roundToInt()
-        cache.put(key, bitmap)
+      }
+      synchronized(cacheLock) {
+        if (generations[key] == generation) {
+          if (bitmap != null && canCache) cache.put(key, bitmap) else cache.remove(key)
+          generations.remove(key)
+        }
       }
       mainHandler.post { callback(bitmap) }
     }
   }
 
-  private fun decode(context: Context, uri: String): Bitmap? {
+  private fun decode(context: Context, uri: String, options: JSONObject, cacheable: (Boolean) -> Unit): Bitmap? {
     val parsed = Uri.parse(uri)
     return when (parsed.scheme?.lowercase()) {
       "http", "https" -> {
         val connection = URL(uri).openConnection() as HttpURLConnection
         connection.connectTimeout = TIMEOUT_MS
         connection.readTimeout = TIMEOUT_MS
+        connection.useCaches = false
+        connection.instanceFollowRedirects = options.length() == 0
+        connection.requestMethod = options.optString("method", "GET")
+        options.optJSONObject("headers")?.let { headers ->
+          for (name in headers.keys()) connection.setRequestProperty(name, headers.getString(name))
+        }
         try {
+          if (options.has("body")) {
+            connection.doOutput = true
+            connection.outputStream.use { it.write(options.getString("body").toByteArray(Charsets.UTF_8)) }
+          }
+          if (connection.responseCode !in 200..299) return null
+          cacheable(!connection.getHeaderField("Cache-Control").orEmpty().contains("no-store", ignoreCase = true))
           connection.inputStream.use { BitmapFactory.decodeStream(it) }
         } finally {
           connection.disconnect()

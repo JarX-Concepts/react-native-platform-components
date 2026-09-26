@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import {
+  Button,
   ButtonGroup,
   DatePicker,
   SegmentedControl,
@@ -15,6 +16,8 @@ const CASES = [
   { label: 'Selection', value: 'selection' },
   { label: 'Date', value: 'date' },
   { label: 'Text', value: 'text' },
+  { label: 'Options', value: 'options' },
+  { label: 'Images', value: 'images' },
 ] as const;
 
 const SEGMENTS = [
@@ -93,6 +96,172 @@ function ControlledSelectionCases() {
         <Status id="regression-menu-request">{menuRequest}</Status>
       </View>
     </Section>
+  );
+}
+
+function DisabledOptionsCase() {
+  const [unavailable, setUnavailable] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [selected, setSelected] = useState('ready');
+  const [reported, setReported] = useState('none');
+  return (
+    <Section title="Disabled menu options">
+      <View style={styles.content}>
+        <PillButton
+          testID="regression-menu-mode"
+          label={modal ? 'Use embedded' : 'Use modal'}
+          onPress={() => setModal(!modal)}
+        />
+        <PillButton
+          testID="regression-menu-enable"
+          label={unavailable ? 'Enable choice' : 'Disable choice'}
+          onPress={() => setUnavailable(!unavailable)}
+        />
+        {modal && (
+          <PillButton
+            testID="regression-menu-open"
+            label="Open options"
+            onPress={() => setVisible(true)}
+          />
+        )}
+        <SelectionMenu
+          testID="regression-disabled-menu"
+          options={[
+            { label: 'Ready choice', data: 'ready' },
+            {
+              label: 'Unavailable choice',
+              data: 'unavailable',
+              disabled: unavailable,
+            },
+            { label: 'Another choice', data: 'another' },
+          ]}
+          selected={selected}
+          presentation={modal ? 'modal' : 'embedded'}
+          visible={visible}
+          android={{ material: 'system' }}
+          onSelect={(data, _label, index) => {
+            setSelected(data);
+            setReported(`${data}:${index}`);
+            setVisible(false);
+          }}
+          onRequestClose={() => setVisible(false)}
+        />
+        <Status id="regression-disabled-request">{reported}</Status>
+      </View>
+    </Section>
+  );
+}
+
+function ImageRequestCase() {
+  const [account, setAccount] = useState('first');
+  const [generation, setGeneration] = useState(0);
+  const [cache, setCache] = useState<'default' | 'reload' | 'only-if-cached'>(
+    'default'
+  );
+  return (
+    <Section title="Authenticated image requests">
+      <View style={styles.content}>
+        <Status id="regression-network-help">
+          Requires the local E2E image server on port 18763.
+        </Status>
+        <TextField
+          key={generation}
+          defaultValue="Authenticated image"
+          leadingIcon={{
+            type: 'image',
+            tinted: false,
+            source: {
+              uri: `http://${Platform.OS === 'android' ? '10.0.2.2' : 'localhost'}:18763/icon`,
+              headers: { Authorization: `Bearer ${account}` },
+              method: 'POST',
+              body: 'size=small',
+              cache,
+            },
+          }}
+          leadingIconTestID="regression-request-image"
+          leadingIconAccessibilityLabel="Authenticated icon"
+        />
+        <Status id="regression-request-account">{account}</Status>
+        <PillButton
+          testID="regression-request-switch"
+          label="Switch account"
+          onPress={() => setAccount(account === 'first' ? 'second' : 'first')}
+        />
+        <PillButton
+          testID="regression-request-cache"
+          label="Use cached image"
+          onPress={() => {
+            setCache('only-if-cached');
+            setGeneration(generation + 1);
+          }}
+        />
+        <PillButton
+          testID="regression-request-reload"
+          label="Reload image"
+          onPress={() => {
+            setCache('reload');
+            setGeneration(generation + 1);
+          }}
+        />
+      </View>
+    </Section>
+  );
+}
+
+function MenuImageRequestCase() {
+  const [account, setAccount] = useState('first');
+  const image = (path: string, reload = false): PlatformIcon => ({
+    type: 'image',
+    tinted: false,
+    source: {
+      uri: `http://${Platform.OS === 'android' ? '10.0.2.2' : 'localhost'}:18763/menu/${path}`,
+      ...(path === 'account'
+        ? { headers: { Authorization: `Bearer ${account}` } }
+        : {}),
+      ...(reload ? { cache: 'reload' as const } : {}),
+    },
+  });
+  return (
+    <Section title="Menu image requests">
+      <View style={styles.content}>
+        <PillButton
+          testID="regression-menu-account"
+          label="Replace account image"
+          onPress={() => setAccount('second')}
+        />
+        <Button
+          label="Request menu"
+          menu={[
+            {
+              id: 'reload',
+              title: 'Reload icon',
+              image: image('reload', true),
+            },
+            {
+              id: 'no-store',
+              title: 'No-store icon',
+              image: image('no-store'),
+            },
+            { id: 'account', title: 'Account icon', image: image('account') },
+          ]}
+        />
+      </View>
+    </Section>
+  );
+}
+
+function ImageCases() {
+  const [menu, setMenu] = useState(false);
+  return (
+    <>
+      <PillButton
+        testID="regression-image-mode"
+        label={menu ? 'Accessory image' : 'Menu images'}
+        onPress={() => setMenu(!menu)}
+      />
+      {menu ? <MenuImageRequestCase /> : <ImageRequestCase />}
+    </>
   );
 }
 
@@ -252,6 +421,8 @@ export function NativeRegressionDemo() {
       {activeCase === 'selection' && <ControlledSelectionCases />}
       {activeCase === 'date' && <DateLifecycleCase />}
       {activeCase === 'text' && <TextLifecycleCase />}
+      {activeCase === 'options' && <DisabledOptionsCase />}
+      {activeCase === 'images' && <ImageCases />}
     </>
   );
 }

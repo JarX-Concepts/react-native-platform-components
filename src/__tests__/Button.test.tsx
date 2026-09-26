@@ -44,6 +44,7 @@ describe('Button', () => {
     expect(props.icon).toEqual({
       iconType: '',
       iconName: '',
+      iconRequest: '',
       iconUri: '',
       iconScale: 1,
       iconTinted: 'true',

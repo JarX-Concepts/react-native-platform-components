@@ -8,6 +8,7 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Sele
 struct PCSelectionMenuOption {
     let label: String
     let data: String
+    let disabled: Bool
     let subtitle: String
     let icon: PCButtonSupport.Icon
 }
@@ -25,10 +26,12 @@ public final class PCSelectionMenuView: UIControl {
                 return PCSelectionMenuOption(
                     label: (dict["label"] as? String) ?? "",
                     data: (dict["data"] as? String) ?? "",
+                    disabled: (dict["disabled"] as? String) == "true",
                     subtitle: (dict["subtitle"] as? String) ?? "",
                     icon: PCButtonSupport.Icon(dictionary: dict)
                 )
             }
+            menuImages.retain(icons: parsedOptions.map(\.icon))
             sync()
         }
     }
@@ -79,6 +82,7 @@ public final class PCSelectionMenuView: UIControl {
     private var headlessSelectedWhileOpen = false
 
     private var parsedOptions: [PCSelectionMenuOption] = []
+    private let menuImages = PCMenuImageState()
 
     private var displayTitle: String {
         let opts = parsedOptions
@@ -198,6 +202,7 @@ public final class PCSelectionMenuView: UIControl {
                 title: opt.label,
                 subtitle: opt.subtitle,
                 icon: opt.icon,
+                disabled: opt.disabled,
                 state: (!selectedData.isEmpty && opt.data == selectedData) ? "on" : "off"
             )
         }
@@ -205,10 +210,13 @@ public final class PCSelectionMenuView: UIControl {
             title: "",
             options: .singleSelection,
             items: items,
+            imageState: menuImages,
             onImageLoaded: { [weak self] in self?.rebuildMenu() },
             handler: { [weak self] item in
                 guard let self, item.index < opts.count else { return }
                 let opt = opts[item.index]
+                guard self.interactivity != "disabled",
+                      self.parsedOptions.contains(where: { $0.data == opt.data && !$0.disabled }) else { return }
                 // A pick from the headless system menu isn't a dismissal to report
                 if self.anchorMode != "inline" { self.headlessSelectedWhileOpen = true }
                 self.onSelect?(item.index, opt.label, opt.data)
@@ -375,7 +383,9 @@ public final class PCSelectionMenuView: UIControl {
                 onSelect: { [weak self] idx in
                     guard let self else { return }
                     let opt = opts[idx]
-                    logger.debug("headless menu selected: index=\(idx), data=\(opt.data)")
+                    guard self.interactivity != "disabled",
+                          self.parsedOptions.contains(where: { $0.data == opt.data && !$0.disabled }) else { return }
+                    logger.debug("headless menu selected: index=\(idx)")
                     self.onSelect?(idx, opt.label, opt.data)
                 },
                 onCancel: { [weak self] in
@@ -572,12 +582,15 @@ private class PCGlassMenuCell: UITableViewCell {
 
     /// `reservesCheckmark` indents every row when the menu has a selection, so labels
     /// stay aligned; only the selected row shows the checkmark.
-    func configure(label: String, selected: Bool, reservesCheckmark: Bool) {
+    func configure(label: String, selected: Bool, disabled: Bool, reservesCheckmark: Bool) {
         menuLabel.text = label
         checkmarkView.isHidden = !selected
         labelLeadingToContent.isActive = !reservesCheckmark
         labelLeadingToCheckmark.isActive = reservesCheckmark
         accessibilityTraits = selected ? [.button, .selected] : [.button]
+        if disabled { accessibilityTraits.insert(.notEnabled) }
+        isUserInteractionEnabled = !disabled
+        contentView.alpha = disabled ? 0.5 : 1
     }
 }
 
@@ -693,12 +706,14 @@ private class PCMenuViewController: UIViewController, UITableViewDelegate, UITab
         (cell as? PCGlassMenuCell)?.configure(
             label: options[indexPath.row].label,
             selected: indexPath.row == selectedIndex,
+            disabled: options[indexPath.row].disabled,
             reservesCheckmark: selectedIndex != nil
         )
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard !options[indexPath.row].disabled else { return }
         tableView.deselectRow(at: indexPath, animated: true)
         dismiss(animated: true) { [weak self] in
             self?.onSelect(indexPath.row)

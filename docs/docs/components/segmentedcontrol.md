@@ -48,6 +48,8 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 Segment `value` strings must be unique and non-empty. Native controls reserve
 the empty string for no selection; use `selectedValue={null}` instead.
+Development builds warn about empty or duplicate identifiers without logging
+their contents.
 
 ### iOS Props (`ios`)
 
@@ -106,9 +108,9 @@ icon: { type: 'image', source: { uri: 'https://example.com/icon@2x.png', scale: 
 
 Image icons render at their point size, so ship `@2x` / `@3x` variants sized around 18–22 points. Local assets load synchronously in release builds; in development they stream from Metro and the segment shows its label until the image arrives.
 
-Native image loaders use only the resolved `uri` and `scale`. Request headers,
-HTTP methods and other `ImageURISource` fetch options are not forwarded. Use a
-bundled asset or a URL that can be fetched without custom request headers.
+Native image loaders also support request headers, methods, bodies and explicit
+in-memory caching. See [Image requests](/guides/icons#image-requests-ios-and-android)
+for the supported options and differences from React Native's `Image` cache.
 
 ### Label visibility
 

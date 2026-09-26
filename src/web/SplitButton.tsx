@@ -4,6 +4,7 @@ import React from 'react';
 import type { SplitButtonProps } from '../SplitButton';
 import { Button } from './Button';
 import { warnOnce } from './shared';
+import { useWebComponent } from './PlatformComponentsProvider';
 
 /**
  * The main button alone: browsers have no native menu to attach, so the
@@ -11,6 +12,7 @@ import { warnOnce } from './shared';
  * app.
  */
 export function SplitButton(props: SplitButtonProps): React.ReactElement {
+  const MainButton = useWebComponent('Button') ?? Button;
   const {
     menu,
     menuAccessibilityLabel,
@@ -26,5 +28,5 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
       'See https://jarx-concepts.github.io/react-native-platform-components/guides/web'
   );
 
-  return <Button {...buttonProps} />;
+  return <MainButton {...buttonProps} />;
 }

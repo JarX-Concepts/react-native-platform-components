@@ -33,10 +33,10 @@ static inline bool ItemsEqual(
     const auto &x = a[i];
     const auto &y = b[i];
     if (x.label != y.label || x.value != y.value || x.disabled != y.disabled ||
-        x.iconType != y.iconType || x.iconName != y.iconName || x.iconUri != y.iconUri ||
+        x.iconType != y.iconType || x.iconName != y.iconName || x.iconRequest != y.iconRequest || x.iconUri != y.iconUri ||
         x.iconScale != y.iconScale || x.iconTinted != y.iconTinted ||
         x.selectedIconType != y.selectedIconType || x.selectedIconName != y.selectedIconName ||
-        x.selectedIconUri != y.selectedIconUri || x.selectedIconScale != y.selectedIconScale ||
+        x.selectedIconRequest != y.selectedIconRequest || x.selectedIconUri != y.selectedIconUri || x.selectedIconScale != y.selectedIconScale ||
         x.selectedIconTinted != y.selectedIconTinted || x.badge != y.badge ||
         x.accessibilityLabel != y.accessibilityLabel || x.testID != y.testID ||
         x.role != y.role) {
@@ -182,11 +182,13 @@ static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style,
         @"disabled" : NSStringFromStd(item.disabled, @"enabled"),
         @"iconType" : NSStringFromStd(item.iconType, @""),
         @"iconName" : NSStringFromStd(item.iconName, @""),
+        @"iconRequest" : NSStringFromStd(item.iconRequest, @""),
         @"iconUri" : NSStringFromStd(item.iconUri, @""),
         @"iconScale" : @(item.iconScale),
         @"iconTinted" : NSStringFromStd(item.iconTinted, @"true"),
         @"selectedIconType" : NSStringFromStd(item.selectedIconType, @""),
         @"selectedIconName" : NSStringFromStd(item.selectedIconName, @""),
+        @"selectedIconRequest" : NSStringFromStd(item.selectedIconRequest, @""),
         @"selectedIconUri" : NSStringFromStd(item.selectedIconUri, @""),
         @"selectedIconScale" : @(item.selectedIconScale),
         @"selectedIconTinted" : NSStringFromStd(item.selectedIconTinted, @"true"),

@@ -14,6 +14,7 @@ import type {
 export type ButtonIconProps = Readonly<{
   iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
   iconName: string; // SF Symbol (iOS) or drawable resource name (Android)
+  iconRequest: string;
   iconUri: string; // Resolved image URI when iconType === 'image'
   iconScale: Double; // Resolved image scale when iconType === 'image'
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
@@ -46,6 +47,7 @@ export type ButtonMenuItem = Readonly<{
   /** '' | 'sfSymbol' | 'drawable' | 'image' */
   iconType: string;
   iconName: string;
+  iconRequest: string;
   iconUri: string;
   iconScale: Double;
   iconTinted: string;

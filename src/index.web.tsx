@@ -26,25 +26,29 @@ export type * from './NativeTheme';
 
 export * from './labelStyle';
 
-export { Button } from './web/Button';
-export { ButtonGroup } from './web/ButtonGroup';
-export { SplitButton } from './web/SplitButton';
-export { DatePicker } from './web/DatePicker';
+export type {
+  PlatformComponentsProviderProps,
+  WebComponents,
+  WebComponentProps,
+} from './webComponents';
+export { PlatformComponentsProvider } from './web/PlatformComponentsProvider';
 export {
-  DateRangePicker,
-  isDateRangePickerSupported,
-} from './web/DateRangePicker';
-export { SegmentedControl } from './web/SegmentedControl';
-export { TabBar } from './web/TabBar';
-export { FloatingActionButton } from './web/FloatingActionButton';
-export { NavigationRail } from './web/NavigationRail';
-export { SelectionMenu } from './web/SelectionMenu';
-export { TextField } from './web/TextField';
-export {
+  Button,
+  ButtonGroup,
+  SplitButton,
   ContextMenu,
+  DatePicker,
+  DateRangePicker,
+  FloatingActionButton,
   FloatingToolbar,
   LiquidGlass,
   LiquidGlassContainer,
-  isLiquidGlassSupported,
-} from './web/containers';
+  NavigationRail,
+  SegmentedControl,
+  SelectionMenu,
+  TabBar,
+  TextField,
+} from './web/components';
+export { isDateRangePickerSupported } from './web/DateRangePicker';
+export { isLiquidGlassSupported } from './web/containers';
 export { setNativeTheme, useNativeTheme } from './web/NativeTheme';

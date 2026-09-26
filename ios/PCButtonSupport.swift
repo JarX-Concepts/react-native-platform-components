@@ -4,13 +4,14 @@ import UIKit
 /// UIButton configuration and icon handling shared by PCButtonView and
 /// PCButtonGroupView.
 enum PCButtonSupport {
-    struct Icon: Equatable {
+    struct Icon: Hashable {
         /// "", "sfSymbol", "drawable" (ignored on iOS) or "image"
         var type: String = ""
         var name: String = ""
         var uri: String = ""
         var scale: CGFloat = 1
         var tinted: Bool = true
+        var request: String = ""
 
         var isPresent: Bool { type == "sfSymbol" || type == "image" }
 
@@ -18,12 +19,13 @@ enum PCButtonSupport {
 
         init() {}
 
-        init(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool) {
+        init(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool, request: String = "") {
             self.type = type
             self.name = name
             self.uri = uri
             self.scale = scale > 0 ? scale : 1
             self.tinted = tinted
+            self.request = request
         }
 
         /// Reads the flat icon fields (iconType, iconName, ...) bridged as a dictionary.
@@ -34,7 +36,8 @@ enum PCButtonSupport {
                 name: (dictionary["iconName"] as? String) ?? "",
                 uri: (dictionary["iconUri"] as? String) ?? "",
                 scale: scale,
-                tinted: (dictionary["iconTinted"] as? String) != "false"
+                tinted: (dictionary["iconTinted"] as? String) != "false",
+                request: (dictionary["iconRequest"] as? String) ?? ""
             )
         }
     }
@@ -233,7 +236,7 @@ enum PCButtonSupport {
             return PCImageLoader.symbol(named: icon.name).map { decorate($0, tinted: icon.tinted) }
 
         case "image":
-            let cached = PCImageLoader.shared.image(uri: icon.uri, scale: icon.scale) { image in
+            let cached = PCImageLoader.shared.image(uri: icon.uri, scale: icon.scale, request: icon.request) { image in
                 completion(image.map { decorate($0, tinted: icon.tinted) })
             }
             return cached.map { decorate($0, tinted: icon.tinted) }

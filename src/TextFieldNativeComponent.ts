@@ -10,6 +10,7 @@ import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 export type TextFieldIconProps = Readonly<{
   iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
   iconName: string; // SF Symbol (iOS) or drawable resource name (Android)
+  iconRequest: string;
   iconUri: string; // Resolved image URI when iconType === 'image'
   iconScale: Double; // Resolved image scale when iconType === 'image'
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
@@ -62,6 +63,7 @@ export type TextFieldToolbarItem = Readonly<{
   systemItem: string; // '' | UIBarButtonItem.SystemItem name
   iconType: string; // '' | 'sfSymbol' | 'image'
   iconName: string;
+  iconRequest: string;
   iconUri: string;
   iconScale: Double;
   iconTinted: string; // 'true' | 'false'

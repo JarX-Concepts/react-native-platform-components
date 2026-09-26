@@ -51,6 +51,7 @@ describe('FloatingActionButton', () => {
     expect(props.icon).toEqual({
       iconType: 'sfSymbol',
       iconName: 'plus',
+      iconRequest: '',
       iconUri: '',
       iconScale: 1,
       iconTinted: 'true',

@@ -68,6 +68,9 @@ jobs:
       - name: Build package
         run: yarn prepare
 
+      - name: Check published web consumer types
+        run: node scripts/check-web-consumer-types.js
+
       - name: Build documentation
         run: yarn docs build
 

@@ -1,6 +1,6 @@
 ---
-title: "Icons"
-description: "SF Symbols on iOS and drawables or images on Android for ContextMenu, SegmentedControl, Button, ButtonGroup and TextField icons, including your own SVG icons."
+title: 'Icons'
+description: 'SF Symbols on iOS and drawables or images on Android for ContextMenu, SegmentedControl, Button, ButtonGroup and TextField icons, including your own SVG icons.'
 ---
 
 ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl, Button, ButtonGroup and TextField accept the same names, plus image assets and per-platform pairs (the `PlatformIcon` type); see [SegmentedControl Icon Support](/components/segmentedcontrol#icon-support).
@@ -64,6 +64,52 @@ An icon set that lives as SVG files can reach every native control through one s
 ```
 
 The library doesn't parse SVG at runtime, and it doesn't bundle Material Symbols: both would add weight and a second rendering path to every app, while the platform formats above are the ones the system renders, tints and scales natively.
+
+### Image requests (iOS and Android)
+
+Image icons accept bundled assets or an `ImageURISource`. Native controls forward
+`uri`, `scale`, `headers`, `method` and `body`. For example:
+
+```tsx
+<Button
+  label="Account"
+  icon={{
+    type: 'image',
+    tinted: false,
+    source: {
+      uri: 'https://example.com/account-icon.png',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'reload',
+    },
+  }}
+/>
+```
+
+Use an explicit method such as `POST` when supplying a UTF-8 request body.
+Requests that differ by URI, scale, headers, method or body have separate decoded
+image cache entries. Updating those props reloads the affected icon even when
+the URI stays the same. Request details are not written to diagnostic logs.
+
+| `source.cache`      | Native icon behavior                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `default` (omitted) | Reuse a matching decoded image in memory; otherwise load it.                                |
+| `force-cache`       | Same decoded-image behavior as `default`.                                                   |
+| `reload`            | Bypass cached data and refresh the matching decoded image.                                  |
+| `only-if-cached`    | Use a matching decoded image already in memory; render no image on a miss without fetching. |
+
+This is the library's bounded in-memory cache, separate from
+[React Native's `Image` caching](https://reactnative.dev/docs/image#cache-control-ios).
+Entries may be evicted and do not persist across app launches. The decoded cache
+does not revalidate expiry; use `reload` when the content behind an unchanged
+request changes. Responses marked `Cache-Control: no-store` are not kept in it.
+Only successful HTTP responses are decoded. Requests with custom headers,
+method or body do not follow redirects; supply the final image URL.
+Platform transport-security rules still apply. Dimensions come from the image
+and its scale; `width`, `height`, `bundle` and other source metadata are not
+additional HTTP request options.
+
+These guarantees apply to the native iOS and Android loaders. Web continues
+to use its existing image fallback and browser restrictions.
 
 ### Cross-platform pattern
 

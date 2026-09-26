@@ -98,7 +98,8 @@ object PCNavigationBarSupport {
       name = stringOr(key("iconName"), ""),
       uri = stringOr(key("iconUri"), ""),
       scale = if (scale > 0) scale.toFloat() else 1f,
-      tinted = stringOr(key("iconTinted"), "true") != "false"
+      tinted = stringOr(key("iconTinted"), "true") != "false",
+      request = stringOr(key("iconRequest"), "")
     )
   }
 
@@ -320,7 +321,7 @@ object PCNavigationBarSupport {
         if (!uri.contains(':')) {
           onLoaded(ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri))
         } else {
-          PCImageLoader.load(context, uri, icon.scale) { bitmap ->
+          PCImageLoader.load(context, uri, icon.scale, icon.request) { bitmap ->
             onLoaded(bitmap?.let { BitmapDrawable(context.resources, it) })
           }
         }

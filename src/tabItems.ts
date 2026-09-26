@@ -95,6 +95,7 @@ export function toNativeTabItems(
       ...icon,
       selectedIconType: selected.iconType,
       selectedIconName: selected.iconName,
+      selectedIconRequest: selected.iconRequest,
       selectedIconUri: selected.iconUri,
       selectedIconScale: selected.iconScale,
       selectedIconTinted: selected.iconTinted,

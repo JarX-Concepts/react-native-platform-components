@@ -1,0 +1,64 @@
+import { createRef, forwardRef, type ComponentProps } from 'react';
+import {
+  Button,
+  PlatformComponentsProvider,
+  SelectionMenu,
+  TextField,
+  type TextFieldProps,
+  type TextFieldRef,
+  type WebComponents,
+} from 'react-native-platform-components';
+
+const textFieldRef = createRef<TextFieldRef>();
+const AppTextField = forwardRef<TextFieldRef, TextFieldProps>(() => null);
+const adapters = {
+  Button: ({ label }) => <button>{label}</button>,
+  TextField: AppTextField,
+} satisfies Partial<WebComponents>;
+
+export const valid = (
+  <PlatformComponentsProvider web={adapters}>
+    <Button
+      label="Save"
+      selected={false}
+      onSelectedChange={(value: boolean) => void value}
+    />
+    <SelectionMenu
+      selected="first"
+      options={[{ label: 'First', data: 'first', disabled: true }]}
+      onSelect={(data: string, label: string, index: number) =>
+        void [data, label, index]
+      }
+    />
+    <TextField
+      ref={textFieldRef}
+      onChangeText={(value: string) => void value}
+    />
+  </PlatformComponentsProvider>
+);
+
+textFieldRef.current?.focus();
+textFieldRef.current?.setSelection(1, 3);
+
+// @ts-expect-error Button labels remain strings through the web wrapper.
+export const invalidLabel = <Button label={123} />;
+// @ts-expect-error Unknown TextField props must not be accepted as any.
+export const invalidProp = <TextField unknownProp="invalid" />;
+// @ts-expect-error TextField accepts its public handle, not another ref shape.
+export const invalidRef = <TextField ref={createRef<number>()} />;
+export const invalidCallback: ComponentProps<typeof SelectionMenu> = {
+  options: [],
+  selected: null,
+  // @ts-expect-error Selection callbacks preserve their public data argument.
+  onSelect: (data: number) => void data,
+};
+// @ts-expect-error Required SelectionMenu props remain required.
+export const missingProps = <SelectionMenu />;
+export const invalidAdapter: Partial<WebComponents> = {
+  // @ts-expect-error Registered adapters must use the matching component's props.
+  Button: (_props: { label: number }) => null,
+};
+export const invalidExtractedRef: ComponentProps<typeof TextField> = {
+  // @ts-expect-error The exported TextField props preserve the same ref contract.
+  ref: createRef<number>(),
+};

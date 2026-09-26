@@ -15,9 +15,11 @@ import type {
 export type SelectionMenuNativeOption = Readonly<{
   label: string;
   data: string;
+  disabled: string; // 'true' | 'false'
   subtitle: string;
   iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
   iconName: string;
+  iconRequest: string;
   iconUri: string;
   iconScale: Double;
   iconTinted: string; // 'true' | 'false'

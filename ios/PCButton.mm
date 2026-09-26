@@ -32,7 +32,7 @@ static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback
 }
 
 static inline bool IconEqual(const PCButtonIconStruct &a, const PCButtonIconStruct &b) {
-  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconUri == b.iconUri &&
+  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconRequest == b.iconRequest && a.iconUri == b.iconUri &&
          a.iconScale == b.iconScale && a.iconTinted == b.iconTinted;
 }
 
@@ -181,6 +181,7 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
     const auto &icon = newProps.icon;
     [_view setIconWithType:NSStringFromStd(icon.iconType, @"")
                       name:NSStringFromStd(icon.iconName, @"")
+                       request:NSStringFromStd(icon.iconRequest, @"")
                        uri:NSStringFromStd(icon.iconUri, @"")
                      scale:icon.iconScale
                     tinted:(icon.iconTinted != "false")];

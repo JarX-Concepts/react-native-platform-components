@@ -87,6 +87,7 @@ export type NativeMenuItem = {
   /** '' | 'sfSymbol' | 'drawable' | 'image' */
   iconType: string;
   iconName: string;
+  iconRequest: string;
   iconUri: string;
   iconScale: number;
   iconTinted: string;

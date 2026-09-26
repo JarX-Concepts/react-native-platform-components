@@ -43,7 +43,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val label: String,
     val data: String,
     val subtitle: String = "",
-    val icon: PCButtonSupport.Icon = PCButtonSupport.NO_ICON
+    val icon: PCButtonSupport.Icon = PCButtonSupport.NO_ICON,
+    val disabled: Boolean = false
   ) {
     /** Has content beyond a label, which needs the rich dropdown rows. */
     val isRich: Boolean get() = subtitle.isNotEmpty() || icon.isPresent
@@ -89,6 +90,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private var inlineSpinner: Spinner? = null
   private var inlineDropdownOverlay: View? = null
   private var inlineSpinnerSuppressCount = 0
+  private var inlineSpinnerPendingSelection: String? = null
   private var inlineSpinnerHasPlaceholder = false
 
   // --- Headless UI (true picker) ---
@@ -375,6 +377,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     inlineText = null
     inlineSpinner = null
     inlineSpinnerSuppressCount = 0
+    inlineSpinnerPendingSelection = null
     inlineSpinnerHasPlaceholder = false
     headlessMenu = null
     headlessMenuShowing = false
@@ -479,6 +482,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
             ?: options.getOrNull(position)
             ?: return@setOnItemClickListener
           val index = options.indexOf(opt)
+          if (interactivity != "enabled" || opt.disabled) {
+            post { refreshSelections() }
+            return@setOnItemClickListener
+          }
           onSelect?.invoke(index, opt.label, opt.data)
           post { refreshSelections() }
           detachInlineDropdownOverlay()
@@ -567,17 +574,31 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
           if (inlineSpinnerSuppressCount > 0) return
 
           if (interactivity != "enabled") return
+          // Spinner can notify both synchronously and on its next layout; the
+          // fallback in setSelection must not duplicate a single user selection.
+          if (position != sp.selectedItemPosition) return
 
           val index = position - if (inlineSpinnerHasPlaceholder) 1 else 0
           val opt = options.getOrNull(index) ?: return
+          if (opt.disabled) {
+            post { refreshSelections() }
+            return
+          }
 
           // Only fire callback if selection actually changed
           if (opt.data == selectedData) return
+          if (inlineSpinnerPendingSelection == opt.data) return
+          inlineSpinnerPendingSelection = opt.data
 
           // Don't update selectedData here - let applySelectedData handle it
           // This ensures refreshSelections() is called to update the Spinner's display
           onSelect?.invoke(index, opt.label, opt.data)
-          post { refreshSelections() }
+          post {
+            if (inlineSpinner === sp) {
+              refreshSelections()
+              inlineSpinnerPendingSelection = null
+            }
+          }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>) {
@@ -602,6 +623,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val popup = PopupMenu(context, this@PCSelectionMenuView).apply {
       setOnMenuItemClickListener { item ->
         val index = item.itemId
+        if (interactivity != "enabled" || options.getOrNull(index)?.disabled != false) {
+          return@setOnMenuItemClickListener false
+        }
         Log.d(TAG, "headless onMenuItemClick index=$index")
         headlessDismissAfterSelect = true
         handleHeadlessSelection(index)
@@ -638,7 +662,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val rich = options.any { it.isRich }
 
     inlineText?.let { actv ->
-      if (rich || isSearchable) {
+      if (rich || isSearchable || options.any { it.disabled }) {
         // Icon + label + subtitle rows, filtered by the typed query
         actv.setAdapter(OptionAdapter(actv.context, options))
       } else {
@@ -662,10 +686,19 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
         sp.context, android.R.layout.simple_spinner_item,
         if (hasPlaceholder) listOf(placeholder.orEmpty()) + labels else labels
       ) {
-        override fun areAllItemsEnabled() = !hasPlaceholder
+        override fun areAllItemsEnabled() = !hasPlaceholder && options.none { it.disabled }
 
         // https://developer.android.com/reference/android/widget/BaseAdapter#isEnabled(int)
-        override fun isEnabled(position: Int) = !hasPlaceholder || position > 0
+        override fun isEnabled(position: Int) =
+          options.getOrNull(position - if (hasPlaceholder) 1 else 0)?.disabled == false
+
+        override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+          val enabled = isEnabled(position)
+          return super.getDropDownView(position, convertView, parent).apply {
+            isEnabled = enabled
+            alpha = if (enabled) 1f else 0.38f
+          }
+        }
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
           (super.getView(position, convertView, parent) as TextView).apply {
@@ -759,6 +792,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     override fun getCount(): Int = shown.size
     override fun getItem(position: Int): Option? = shown.getOrNull(position)
     override fun getItemId(position: Int): Long = position.toLong()
+    override fun areAllItemsEnabled(): Boolean = shown.none { it.disabled }
+    override fun isEnabled(position: Int): Boolean = shown.getOrNull(position)?.disabled == false
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
       val option = shown[position]
@@ -773,6 +808,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       holder.root.minimumHeight = dp(if (option.subtitle.isEmpty()) 48 else 64)
       holder.root.background = if (selected) selectedBackground() else itemBackground()
       holder.root.isSelected = selected
+      holder.root.isEnabled = !option.disabled
+      holder.label.isEnabled = !option.disabled
+      holder.subtitle.isEnabled = !option.disabled
+      holder.root.alpha = if (option.disabled) 0.38f else 1f
       return holder.root
     }
 
@@ -978,6 +1017,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   private fun handleHeadlessSelection(position: Int) {
     val opt = options.getOrNull(position) ?: return
+    if (interactivity != "enabled" || opt.disabled) return
     Log.d(TAG, "handleHeadlessSelection pos=$position")
     onSelect?.invoke(position, opt.label, opt.data)
   }
@@ -989,6 +1029,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val selectedIdx = options.indexOfFirst { it.data == selectedData }
     options.forEachIndexed { index, opt ->
       val item = menu.add(HEADLESS_GROUP_ID, index, index, opt.label)
+      item.isEnabled = !opt.disabled
       item.isChecked = index == selectedIdx
       // PopupMenu rows have one line, so only the icon is shown (no subtitle)
       if (opt.icon.isPresent) {

@@ -217,7 +217,7 @@ object PCMenuSupport {
         if (!uri.contains(':')) {
           onLoaded(ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri)?.let(::imageIcon))
         } else {
-          PCImageLoader.load(context, uri, icon.scale) { bitmap ->
+          PCImageLoader.load(context, uri, icon.scale, icon.request) { bitmap ->
             onLoaded(bitmap?.let { imageIcon(BitmapDrawable(context.resources, it)) })
           }
         }

@@ -35,7 +35,7 @@ static inline bool SegmentsEqual(
     if (a[i].disabled != b[i].disabled) return false;
     if (a[i].iconType != b[i].iconType) return false;
     if (a[i].iconName != b[i].iconName) return false;
-    if (a[i].iconUri != b[i].iconUri) return false;
+    if (a[i].iconRequest != b[i].iconRequest || a[i].iconUri != b[i].iconUri) return false;
     if (a[i].iconScale != b[i].iconScale) return false;
     if (a[i].iconTinted != b[i].iconTinted) return false;
     if (a[i].badge != b[i].badge) return false;
@@ -151,6 +151,7 @@ static UIFont *FontFromLabelStyle(
         @"disabled": NSStringFromStd(seg.disabled, @"enabled"),
         @"iconType": NSStringFromStd(seg.iconType, @""),
         @"iconName": NSStringFromStd(seg.iconName, @""),
+        @"iconRequest": NSStringFromStd(seg.iconRequest, @""),
         @"iconUri": NSStringFromStd(seg.iconUri, @""),
         @"iconScale": @(seg.iconScale),
         @"iconTinted": NSStringFromStd(seg.iconTinted, @"true"),

@@ -186,6 +186,7 @@ describe('SegmentedControl icons', () => {
     expect(nativeIcon('list.bullet')).toMatchObject({
       iconType: 'sfSymbol',
       iconName: 'list.bullet',
+      iconRequest: '',
       iconUri: '',
     });
   });
@@ -226,6 +227,7 @@ describe('SegmentedControl icons', () => {
       nativeIcon({ type: 'image', source: 42, tinted: false })
     ).toMatchObject({
       iconType: 'image',
+      iconRequest: '',
       iconUri: 'file:///bundle/assets/bell@2x.png',
       iconScale: 2,
       iconTinted: 'false',

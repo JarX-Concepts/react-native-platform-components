@@ -70,6 +70,7 @@ class PCSelectionMenuViewManager :
             label = m.stringOr("label", ""),
             data = m.stringOr("data", ""),
             subtitle = m.stringOr("subtitle", ""),
+            disabled = m.stringOr("disabled", "false") == "true",
             icon = PCButtonSupport.parseIcon(m)
           )
         )

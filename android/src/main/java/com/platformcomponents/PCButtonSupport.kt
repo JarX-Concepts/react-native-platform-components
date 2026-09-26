@@ -19,7 +19,8 @@ object PCButtonSupport {
     val name: String,
     val uri: String,
     val scale: Float,
-    val tinted: Boolean
+    val tinted: Boolean,
+    val request: String = ""
   ) {
     val isPresent: Boolean get() = type == "drawable" || type == "image"
   }
@@ -41,7 +42,8 @@ object PCButtonSupport {
       name = map.stringOr("iconName", ""),
       uri = map.stringOr("iconUri", ""),
       scale = if (scale > 0) scale.toFloat() else 1f,
-      tinted = map.stringOr("iconTinted", "true") != "false"
+      tinted = map.stringOr("iconTinted", "true") != "false",
+      request = map.stringOr("iconRequest", "")
     )
   }
 
@@ -65,7 +67,7 @@ object PCButtonSupport {
         if (!uri.contains(':')) {
           button.icon = ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri)
         } else {
-          PCImageLoader.load(context, uri, icon.scale) { bitmap ->
+          PCImageLoader.load(context, uri, icon.scale, icon.request) { bitmap ->
             if (bitmap == null || !isCurrent()) return@load
             button.icon = BitmapDrawable(context.resources, bitmap)
             onLoaded()
