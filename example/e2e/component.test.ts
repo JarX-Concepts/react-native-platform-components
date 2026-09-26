@@ -1448,7 +1448,13 @@ describe('Platform Components Example', () => {
     }
 
     // Split button: the main button presses, the menu button opens its menu
-    await scrollToId('split-value');
+    // On iOS, Detox's default start point can land on the Save menu arrow
+    // below the Symbol Effects section. Start in the card's left padding so
+    // the page gesture does not compete with a native menu gesture.
+    await waitFor(element(by.id('split-value')))
+      .toBeVisible()
+      .whileElement(by.id('demo-scroll'))
+      .scroll(200, 'down', isAndroid() ? NaN : 0.05);
     await element(by.text('Reply')).atIndex(0).tap();
     await expectText('split-value', 'reply');
     await element(by.label('Reply options')).atIndex(0).tap();
