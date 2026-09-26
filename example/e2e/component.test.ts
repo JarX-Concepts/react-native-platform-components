@@ -1454,7 +1454,7 @@ describe('Platform Components Example', () => {
     await waitFor(element(by.id('split-value')))
       .toBeVisible()
       .whileElement(by.id('demo-scroll'))
-      .scroll(200, 'down', isAndroid() ? NaN : 0.05);
+      .scroll(200, 'down', isAndroid() ? undefined : 0.05);
     await element(by.text('Reply')).atIndex(0).tap();
     await expectText('split-value', 'reply');
     await element(by.label('Reply options')).atIndex(0).tap();
