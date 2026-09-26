@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   useColorScheme,
@@ -40,7 +41,8 @@ export function Screen(props: {
   subtitle?: string;
   children: React.ReactNode;
 }) {
-  const colors = useDemoColors();
+  const isDark = useColorScheme() === 'dark';
+  const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
   return (
     <ScrollView
       testID="demo-scroll"
@@ -50,6 +52,9 @@ export function Screen(props: {
       keyboardDismissMode="on-drag"
       style={[ui.container, { backgroundColor: colors.background }]}
     >
+      {Platform.OS === 'android' && (
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      )}
       {props.children}
       <Text style={ui.footer}>react-native-platform-components</Text>
     </ScrollView>

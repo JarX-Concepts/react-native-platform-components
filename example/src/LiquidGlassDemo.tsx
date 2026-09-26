@@ -36,7 +36,7 @@ const BACKGROUND = {
 };
 
 const TINT_COLOR_OPTIONS = [
-  { label: 'None', data: '' },
+  { label: 'None', data: 'none' },
   { label: 'Blue', data: '#007AFF' },
   { label: 'Red', data: '#FF3B30' },
   { label: 'Green', data: '#34C759' },
@@ -71,7 +71,9 @@ export function LiquidGlassDemo(): React.JSX.Element {
   );
 
   const tintColorLabel = useMemo(() => {
-    const option = TINT_COLOR_OPTIONS.find((o) => o.data === tintColor);
+    const option = TINT_COLOR_OPTIONS.find(
+      (o) => o.data === (tintColor || 'none')
+    );
     return option?.label ?? 'None';
   }, [tintColor]);
 
@@ -183,10 +185,10 @@ export function LiquidGlassDemo(): React.JSX.Element {
               testID="tint-color-menu"
               style={ui.alignEnd}
               options={tintColorOptions}
-              selected={tintColor}
+              selected={tintColor || 'none'}
               presentation="embedded"
               placeholder={tintColorLabel}
-              onSelect={(data) => setTintColor(data)}
+              onSelect={(data) => setTintColor(data === 'none' ? '' : data)}
             />
           </Row>
         </Section>
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },

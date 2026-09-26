@@ -36,6 +36,12 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
+      - name: Typecheck example and interaction tests
+        run: yarn tsc -p example/tsconfig.json
+
+      - name: Typecheck Expo example
+        run: yarn tsc -p example-expo/tsconfig.json
+
   test:
     runs-on: ubuntu-latest
 
@@ -61,6 +67,9 @@ jobs:
 
       - name: Build package
         run: yarn prepare
+
+      - name: Build documentation
+        run: yarn docs build
 
   test-android:
     runs-on: ubuntu-latest
@@ -91,15 +100,14 @@ jobs:
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
           fi
 
+      # The Release Detox build still needs the toolchain on a Turbo cache hit.
       - name: Install JDK
-        if: env.turbo_cache_hit != 1
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: 'zulu'
           java-version: '17'
 
       - name: Finalize Android SDK
-        if: env.turbo_cache_hit != 1
         run: |
           /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
 
@@ -128,7 +136,6 @@ jobs:
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf /opt/ghc
           df -h
@@ -172,6 +179,21 @@ jobs:
         run: |
           yarn workspace react-native-platform-components-example test:e2e:android:ci
 
+      - name: Run native Android regressions
+        working-directory: example/android
+        run: |
+          ./gradlew :app:connectedReleaseAndroidTest --no-daemon \
+            -DtestBuildType=release \
+            -Pandroid.testInstrumentationRunnerArguments.class=platformcomponents.example.NativeRegressionTest
+
+      - name: Upload native Android test reports
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: native-android-test-reports
+          path: example/android/app/build/reports/androidTests
+          if-no-files-found: ignore
+
       - name: Upload Detox artifacts (Android)
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -212,21 +234,20 @@ jobs:
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
           fi
 
+      # Detox rebuilds Release even when the Turbo Debug check is cached.
+      # A cache hit contains no Pods or simulator tooling.
       - name: Use appropriate Xcode version
-        if: env.turbo_cache_hit != 1
         uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: Install applesimutils
-        if: env.turbo_cache_hit != 1
         run: |
           brew tap wix/brew
           brew trust --tap wix/brew
           brew install applesimutils
 
       - name: Install cocoapods
-        if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example
           bundle install
@@ -262,7 +283,7 @@ jobs:
   #
   # iOS builds the declared floor (SDK 54). Android goes one release lower than
   # we promise (SDK 52 / RN 0.76), which keeps the native code portable: the
-  # floor is set by iOS needing Xcode 26, not by anything in this library.
+  # declared floor follows the supported React Native and Expo versions.
   build-floor-android:
     name: build-floor-android (Expo SDK 52 / RN 0.76, below the declared floor)
     runs-on: ubuntu-latest

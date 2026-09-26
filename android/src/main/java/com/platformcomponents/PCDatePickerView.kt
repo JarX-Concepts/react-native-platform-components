@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
-import android.os.Build
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -16,6 +15,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TimePicker
 import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentActivity
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
@@ -49,6 +49,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   private var lastReportedWidth: Float = 0f
   private var lastReportedHeight: Float = 0f
+  private var inlineContentHeight = 0
 
   // --- Public props (set by manager) ---
   private var mode: String = "date" // "date" | "time" | "dateAndTime" | "dateRange"
@@ -85,6 +86,9 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   // --- Modal state ---
   private var showingModal = false
+  private var modalGeneration = 0
+  private var systemDialog: AlertDialog? = null
+  private var materialDialog: DialogFragment? = null
 
   // --- Native theme ---
   // Widgets read theme colors when they are created, so they are rebuilt when the
@@ -102,7 +106,12 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       setMeasuredDimension(0, 0)
       return
     }
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    // Measure the picker's intrinsic height before layout. Measuring again in
+    // onLayout leaves NumberPicker's centered text awaiting another layout,
+    // so its selected day/year can stay outside the visible text area.
+    super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+    inlineContentHeight = inlineContainer?.measuredHeight ?: 0
+    setMeasuredDimension(measuredWidth, resolveSize(measuredHeight, heightMeasureSpec))
   }
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -119,15 +128,9 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun updateFrameSizeState() {
     val wrapper = stateWrapper ?: return
 
-    // Measure the inline container's preferred height
-    inlineContainer?.let { container ->
-      container.measure(
-        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-      )
-
+    inlineContainer?.let {
       val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
-      val heightDp = PixelUtil.toDIPFromPixel(container.measuredHeight.toFloat())
+      val heightDp = PixelUtil.toDIPFromPixel(inlineContentHeight.toFloat())
 
       // Only update state if the size actually changed (avoid infinite loops)
       if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
@@ -161,8 +164,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   fun applyPresentation(value: String?) {
     presentation = value ?: "modal"
+    if (isInline()) dismissIfNeeded()
     rebuildUI()
-    // If we were showing and presentation changed, we’ll let JS drive visible again.
   }
 
   fun applyVisible(value: String?) {
@@ -269,6 +272,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
   override fun onDetachedFromWindow() {
     PCNativeTheme.removeListener(nativeThemeListener)
+    dismissIfNeeded(notifyClosed = false)
     super.onDetachedFromWindow()
   }
 
@@ -317,21 +321,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     // date and/or time
     if (mode == "date" || mode == "dateAndTime") {
-      val dp = DatePicker(pickerContext).apply {
+      // DatePicker chooses its delegate in the constructor; the visibility
+      // setters cannot change a calendar delegate into spinner mode.
+      // https://developer.android.com/reference/android/widget/DatePicker#attr_android:datePickerMode
+      val dp = DatePicker(ContextThemeWrapper(pickerContext, R.style.PCInlineDatePickerThemeOverlay)).apply {
         applyFirstDayOfWeek(this)
         layoutParams = LinearLayout.LayoutParams(
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        // Use spinner mode to avoid CalendarView rendering bugs when scrolling months
-        calendarViewShown = false
-        spinnersShown = true
-        // Defer min/max date setting to avoid CalendarView initialization race condition
-        // where SimpleMonthView may not be fully detached yet during layout
-        post {
-          minDateMs?.let { minDate = it }
-          maxDateMs?.let { maxDate = it }
-        }
+        minDateMs?.let { minDate = it }
+        maxDateMs?.let { maxDate = it }
       }
       container.addView(dp)
       inlineDatePicker = dp
@@ -395,15 +395,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       inlineTimePicker?.let { tp ->
         val hour = cal.get(Calendar.HOUR_OF_DAY)
         val minute = cal.get(Calendar.MINUTE)
-        if (Build.VERSION.SDK_INT >= 23) {
-          if (tp.hour != hour) tp.hour = hour
-          if (tp.minute != minute) tp.minute = minute
-        } else {
-          @Suppress("DEPRECATION")
-          if (tp.currentHour != hour) tp.currentHour = hour
-          @Suppress("DEPRECATION")
-          if (tp.currentMinute != minute) tp.currentMinute = minute
-        }
+        if (tp.hour != hour) tp.hour = hour
+        if (tp.minute != minute) tp.minute = minute
       }
     } finally {
       suppressInlineCallbacks = false
@@ -449,17 +442,23 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun presentIfNeeded() {
     if (showingModal) return
     showingModal = true
+    val generation = ++modalGeneration
 
     // Defer presentation to the next frame to ensure all props from the current
     // React Native batch are applied first. This guarantees dateMs reflects the
     // latest value from React Native before we create the dialog.
     post {
-      if (!showingModal) return@post
+      if (!showingModal || generation != modalGeneration) return@post
 
       val act = findFragmentActivity() ?: run {
         Log.w(TAG, "presentIfNeeded: no FragmentActivity found")
-        onCancel?.invoke()
-        showingModal = false
+        dismissIfNeeded()
+        return@post
+      }
+      if (!isAttachedToWindow || act.isFinishing || act.isDestroyed ||
+        act.supportFragmentManager.isStateSaved
+      ) {
+        dismissIfNeeded()
         return@post
       }
 
@@ -475,10 +474,29 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     }
   }
 
-  private fun dismissIfNeeded() {
-    // We don’t retain dialog instances here; JS will close by dismissing itself or user action.
-    // This keeps parity with Fabric headless patterns.
-    showingModal = false
+  private fun dismissIfNeeded(notifyClosed: Boolean = true) {
+    val wasShowing = showingModal
+    val system = systemDialog
+    val material = materialDialog
+    // Clear ownership before dismissal: its listeners may run synchronously.
+    modalGeneration += 1
+    onCancelOrClose()
+    system?.dismiss()
+    // A React view can detach after the activity saved its fragment state.
+    // https://developer.android.com/reference/androidx/fragment/app/DialogFragment#dismissAllowingStateLoss()
+    material?.dismissAllowingStateLoss()
+    if (wasShowing && notifyClosed) onCancel?.invoke()
+  }
+
+  private fun showSystemDialog(dialog: AlertDialog) {
+    systemDialog = dialog
+    dialog.setOnDismissListener {
+      if (systemDialog === dialog && showingModal) {
+        onCancelOrClose()
+        onCancel?.invoke()
+      }
+    }
+    dialog.show()
   }
 
   private fun presentDate(act: FragmentActivity) {
@@ -557,7 +575,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       }
       .create()
 
-    dlg.show()
+    showSystemDialog(dlg)
   }
 
   private fun presentSystemTime(act: FragmentActivity) {
@@ -571,32 +589,17 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       val hour = cal.get(Calendar.HOUR_OF_DAY)
       val minute = cal.get(Calendar.MINUTE)
 
-      if (Build.VERSION.SDK_INT >= 23) {
-        this.hour = hour
-        this.minute = minute
-      } else {
-        @Suppress("DEPRECATION") this.currentHour = hour
-        @Suppress("DEPRECATION") this.currentMinute = minute
-      }
+      this.hour = hour
+      this.minute = minute
     }
 
     val dlg = AlertDialog.Builder(dialogContext)
       .setTitle(androidDialogTitle ?: "")
       .setView(picker)
       .setPositiveButton(androidPositiveTitle ?: "OK") { _, _ ->
-        val h: Int
-        val m: Int
-        if (Build.VERSION.SDK_INT >= 23) {
-          h = picker.hour
-          m = picker.minute
-        } else {
-          @Suppress("DEPRECATION") h = picker.currentHour
-          @Suppress("DEPRECATION") m = picker.currentMinute
-        }
-
         val c = calendarFor(ts)
-        c.set(Calendar.HOUR_OF_DAY, h)
-        c.set(Calendar.MINUTE, m)
+        c.set(Calendar.HOUR_OF_DAY, picker.hour)
+        c.set(Calendar.MINUTE, picker.minute)
         c.set(Calendar.SECOND, 0)
         c.set(Calendar.MILLISECOND, 0)
 
@@ -614,7 +617,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       }
       .create()
 
-    dlg.show()
+    showSystemDialog(dlg)
   }
 
   private fun presentSystemDateThenTime(act: FragmentActivity) {
@@ -674,7 +677,7 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
       }
       .create()
 
-    dlg.show()
+    showSystemDialog(dlg)
   }
 
   // -----------------------------
@@ -704,12 +707,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
 
     picker.addOnDismissListener {
       // If dismissed without confirm, treat as cancel
-      if (showingModal) {
+      if (materialDialog === picker && showingModal) {
         onCancel?.invoke()
         onCancelOrClose()
       }
     }
 
+    materialDialog = picker
     picker.show(act.supportFragmentManager, "PCDatePicker_M3_DATE")
   }
 
@@ -747,12 +751,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     }
 
     picker.addOnDismissListener {
-      if (showingModal) {
+      if (materialDialog === picker && showingModal) {
         onCancel?.invoke()
         onCancelOrClose()
       }
     }
 
+    materialDialog = picker
     picker.show(act.supportFragmentManager, "PCDatePicker_M3_TIME")
   }
 
@@ -777,12 +782,16 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     }
 
     picker.addOnDismissListener {
-      if (showingModal) {
+      // Material also dismisses after Next. The time picker owns the session
+      // then, so finishing the date dialog must not close it.
+      // https://developer.android.com/reference/com/google/android/material/datepicker/MaterialDatePicker#addOnDismissListener(android.content.DialogInterface.OnDismissListener)
+      if (materialDialog === picker && showingModal) {
         onCancel?.invoke()
         onCancelOrClose()
       }
     }
 
+    materialDialog = picker
     picker.show(act.supportFragmentManager, "PCDatePicker_M3_DATE_THEN_TIME")
   }
 
@@ -823,12 +832,13 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
     }
 
     picker.addOnDismissListener {
-      if (showingModal) {
+      if (materialDialog === picker && showingModal) {
         onCancel?.invoke()
         onCancelOrClose()
       }
     }
 
+    materialDialog = picker
     picker.show(act.supportFragmentManager, "PCDatePicker_M3_RANGE")
   }
 
@@ -992,6 +1002,8 @@ class PCDatePickerView(context: Context) : FrameLayout(context), ReactScrollView
   private fun onCancelOrClose() {
     Log.d(TAG, "onCancelOrClose")
     showingModal = false
+    systemDialog = null
+    materialDialog = null
   }
 
   private fun clamp(valueMs: Long): Long {

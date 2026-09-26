@@ -1,6 +1,6 @@
 ---
-title: "SegmentedControl"
-description: "Native segmented control for React Native: UISegmentedControl on iOS, Material 3 segmented buttons on Android, with icons and badges."
+title: 'SegmentedControl'
+description: 'Native segmented control for React Native: UISegmentedControl on iOS, Material 3 segmented buttons on Android, with icons and badges.'
 ---
 
 <table>
@@ -18,33 +18,36 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Props
 
-| Prop                   | Type                                                  | Description                                                                                                                          |
-| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `segments`             | `SegmentedControlSegment[]`                           | Array of segments to display                                                                                                         |
-| `selectedValue`        | `string \| null`                                      | Currently selected segment's `value`                                                                                                 |
-| `disabled`             | `boolean`                                             | Disables the entire control                                                                                                          |
-| `labelVisibility`      | `'auto' \| 'labeled' \| 'unlabeled'`                  | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                           |
-| `selectedSegmentColor` | `ColorValue`                                          | Background of the selected segment                                                                                                   |
-| `activeTintColor`      | `ColorValue`                                          | Text and icon color of the selected segment                                                                                          |
-| `inactiveTintColor`    | `ColorValue`                                          | Text and icon color of unselected segments                                                                                           |
-| `labelStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Font for segment labels. See [Styling](#styling)                                                                                     |
-| `badgeStyle`           | `{ backgroundColor?, color? }`                        | Colors for segment badges. See [Badges](#badges)                                                                                     |
-| `maxFontSizeMultiplier` | `number`                                             | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                       |
-| `haptics`              | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user changes the selection, not when `selectedValue` does. See [Haptics](/guides/haptics). Default: none |
-| `onSelect`             | `(value: string, index: number) => void`              | Called when user selects a segment                                                                                                   |
-| `onDeselect`           | `() => void`                                          | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
+| Prop                    | Type                                                                                           | Description                                                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `segments`              | `SegmentedControlSegment[]`                                                                    | Array of segments to display                                                                                                         |
+| `selectedValue`         | `string \| null`                                                                               | Currently selected segment's `value`                                                                                                 |
+| `disabled`              | `boolean`                                                                                      | Disables the entire control                                                                                                          |
+| `labelVisibility`       | `'auto' \| 'labeled' \| 'unlabeled'`                                                           | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                           |
+| `selectedSegmentColor`  | `ColorValue`                                                                                   | Background of the selected segment                                                                                                   |
+| `activeTintColor`       | `ColorValue`                                                                                   | Text and icon color of the selected segment                                                                                          |
+| `inactiveTintColor`     | `ColorValue`                                                                                   | Text and icon color of unselected segments                                                                                           |
+| `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`                                          | Font for segment labels. See [Styling](#styling)                                                                                     |
+| `badgeStyle`            | `{ backgroundColor?, color? }`                                                                 | Colors for segment badges. See [Badges](#badges)                                                                                     |
+| `maxFontSizeMultiplier` | `number`                                                                                       | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                        |
+| `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user changes the selection, not when `selectedValue` does. See [Haptics](/guides/haptics). Default: none      |
+| `onSelect`              | `(value: string, index: number) => void`                                                       | Called when user selects a segment                                                                                                   |
+| `onDeselect`            | `() => void`                                                                                   | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
 
 ### SegmentedControlSegment
 
-| Property             | Type                   | Description                                                                                                      |
-| -------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `label`              | `string`               | Display text for the segment                                                                                     |
-| `value`              | `string`               | Unique value returned in callbacks                                                                               |
-| `disabled`           | `boolean`              | Disables this specific segment                                                                                   |
-| `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](https://github.com/JarX-Concepts/react-native-platform-components#icon-support-1)                                                               |
-| `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                             |
-| `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title |
-| `testID`             | `string`               | Test identifier of the segment. See [Testing](#testing)                                                          |
+| Property             | Type                   | Description                                                                                                         |
+| -------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `label`              | `string`               | Display text for the segment                                                                                        |
+| `value`              | `string`               | Unique value returned in callbacks                                                                                  |
+| `disabled`           | `boolean`              | Disables this specific segment                                                                                      |
+| `icon`               | `SegmentedControlIcon` | Optional icon. See [Icon Support](https://github.com/JarX-Concepts/react-native-platform-components#icon-support-1) |
+| `badge`              | `string \| number`     | Badge at the segment's top-right corner, e.g. an unread count. See [Badges](#badges)                                |
+| `accessibilityLabel` | `string`               | Screen-reader label. Defaults to `label`. On iOS it applies to icon segments; text segments announce their title    |
+| `testID`             | `string`               | Test identifier of the segment. See [Testing](#testing)                                                             |
+
+Segment `value` strings must be unique and non-empty. Native controls reserve
+the empty string for no selection; use `selectedValue={null}` instead.
 
 ### iOS Props (`ios`)
 
@@ -56,11 +59,11 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Android Props (`android`)
 
-| Prop                | Type         | Description                                                                                                                                 |
-| ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `selectionRequired` | `boolean`    | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`. |
-| `rippleColor`       | `ColorValue` | Ripple shown while pressing a segment                                                                                                       |
-| `strokeColor`       | `ColorValue` | Outline color of the segments                                                                                                               |
+| Prop                | Type                   | Description                                                                                                                                               |
+| ------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `selectionRequired` | `boolean`              | If true (default), one segment must always be selected. Set to `false` to let a tap on the selected segment clear it and fire `onDeselect`.               |
+| `rippleColor`       | `ColorValue`           | Ripple shown while pressing a segment                                                                                                                     |
+| `strokeColor`       | `ColorValue`           | Outline color of the segments                                                                                                                             |
 | `material`          | `'m3' \| 'expressive'` | Material style: the Material 3 Expressive connected buttons (default), or the classic Material 3 segmented buttons. See [Material style](#material-style) |
 
 ### Material style
@@ -68,7 +71,12 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 On Android the control is a `MaterialButtonToggleGroup`. By default it uses the **Material 3 Expressive** connected button group styles: a hairline gap between segments, small inner corners, and the selected segment rounding into a pill, matching [ButtonGroup](/components/buttongroup). Pass `android={{ material: 'm3' }}` for the classic Material 3 segmented buttons (a shared outline, no gaps).
 
 ```tsx
-<SegmentedControl segments={segments} selectedValue={selected} onSelect={setSelected} android={{ material: 'm3' }} />
+<SegmentedControl
+  segments={segments}
+  selectedValue={selected}
+  onSelect={setSelected}
+  android={{ material: 'm3' }}
+/>
 ```
 
 > Before 1.4.0 the classic look was the only one; set `material: 'm3'` to keep it.
@@ -97,6 +105,10 @@ icon: { type: 'image', source: { uri: 'https://example.com/icon@2x.png', scale: 
 ```
 
 Image icons render at their point size, so ship `@2x` / `@3x` variants sized around 18–22 points. Local assets load synchronously in release builds; in development they stream from Metro and the segment shows its label until the image arrives.
+
+Native image loaders use only the resolved `uri` and `scale`. Request headers,
+HTTP methods and other `ImageURISource` fetch options are not forwarded. Use a
+bundled asset or a URL that can be fetched without custom request headers.
 
 ### Label visibility
 

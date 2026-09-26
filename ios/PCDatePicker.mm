@@ -114,15 +114,7 @@ using namespace facebook::react;
           : [NSString stringWithUTF8String:newViewProps.presentation.c_str()];
 
   if (![_datePickerView.presentation isEqualToString:newPresentation]) {
-    _datePickerView.presentation = newPresentation;
     needsToUpdateMeasurements = YES;
-  }
-
-  // visible: treat only "open" as open; everything else as closed
-  BOOL shouldOpen = (newViewProps.visible == "open");
-  NSNumber *newOpen = @(shouldOpen);
-  if (![_datePickerView.open isEqual:newOpen]) {
-    _datePickerView.open = newOpen;
   }
 
   // dateMs (sentinel is MIN_SAFE_INTEGER to allow negative timestamps for pre-1970 dates)
@@ -214,6 +206,10 @@ using namespace facebook::react;
             ? [NSString stringWithUTF8String:newIos.confirmToolbar.c_str()]
             : @"show";
   }
+
+  // Opening builds and sizes the popover, so every option must be applied first.
+  [_datePickerView configurePresentation:newPresentation
+                                   open:(newViewProps.visible == "open")];
 
   if (needsToUpdateMeasurements) {
     [self updateMeasurements];

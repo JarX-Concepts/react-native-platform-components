@@ -1,6 +1,7 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
@@ -65,6 +66,11 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
         touchDownY = ev.y
         // In longPress mode, schedule long-press detection
         if (trigger == "longPress") {
+          // Dispatch recycles MotionEvent instances before this callback runs.
+          val downTime = ev.downTime
+          val downX = ev.x
+          val downY = ev.y
+          cancelPendingLongPress()
           longPressRunnable = Runnable {
             if (handleLongClick()) {
               // The long-press haptic View.performLongClick plays, which this
@@ -72,8 +78,8 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
               if (popupShowing) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
               // Cancel any pending touch events on children
               val cancel = MotionEvent.obtain(
-                ev.downTime, System.currentTimeMillis(),
-                MotionEvent.ACTION_CANCEL, ev.x, ev.y, 0
+                downTime, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_CANCEL, downX, downY, 0
               )
               super.dispatchTouchEvent(cancel)
               cancel.recycle()
@@ -252,7 +258,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
       // Submenu headers open their submenu; they aren't actions.
       val item = PCMenuSupport.itemFor(menuItem, items)
       if (item == null || !item.isAction) return@setOnMenuItemClickListener false
-      Log.d(TAG, "popup onMenuItemClick id=${item.id} title=${item.title}")
+      Log.d(TAG, "popup onMenuItemClick")
       dismissAfterSelect = true
       PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
       onPressAction?.invoke(item.id, item.title)

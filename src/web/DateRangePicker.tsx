@@ -4,7 +4,11 @@ import { View } from 'react-native';
 
 import type { DateRangePickerProps } from '../DatePicker';
 import { Dialog } from './Dialog';
-import { formatInputValue, parseInputValue } from './dateInput';
+import {
+  formatInputValue,
+  isWithinInputBounds,
+  parseInputValue,
+} from './dateInput';
 import { BUTTON_BASE, eventValue, usePrimaryColor } from './shared';
 
 /** The browser has start and end date inputs, so the range picker works on web. */
@@ -58,7 +62,12 @@ function RangeDialog({
   const primary = usePrimaryColor();
   const [start, setStart] = useState(startOfDay(startDate));
   const [end, setEnd] = useState(startOfDay(endDate));
-  const valid = start != null && end != null && end >= start;
+  const valid =
+    isWithinInputBounds(start, 'date', minDate, maxDate) &&
+    isWithinInputBounds(end, 'date', minDate, maxDate) &&
+    end >= start;
+  const minimumEndDate =
+    start && (!minDate || start >= minDate) ? start : minDate;
   const dismiss = () => onClosed?.();
   const textButton = {
     ...BUTTON_BASE,
@@ -92,10 +101,10 @@ function RangeDialog({
   );
 
   return (
-    <Dialog onDismiss={dismiss}>
+    <Dialog label="Date range" onDismiss={dismiss}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {renderInput('Start date', start, setStart, minDate)}
-        {renderInput('End date', end, setEnd, start ?? minDate)}
+        {renderInput('End date', end, setEnd, minimumEndDate)}
       </div>
       <div
         style={{

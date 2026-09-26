@@ -148,6 +148,10 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         : undefined;
     // A read-only field with onPress acts as a button
     const actsAsButton = !editable && onPress != null;
+    // A disabled Pressable marks every focusable descendant aria-disabled.
+    // Editable inputs need a neutral container, including their icon actions.
+    // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-disabled
+    const FieldContainer = actsAsButton ? Pressable : View;
     const lineHeight = (textStyle?.fontSize ?? 16) * 1.25;
     const bottomText = errorText ?? supportingText;
     const counter = showCharacterCount
@@ -163,9 +167,11 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             {label}
           </Text>
         ) : null}
-        <Pressable
-          disabled={!actsAsButton}
-          onPress={onPress}
+        <FieldContainer
+          onPress={actsAsButton ? onPress : undefined}
+          accessibilityLabel={
+            actsAsButton ? (accessibilityLabel ?? label) : undefined
+          }
           role={actsAsButton ? 'button' : undefined}
           style={{
             flexDirection: 'row',
@@ -297,7 +303,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
               </View>
             )
           ) : null}
-        </Pressable>
+        </FieldContainer>
         {bottomText || counter ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Text

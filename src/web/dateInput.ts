@@ -52,35 +52,86 @@ export function parseInputValue(
   type: DateInputType,
   base: Date | null | undefined
 ): Date | null {
-  const result = base ? new Date(base.getTime()) : new Date();
-  if (!base) result.setHours(0, 0, 0, 0);
+  const hasBase = base && Number.isFinite(base.getTime());
+  const result = hasBase ? new Date(base.getTime()) : new Date();
+  if (!hasBase) result.setHours(0, 0, 0, 0);
 
   if (type === 'month') {
     const monthMatch = /^(\d{4,})-(\d{2})$/.exec(value);
     if (!monthMatch) return null;
-    result.setFullYear(Number(monthMatch[1]), Number(monthMatch[2]) - 1, 1);
+    const year = Number(monthMatch[1]);
+    const month = Number(monthMatch[2]);
+    if (year < 1 || month < 1 || month > 12) return null;
+    result.setFullYear(year, month - 1, 1);
     return Number.isFinite(result.getTime()) ? result : null;
   }
 
-  const dayMatch = /^(\d{4,})-(\d{2})-(\d{2})/.exec(value);
+  const dayMatch =
+    type === 'date'
+      ? /^(\d{4,})-(\d{2})-(\d{2})$/.exec(value)
+      : /^(\d{4,})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2})?$/.exec(value);
   const timeMatch = /(?:^|T)(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value);
 
   if (type !== 'time') {
     if (!dayMatch) return null;
-    result.setFullYear(
-      Number(dayMatch[1]),
-      Number(dayMatch[2]) - 1,
-      Number(dayMatch[3])
-    );
+    const year = Number(dayMatch[1]);
+    const month = Number(dayMatch[2]);
+    const day = Number(dayMatch[3]);
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+    result.setFullYear(year, month - 1, day);
+    // Date setters normalize impossible dates (February 30 becomes March 2).
+    if (
+      result.getFullYear() !== year ||
+      result.getMonth() !== month - 1 ||
+      result.getDate() !== day
+    ) {
+      return null;
+    }
   }
   if (type !== 'date') {
     if (!timeMatch) return null;
-    result.setHours(
-      Number(timeMatch[1]),
-      Number(timeMatch[2]),
-      Number(timeMatch[3] ?? 0),
-      0
-    );
+    if (type === 'time' && !/^\d{2}:\d{2}(?::\d{2})?$/.test(value)) {
+      return null;
+    }
+    const hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    const seconds = Number(timeMatch[3] ?? 0);
+    if (hours > 23 || minutes > 59 || seconds > 59) return null;
+    result.setHours(hours, minutes, seconds, 0);
   }
   return Number.isFinite(result.getTime()) ? result : null;
+}
+
+/** Compare only the date/time fields the input displays, like its min/max. */
+function inputValueNumber(date: Date, type: DateInputType): number {
+  if (type === 'month') return date.getFullYear() * 12 + date.getMonth();
+  if (type === 'time') return date.getHours() * 60 + date.getMinutes();
+  const result = new Date(date.getTime());
+  if (type === 'date') result.setHours(0, 0, 0, 0);
+  else result.setSeconds(0, 0);
+  return result.getTime();
+}
+
+/**
+ * Bounds also apply to typed values and the modal's initial selection. HTML
+ * inputs report constraint violations but don't prevent a button callback.
+ */
+export function isWithinInputBounds(
+  date: Date | null | undefined,
+  type: DateInputType,
+  minDate?: Date | null,
+  maxDate?: Date | null
+): date is Date {
+  if (!date || !Number.isFinite(date.getTime())) return false;
+  const value = inputValueNumber(date, type);
+  const min = minDate ? inputValueNumber(minDate, type) : NaN;
+  const max = maxDate ? inputValueNumber(maxDate, type) : NaN;
+  // Time inputs have a periodic domain: 23:00–01:00 spans midnight.
+  if (type === 'time' && min > max) return value >= min || value <= max;
+  return (
+    (!Number.isFinite(min) || value >= min) &&
+    (!Number.isFinite(max) || value <= max)
+  );
 }

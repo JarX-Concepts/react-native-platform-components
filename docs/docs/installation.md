@@ -91,7 +91,7 @@ This library is built for the **React Native New Architecture** (Fabric + TurboM
 | --------------------- | ---------------------------------- |
 | Fabric (New Renderer) | Supported                          |
 | Codegen               | Used for type-safe native bindings |
-| TurboModules          | N/A (view components only)         |
+| TurboModules          | Used for native theme updates      |
 | Old Architecture      | Not supported                      |
 
 **Compatibility:**
@@ -104,10 +104,10 @@ This library is built for the **React Native New Architecture** (Fabric + TurboM
 | iOS          | 15.1 (LiquidGlass needs iOS 26)                           |
 | Android      | API 24 (Android 7.0); Material Components 1.14 is bundled |
 
-iOS sets that minimum. LiquidGlass uses iOS 26 APIs, so the library has to be
-built with Xcode 26, and React Native's bundled `fmt` only compiles under Xcode
-26 from 0.81 on. The Android code itself builds against React Native 0.76, and
-CI keeps it that way.
+React Native 0.81 / Expo SDK 54 is the supported minimum. CI builds that
+combination with both Xcode 26 and Xcode 16.4; Liquid Glass is compiled out
+when the iOS 26 SDK is unavailable. Android is also built against React
+Native 0.76 in CI to check native compatibility below the supported minimum.
 
 **Requirements:**
 

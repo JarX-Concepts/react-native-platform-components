@@ -302,6 +302,9 @@ class PCSegmentedControlView(context: Context) :
 
     group.addOnButtonCheckedListener { toggleGroup, checkedId, isChecked ->
       if (suppressCallbacks) return@addOnButtonCheckedListener
+      // Material toggles immediately. Restore the latest controlled prop once
+      // that update finishes, including when the parent rejects the selection.
+      post { updateSelection() }
 
       if (!isChecked) {
         // In single-selection mode switching from A to B reports A as unchecked
@@ -442,19 +445,10 @@ class PCSegmentedControlView(context: Context) :
   }
 
   private fun updateSelection() {
-    suppressCallbacks = true
     val group = toggleGroup ?: return
-
-    if (selectedValue.isEmpty()) {
-      group.clearChecked()
-    } else {
-      for ((id, segment) in buttonIdToSegment) {
-        if (segment.value == selectedValue) {
-          group.check(id)
-          break
-        }
-      }
-    }
+    suppressCallbacks = true
+    val selectedId = buttonIdToSegment.entries.firstOrNull { it.value.value == selectedValue }?.key
+    if (selectedId == null) group.clearChecked() else group.check(selectedId)
     suppressCallbacks = false
   }
 

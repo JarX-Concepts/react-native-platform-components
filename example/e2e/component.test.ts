@@ -210,10 +210,16 @@ export const selectMenuOption = async (menuId: string, optionLabel: string) => {
       by.type('android.widget.TextView').withAncestor(by.id(menuId))
     );
     await spinnerText.tap();
-    // Wait for dropdown to fully appear
-    await new Promise((r) => setTimeout(r, 300));
-    // Android dropdown covers the tabs, so always use index 0
-    await element(by.text(optionLabel)).atIndex(0).tap();
+    // The selected label remains in the activity behind the popup. Scope the
+    // choice to the dropdown so picking the current option cannot reopen it.
+    const option = element(
+      by
+        .text(optionLabel)
+        .withAncestor(by.type('android.widget.DropDownListView'))
+    );
+    await waitFor(option).toBeVisible().withTimeout(5000);
+    await option.tap();
+    await waitFor(option).not.toExist().withTimeout(5000);
   } else {
     // iOS: Tap the menu to open it (UIButton pull-down menu)
     await element(by.id(menuId)).tap();
@@ -338,7 +344,12 @@ const menuItem = (label: string) =>
 // is retried before failing.
 const openMenuByLongPress = async (targetID: string, item: string) => {
   for (let attempt = 1; ; attempt++) {
-    await element(by.id(targetID)).longPress(attempt === 1 ? undefined : 1500);
+    const target = element(by.id(targetID));
+    if (attempt === 1) {
+      await target.longPress();
+    } else {
+      await target.longPress(1500);
+    }
     try {
       await waitFor(element(by.text(item)))
         .toBeVisible()
@@ -449,6 +460,8 @@ const cleanStatusBar = async () => {
 };
 
 describe('Platform Components Example', () => {
+  const itOnIOS = isAndroid() ? it.skip : it;
+
   beforeAll(async () => {
     if (isAndroid()) {
       // Text is entered with replaceText (see typeInto), so the soft keyboard
@@ -585,10 +598,7 @@ describe('Platform Components Example', () => {
 
   // UIDatePicker's wheels-only modes (iOS), in a flow of their own to keep
   // the first flow short
-  it('should test Date Picker wheels', async () => {
-    // Android has no countdown or month-and-year picker
-    if (isAndroid()) return;
-
+  itOnIOS('should test Date Picker wheels', async () => {
     // The app opens on the Date Picker demo, embedded with the inline style
     // (beforeEach waits for it). Countdown from there (UIKit only has
     // countdown wheels), reporting the duration
@@ -1629,12 +1639,7 @@ describe('Platform Components Example', () => {
     await expectText('feed-last-action', 'edit');
   });
 
-  it('should test Liquid Glass functionality', async () => {
-    // LiquidGlass is iOS 26+ only - skip on Android
-    if (isAndroid()) {
-      return;
-    }
-
+  itOnIOS('should test Liquid Glass functionality', async () => {
     // Navigate to LiquidGlass tab
     await selectDemo('Liquid Glass');
 

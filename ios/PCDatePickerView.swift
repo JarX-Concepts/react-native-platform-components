@@ -12,6 +12,7 @@ public final class PCDatePickerView: UIControl,
     private let picker = UIDatePicker()
     private var modalVC: UIViewController?
     private var inlineConstraints: [NSLayoutConstraint] = []
+    private var updatingPresentation = false
 
     private var modalToolbarHeight: CGFloat {
         // iOS 26 renders bar button items as oversized Liquid Glass pills;
@@ -51,7 +52,7 @@ public final class PCDatePickerView: UIControl,
     /// "modal" | "inline"
     public var presentation: String = "modal" {
         didSet {
-            if oldValue != presentation {
+            if oldValue != presentation && !updatingPresentation {
                 applyPresentation()
                 invalidateSize()
             }
@@ -61,7 +62,7 @@ public final class PCDatePickerView: UIControl,
     /// modal only: NSNumber(0/1)
     public var open: NSNumber? {
         didSet {
-            guard oldValue != open else { return }
+            guard oldValue != open, !updatingPresentation else { return }
             applyOpen()
         }
     }
@@ -233,6 +234,28 @@ public final class PCDatePickerView: UIControl,
 
     // MARK: - Presentation
 
+    /// Apply presentation and visibility together after the other props, so
+    /// opening never uses the previous mode, style or toolbar configuration.
+    @objc(configurePresentation:open:)
+    public func configurePresentation(_ value: String, open shouldOpen: Bool) {
+        guard presentation != value || open?.boolValue != shouldOpen else { return }
+        updatingPresentation = true
+        presentation = value
+        open = NSNumber(value: shouldOpen)
+        updatingPresentation = false
+        applyPresentation()
+        invalidateSize()
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil {
+            dismissIfNeeded(emitCancel: false, animated: false)
+        } else {
+            applyOpen()
+        }
+    }
+
     private func applyPresentation() {
         if presentation == "embedded" {
             dismissIfNeeded(emitCancel: false)
@@ -292,7 +315,7 @@ public final class PCDatePickerView: UIControl,
     // MARK: - Modal Popover
 
     private func presentIfNeeded() {
-        guard modalVC == nil else { return }
+        guard modalVC == nil, window != nil else { return }
         guard let top = topViewController() else {
             logger.warning("presentIfNeeded: no view controller found")
             return
@@ -405,11 +428,11 @@ public final class PCDatePickerView: UIControl,
         top.present(vc, animated: true)
     }
 
-    private func dismissIfNeeded(emitCancel: Bool) {
+    private func dismissIfNeeded(emitCancel: Bool, animated: Bool = true) {
         guard let vc = modalVC else { return }
         logger.debug("dismissIfNeeded: dismissing modal, emitCancel=\(emitCancel)")
         modalVC = nil
-        vc.dismiss(animated: true) { [weak self] in
+        vc.dismiss(animated: animated) { [weak self] in
             guard let self else { return }
             if emitCancel { self.onCancelHandler?() }
         }
@@ -601,11 +624,7 @@ public final class PCDatePickerView: UIControl,
     // MARK: - Top VC (same approach you were using)
 
     private func topViewController() -> UIViewController? {
-        guard
-            let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene })
-                .first,
-            let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
-        else { return nil }
+        guard let root = window?.rootViewController else { return nil }
 
         var top = root
         while true {

@@ -161,6 +161,11 @@ public final class PCSegmentedControlView: UIControl {
 
         let segment = parsedSegments[index]
         onSelect?(index, segment.value)
+        if !momentary {
+            // UIKit selects immediately; restore the controlled value if
+            // the parent keeps its previous selection.
+            DispatchQueue.main.async { [weak self] in self?.updateSelection() }
+        }
     }
 
     // MARK: - Props handling

@@ -148,6 +148,8 @@ class PCTextFieldView(context: Context) :
 
   /** The Material style's error icon, shown in the end slot while there is an error. */
   private var defaultErrorIcon: Drawable? = null
+  private var defaultStartIconTint: ColorStateList? = null
+  private var defaultEndIconTint: ColorStateList? = null
 
   /** Bumped on every rebuild and icon change so late image loads can't touch stale widgets. */
   private var startIconGeneration = 0
@@ -608,6 +610,22 @@ class PCTextFieldView(context: Context) :
       layout = til
       editText = edit
       defaultErrorIcon = til.errorIconDrawable
+      // TextInputLayout has tint setters but no getters. Resolve the same
+      // styled attributes its constructor uses, preserving host theme state
+      // colors so changing an image's template mode need not replace the input.
+      // https://github.com/material-components/material-components-android/blob/1.14.0/lib/java/com/google/android/material/textfield/TextInputLayout.java
+      val iconTints = til.context.obtainStyledAttributes(
+        null,
+        MaterialR.styleable.TextInputLayout,
+        MaterialR.attr.textInputStyle,
+        MaterialR.style.Widget_Design_TextInputLayout
+      )
+      try {
+        defaultStartIconTint = iconTints.getColorStateList(MaterialR.styleable.TextInputLayout_startIconTint)
+        defaultEndIconTint = iconTints.getColorStateList(MaterialR.styleable.TextInputLayout_endIconTint)
+      } finally {
+        iconTints.recycle()
+      }
       til.prefixText = prefix.ifEmpty { null }
       til.suffixText = suffix.ifEmpty { null }
     }
@@ -626,6 +644,7 @@ class PCTextFieldView(context: Context) :
     // Restore the text without reporting it as an edit
     settingTextInternally = true
     edit.setText(text)
+    text = edit.text?.toString().orEmpty()
     val length = edit.length()
     edit.setSelection(if (selection in 0..length) selection else length)
     settingTextInternally = false
@@ -683,7 +702,9 @@ class PCTextFieldView(context: Context) :
     val wasAtEnd = edit.selectionEnd == edit.length()
     val cursor = edit.selectionStart
     edit.setText(value)
-    text = value
+    // InputFilter (notably maxLength) can change the supplied value. Events
+    // must report the text the user sees, including after a widget rebuild.
+    text = edit.text?.toString().orEmpty()
     val length = edit.length()
     edit.setSelection(if (moveCursorToEnd || wasAtEnd) length else cursor.coerceIn(0, length))
     settingTextInternally = false
@@ -773,12 +794,13 @@ class PCTextFieldView(context: Context) :
     val edit = editText ?: return
     val start = systemStart
     val end = systemEnd
+    val tint = ColorStateList.valueOf(themeColor(android.R.attr.colorControlNormal, 0xFF757575.toInt()))
+    // TextView's compound tint applies to every side. Each icon has its own
+    // template preference, so put the tint on the drawable instead.
+    // https://developer.android.com/reference/android/widget/TextView#setCompoundDrawableTintList(android.content.res.ColorStateList)
+    start?.mutate()?.setTintList(if (leadingIcon.tinted) tint else null)
+    end?.mutate()?.setTintList(if (trailingIcon.tinted) tint else null)
     edit.setCompoundDrawablesRelativeWithIntrinsicBounds(start, null, end, null)
-    val tinted = (start != null && leadingIcon.tinted) || (end != null && trailingIcon.tinted)
-    TextViewCompat.setCompoundDrawableTintList(
-      edit,
-      if (tinted) ColorStateList.valueOf(themeColor(android.R.attr.colorControlNormal, 0xFF757575.toInt())) else null
-    )
     if (end != null) {
       edit.setOnTouchListener { v, event ->
         if (event.action == MotionEvent.ACTION_UP) {
@@ -822,7 +844,7 @@ class PCTextFieldView(context: Context) :
     }
     loadIcon(leadingIcon) { drawable ->
       if (generation != startIconGeneration || layout !== til) return@loadIcon
-      if (!leadingIcon.tinted) til.setStartIconTintList(null)
+      til.setStartIconTintList(if (leadingIcon.tinted) defaultStartIconTint else null)
       til.startIconDrawable = drawable
       applyTestIDs()
       requestLayout()
@@ -850,13 +872,13 @@ class PCTextFieldView(context: Context) :
       applySystemIcons()
       return
     }
+    til.setEndIconTintList(if (trailingIcon.isPresent && !trailingIcon.tinted) null else defaultEndIconTint)
     when {
       trailingIcon.isPresent -> {
         til.endIconMode = TextInputLayout.END_ICON_CUSTOM
         til.setEndIconOnClickListener { onTrailingIconPress?.invoke() }
         loadIcon(trailingIcon) { drawable ->
           if (generation != endIconGeneration || layout !== til) return@loadIcon
-          if (!trailingIcon.tinted) til.setEndIconTintList(null)
           til.endIconDrawable = drawable
           applyTestIDs()
           requestLayout()

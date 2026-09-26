@@ -131,7 +131,8 @@ object PCNavigationBarSupport {
   /**
    * Adds the tabs to the bar's menu, as many as it takes, with their icons.
    * Icons that load in the background are applied while [isCurrent] holds,
-   * then [onIconLoaded] runs.
+   * then [onIconLoaded] runs. Call after [applyColors] so each icon receives
+   * the final state colors before the bar-wide tint is disabled.
    */
   fun populateMenu(
     bar: NavigationBarView,
@@ -140,13 +141,18 @@ object PCNavigationBarSupport {
     onIconLoaded: () -> Unit
   ) {
     val menu = bar.menu
+    // Material's bar-wide tint overrides an image's original colors. Apply the
+    // same state list to each opted-in icon, including its selected variant.
+    // https://developer.android.com/reference/com/google/android/material/navigation/NavigationBarView#setItemIconTintList(android.content.res.ColorStateList)
+    val iconTint = bar.itemIconTintList
+    bar.itemIconTintList = null
     val count = minOf(items.size, bar.maxItemCount)
     for (index in 0 until count) {
       val tab = items[index]
       val item = menu.add(Menu.NONE, itemId(index), index, tab.label)
       item.isEnabled = !tab.disabled
       MenuItemCompat.setContentDescription(item, tab.accessibilityLabel.ifEmpty { null })
-      loadItemIcon(bar.context, tab, isCurrent) { drawable ->
+      loadItemIcon(bar.context, tab, iconTint, isCurrent) { drawable ->
         item.icon = drawable
         onIconLoaded()
       }
@@ -271,9 +277,17 @@ object PCNavigationBarSupport {
    * there is one. Drawable names and bundled assets resolve synchronously;
    * other image URIs load in the background.
    */
-  private fun loadItemIcon(context: Context, tab: Item, isCurrent: () -> Boolean, apply: (Drawable?) -> Unit) {
+  private fun loadItemIcon(
+    context: Context,
+    tab: Item,
+    tint: ColorStateList?,
+    isCurrent: () -> Boolean,
+    apply: (Drawable?) -> Unit
+  ) {
     var normal: Drawable? = null
     var selected: Drawable? = null
+    fun tinted(drawable: Drawable?, enabled: Boolean): Drawable? =
+      drawable?.mutate()?.apply { if (enabled) setTintList(tint) }
     var pending = 1 + (if (tab.selectedIcon.isPresent) 1 else 0)
     fun done() {
       pending -= 1
@@ -288,12 +302,14 @@ object PCNavigationBarSupport {
       )
     }
     if (tab.role == "search" && !tab.icon.isPresent) {
-      normal = ContextCompat.getDrawable(context, R.drawable.pc_ic_search)
+      normal = tinted(ContextCompat.getDrawable(context, R.drawable.pc_ic_search), true)
       done()
     } else {
-      loadIcon(context, tab.icon) { normal = it; done() }
+      loadIcon(context, tab.icon) { normal = tinted(it, tab.icon.tinted); done() }
     }
-    if (tab.selectedIcon.isPresent) loadIcon(context, tab.selectedIcon) { selected = it; done() }
+    if (tab.selectedIcon.isPresent) {
+      loadIcon(context, tab.selectedIcon) { selected = tinted(it, tab.selectedIcon.tinted); done() }
+    }
   }
 
   private fun loadIcon(context: Context, icon: PCButtonSupport.Icon, onLoaded: (Drawable?) -> Unit) {

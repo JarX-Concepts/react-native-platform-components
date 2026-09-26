@@ -1,6 +1,6 @@
 ---
-title: "SelectionMenu"
-description: "Native selection menu for React Native: system menus on iOS, Material exposed dropdown or Spinner on Android, with icons, subtitles and a searchable dropdown."
+title: 'SelectionMenu'
+description: 'Native selection menu for React Native: system menus on iOS, Material exposed dropdown or Spinner on Android, with icons, subtitles and a searchable dropdown.'
 ---
 
 <table>
@@ -18,19 +18,19 @@ Native selection menu with **modal** and **embedded** modes.
 
 ### Props
 
-| Prop                 | Type                            | Description                                                         |
-| -------------------- | ------------------------------- | ------------------------------------------------------------------- |
-| `options`            | `SelectionMenuOption[]`         | Options to display. See [SelectionMenuOption](#selectionmenuoption) |
-| `selected`           | `string \| null`                | Currently selected option's `data` value                            |
-| `disabled`           | `boolean`                       | Disables the menu                                                   |
-| `placeholder`        | `string`                        | Placeholder text when no selection                                  |
-| `presentation`       | `'modal' \| 'embedded'`         | Presentation mode (default: `'modal'`)                              |
-| `visible`            | `boolean`                       | Controls modal mode menu visibility                                 |
-| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none |
-| `onSelect`           | `(data, label, index) => void`  | Called when user selects an option                                  |
-| `onRequestClose`     | `() => void`                    | Called when menu is dismissed without selection                     |
-| `android.material`   | `'system' \| 'm3'`              | Material Design style preference                                    |
-| `android.searchable` | `boolean`                       | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android) |
+| Prop                 | Type                                                                                           | Description                                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `options`            | `SelectionMenuOption[]`                                                                        | Options to display. See [SelectionMenuOption](#selectionmenuoption)                                     |
+| `selected`           | `string \| null`                                                                               | Currently selected option's `data` value                                                                |
+| `disabled`           | `boolean`                                                                                      | Disables the menu                                                                                       |
+| `placeholder`        | `string`                                                                                       | Placeholder text when no selection                                                                      |
+| `presentation`       | `'modal' \| 'embedded'`                                                                        | Presentation mode (default: `'modal'`)                                                                  |
+| `visible`            | `boolean`                                                                                      | Controls modal mode menu visibility                                                                     |
+| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none              |
+| `onSelect`           | `(data, label, index) => void`                                                                 | Called when user selects an option                                                                      |
+| `onRequestClose`     | `() => void`                                                                                   | Called when menu is dismissed without selection                                                         |
+| `android.material`   | `'system' \| 'm3'`                                                                             | Material Design style preference                                                                        |
+| `android.searchable` | `boolean`                                                                                      | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android) |
 
 ### SelectionMenuOption
 
@@ -72,8 +72,8 @@ const [open, setOpen] = useState(false);
 - **iOS 15.1 to 17.3**: UIKit has no public way to open a menu without a touch, so modal mode falls back to a popover styled like a system menu (a blurred material panel), with the checkmark on the selected row. It shows labels only: no icons or subtitles.
 - **Android**: a `PopupMenu` anchored to the component, with a radio indicator on the selected option.
 
-| iOS 26 | iOS 18 | Android |
-| --- | --- | --- |
+| iOS 26                                                                                            | iOS 18                                                                                              | Android                                                                                   |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | ![The system menu opened from modal mode on iOS 26](/img/components/selectionmenu/modal-ios.webp) | ![The system menu opened from modal mode on iOS 18](/img/components/selectionmenu/modal-ios18.webp) | ![The popup menu with icons on Android](/img/components/selectionmenu/modal-android.webp) |
 
 ### Selected option
@@ -83,9 +83,13 @@ The option matching `selected` is marked natively when the menu is open:
 - **iOS** (both modes): a single-selection `UIMenu` with the system checkmark on the selected action. Before iOS 17.4, modal mode's popover draws the checkmark in the leading position like a system menu.
 - **Android modal**: a single-choice `PopupMenu` group with the selected item checked (radio indicator).
 - **Android embedded, `m3`**: the exposed dropdown highlights the selected item.
-- **Android embedded, `system`**: the Spinner shows the selected label.
+- **Android embedded, `system`**: the Spinner shows the selected label, or `placeholder` when `selected` is `null`. The placeholder is not a selectable option.
 
 Selection stays controlled: the mark follows the `selected` prop, not the last tap.
+
+Use a unique, non-empty `data` string for each option. Native controls reserve
+the empty string for no selection; use `selected={null}` to clear the choice.
+Individual options cannot currently be disabled.
 
 ### Icons and subtitles
 
@@ -93,9 +97,24 @@ Each option can carry an `icon` and a `subtitle`:
 
 ```tsx
 const OPTIONS = [
-  { label: 'Push', data: 'push', subtitle: 'On this device', icon: { type: 'image', source: require('./bell.png') } },
-  { label: 'Email', data: 'email', subtitle: 'A daily digest', icon: { ios: 'envelope', android: 'send' } },
-  { label: 'Off', data: 'off', subtitle: 'No notifications', icon: { ios: 'bell.slash', android: 'remove_circle' } },
+  {
+    label: 'Push',
+    data: 'push',
+    subtitle: 'On this device',
+    icon: { type: 'image', source: require('./bell.png') },
+  },
+  {
+    label: 'Email',
+    data: 'email',
+    subtitle: 'A daily digest',
+    icon: { ios: 'envelope', android: 'send' },
+  },
+  {
+    label: 'Off',
+    data: 'off',
+    subtitle: 'No notifications',
+    icon: { ios: 'bell.slash', android: 'remove_circle' },
+  },
 ];
 ```
 
@@ -106,8 +125,8 @@ const OPTIONS = [
 
 Image sources are drawn as templates in the menu's icon color unless `tinted: false`; on Android they sit in the 24dp icon box, scaled down if larger.
 
-| Android embedded (`m3`) |
-| --- |
+| Android embedded (`m3`)                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ |
 | ![Dropdown rows with icons and subtitles in the M3 exposed dropdown](/img/components/selectionmenu/rich-m3-android.webp) |
 
 ### Searchable dropdown (Android)
@@ -131,6 +150,6 @@ With `presentation="embedded"`, `android.material="m3"` and `android.searchable`
 
 `searchable` is ignored in modal mode, by the `system` Spinner and on iOS, where menus aren't searchable.
 
-| Android |
-| --- |
+| Android                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------- |
 | ![The M3 exposed dropdown filtered to the states starting with "new"](/img/components/selectionmenu/searchable-android.webp) |

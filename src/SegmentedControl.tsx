@@ -62,7 +62,7 @@ export interface SegmentedControlSegmentProps {
   /** Display label for the segment */
   label: string;
 
-  /** Unique value identifier for the segment */
+  /** Unique, non-empty value identifier for the segment. */
   value: string;
 
   /** Whether this specific segment is disabled */

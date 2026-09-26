@@ -405,7 +405,7 @@ export function ButtonDemo(): React.JSX.Element {
             buttons={ACTION_BUTTONS}
             variant="tonal"
             onPress={(value) => setLastPressed(value)}
-            android={{ overflow: 'wrap' }}
+            overflow="wrap"
             {...common}
           />
         </View>

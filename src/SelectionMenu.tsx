@@ -18,7 +18,7 @@ import type { AndroidMaterialMode, Presentation } from './sharedTypes';
 export interface SelectionMenuOption {
   /** Display text */
   label: string;
-  /** Payload returned by `onSelect`; also what `selected` matches */
+  /** Unique, non-empty payload returned by `onSelect` and matched by `selected`. */
   data: string;
   /**
    * Secondary text under the label.

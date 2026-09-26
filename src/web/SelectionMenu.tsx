@@ -19,6 +19,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     selected,
     disabled,
     placeholder,
+    accessibilityLabel,
     presentation = 'modal',
     visible,
     onSelect,
@@ -29,6 +30,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   } = props;
 
   const primary = usePrimaryColor();
+  const label = accessibilityLabel ?? placeholder ?? 'Select an option';
 
   const select = (index: number) => {
     const option = options[index];
@@ -39,6 +41,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     return (
       <View {...viewProps}>
         <select
+          aria-label={label}
           value={selected ?? ''}
           disabled={disabled}
           onChange={(event) => {
@@ -79,10 +82,10 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   return (
     <View {...viewProps}>
       {visible && !disabled ? (
-        <Dialog label={placeholder} onDismiss={dismiss}>
+        <Dialog label={label} onDismiss={dismiss}>
           <div
             role="listbox"
-            aria-label={placeholder}
+            aria-label={label}
             style={{ display: 'flex', flexDirection: 'column', minWidth: 200 }}
           >
             {options.map((option, index) => {

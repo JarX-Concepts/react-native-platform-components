@@ -211,8 +211,10 @@ public final class PCSelectionMenuView: UIControl {
                 let opt = opts[item.index]
                 // A pick from the headless system menu isn't a dismissal to report
                 if self.anchorMode != "inline" { self.headlessSelectedWhileOpen = true }
-                self.selectedData = opt.data
                 self.onSelect?(item.index, opt.label, opt.data)
+                // UIKit may check the picked action itself. Rebuild from
+                // the controlled value once the action has finished.
+                DispatchQueue.main.async { [weak self] in self?.sync() }
             }
         )
     }
@@ -374,7 +376,6 @@ public final class PCSelectionMenuView: UIControl {
                     guard let self else { return }
                     let opt = opts[idx]
                     logger.debug("headless menu selected: index=\(idx), data=\(opt.data)")
-                    self.selectedData = opt.data
                     self.onSelect?(idx, opt.label, opt.data)
                 },
                 onCancel: { [weak self] in

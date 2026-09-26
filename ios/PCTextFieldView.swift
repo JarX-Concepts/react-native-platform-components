@@ -299,7 +299,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     private var trailingIcon = PCButtonSupport.Icon.none
     private var leadingImage: UIImage?
     private var trailingImage: UIImage?
-    private var iconGeneration = 0
+    private var leadingIconGeneration = 0
+    private var trailingIconGeneration = 0
 
     // MARK: - Layout metrics
 
@@ -430,10 +431,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
         guard next != leadingIcon else { return }
         leadingIcon = next
-        iconGeneration += 1
-        let generation = iconGeneration
+        leadingIconGeneration += 1
+        let generation = leadingIconGeneration
         leadingImage = PCButtonSupport.image(for: next) { [weak self] image in
-            guard let self, self.iconGeneration == generation else { return }
+            guard let self, self.leadingIconGeneration == generation else { return }
             self.leadingImage = image
             self.applyAccessories()
         }
@@ -444,10 +445,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
         guard next != trailingIcon else { return }
         trailingIcon = next
-        iconGeneration += 1
-        let generation = iconGeneration
+        trailingIconGeneration += 1
+        let generation = trailingIconGeneration
         trailingImage = PCButtonSupport.image(for: next) { [weak self] image in
-            guard let self, self.iconGeneration == generation else { return }
+            guard let self, self.trailingIconGeneration == generation else { return }
             self.trailingImage = image
             self.applyAccessories()
         }
@@ -457,6 +458,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     /// Resets the text state for a recycled view.
     public func resetForRecycle() {
         blur()
+        leadingIconGeneration += 1
+        trailingIconGeneration += 1
         initialTextApplied = false
         autoFocusDone = false
         nativeEventCount = 0
@@ -666,7 +669,15 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     // MARK: - Props handling
 
     private func rebuildInput() {
-        let focused = activeInput.isFirstResponder
+        // `multiline` already has its new value in didSet, so activeInput
+        // points to the replacement. Read focus and selection from the old input.
+        let previousInput: UIView & UITextInput = multiline ? textField : textView
+        let focused = previousInput.isFirstResponder
+        let selection = previousInput.selectedTextRange.map { range in
+            let start = previousInput.offset(from: previousInput.beginningOfDocument, to: range.start)
+            let end = previousInput.offset(from: previousInput.beginningOfDocument, to: range.end)
+            return NSRange(location: start, length: max(0, end - start))
+        }
         textField.removeFromSuperview()
         textView.removeFromSuperview()
         if multiline {
@@ -687,6 +698,9 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         applyAccessibility()
         applyAlignment()
         if focused { activeInput.becomeFirstResponder() }
+        if let selection {
+            setSelection(start: selection.location, end: NSMaxRange(selection), eventCount: nativeEventCount)
+        }
         setNeedsLayout()
         onNeedsRemeasure?()
     }
