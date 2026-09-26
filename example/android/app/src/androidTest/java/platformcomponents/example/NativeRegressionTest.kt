@@ -17,6 +17,7 @@ import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ListAdapter
+import android.widget.Filterable
 import android.widget.NumberPicker
 import android.widget.Spinner
 import android.widget.TextView
@@ -57,6 +58,9 @@ import com.platformcomponents.PCSelectionMenuView
 import com.platformcomponents.PCTabBarView
 import com.platformcomponents.PCTextFieldView
 import java.io.ByteArrayOutputStream
+import java.net.ServerSocket
+import java.util.Collections
+import org.json.JSONObject
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -517,6 +521,225 @@ class NativeRegressionTest {
       assertEquals("B", reported)
       assertEquals("A", descendant<MaterialAutoCompleteTextView>(field).text.toString())
     }
+  }
+
+  @Test
+  fun disabledSystemOptionsRemainVisibleAndCannotChangeSelection() {
+    lateinit var field: PCSelectionMenuView
+    val reported = mutableListOf<Int>()
+    val options = listOf(
+      PCSelectionMenuView.Option("First available", "a"),
+      PCSelectionMenuView.Option("Unavailable", "b", disabled = true),
+      PCSelectionMenuView.Option("Last available", "c")
+    )
+    onMain {
+      field = PCSelectionMenuView(activity)
+      field.applyAnchorMode("inline")
+      field.applyOptions(options)
+      field.applySelectedData("a")
+      field.onSelect = { index, _, _ -> reported.add(index) }
+      host.addView(field)
+    }
+    settle()
+    onMain {
+      val spinner = descendant<Spinner>(field)
+      val adapter = spinner.adapter as ListAdapter
+      assertEquals(3, adapter.count)
+      assertFalse(adapter.areAllItemsEnabled())
+      assertFalse(adapter.isEnabled(1))
+      assertTrue(adapter.isEnabled(2))
+      val disabledRow = spinner.adapter.getDropDownView(1, null, spinner)
+      assertFalse(disabledRow.isEnabled)
+      assertTrue(spinner.adapter.getDropDownView(2, disabledRow, spinner).isEnabled)
+      spinner.setSelection(1)
+    }
+    settle()
+    onMain {
+      assertTrue(reported.isEmpty())
+      assertEquals(0, descendant<Spinner>(field).selectedItemPosition)
+      field.applyOptions(options.map { it.copy(disabled = false) })
+    }
+    settle()
+    onMain { descendant<Spinner>(field).setSelection(1) }
+    settle()
+    onMain { assertEquals(listOf(1), reported) }
+    // A controlled parent rejected the first pick. A later pick of that same
+    // option must be reported again, once the duplicate-callback guard resets.
+    onMain { descendant<Spinner>(field).setSelection(1) }
+    settle()
+    onMain { assertEquals(listOf(1, 1), reported) }
+  }
+
+  @Test
+  fun disabledModalOptionsIgnoreTouchesAndCanBeEnabledAgain() {
+    lateinit var field: PCSelectionMenuView
+    val reported = mutableListOf<Int>()
+    val options = listOf(
+      PCSelectionMenuView.Option("Modal available", "a"),
+      PCSelectionMenuView.Option("Modal unavailable", "b", disabled = true)
+    )
+    onMain {
+      field = PCSelectionMenuView(activity)
+      field.applyAnchorMode("headless")
+      field.applyOptions(options)
+      field.applySelectedData("a")
+      field.onSelect = { index, _, _ -> reported.add(index) }
+      host.addView(field, FrameLayout.LayoutParams(500, 100))
+      field.applyVisible("open")
+    }
+    settle()
+    onView(withText("Modal unavailable")).check { title, error ->
+      if (error != null) throw error
+      // PopupMenu disables its action row; its nested title keeps its own
+      // enabled flag, so checking the title alone does not test the action.
+      val row = generateSequence(title.parent as? View) { it.parent as? View }
+        .first { it.javaClass.name == "androidx.appcompat.view.menu.ListMenuItemView" }
+      assertFalse(row.isEnabled)
+    }
+    onView(withText("Modal unavailable")).perform(click())
+    settle()
+    onMain { assertTrue(reported.isEmpty()) }
+    onView(withText("Modal available")).check(matches(isDisplayed()))
+    onView(withText("Modal available")).perform(click())
+    settle()
+    onMain {
+      assertEquals(listOf(0), reported)
+      field.applyVisible("closed")
+      field.applyOptions(options.map { it.copy(disabled = false) })
+      field.applyVisible("open")
+    }
+    settle()
+    onView(withText("Modal unavailable")).perform(click())
+    settle()
+    onMain {
+      assertEquals(listOf(0, 1), reported)
+      field.applyVisible("closed")
+    }
+  }
+
+  @Test
+  fun filteredMaterialOptionsKeepTheirDisabledStateAndPublicIndexes() {
+    lateinit var field: PCSelectionMenuView
+    val reported = mutableListOf<Int>()
+    onMain {
+      field = PCSelectionMenuView(activity)
+      field.applyAnchorMode("inline")
+      field.applyAndroidMaterial("m3")
+      field.applyAndroidSearchable(true)
+      field.applyOptions(listOf(
+        PCSelectionMenuView.Option("Alpha", "a"),
+        PCSelectionMenuView.Option("Beta unavailable", "b", disabled = true),
+        PCSelectionMenuView.Option("Beta available", "c")
+      ))
+      field.applySelectedData("a")
+      field.onSelect = { index, _, _ -> reported.add(index) }
+      host.addView(field)
+    }
+    settle()
+    val filtered = CountDownLatch(1)
+    onMain {
+      val input = descendant<MaterialAutoCompleteTextView>(field)
+      (input.adapter as Filterable).filter.filter("Beta") { filtered.countDown() }
+    }
+    assertTrue(filtered.await(5, TimeUnit.SECONDS))
+    onMain {
+      val input = descendant<MaterialAutoCompleteTextView>(field)
+      assertEquals(2, input.adapter.count)
+      assertFalse(input.adapter.isEnabled(0))
+      assertTrue(input.adapter.isEnabled(1))
+      input.onItemClickListener!!.onItemClick(null, null, 0, 0L)
+      assertTrue(reported.isEmpty())
+      // Both calls happen before the posted controlled-selection restoration.
+      input.onItemClickListener!!.onItemClick(null, null, 1, 1L)
+      assertEquals(listOf(2), reported)
+    }
+    settle()
+    onMain { assertEquals("Alpha", descendant<MaterialAutoCompleteTextView>(field).text.toString()) }
+  }
+
+  @Test
+  fun authenticatedImagesSeparateCacheEntriesAndHonorRequestOptions() {
+    val server = ServerSocket(0)
+    server.soTimeout = 15000
+    val requests = Collections.synchronizedList(mutableListOf<String>())
+    val failures = Collections.synchronizedList(mutableListOf<Throwable>())
+    val worker = Thread {
+      try {
+        repeat(5) {
+          server.accept().use { socket ->
+            socket.soTimeout = 5000
+            val reader = socket.getInputStream().bufferedReader()
+            val line = reader.readLine()
+            val headers = mutableMapOf<String, String>()
+            while (true) {
+              val header = reader.readLine()
+              if (header.isNullOrEmpty()) break
+              val parts = header.split(":", limit = 2)
+              headers[parts[0].lowercase()] = parts[1].trim()
+            }
+            val body = CharArray(headers["content-length"]?.toInt() ?: 0)
+            var offset = 0
+            while (offset < body.size) {
+              val count = reader.read(body, offset, body.size - offset)
+              check(count > 0)
+              offset += count
+            }
+            requests.add("$line|${headers["authorization"]}|${String(body)}")
+            val output = socket.getOutputStream()
+            if (line.contains("/redirect")) {
+              output.write("HTTP/1.1 302 Found\r\nLocation: http://localhost:${server.localPort}/target\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
+            } else {
+              val color = when {
+                String(body) == "pick=blue" -> Color.BLUE
+                headers["authorization"] == "Bearer second" -> Color.GREEN
+                else -> Color.RED
+              }
+              val bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+              val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+              output.write("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n".toByteArray())
+              output.write(bytes)
+            }
+            output.flush()
+          }
+        }
+      } catch (error: Throwable) { if (!server.isClosed) failures.add(error) }
+    }.apply { start() }
+    fun load(account: String, policy: String = "default", post: Boolean = false, path: String = "/icon"): Bitmap? {
+      val request = JSONObject().put("headers", JSONObject().put("Authorization", "Bearer $account"))
+        .put("cache", policy)
+      if (post) request.put("method", "POST").put("body", "pick=blue")
+      val done = CountDownLatch(1)
+      var result: Bitmap? = null
+      onMain {
+        PCImageLoader.load(activity, "http://localhost:${server.localPort}$path", 1f, request.toString()) {
+          result = it
+          done.countDown()
+        }
+      }
+      assertTrue("Image request did not complete; server errors: $failures", done.await(10, TimeUnit.SECONDS))
+      return result
+    }
+    try {
+      assertEquals(Color.RED, load("first")!!.getPixel(0, 0))
+      assertEquals(Color.GREEN, load("second")!!.getPixel(0, 0))
+      assertEquals(Color.RED, load("first")!!.getPixel(0, 0))
+      assertEquals(Color.RED, load("first", "only-if-cached")!!.getPixel(0, 0))
+      assertEquals(null, load("unknown", "only-if-cached"))
+      assertEquals(2, requests.size)
+      assertEquals(Color.RED, load("first", "reload")!!.getPixel(0, 0))
+      assertEquals(Color.BLUE, load("first", post = true)!!.getPixel(0, 0))
+      assertEquals(null, load("first", path = "/redirect"))
+      worker.join(5000)
+      assertFalse("Request server should have served exactly five requests", worker.isAlive)
+      assertTrue("Server errors: $failures", failures.isEmpty())
+      assertEquals(listOf(
+        "GET /icon HTTP/1.1|Bearer first|",
+        "GET /icon HTTP/1.1|Bearer second|",
+        "GET /icon HTTP/1.1|Bearer first|",
+        "POST /icon HTTP/1.1|Bearer first|pick=blue",
+        "GET /redirect HTTP/1.1|Bearer first|"
+      ), requests)
+    } finally { server.close(); worker.join(1000) }
   }
 
   @Test

@@ -31,10 +31,11 @@ static inline bool OptionsEqual(
   for (size_t i = 0; i < a.size(); i++) {
     if (a[i].label != b[i].label) return false;
     if (a[i].data != b[i].data) return false;
+    if (a[i].disabled != b[i].disabled) return false;
     if (a[i].subtitle != b[i].subtitle) return false;
     if (a[i].iconType != b[i].iconType) return false;
     if (a[i].iconName != b[i].iconName) return false;
-    if (a[i].iconUri != b[i].iconUri) return false;
+    if (a[i].iconRequest != b[i].iconRequest || a[i].iconUri != b[i].iconUri) return false;
     if (a[i].iconScale != b[i].iconScale) return false;
     if (a[i].iconTinted != b[i].iconTinted) return false;
   }
@@ -129,9 +130,11 @@ static inline NSString *ToNSString(const std::string &value) {
       [arr addObject:@{
         @"label" : ToNSString(opt.label),
         @"data" : ToNSString(opt.data),
+        @"disabled" : ToNSString(opt.disabled),
         @"subtitle" : ToNSString(opt.subtitle),
         @"iconType" : ToNSString(opt.iconType),
         @"iconName" : ToNSString(opt.iconName),
+        @"iconRequest" : ToNSString(opt.iconRequest),
         @"iconUri" : ToNSString(opt.iconUri),
         @"iconScale" : @(opt.iconScale),
         @"iconTinted" : ToNSString(opt.iconTinted),

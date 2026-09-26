@@ -19,8 +19,11 @@ import {
  *   Android only; ignored on iOS.
  * - `{ type: 'image' }`: an image asset (`require('./icon.png')`) or a
  *   `{ uri }` source. Works on both platforms. Images are drawn as tinted
- *   templates unless `tinted` is `false`. Native loaders use `uri` and `scale`;
- *   request headers, HTTP methods and other fetch options are not forwarded.
+ *   templates unless `tinted` is `false`. Native loaders forward `headers`,
+ *   `method` and `body`. `cache` controls the decoded in-memory image cache:
+ *   `reload` bypasses it, `only-if-cached` never fetches, and `default` /
+ *   `force-cache` reuse a matching cached request. HTTP redirects carrying
+ *   custom request options are not followed.
  */
 export type PlatformIconSource =
   | string
@@ -51,6 +54,8 @@ export type NativeIconFields = {
   iconName: string;
   /** Resolved image URI when iconType === 'image' */
   iconUri: string;
+  /** Serialized HTTP request options; empty for ordinary image assets. */
+  iconRequest: string;
   /** Resolved image scale when iconType === 'image' */
   iconScale: number;
   /** 'true' | 'false': draw the image as a tinted template */
@@ -61,6 +66,7 @@ export const NO_ICON: NativeIconFields = {
   iconType: '',
   iconName: '',
   iconUri: '',
+  iconRequest: '',
   iconScale: 1,
   iconTinted: 'true',
 };
@@ -103,10 +109,30 @@ export function resolveIcon(icon: PlatformIcon | undefined): NativeIconFields {
     case 'image': {
       const resolved = Image.resolveAssetSource(source.source);
       if (!resolved?.uri) return NO_ICON;
+      const request =
+        typeof source.source === 'object' ? source.source : undefined;
+      const headers = request?.headers
+        ? Object.fromEntries(
+            Object.entries(request.headers).sort(([a], [b]) =>
+              a.localeCompare(b)
+            )
+          )
+        : undefined;
+      const requestOptions = {
+        headers,
+        method: request?.method,
+        body: request?.body,
+        cache: request?.cache,
+      };
       return {
         iconType: 'image',
         iconName: '',
         iconUri: resolved.uri,
+        iconRequest: Object.values(requestOptions).some(
+          (value) => value !== undefined
+        )
+          ? JSON.stringify(requestOptions)
+          : '',
         iconScale: resolved.scale > 0 ? resolved.scale : 1,
         iconTinted: source.tinted === false ? 'false' : 'true',
       };

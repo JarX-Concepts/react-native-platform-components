@@ -34,7 +34,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
 
   const select = (index: number) => {
     const option = options[index];
-    if (option) onSelect?.(option.data, option.label, index);
+    if (option && !disabled && !option.disabled)
+      onSelect?.(option.data, option.label, index);
   };
 
   if (presentation === 'embedded') {
@@ -68,7 +69,11 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
             </option>
           ) : null}
           {options.map((option) => (
-            <option key={option.data} value={option.data}>
+            <option
+              key={option.data}
+              value={option.data}
+              disabled={option.disabled}
+            >
               {option.label}
             </option>
           ))}
@@ -96,7 +101,13 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  autoFocus={isSelected || (selected === null && index === 0)}
+                  disabled={option.disabled}
+                  autoFocus={
+                    !option.disabled &&
+                    (isSelected ||
+                      (selected === null &&
+                        index === options.findIndex((item) => !item.disabled)))
+                  }
                   onClick={() => select(index)}
                   style={{
                     display: 'flex',

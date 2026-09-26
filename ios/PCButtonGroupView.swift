@@ -136,6 +136,8 @@ public final class PCButtonGroupView: UIView {
     /// Split mode: the chevron button after the button, and its menu items.
     private var chevronButton: PCMenuButton?
     private var splitItems: [PCMenuItem] = []
+    private let splitMenuImages = PCMenuImageState()
+    private let overflowMenuImages = PCMenuImageState()
 
     /// Overflow "menu": the "…" button that holds the buttons that don't
     /// fit (made the first time it is needed), and how many buttons are
@@ -202,6 +204,7 @@ public final class PCButtonGroupView: UIView {
         overflowDirty = true
         // A split button is one button and its chevron
         if split && items.count > 1 { items = Array(items.prefix(1)) }
+        overflowMenuImages.retain(icons: items.map(\.icon))
         iconImages = Array(repeating: nil, count: items.count)
 
         for (index, item) in items.enumerated() {
@@ -298,10 +301,12 @@ public final class PCButtonGroupView: UIView {
     // MARK: - Split menu
 
     private func updateSplitMenu() {
+        splitMenuImages.retain(icons: splitItems.map(\.icon))
         guard let chevron = chevronButton else { return }
         chevron.setMenu(splitItems.isEmpty ? nil : PCMenuSupport.menu(
             title: "",
             items: splitItems,
+            imageState: splitMenuImages,
             onImageLoaded: { [weak self] in self?.updateSplitMenu() },
             handler: { [weak self] item in
                 guard let self else { return }
@@ -371,6 +376,7 @@ public final class PCButtonGroupView: UIView {
     private func updateOverflowMenu() {
         guard let overflowButton else { return }
         guard let count = visibleCount else {
+            overflowMenuImages.retain(icons: [])
             overflowButton.setMenu(nil)
             return
         }
@@ -388,6 +394,7 @@ public final class PCButtonGroupView: UIView {
         overflowButton.setMenu(PCMenuSupport.menu(
             title: "",
             items: hidden,
+            imageState: overflowMenuImages,
             onImageLoaded: { [weak self] in self?.updateOverflowMenu() },
             handler: { [weak self] item in self?.press(at: item.index) }
         ))

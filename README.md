@@ -66,6 +66,16 @@ One package and one API shape: platform-only props go under `ios={{ }}` and `and
 
 ---
 
+## Web
+
+Connect your existing web UI through `PlatformComponentsProvider`: register typed
+web adapters once, then keep the same component imports, props and callbacks in
+shared screens. Override only the controls you need; the others keep the existing
+web fallbacks. iOS and Android continue using their native widgets.
+
+See the [web integration guide](https://jarx-concepts.github.io/react-native-platform-components/guides/web)
+for setup, adapter examples, field refs and current fallback limitations.
+
 ## Installation
 
 ```sh

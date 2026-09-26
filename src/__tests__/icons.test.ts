@@ -63,6 +63,7 @@ describe('resolveIcon', () => {
     ).toEqual({
       iconType: 'image',
       iconName: '',
+      iconRequest: '',
       iconUri: 'file:///icon.png',
       iconScale: 3,
       iconTinted: 'false',
@@ -72,4 +73,40 @@ describe('resolveIcon', () => {
     expect(resolveIcon({ type: 'image', source: 1 })).toEqual(NO_ICON);
     spy.mockRestore();
   });
+
+  it.each(['ios', 'android'] as const)(
+    'forwards request options on %s with stable header ordering',
+    (os) => {
+      const spy = jest.spyOn(Image, 'resolveAssetSource').mockReturnValue({
+        uri: 'https://example.test/icon',
+        scale: 1,
+      } as never);
+      try {
+        const source = {
+          uri: 'https://example.test/icon',
+          method: 'POST',
+          body: 'variant=small',
+          cache: 'reload' as const,
+          headers: { 'X-Variant': 'small', 'Authorization': 'Bearer sample' },
+        };
+        const first = resolveOn(os, { type: 'image', source });
+        const second = resolveOn(os, {
+          type: 'image',
+          source: {
+            ...source,
+            headers: { 'Authorization': 'Bearer sample', 'X-Variant': 'small' },
+          },
+        });
+        expect(first.iconRequest).toBe(second.iconRequest);
+        expect(JSON.parse(first.iconRequest)).toEqual({
+          headers: source.headers,
+          method: 'POST',
+          body: 'variant=small',
+          cache: 'reload',
+        });
+      } finally {
+        spy.mockRestore();
+      }
+    }
+  );
 });

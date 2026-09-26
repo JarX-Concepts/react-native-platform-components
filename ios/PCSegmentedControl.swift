@@ -9,6 +9,7 @@ struct PCSegmentedControlSegment {
     /// "", "sfSymbol", "drawable" (ignored on iOS) or "image"
     let iconType: String
     let iconName: String
+    let iconRequest: String
     let iconUri: String
     let iconScale: CGFloat
     let iconTinted: Bool
@@ -180,6 +181,7 @@ public final class PCSegmentedControlView: UIControl {
                 disabled: (dict["disabled"] as? String) == "disabled",
                 iconType: (dict["iconType"] as? String) ?? "",
                 iconName: (dict["iconName"] as? String) ?? "",
+                iconRequest: (dict["iconRequest"] as? String) ?? "",
                 iconUri: (dict["iconUri"] as? String) ?? "",
                 iconScale: scale > 0 ? scale : 1,
                 iconTinted: (dict["iconTinted"] as? String) != "false",
@@ -333,7 +335,7 @@ public final class PCSegmentedControlView: UIControl {
             return PCImageLoader.symbol(named: segment.iconName).map { decorate($0, for: segment) }
 
         case "image":
-            let cached = PCImageLoader.shared.image(uri: segment.iconUri, scale: segment.iconScale) { [weak self] image in
+            let cached = PCImageLoader.shared.image(uri: segment.iconUri, scale: segment.iconScale, request: segment.iconRequest) { [weak self] image in
                 guard let self, let image,
                       self.rebuildGeneration == generation,
                       let index = self.parsedSegments.firstIndex(where: { $0.value == segment.value }),

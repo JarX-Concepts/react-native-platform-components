@@ -25,6 +25,7 @@ export type ContextMenuItem = Readonly<{
   /** SF Symbol / asset name (iOS) or drawable resource name (Android) */
   iconName: string;
   /** Resolved image URI when iconType === 'image' */
+  iconRequest: string;
   iconUri: string;
   /** Resolved image scale when iconType === 'image' */
   iconScale: Double;

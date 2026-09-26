@@ -73,6 +73,35 @@ struct PCMenuItem {
     }
 }
 
+/// Images currently displayed by one view's menu. A menu rebuild must reuse its
+/// loaded images even when the request bypasses the shared cache or the response
+/// forbids caching. Removed icons release both their image and pending entry.
+/// Must be used from the main thread.
+final class PCMenuImageState {
+    private final class Entry {
+        var image: UIImage?
+    }
+
+    private var entries: [PCButtonSupport.Icon: Entry] = [:]
+
+    func retain(icons: [PCButtonSupport.Icon]) {
+        let current = Set(icons)
+        entries = entries.filter { current.contains($0.key) }
+    }
+
+    func image(for icon: PCButtonSupport.Icon, onImageLoaded: @escaping () -> Void) -> UIImage? {
+        if let entry = entries[icon] { return entry.image }
+        let entry = Entry()
+        entries[icon] = entry
+        entry.image = PCButtonSupport.image(for: icon) { [weak self, weak entry] image in
+            guard let self, let entry, self.entries[icon] === entry else { return }
+            entry.image = image
+            if image != nil { onImageLoaded() }
+        }
+        return entry.image
+    }
+}
+
 /// Builds UIKit menus from flattened menu items: actions, submenus, inline
 /// sections, subtitles, icons (SF Symbols, asset catalog names and React
 /// Native image sources), attributes and states. Shared by the components
@@ -91,20 +120,24 @@ enum PCMenuSupport {
     /// The root menu. Its identifier is UIKit's own, different for every
     /// build; `updatedVisibleMenu` finds it through the menu it replaces.
     ///
-    /// - `onImageLoaded`: called when an image icon that wasn't cached has
-    ///   loaded; build the menu again then (it is cached from now on).
+    /// - `imageState`: retained by the view across menu rebuilds, holding only
+    ///   the current menu's images.
+    /// - `onImageLoaded`: called when an image icon has loaded; build the menu
+    ///   again then using the same image state.
     /// - `handler`: called with the item when an action is performed.
     static func menu(
         title: String,
         options: UIMenu.Options = [],
         items: [PCMenuItem],
+        imageState: PCMenuImageState,
         onImageLoaded: @escaping () -> Void,
         handler: @escaping (PCMenuItem) -> Void
     ) -> UIMenu {
-        UIMenu(
+        imageState.retain(icons: items.map(\.icon))
+        return UIMenu(
             title: title,
             options: options,
-            children: elements(for: items, onImageLoaded: onImageLoaded, handler: handler)
+            children: elements(for: items, imageState: imageState, onImageLoaded: onImageLoaded, handler: handler)
         )
     }
 
@@ -112,6 +145,7 @@ enum PCMenuSupport {
     /// children are left out.
     static func elements(
         for items: [PCMenuItem],
+        imageState: PCMenuImageState,
         onImageLoaded: @escaping () -> Void,
         handler: @escaping (PCMenuItem) -> Void
     ) -> [UIMenuElement] {
@@ -126,7 +160,7 @@ enum PCMenuSupport {
                     let inline = item.kind == "section"
                     let menu = UIMenu(
                         title: item.title,
-                        image: inline ? nil : image(for: item, onImageLoaded: onImageLoaded),
+                        image: inline ? nil : image(for: item, imageState: imageState, onImageLoaded: onImageLoaded),
                         identifier: identifier(for: item),
                         options: inline ? .displayInline : [],
                         children: elements
@@ -134,7 +168,7 @@ enum PCMenuSupport {
                     if !item.subtitle.isEmpty { menu.subtitle = item.subtitle }
                     return menu
                 default:
-                    return action(for: item, onImageLoaded: onImageLoaded, handler: handler)
+                    return action(for: item, imageState: imageState, onImageLoaded: onImageLoaded, handler: handler)
                 }
             }
         }
@@ -144,6 +178,7 @@ enum PCMenuSupport {
 
     static func action(
         for item: PCMenuItem,
+        imageState: PCMenuImageState,
         onImageLoaded: @escaping () -> Void,
         handler: @escaping (PCMenuItem) -> Void
     ) -> UIAction {
@@ -157,7 +192,7 @@ enum PCMenuSupport {
         return UIAction(
             title: item.title,
             subtitle: item.subtitle.isEmpty ? nil : item.subtitle,
-            image: image(for: item, onImageLoaded: onImageLoaded),
+            image: image(for: item, imageState: imageState, onImageLoaded: onImageLoaded),
             attributes: attributes,
             state: state(item.state)
         ) { _ in
@@ -182,7 +217,7 @@ enum PCMenuSupport {
     /// The item's icon. SF Symbol and asset catalog names resolve right away;
     /// an image source that is still loading gives nil and calls
     /// `onImageLoaded` when it arrives.
-    static func image(for item: PCMenuItem, onImageLoaded: @escaping () -> Void) -> UIImage? {
+    static func image(for item: PCMenuItem, imageState: PCMenuImageState, onImageLoaded: @escaping () -> Void) -> UIImage? {
         let icon = item.icon
         var image: UIImage?
         switch icon.type {
@@ -191,9 +226,7 @@ enum PCMenuSupport {
             // rendering mode set in the catalog.
             image = PCImageLoader.symbol(named: icon.name)
         case "image":
-            image = PCButtonSupport.image(for: icon) { loaded in
-                if loaded != nil { onImageLoaded() }
-            }
+            image = imageState.image(for: icon, onImageLoaded: onImageLoaded)
         default:
             return nil
         }

@@ -19,11 +19,13 @@ export type TabBarItem = Readonly<{
   disabled: string; // 'enabled' | 'disabled'
   iconType: string; // '' | 'sfSymbol' | 'drawable' | 'image'
   iconName: string;
+  iconRequest: string;
   iconUri: string;
   iconScale: Double;
   iconTinted: string; // 'true' | 'false'
   selectedIconType: string;
   selectedIconName: string;
+  selectedIconRequest: string;
   selectedIconUri: string;
   selectedIconScale: Double;
   selectedIconTinted: string;

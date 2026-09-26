@@ -96,6 +96,7 @@ describe('flattenMenuActions', () => {
       kind: 'action',
       iconType: 'sfSymbol',
       iconName: 'doc.on.doc',
+      iconRequest: '',
       iconUri: '',
       iconScale: 1,
       iconTinted: 'true',
@@ -117,6 +118,7 @@ describe('flattenMenuActions', () => {
     expect(del).toMatchObject({
       destructive: 'true',
       iconType: 'image',
+      iconRequest: '',
       iconUri: 'https://x/trash.png',
       iconScale: 2,
     });

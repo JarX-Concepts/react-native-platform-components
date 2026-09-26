@@ -949,3 +949,10 @@ export function setNativeTheme(_theme: NativeTheme | null): void {}
 
 /** No-op under Jest. */
 export function useNativeTheme(_theme: NativeTheme | null | undefined): void {}
+
+export { PlatformComponentsProvider } from './PlatformComponentsProvider';
+export type {
+  PlatformComponentsProviderProps,
+  WebComponents,
+  WebComponentProps,
+} from './webComponents';

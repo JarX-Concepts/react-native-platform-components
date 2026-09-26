@@ -37,7 +37,7 @@ static inline bool ButtonsEqual(
     if (a[i].disabled != b[i].disabled) return false;
     if (a[i].iconType != b[i].iconType) return false;
     if (a[i].iconName != b[i].iconName) return false;
-    if (a[i].iconUri != b[i].iconUri) return false;
+    if (a[i].iconRequest != b[i].iconRequest || a[i].iconUri != b[i].iconUri) return false;
     if (a[i].iconScale != b[i].iconScale) return false;
     if (a[i].iconTinted != b[i].iconTinted) return false;
     if (a[i].accessibilityLabel != b[i].accessibilityLabel) return false;
@@ -204,6 +204,7 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
         @"disabled": NSStringFromStd(button.disabled, @"enabled"),
         @"iconType": NSStringFromStd(button.iconType, @""),
         @"iconName": NSStringFromStd(button.iconName, @""),
+        @"iconRequest": NSStringFromStd(button.iconRequest, @""),
         @"iconUri": NSStringFromStd(button.iconUri, @""),
         @"iconScale": @(button.iconScale),
         @"iconTinted": NSStringFromStd(button.iconTinted, @"true"),

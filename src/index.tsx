@@ -17,3 +17,4 @@ export * from './labelStyle';
 export * from './sharedTypes';
 export * from './haptics';
 export * from './NativeTheme';
+export * from './PlatformComponentsProvider';

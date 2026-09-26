@@ -151,8 +151,8 @@ public final class PCFloatingActionButtonView: UIView {
 
     /// Sets the icon from the flat spec fields. Images that are still loading
     /// apply once they arrive.
-    public func setIcon(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool) {
-        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
+    public func setIcon(type: String, name: String, request: String, uri: String, scale: CGFloat, tinted: Bool) {
+        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted, request: request)
         guard next != icon else { return }
         icon = next
         iconGeneration += 1

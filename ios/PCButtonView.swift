@@ -150,6 +150,7 @@ public final class PCButtonView: UIView {
     private var controlledSelected = false
 
     private var items: [PCMenuItem] = []
+    private let menuImages = PCMenuImageState()
     private var hasMenu: Bool { !items.isEmpty }
 
     /// "" or an effect name; see `setSymbolEffect`.
@@ -247,6 +248,7 @@ public final class PCButtonView: UIView {
     // MARK: - Menu
 
     private func updateMenu() {
+        menuImages.retain(icons: items.map(\.icon))
         button.setMenu(hasMenu ? buildMenu() : nil)
         updatePrimaryAction()
     }
@@ -255,6 +257,7 @@ public final class PCButtonView: UIView {
         PCMenuSupport.menu(
             title: "",
             items: items,
+            imageState: menuImages,
             onImageLoaded: { [weak self] in self?.updateMenu() },
             handler: { [weak self] item in
                 guard let self else { return }
@@ -316,8 +319,8 @@ public final class PCButtonView: UIView {
 
     /// Sets the icon from the flat spec fields. Images that are still loading
     /// apply once they arrive.
-    public func setIcon(type: String, name: String, uri: String, scale: CGFloat, tinted: Bool) {
-        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted)
+    public func setIcon(type: String, name: String, request: String, uri: String, scale: CGFloat, tinted: Bool) {
+        let next = PCButtonSupport.Icon(type: type, name: name, uri: uri, scale: scale, tinted: tinted, request: request)
         guard next != icon else { return }
         icon = next
         iconGeneration += 1

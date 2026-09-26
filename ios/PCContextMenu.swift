@@ -48,6 +48,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     // MARK: - Internal
 
     private var items: [PCMenuItem] = []
+    private let menuImages = PCMenuImageState()
     private var contextMenuInteraction: UIContextMenuInteraction?
     /// Whether the long-press menu is showing, so new actions update it in place.
     private var isMenuVisible = false
@@ -93,6 +94,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     }
 
     private func sync() {
+        menuImages.retain(icons: items.map(\.icon))
         // Re-setup trigger mode if needed
         updateTrigger()
         // Update tap menu content if in tap mode
@@ -313,6 +315,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         PCMenuSupport.menu(
             title: menuTitle ?? "",
             items: items,
+            imageState: menuImages,
             onImageLoaded: { [weak self] in self?.sync() },
             handler: { [weak self] item in
                 logger.debug("UIAction selected: id=\(item.id), title=\(item.title)")

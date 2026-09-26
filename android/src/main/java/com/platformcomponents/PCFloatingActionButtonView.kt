@@ -378,7 +378,7 @@ class PCFloatingActionButtonView(context: Context) :
         if (!uri.contains(':')) {
           onLoaded(ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri))
         } else {
-          PCImageLoader.load(context, uri, icon.scale) { bitmap ->
+          PCImageLoader.load(context, uri, icon.scale, icon.request) { bitmap ->
             onLoaded(bitmap?.let { BitmapDrawable(resources, it) })
           }
         }

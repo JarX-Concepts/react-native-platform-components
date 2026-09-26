@@ -7,6 +7,7 @@ import NativeSelectionMenu, {
   type SelectionMenuSelectEvent,
 } from './SelectionMenuNativeComponent';
 import { resolveIcon, type PlatformIcon } from './icons';
+import { warnSelectionIdentifiers } from './selectionIdentifiers';
 
 import type { Haptics } from './haptics';
 import type { AndroidMaterialMode, Presentation } from './sharedTypes';
@@ -20,6 +21,8 @@ export interface SelectionMenuOption {
   label: string;
   /** Unique, non-empty payload returned by `onSelect` and matched by `selected`. */
   data: string;
+  /** Keeps the option visible but prevents the user from choosing it. */
+  disabled?: boolean;
   /**
    * Secondary text under the label.
    * - iOS: `UIAction.subtitle` in the system menu.
@@ -108,9 +111,14 @@ export interface SelectionMenuProps extends ViewProps {
 function normalizeSelectionMenuOptions(
   options: readonly SelectionMenuOption[]
 ): SelectionMenuNativeOption[] {
+  warnSelectionIdentifiers(
+    'SelectionMenu',
+    options.map((option) => option.data)
+  );
   return options.map((option) => ({
     label: option.label,
     data: option.data,
+    disabled: option.disabled ? 'true' : 'false',
     subtitle: option.subtitle ?? '',
     ...resolveIcon(option.icon),
   }));
@@ -164,9 +172,12 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const handleSelect = useCallback(
     (e: { nativeEvent: SelectionMenuSelectEvent }) => {
       const { index, label, data } = e.nativeEvent;
+      const option = options[index];
+      if (disabled || !option || option.disabled || option.data !== data)
+        return;
       onSelect?.(data, label, index);
     },
-    [onSelect]
+    [disabled, onSelect, options]
   );
 
   const handleRequestClose = useCallback(() => {

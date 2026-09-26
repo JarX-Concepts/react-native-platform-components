@@ -28,9 +28,11 @@
     "@react-native/babel-preset": "0.86.3",
     "@react-native/metro-config": "0.86.3",
     "@react-native/typescript-config": "0.86.3",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "~19.2.18",
     "detox": "^20.51.4",
     "jest": "^30.5.1",
+    "pngjs": "^7.0.0",
     "react-native-builder-bob": "^0.43.1",
     "react-native-monorepo-config": "^0.4.0"
   },

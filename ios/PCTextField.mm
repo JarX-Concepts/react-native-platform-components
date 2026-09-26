@@ -31,12 +31,12 @@ static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback
 }
 
 static inline bool IconEqual(const PCTextFieldLeadingIconStruct &a, const PCTextFieldLeadingIconStruct &b) {
-  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconUri == b.iconUri &&
+  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconRequest == b.iconRequest && a.iconUri == b.iconUri &&
          a.iconScale == b.iconScale && a.iconTinted == b.iconTinted;
 }
 
 static inline bool IconEqual(const PCTextFieldTrailingIconStruct &a, const PCTextFieldTrailingIconStruct &b) {
-  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconUri == b.iconUri &&
+  return a.iconType == b.iconType && a.iconName == b.iconName && a.iconRequest == b.iconRequest && a.iconUri == b.iconUri &&
          a.iconScale == b.iconScale && a.iconTinted == b.iconTinted;
 }
 
@@ -49,7 +49,7 @@ static inline bool ToolbarItemsEqual(
     const auto &y = b[i];
     if (x.kind != y.kind || x.itemId != y.itemId || x.title != y.title ||
         x.systemItem != y.systemItem || x.iconType != y.iconType || x.iconName != y.iconName ||
-        x.iconUri != y.iconUri || x.iconScale != y.iconScale || x.iconTinted != y.iconTinted ||
+        x.iconRequest != y.iconRequest || x.iconUri != y.iconUri || x.iconScale != y.iconScale || x.iconTinted != y.iconTinted ||
         x.prominent != y.prominent || x.accessibilityLabel != y.accessibilityLabel ||
         x.testID != y.testID) {
       return false;
@@ -257,6 +257,7 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
     const auto &icon = newProps.leadingIcon;
     [_view setLeadingIconWithType:NSStringFromStd(icon.iconType, @"")
                              name:NSStringFromStd(icon.iconName, @"")
+                              request:NSStringFromStd(icon.iconRequest, @"")
                               uri:NSStringFromStd(icon.iconUri, @"")
                             scale:icon.iconScale
                            tinted:(icon.iconTinted != "false")];
@@ -266,6 +267,7 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
     const auto &icon = newProps.trailingIcon;
     [_view setTrailingIconWithType:NSStringFromStd(icon.iconType, @"")
                               name:NSStringFromStd(icon.iconName, @"")
+                               request:NSStringFromStd(icon.iconRequest, @"")
                                uri:NSStringFromStd(icon.iconUri, @"")
                              scale:icon.iconScale
                             tinted:(icon.iconTinted != "false")];
@@ -326,6 +328,7 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
         @"systemItem" : NSStringFromStd(item.systemItem, @""),
         @"iconType" : NSStringFromStd(item.iconType, @""),
         @"iconName" : NSStringFromStd(item.iconName, @""),
+        @"iconRequest" : NSStringFromStd(item.iconRequest, @""),
         @"iconUri" : NSStringFromStd(item.iconUri, @""),
         @"iconScale" : @(item.iconScale),
         @"iconTinted" : NSStringFromStd(item.iconTinted, @"true"),

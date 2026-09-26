@@ -87,7 +87,7 @@ Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurr
 
 ### Adding a component
 
-1. Codegen spec in `src/<Name>NativeComponent.ts`, public wrapper in `src/<Name>.tsx`, export from `src/index.tsx`, web implementation in `src/web/<Name>.tsx`, and export from `src/index.web.tsx`. Document any web limitations.
+1. Codegen spec in `src/<Name>NativeComponent.ts`, public wrapper in `src/<Name>.tsx`, and export from `src/index.tsx`. Add its web fallback to `src/web/<Name>.tsx`, its public props to `WebComponentProps` in `src/webComponents.ts`, and its typed wrapper to `src/web/components.tsx` and `src/index.web.tsx`. Document web limitations and preserve consumer overrides (see the [web guide](./docs/docs/guides/web.md)).
 2. iOS: `ios/PC<Name>.swift` plus the `.h`/`.mm` Fabric view, and an entry in `codegenConfig.ios.componentProvider` in `package.json`.
 3. Android: `PC<Name>View.kt` and `PC<Name>ViewManager.kt`, registered in `PlatformComponentsPackage.kt`. Build Material widgets from `PCThemeSupport.materialContext(...)`.
 4. Demo in `example/src/<Name>Demo.tsx` and `example-expo/src/App.tsx`, a Detox flow in `example/e2e/component.test.ts`, unit tests for the native wrapper and web implementation, component documentation in `docs/docs/components/`, and visuals.
@@ -127,8 +127,11 @@ DETOX_CONFIGURATION=android.emu.release yarn jest:e2e -t "Segmented Control"
 Use `ios.sim.release` for iOS. Recordings land in `example/artifacts/<configuration>.<timestamp>/`.
 
 `example/e2e/native-regressions.test.ts` covers controlled selections, date
-dialog lifecycle and TextField accessory/focus behavior. The **Native
-Regressions** demo exposes the same cases for manual inspection.
+dialog lifecycle, disabled menu options and TextField accessory/focus behavior.
+Image cases start a local HTTP server on port 18763, verify the native requests
+and assert rendered image colors, including cache isolation and iOS menu reloads.
+The **Native Regressions** demo exposes the same cases for manual inspection;
+network image cases require that test server.
 
 Android also has native widget tests for dialog ownership, filtered text,
 icon colors, placeholders and touch events. With an emulator running:
@@ -142,6 +145,12 @@ cd example/android
 Run `yarn tsc -p example/tsconfig.json` from the repository root to check the
 example and Detox tests. Root `yarn typecheck` checks the library. Build the
 documentation with `yarn docs build` to catch broken links and invalid pages.
+
+After `yarn prepare`, run `node scripts/check-web-consumer-types.js` to validate
+the published browser declarations under bundler and NodeNext resolution. This
+checks accepted and rejected props, adapters and field refs through the package
+exports, independently of the source aliases used by the examples. CI runs this
+check after building the package.
 
 Jest's React Native mocks cannot verify native rendering or browser semantics.
 For UI changes, inspect the affected native demo and the real web controls in

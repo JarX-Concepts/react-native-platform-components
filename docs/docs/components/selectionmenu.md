@@ -38,6 +38,7 @@ Native selection menu with **modal** and **embedded** modes.
 | ---------- | ------------------------ | ----------------------------------------------------------------------------------- |
 | `label`    | `string`                 | Display text                                                                        |
 | `data`     | `string`                 | Payload returned by `onSelect`; what `selected` matches                             |
+| `disabled` | `boolean`                | Keeps the option visible but prevents user selection (default: `false`)             |
 | `subtitle` | `string`                 | Secondary text under the label. See [Icons and subtitles](#icons-and-subtitles)     |
 | `icon`     | `string \| PlatformIcon` | Icon next to the label, the same shapes as [Button icons](/components/button#icons) |
 
@@ -89,7 +90,27 @@ Selection stays controlled: the mark follows the `selected` prop, not the last t
 
 Use a unique, non-empty `data` string for each option. Native controls reserve
 the empty string for no selection; use `selected={null}` to clear the choice.
-Individual options cannot currently be disabled.
+Development builds warn about empty or duplicate identifiers without logging
+their contents.
+
+Set `disabled: true` on an option to show an unavailable choice. It remains in
+the list and keeps its original callback index; the Android searchable dropdown
+also preserves its disabled state while filtering. The parent can still select
+a disabled option programmatically through `selected`. Reopen an already open
+native menu after changing its options to refresh the visible menu snapshot.
+
+```tsx
+<SelectionMenu
+  presentation="embedded"
+  selected={plan}
+  onSelect={setPlan}
+  options={[
+    { label: 'Basic', data: 'basic' },
+    { label: 'Team — currently unavailable', data: 'team', disabled: true },
+    { label: 'Enterprise', data: 'enterprise' },
+  ]}
+/>
+```
 
 ### Icons and subtitles
 

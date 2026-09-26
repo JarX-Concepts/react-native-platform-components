@@ -75,6 +75,7 @@ class PCSegmentedControlViewManager :
             iconType = m.stringOr("iconType", ""),
             iconName = m.stringOr("iconName", ""),
             iconUri = m.stringOr("iconUri", ""),
+            iconRequest = m.stringOr("iconRequest", ""),
             iconScale = if (scale > 0) scale.toFloat() else 1f,
             iconTinted = m.stringOr("iconTinted", "true") != "false",
             badge = m.stringOr("badge", ""),

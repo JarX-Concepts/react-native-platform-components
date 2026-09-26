@@ -21,6 +21,7 @@ import {
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
+import { warnSelectionIdentifiers } from './selectionIdentifiers';
 
 // Android: Minimum height to ensure visibility.
 // Fabric's shadow node measurement isn't being called on initial render,
@@ -237,6 +238,10 @@ export function SegmentedControl(
 
   // Normalize segments for native
   const nativeSegments = useMemo((): NativeSegment[] => {
+    warnSelectionIdentifiers(
+      'SegmentedControl',
+      segments.map((segment) => segment.value)
+    );
     return segments.map((seg) => ({
       label: seg.label,
       value: seg.value,

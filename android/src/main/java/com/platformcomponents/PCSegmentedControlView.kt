@@ -39,7 +39,8 @@ class PCSegmentedControlView(context: Context) :
     val iconTinted: Boolean,
     val badge: String,
     val accessibilityLabel: String,
-    val testID: String = ""
+    val testID: String = "",
+    val iconRequest: String = ""
   ) {
     val hasIcon: Boolean get() = iconType == "drawable" || iconType == "image"
 
@@ -351,7 +352,7 @@ class PCSegmentedControlView(context: Context) :
         if (isResourceName) {
           button.icon = ResourceDrawableIdHelper.instance.getResourceDrawable(context, uri)
         } else {
-          PCImageLoader.load(context, uri, segment.iconScale) { bitmap ->
+          PCImageLoader.load(context, uri, segment.iconScale, segment.iconRequest) { bitmap ->
             if (bitmap == null || generation != rebuildGeneration) return@load
             button.icon = BitmapDrawable(resources, bitmap)
             requestLayout()
