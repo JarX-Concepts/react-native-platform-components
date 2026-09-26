@@ -497,14 +497,23 @@ class PCButtonGroupView(context: Context) :
       .sorted()
       .map { items[it].value }
     onSelectionChange?.invoke(values)
+    // Keep the prop authoritative even when the parent declines the edit and
+    // React therefore has no changed selection prop to send back.
+    updateSelection()
   }
 
   private fun updateSelection() {
     val g = group as? MaterialButtonToggleGroup ?: return
     suppressCallbacks = true
-    for ((id, index) in buttonIdToIndex) {
-      val checked = selectedValues.contains(items[index].value)
-      if (checked) g.check(id) else g.uncheck(id)
+    val selectedIds = buttonIdToIndex.filterValues { selectedValues.contains(items[it].value) }.keys
+    if (selectedIds.isEmpty()) {
+      // clearChecked also permits a controlled empty selection when user
+      // deselection is disabled by selectionRequired.
+      g.clearChecked()
+    } else {
+      // Check first so selectionRequired does not retain the previous last item.
+      selectedIds.forEach { g.check(it) }
+      for (id in buttonIdToIndex.keys) if (id !in selectedIds) g.uncheck(id)
     }
     suppressCallbacks = false
   }

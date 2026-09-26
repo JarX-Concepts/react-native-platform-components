@@ -411,7 +411,8 @@ public final class PCButtonGroupView: UIView {
         onPress?(index, item.value)
 
         guard selection != "none", let next = nextSelection(tapping: item.value) else { return }
-        selectedValues = next
+        // The parent owns selection. A rejected change must leave the
+        // existing buttons (and overflow checkmarks) selected.
         onSelectionChange?(next)
     }
 

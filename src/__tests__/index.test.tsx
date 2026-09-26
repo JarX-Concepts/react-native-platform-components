@@ -296,6 +296,12 @@ describe('SelectionMenu', () => {
 });
 
 describe('LiquidGlass', () => {
+  const originalOS = Platform.OS;
+
+  afterEach(() => {
+    Platform.OS = originalOS;
+  });
+
   beforeEach(() => {
     NativeLiquidGlass.mockClear();
   });
@@ -328,11 +334,7 @@ describe('LiquidGlass', () => {
   });
 
   it('normalizes ios props with boolean to string conversion', () => {
-    // Mock Platform to be iOS
-    jest.doMock('react-native', () => ({
-      ...jest.requireActual('react-native'),
-      Platform: { OS: 'ios' },
-    }));
+    Platform.OS = 'ios';
 
     let tree: ReturnType<typeof renderer.create>;
     act(() => {
@@ -351,14 +353,20 @@ describe('LiquidGlass', () => {
 
     const props = NativeLiquidGlass.mock.calls[0][0];
     expect(props.cornerRadius).toBe(30);
-    // iOS props are normalized in the component (booleans to strings)
-    // On non-iOS platform in test, ios prop may be undefined
+    expect(props.ios).toEqual({
+      effect: 'clear',
+      interactive: 'true',
+      tintColor: '#FF0000',
+      colorScheme: 'dark',
+    });
+    expect(props.android).toBeUndefined();
     act(() => {
       tree.unmount();
     });
   });
 
   it('passes android fallback props', () => {
+    Platform.OS = 'android';
     let tree: ReturnType<typeof renderer.create>;
     act(() => {
       tree = renderer.create(
@@ -371,7 +379,8 @@ describe('LiquidGlass', () => {
 
     const props = NativeLiquidGlass.mock.calls[0][0];
     expect(props.cornerRadius).toBe(15);
-    // Android props are normalized in the component
+    expect(props.android).toEqual({ fallbackBackgroundColor: '#FFFFFF80' });
+    expect(props.ios).toBeUndefined();
     act(() => {
       tree.unmount();
     });

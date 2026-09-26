@@ -7,6 +7,7 @@ import { Dialog } from './Dialog';
 import {
   formatInputValue,
   inputTypeForMode,
+  isWithinInputBounds,
   parseInputValue,
 } from './dateInput';
 import { BUTTON_BASE, eventValue, usePrimaryColor } from './shared';
@@ -52,8 +53,23 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
 
   const primary = usePrimaryColor();
   const type = inputTypeForMode(mode);
-  const step = ios?.minuteInterval ? ios.minuteInterval * 60 : undefined;
-  const confirm = (next: Date, confirmed: boolean) =>
+  const label =
+    mode === 'countDownTimer'
+      ? 'Duration'
+      : {
+          'date': 'Date',
+          'time': 'Time',
+          'datetime-local': 'Date and time',
+          'month': 'Month',
+        }[type];
+  const step =
+    (type === 'time' || type === 'datetime-local') && ios?.minuteInterval
+      ? ios.minuteInterval * 60
+      : undefined;
+  const isValid = (next: Date | null) =>
+    isWithinInputBounds(next, type, minDate, maxDate);
+  const confirm = (next: Date, confirmed: boolean) => {
+    if (!isValid(next)) return;
     onConfirm?.(
       next,
       confirmed,
@@ -61,14 +77,16 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
         ? next.getHours() * 3600 + next.getMinutes() * 60
         : 0
     );
+  };
 
   const renderInput = (
     value: Date | null,
-    onValue: (next: Date) => void,
+    onValue: (next: Date | null) => void,
     autoFocus: boolean
   ) => (
     <input
       type={type}
+      aria-label={label}
       lang={locale}
       value={formatInputValue(value, type)}
       min={formatInputValue(minDate, type) || undefined}
@@ -77,7 +95,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
       autoFocus={autoFocus}
       onChange={(event) => {
         const next = parseInputValue(eventValue(event), type, value);
-        if (next) onValue(next);
+        onValue(next);
       }}
       style={{ ...INPUT_STYLE, accentColor: primary }}
     />
@@ -86,7 +104,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
   if (presentation === 'embedded') {
     return (
       <View testID={testID} style={style}>
-        {renderInput(date, (next) => confirm(next, true), false)}
+        {renderInput(date, (next) => next && confirm(next, true), false)}
       </View>
     );
   }
@@ -96,10 +114,12 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
       {visible ? (
         <ModalPicker
           date={date}
+          label={label}
           primary={primary}
           renderInput={renderInput}
           onConfirm={confirm}
           onClosed={onClosed}
+          isValid={isValid}
         />
       ) : null}
     </View>
@@ -108,22 +128,35 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
 
 function ModalPicker({
   date,
+  label,
   primary,
   renderInput,
   onConfirm,
   onClosed,
+  isValid,
 }: {
   date: Date | null;
+  label: string;
   primary: string;
   renderInput: (
     value: Date | null,
-    onValue: (next: Date) => void,
+    onValue: (next: Date | null) => void,
     autoFocus: boolean
   ) => React.ReactElement;
   onConfirm: (next: Date, confirmed: boolean) => void;
   onClosed: DatePickerProps['onClosed'];
+  isValid: (next: Date | null) => boolean;
 }): React.ReactElement {
   const [draft, setDraft] = useState(date);
+  const dateMs = date?.getTime() ?? null;
+  const [previousDateMs, setPreviousDateMs] = useState(dateMs);
+  // Honor external updates without remounting the dialog or discarding edits
+  // when the parent creates another Date representing the same instant.
+  if (!Object.is(dateMs, previousDateMs)) {
+    setPreviousDateMs(dateMs);
+    setDraft(date);
+  }
+  const valid = isValid(draft);
   const dismiss = () => onClosed?.();
   const textButton = {
     ...BUTTON_BASE,
@@ -137,12 +170,12 @@ function ModalPicker({
   };
 
   return (
-    <Dialog onDismiss={dismiss}>
+    <Dialog label={label} onDismiss={dismiss}>
       {renderInput(
         draft,
         (next) => {
           setDraft(next);
-          onConfirm(next, false);
+          if (next) onConfirm(next, false);
         },
         true
       )}
@@ -159,9 +192,9 @@ function ModalPicker({
         </button>
         <button
           type="button"
-          disabled={!draft}
-          onClick={() => draft && onConfirm(draft, true)}
-          style={{ ...textButton, opacity: draft ? 1 : 0.38 }}
+          disabled={!valid}
+          onClick={() => valid && draft && onConfirm(draft, true)}
+          style={{ ...textButton, opacity: valid ? 1 : 0.38 }}
         >
           Done
         </button>

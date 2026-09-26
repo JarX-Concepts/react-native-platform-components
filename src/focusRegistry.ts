@@ -1,3 +1,4 @@
+/// <reference path="./reactNativeInternals.d.ts" />
 // focusRegistry.ts
 //
 // TextField's link to React Native's focused-input bookkeeping. The core

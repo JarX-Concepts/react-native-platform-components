@@ -19,7 +19,8 @@ import {
  *   Android only; ignored on iOS.
  * - `{ type: 'image' }`: an image asset (`require('./icon.png')`) or a
  *   `{ uri }` source. Works on both platforms. Images are drawn as tinted
- *   templates unless `tinted` is `false`.
+ *   templates unless `tinted` is `false`. Native loaders use `uri` and `scale`;
+ *   request headers, HTTP methods and other fetch options are not forwarded.
  */
 export type PlatformIconSource =
   | string

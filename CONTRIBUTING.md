@@ -55,22 +55,22 @@ Re-run `prebuild` after changing the config plugin or `example-expo/app.json`.
 
 ## Project layout
 
-| Path                                                                       | What lives there                                                                                                                            |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/<Component>.tsx`                                                      | Public TypeScript component and its props                                                                                                   |
-| `src/<Component>NativeComponent.ts`                                        | Codegen spec for the Fabric view                                                                                                            |
-| `src/index.tsx`, `src/index.web.tsx`                                       | Public exports and the render-nothing web stubs                                                                                             |
-| `ios/PC<Component>.swift`                                                  | iOS implementation (UIKit)                                                                                                                  |
-| `ios/PC<Component>.h`, `ios/PC<Component>.mm`                              | Fabric component view bridging into the Swift implementation                                                                                |
-| `android/src/main/java/com/platformcomponents/PC<Component>View.kt`        | Android implementation                                                                                                                      |
-| `android/src/main/java/com/platformcomponents/PC<Component>ViewManager.kt` | Android view manager (props, events, Fabric state)                                                                                          |
-| `android/src/main/java/com/platformcomponents/PCThemeSupport.kt`           | Theme guards: build Material widgets through `PCThemeSupport.materialContext(...)` so an AppCompat app theme falls back instead of crashing |
-| `android/src/main/res/values/styles.xml`                                   | Bundled Material 3 dialog themes used by that fallback                                                                                      |
-| `shared/`                                                                  | Custom C++ shadow nodes and component descriptors for components that measure themselves natively                                           |
-| `plugin/src/index.ts`                                                      | Expo config plugin (compiled to `plugin/build` by `yarn build:plugin`)                                                                      |
-| `docs/docs/`                                                               | Documentation site content (Docusaurus). The README stays short and links here; document props and behavior on the component pages          |
-| `example/e2e/`                                                             | Detox flows for all components                                                                                                              |
-| `scripts/generate-readme-gifs.sh`                                          | Regenerates the README GIFs from Detox recordings                                                                                           |
+| Path                                                                       | What lives there                                                                                                                              |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/<Component>.tsx`                                                      | Public TypeScript component and its props                                                                                                     |
+| `src/<Component>NativeComponent.ts`                                        | Codegen spec for the Fabric view                                                                                                              |
+| `src/index.tsx`, `src/index.web.tsx`                                       | Public exports for native and web                                                                                                             |
+| `ios/PC<Component>.swift`                                                  | iOS implementation (UIKit)                                                                                                                    |
+| `ios/PC<Component>.h`, `ios/PC<Component>.mm`                              | Fabric component view bridging into the Swift implementation                                                                                  |
+| `android/src/main/java/com/platformcomponents/PC<Component>View.kt`        | Android implementation                                                                                                                        |
+| `android/src/main/java/com/platformcomponents/PC<Component>ViewManager.kt` | Android view manager (props, events, Fabric state)                                                                                            |
+| `android/src/main/java/com/platformcomponents/PCThemeSupport.kt`           | Theme guards: build Material widgets through `PCThemeSupport.materialContext(...)` so an AppCompat app theme falls back instead of crashing   |
+| `android/src/main/res/values/styles.xml`                                   | Bundled Material 3 dialog themes used by that fallback                                                                                        |
+| `shared/`                                                                  | Custom C++ shadow nodes and component descriptors for components that measure themselves natively                                             |
+| `plugin/src/index.ts`                                                      | Expo config plugin (compiled to `plugin/build` by `yarn build:plugin`)                                                                        |
+| `docs/docs/`                                                               | Documentation site content (Docusaurus). The README stays short and links here; document props and behavior on the component pages            |
+| `example/e2e/`                                                             | Detox flows for all components                                                                                                                |
+| `scripts/generate-readme-gifs.sh`                                          | Regenerates the README GIFs from Detox recordings                                                                                             |
 | `scripts/visuals/`                                                         | Builds the README hero grid, social card and showreel from those recordings (ffmpeg + headless Chrome); `yarn generate:visuals` runs it alone |
 
 ### Editing native code
@@ -87,25 +87,25 @@ Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurr
 
 ### Adding a component
 
-1. Codegen spec in `src/<Name>NativeComponent.ts`, public wrapper in `src/<Name>.tsx`, export from `src/index.tsx`, stub in `src/index.web.tsx`.
+1. Codegen spec in `src/<Name>NativeComponent.ts`, public wrapper in `src/<Name>.tsx`, export from `src/index.tsx`, web implementation in `src/web/<Name>.tsx`, and export from `src/index.web.tsx`. Document any web limitations.
 2. iOS: `ios/PC<Name>.swift` plus the `.h`/`.mm` Fabric view, and an entry in `codegenConfig.ios.componentProvider` in `package.json`.
 3. Android: `PC<Name>View.kt` and `PC<Name>ViewManager.kt`, registered in `PlatformComponentsPackage.kt`. Build Material widgets from `PCThemeSupport.materialContext(...)`.
-4. Demo in `example/src/<Name>Demo.tsx` and `example-expo/src/App.tsx`, a Detox flow in `example/e2e/component.test.ts`, a README section, and GIFs.
+4. Demo in `example/src/<Name>Demo.tsx` and `example-expo/src/App.tsx`, a Detox flow in `example/e2e/component.test.ts`, unit tests for the native wrapper and web implementation, component documentation in `docs/docs/components/`, and visuals.
 
 ## Scripts
 
-| Command                   | Description                                                              |
-| ------------------------- | ------------------------------------------------------------------------ |
-| `yarn`                    | Install dependencies                                                     |
-| `yarn typecheck`          | Type-check with TypeScript                                               |
-| `yarn lint`               | Lint with ESLint (`yarn lint --fix` to auto-fix)                         |
-| `yarn test`               | Unit tests (Jest), including the config plugin tests                     |
-| `yarn build:plugin`       | Compile the Expo config plugin                                           |
-| `yarn example <cmd>`      | Run a script in the bare example app                                     |
-| `yarn example-expo <cmd>` | Run a script in the Expo example app                                     |
-| `yarn generate:gifs`      | Regenerate the README GIFs (runs the full Detox suite on both platforms) |
+| Command                   | Description                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| `yarn`                    | Install dependencies                                                         |
+| `yarn typecheck`          | Type-check with TypeScript                                                   |
+| `yarn lint`               | Lint with ESLint (`yarn lint --fix` to auto-fix)                             |
+| `yarn test`               | Unit tests (Jest), including the config plugin tests                         |
+| `yarn build:plugin`       | Compile the Expo config plugin                                               |
+| `yarn example <cmd>`      | Run a script in the bare example app                                         |
+| `yarn example-expo <cmd>` | Run a script in the Expo example app                                         |
+| `yarn generate:gifs`      | Regenerate the README GIFs (runs the full Detox suite on both platforms)     |
 | `yarn generate:visuals`   | Rebuild the README hero, social card and showreel from the newest recordings |
-| `yarn clean`              | Clean build artifacts                                                    |
+| `yarn clean`              | Clean build artifacts                                                        |
 
 ### E2E testing (Detox)
 
@@ -120,11 +120,32 @@ To run a single flow, build once and call Jest directly (Yarn 4 rejects the argu
 
 ```sh
 cd example
-npx detox build --configuration android.emu.release
-DETOX_CONFIGURATION=android.emu.release npx jest --config e2e/jest.config.js -t "Segmented Control"
+yarn detox build --configuration android.emu.release
+DETOX_CONFIGURATION=android.emu.release yarn jest:e2e -t "Segmented Control"
 ```
 
 Use `ios.sim.release` for iOS. Recordings land in `example/artifacts/<configuration>.<timestamp>/`.
+
+`example/e2e/native-regressions.test.ts` covers controlled selections, date
+dialog lifecycle and TextField accessory/focus behavior. The **Native
+Regressions** demo exposes the same cases for manual inspection.
+
+Android also has native widget tests for dialog ownership, filtered text,
+icon colors, placeholders and touch events. With an emulator running:
+
+```sh
+cd example/android
+./gradlew :app:connectedReleaseAndroidTest -DtestBuildType=release \
+  -Pandroid.testInstrumentationRunnerArguments.class=platformcomponents.example.NativeRegressionTest
+```
+
+Run `yarn tsc -p example/tsconfig.json` from the repository root to check the
+example and Detox tests. Root `yarn typecheck` checks the library. Build the
+documentation with `yarn docs build` to catch broken links and invalid pages.
+
+Jest's React Native mocks cannot verify native rendering or browser semantics.
+For UI changes, inspect the affected native demo and the real web controls in
+a browser, including keyboard operation and narrow layouts.
 
 ## Commit message convention
 

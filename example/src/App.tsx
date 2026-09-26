@@ -19,6 +19,7 @@ import { FloatingActionButtonDemo } from './FloatingActionButtonDemo';
 import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
+import { NativeRegressionDemo } from './NativeRegressionDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
 import { TabBarDemo } from './TabBarDemo';
@@ -43,6 +44,7 @@ type DemoKey =
   | 'floatingToolbar'
   | 'textField'
   | 'liquidGlass'
+  | 'nativeRegressions'
   | 'theme';
 
 const COMPONENT_DEMOS = [
@@ -75,6 +77,7 @@ export default function App(): React.ReactElement {
       ...COMPONENT_DEMOS,
       ...(Platform.OS === 'ios' ? IOS_ONLY_DEMOS : []),
       THEME_DEMO,
+      { label: 'Native Regressions', data: 'nativeRegressions' },
     ],
     []
   );
@@ -142,6 +145,7 @@ export default function App(): React.ReactElement {
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
+      {demo === 'nativeRegressions' && <NativeRegressionDemo />}
       {demo === 'theme' && (
         <ThemeDemo
           brand={brand}

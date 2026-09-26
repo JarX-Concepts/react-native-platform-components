@@ -1,5 +1,5 @@
 ---
-title: "Web"
+title: 'Web'
 description: "How the components render on the web with react-native-web: the browser's own controls, the same props, and how to swap in your own web components."
 ---
 
@@ -7,30 +7,36 @@ On the web the package resolves to a separate entry point for [react-native-web]
 
 The web entry point takes the same props as iOS and Android and uses the same types, so shared screens need no `Platform.OS` checks. Where the browser has a control of its own, the component renders that control, which is the web's own platform widget:
 
-| Component          | Web rendering                                                                                                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `TextField`        | react-native-web's `TextInput` (an `<input>` or `<textarea>`), with the label, prefix, suffix, clear button, password toggle, supporting and error text, and counter around it |
-| `DatePicker`       | `<input type="date">`, `"time"` or `"datetime-local"`. `embedded` renders it in place; `modal` opens it in a `<dialog>` with Cancel and Done                                   |
-| `SelectionMenu`    | `embedded` renders a `<select>`; `modal` opens the options in a `<dialog>`                                                                                                     |
-| `Button`           | A `<button>` in the Material 3 variants and sizes. A toggle (`selected`) sets `aria-pressed`. There is no web menu: a button with a `menu` calls `onPress` and logs a warning once |
-| `FloatingActionButton` | A `<button>` styled after the Material 3 FAB, with the label while extended. `scrollViewNativeID` is ignored |
-| `ButtonGroup`      | A row of `<button>`s, with toggle semantics (`aria-pressed`, or radios for single selection) when `selection` is set                                                           |
-| `SplitButton`      | The main button alone: there is no web menu (a warning is logged once)                                                                                                         |
-| `SegmentedControl` | A radio group of `<button>`s in a track, like the iOS control                                                                                                                  |
-| `TabBar`           | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                   |
-| `NavigationRail`   | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above |
-| `FloatingToolbar`  | A pill-shaped surface that lays out its children                                                                                                                               |
-| `LiquidGlass`      | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                               |
-| `ContextMenu`      | Its children, without a menu (see below)                                                                                                                                       |
+| Component              | Web rendering                                                                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TextField`            | react-native-web's `TextInput` (an `<input>` or `<textarea>`), with the label, prefix, suffix, clear button, password toggle, supporting and error text, and counter around it     |
+| `DatePicker`           | `<input type="date">`, `"time"`, `"datetime-local"` or `"month"`. `embedded` renders it in place; `modal` opens it in a `<dialog>` with Cancel and Done                            |
+| `DateRangePicker`      | A `<dialog>` with start and end date inputs; Done confirms a complete range within the configured bounds                                                                           |
+| `SelectionMenu`        | `embedded` renders a `<select>`; `modal` opens the options in a `<dialog>`                                                                                                         |
+| `Button`               | A `<button>` in the Material 3 variants and sizes. A toggle (`selected`) sets `aria-pressed`. There is no web menu: a button with a `menu` calls `onPress` and logs a warning once |
+| `FloatingActionButton` | A `<button>` styled after the Material 3 FAB, with the label while extended. `scrollViewNativeID` is ignored                                                                       |
+| `ButtonGroup`          | A row of `<button>`s, with toggle semantics (`aria-pressed`, or radios for single selection) when `selection` is set                                                               |
+| `SplitButton`          | The main button alone: there is no web menu (a warning is logged once)                                                                                                             |
+| `SegmentedControl`     | A radio group of `<button>`s in a track, like the iOS control                                                                                                                      |
+| `TabBar`               | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                       |
+| `NavigationRail`       | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above                                                                  |
+| `FloatingToolbar`      | A pill-shaped surface that lays out its children                                                                                                                                   |
+| `LiquidGlass`          | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                                   |
+| `ContextMenu`          | Its children, without a menu (see below)                                                                                                                                           |
 
 ## Behavior
 
 Events and controlled props work the way they do on native:
 
-- **`DatePicker`**: `embedded` reports every change with `confirmed: true`. `modal` works like the iOS popover: changes report `confirmed: false`, **Done** reports `confirmed: true`, and **Cancel**, Escape or a click outside the dialog call `onClosed`. Close the dialog by setting `visible` to `false`. `minDate`, `maxDate` and `ios.minuteInterval` apply to the input. Dates are in the browser's local time zone; `timeZoneName` is ignored.
-- **`SelectionMenu`**: `modal` stays headless. While `visible`, picking an option calls `onSelect`, and Escape or a click outside calls `onRequestClose`.
+- **`DatePicker`**: `embedded` reports every change with `confirmed: true`. `modal` works like the iOS popover: changes report `confirmed: false`, **Done** reports `confirmed: true`, and **Cancel**, Escape or a click outside the dialog call `onClosed`. Close the dialog by setting `visible` to `false`. Changing `date` also updates an already open dialog; recreating the same date value preserves the user's pending edits. `minDate` and `maxDate` constrain both typed dates and confirmed selections. Bounds compare the fields shown by the input: days for date inputs, months for month inputs, and times of day for time inputs. `ios.minuteInterval` sets the step for time and date-time inputs only. Dates are in the browser's local time zone; `timeZoneName` is ignored.
+- **`DateRangePicker`**: Done stays disabled until both dates are set, ordered, and within `minDate` / `maxDate`. Confirmation reports the start of each day in the browser’s local time zone, then calls `onClosed`. `timeZoneName` and Android dialog options are ignored.
+- **`SelectionMenu`**: `modal` stays headless. While `visible`, picking an option calls `onSelect`, and Escape or a click outside calls `onRequestClose`. `accessibilityLabel` names the actual select or dialog; it defaults to the placeholder, or “Select an option”.
 - **`SegmentedControl`**: as on iOS, clicking the selected segment keeps it selected. `labelVisibility: 'auto'` shows both the icon and the label.
 - **`TabBar`**: clicking the selected tab calls `onReselect`. `labelVisibility: 'auto'` labels every tab.
+
+## Keyboard support
+
+The browser handles keyboard input for embedded date fields and selection menus. Custom button controls support Tab to focus and Enter or Space to activate. `TabBar`, `NavigationRail`, `SegmentedControl`, single-selection `ButtonGroup`, and modal `SelectionMenu` currently do not implement arrow-key navigation within their groups. The modal selection menu also lacks type-ahead search. Use your own web component when your application requires those keyboard interactions.
 
 ## Theme and icons
 

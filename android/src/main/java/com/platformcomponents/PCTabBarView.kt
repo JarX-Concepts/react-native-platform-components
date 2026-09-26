@@ -268,11 +268,11 @@ class PCTabBarView(context: Context) :
     ViewCompat.setOnApplyWindowInsetsListener(b, null)
     b.setPadding(0, 0, 0, 0)
 
+    PCNavigationBarSupport.applyColors(b, activeTintColor, inactiveTintColor, indicatorColor, rippleColor, barColor)
     PCNavigationBarSupport.populateMenu(b, tabs, isCurrent = { generation == rebuildGeneration }) {
       requestLayout()
     }
 
-    PCNavigationBarSupport.applyColors(b, activeTintColor, inactiveTintColor, indicatorColor, rippleColor, barColor)
     PCNavigationBarSupport.applyIndicator(b, indicator)
     PCNavigationBarSupport.applyItemLayout(b, itemLayout, width)
     // Select or reselect is decided against selectedValue: with no tab

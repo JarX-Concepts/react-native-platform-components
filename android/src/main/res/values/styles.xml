@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <!-- Select spinner mode before DatePicker constructs its native delegate. -->
+  <style name="PCInlineDatePickerThemeOverlay" parent="">
+    <item name="android:datePickerStyle">@style/PCInlineDatePicker</item>
+  </style>
+  <style name="PCInlineDatePicker" parent="@android:style/Widget.Material.DatePicker">
+    <item name="android:datePickerMode">spinner</item>
+    <item name="android:calendarViewShown">false</item>
+    <item name="android:spinnersShown">true</item>
+  </style>
+
   <!--
     Fallback dialog themes for MaterialDatePicker / MaterialTimePicker when the host
     app theme is not a Material theme (see PCThemeSupport). Each is a full

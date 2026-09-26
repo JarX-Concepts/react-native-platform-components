@@ -89,6 +89,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private var inlineSpinner: Spinner? = null
   private var inlineDropdownOverlay: View? = null
   private var inlineSpinnerSuppressCount = 0
+  private var inlineSpinnerHasPlaceholder = false
 
   // --- Headless UI (true picker) ---
   private var headlessMenu: PopupMenu? = null
@@ -265,7 +266,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val next = data ?: ""
     if (selectedData == next) return
     selectedData = next
-    Log.d(TAG, "applySelectedData selectedData=$selectedData")
+    Log.d(TAG, "applySelectedData")
     refreshSelections()
   }
 
@@ -290,7 +291,10 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (placeholder == value) return
     placeholder = value
     inlineLayout?.hint = placeholder
-    // Spinner doesn't support placeholder
+    if (inlineSpinner != null) {
+      refreshAdapters()
+      refreshSelections()
+    }
 
     // Re-measure after placeholder change
     if (anchorMode == "inline") {
@@ -371,6 +375,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     inlineText = null
     inlineSpinner = null
     inlineSpinnerSuppressCount = 0
+    inlineSpinnerHasPlaceholder = false
     headlessMenu = null
     headlessMenuShowing = false
     headlessDismissProgrammatic = false
@@ -474,8 +479,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
             ?: options.getOrNull(position)
             ?: return@setOnItemClickListener
           val index = options.indexOf(opt)
-          selectedData = opt.data
           onSelect?.invoke(index, opt.label, opt.data)
+          post { refreshSelections() }
           detachInlineDropdownOverlay()
           if (isSearchable) clearFocus()
         }
@@ -511,6 +516,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       val sp = object : Spinner(context, null, android.R.attr.spinnerStyle, Spinner.MODE_DROPDOWN) {
         override fun setSelection(position: Int, animate: Boolean) {
           val oldPos = selectedItemPosition
+          val selectionAdapter = adapter
           super.setSelection(position, animate)
 
           // Manually trigger onItemSelectedListener if selection changed
@@ -518,6 +524,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
           // the selection changes via user interaction with the dropdown
           if (position != oldPos && onItemSelectedListener != null) {
             post {
+              if (adapter !== selectionAdapter || selectedItemPosition != position) return@post
               onItemSelectedListener?.onItemSelected(
                 this,
                 selectedView,
@@ -530,11 +537,13 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
         override fun setSelection(position: Int) {
           val oldPos = selectedItemPosition
+          val selectionAdapter = adapter
           super.setSelection(position)
 
           // Manually trigger onItemSelectedListener if selection changed
           if (position != oldPos && onItemSelectedListener != null) {
             post {
+              if (adapter !== selectionAdapter || selectedItemPosition != position) return@post
               onItemSelectedListener?.onItemSelected(
                 this,
                 selectedView,
@@ -559,14 +568,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
           if (interactivity != "enabled") return
 
-          val opt = options.getOrNull(position) ?: return
+          val index = position - if (inlineSpinnerHasPlaceholder) 1 else 0
+          val opt = options.getOrNull(index) ?: return
 
           // Only fire callback if selection actually changed
           if (opt.data == selectedData) return
 
           // Don't update selectedData here - let applySelectedData handle it
           // This ensures refreshSelections() is called to update the Spinner's display
-          onSelect?.invoke(position, opt.label, opt.data)
+          onSelect?.invoke(index, opt.label, opt.data)
+          post { refreshSelections() }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>) {
@@ -591,11 +602,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val popup = PopupMenu(context, this@PCSelectionMenuView).apply {
       setOnMenuItemClickListener { item ->
         val index = item.itemId
-        val opt = options.getOrNull(index)
-        Log.d(
-          TAG,
-          "headless onMenuItemClick index=$index optData=${opt?.data} selectedData=$selectedData"
-        )
+        Log.d(TAG, "headless onMenuItemClick index=$index")
         headlessDismissAfterSelect = true
         handleHeadlessSelection(index)
         true
@@ -645,7 +652,27 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       // The platform Spinner keeps its own rows (labels only): its dropdown is
       // sized to its widest row and anchored at the field's start, so rich
       // rows would run off the screen's edge.
-      val adapter = ArrayAdapter(sp.context, android.R.layout.simple_spinner_item, labels)
+      // Spinner needs a selected row even for null. Use a normal disabled
+      // placeholder until a value is selected, then show only real options.
+      // ListView measures zero-height rows with UNSPECIFIED height, so a GONE
+      // placeholder can leave a full-height row with unreliable touch bounds.
+      val hasPlaceholder = options.none { it.data == selectedData }
+      inlineSpinnerHasPlaceholder = hasPlaceholder
+      val adapter = object : ArrayAdapter<String>(
+        sp.context, android.R.layout.simple_spinner_item,
+        if (hasPlaceholder) listOf(placeholder.orEmpty()) + labels else labels
+      ) {
+        override fun areAllItemsEnabled() = !hasPlaceholder
+
+        // https://developer.android.com/reference/android/widget/BaseAdapter#isEnabled(int)
+        override fun isEnabled(position: Int) = !hasPlaceholder || position > 0
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+          (super.getView(position, convertView, parent) as TextView).apply {
+            if (hasPlaceholder && position == 0) text = ""
+            hint = if (hasPlaceholder && position == 0) placeholder else null
+          }
+      }
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
       sp.adapter = adapter
     }
@@ -665,8 +692,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (!(isSearchable && inlineText?.hasFocus() == true)) showSelectedText()
 
     inlineSpinner?.let { sp ->
-      if (options.isEmpty()) return
-      val target = if (idx >= 0) idx else 0
+      if (inlineSpinnerHasPlaceholder != (idx < 0)) refreshAdapters()
+      val target = if (inlineSpinnerHasPlaceholder) 0 else idx
       // Always call setSelection to ensure the view is refreshed
       // Even if the position hasn't changed, we need to update the displayed text
       suppressInlineSpinnerCallbacks(sp)
@@ -951,8 +978,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   private fun handleHeadlessSelection(position: Int) {
     val opt = options.getOrNull(position) ?: return
-    Log.d(TAG, "handleHeadlessSelection pos=$position data=${opt.data}")
-    selectedData = opt.data
+    Log.d(TAG, "handleHeadlessSelection pos=$position")
     onSelect?.invoke(position, opt.label, opt.data)
   }
 

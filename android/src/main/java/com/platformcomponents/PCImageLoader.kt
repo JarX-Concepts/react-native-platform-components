@@ -50,7 +50,8 @@ object PCImageLoader {
       val bitmap = try {
         decode(appContext, uri)
       } catch (e: Exception) {
-        Log.w(TAG, "Failed to load $uri: ${e.message}")
+        // Image URIs may carry credentials or signed query parameters.
+        Log.w(TAG, "Failed to load image (${e.javaClass.simpleName})")
         null
       }
       if (bitmap != null) {

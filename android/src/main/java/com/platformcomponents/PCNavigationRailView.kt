@@ -297,8 +297,8 @@ class PCNavigationRailView(context: Context) :
     ViewCompat.setOnApplyWindowInsetsListener(r, null)
     r.setPadding(0, 0, 0, 0)
 
-    PCNavigationBarSupport.populateMenu(r, items, { generation == rebuildGeneration }) { requestLayout() }
     PCNavigationBarSupport.applyColors(r, activeTintColor, inactiveTintColor, indicatorColor, rippleColor, railColor)
+    PCNavigationBarSupport.populateMenu(r, items, { generation == rebuildGeneration }) { requestLayout() }
     // Select or reselect is decided against selectedValue: with nothing
     // selected the widget still counts its last destination as selected
     r.setOnItemSelectedListener { menuItem ->
