@@ -81,6 +81,15 @@ Add to your `app.json`. The `android.theme` option re-parents Expo's generated `
 Either form of the reference works: `react-native-platform-components/app.plugin`
 as above, or the bare package name.
 
+The `android.drawables` option copies vector drawables into the generated project at prebuild, so drawable icon names (`icon={{ ios: 'house', android: 'home' }}`) work as they do in a bare app. List `.xml` files or directories of them, relative to the project root; each drawable is named after its file (see [Icons in Expo](/guides/icons#expo)):
+
+```json
+[
+  "react-native-platform-components/app.plugin",
+  { "android": { "theme": "material3", "drawables": ["./assets/icons"] } }
+]
+```
+
 For a complete working example, see the [`example-expo/`](https://github.com/JarX-Concepts/react-native-platform-components/tree/main/example-expo) directory.
 
 ## React Native New Architecture

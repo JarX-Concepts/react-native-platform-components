@@ -257,13 +257,22 @@ function NavigationRailDemo() {
       <View style={[styles.card, styles.railCard]}>
         <NavigationRail
           items={[
-            { label: 'Home', value: 'home', icon: { ios: 'house' } },
+            {
+              label: 'Home',
+              value: 'home',
+              icon: { ios: 'house', android: 'home' },
+            },
             {
               label: 'Search',
               value: 'search',
-              icon: { ios: 'magnifyingglass' },
+              icon: { ios: 'magnifyingglass', android: 'search' },
             },
-            { label: 'Inbox', value: 'inbox', icon: { ios: 'bell' }, badge: 2 },
+            {
+              label: 'Inbox',
+              value: 'inbox',
+              icon: { ios: 'bell', android: 'notifications' },
+              badge: 2,
+            },
           ]}
           selectedValue={selected}
           onSelect={setSelected}

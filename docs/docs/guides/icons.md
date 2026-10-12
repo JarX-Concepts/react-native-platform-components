@@ -69,7 +69,30 @@ The library doesn't parse SVG at runtime, and it doesn't bundle Material Symbols
 
 SF Symbol names work in Expo with no setup. Android drawables are different: with prebuild (Continuous Native Generation), the `android/` directory is generated, and drawables added to `android/app/src/main/res/drawable/` by hand are deleted by the next `expo prebuild --clean`.
 
-Use image icons for Android instead. Every icon prop accepts them, and they need no native files:
+There are two ways to give Android its icons in Expo.
+
+**Vector drawables through the config plugin.** Keep the drawable XML files in your project, for example under `assets/icons/`, and list them in the plugin's `android.drawables` option. Prebuild copies them into `res/drawable`, and drawable names then work as in a bare app:
+
+```json
+[
+  "react-native-platform-components/app.plugin",
+  { "android": { "drawables": ["./assets/icons"] } }
+]
+```
+
+```tsx
+<NavigationRail
+  items={[
+    { label: 'Home', value: 'home', icon: { ios: 'house', android: 'home' } },
+  ]}
+  selectedValue={selected}
+  onSelect={setSelected}
+/>
+```
+
+Each entry is a `.xml` file or a directory of them; a drawable is named after its file (`assets/icons/home.xml` is `'home'`), so file names must be lowercase letters, digits and underscores. Make the XML files as described under [Android](#android) and [Your own SVG icons](#your-own-svg-icons). Run prebuild again after adding or renaming one.
+
+**Image icons**, which need no native files at all. Every icon prop accepts them:
 
 ```tsx
 <FloatingActionButton
