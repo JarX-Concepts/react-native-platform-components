@@ -65,6 +65,27 @@ An icon set that lives as SVG files can reach every native control through one s
 
 The library doesn't parse SVG at runtime, and it doesn't bundle Material Symbols: both would add weight and a second rendering path to every app, while the platform formats above are the ones the system renders, tints and scales natively.
 
+### Expo
+
+SF Symbol names work in Expo with no setup. Android drawables are different: with prebuild (Continuous Native Generation), the `android/` directory is generated, and drawables added to `android/app/src/main/res/drawable/` by hand are deleted by the next `expo prebuild --clean`.
+
+Use image icons for Android instead. Every icon prop accepts them, and they need no native files:
+
+```tsx
+<FloatingActionButton
+  label="New"
+  icon={{
+    ios: 'plus',
+    android: { type: 'image', source: require('./assets/plus.png') },
+  }}
+  onPress={create}
+/>
+```
+
+- Add `plus@2x.png` and `plus@3x.png` beside `plus.png` so the icon stays sharp; React Native picks the closest scale for the device.
+- Images are drawn as tinted templates, so only the alpha channel matters: draw the shape opaque on a transparent background. An image whose pixels are all transparent draws nothing, even where its color channels hold the shape.
+- Debug builds load the image from Metro; release builds bundle it as a drawable resource.
+
 ### Image requests (iOS and Android)
 
 Image icons accept bundled assets or an `ImageURISource`. Native controls forward
