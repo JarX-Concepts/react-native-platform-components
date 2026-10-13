@@ -1,5 +1,16 @@
 # Changelog
 
+# [1.6.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.5.0...v1.6.0) (2026-10-13)
+
+### Bug Fixes
+
+* install expo-system-ui in example-expo ([d40dd11](https://github.com/JarX-Concepts/react-native-platform-components/commit/d40dd11582f1adbe5eac66e150d9eb4a2c3f5586))
+* make the Expo example's FAB icon visible, and document icons in Expo ([df357bc](https://github.com/JarX-Concepts/react-native-platform-components/commit/df357bc2634f1f06d4fb1c58d2a91b55656e1142))
+
+### Features
+
+* **plugin:** copy vector drawables into Expo projects at prebuild ([f57ed99](https://github.com/JarX-Concepts/react-native-platform-components/commit/f57ed995bdffe927984dbe34b98b140e15734b46))
+
 # [1.5.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.4.0...v1.5.0) (2026-09-27)
 
 ### Bug Fixes
