@@ -1,8 +1,14 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
 import type { AndroidConfig } from '@expo/config-plugins';
 
 import withPlatformComponents, {
   MATERIAL3_THEME_PARENT,
   applyMaterial3Theme,
+  copyDrawables,
+  resolveDrawables,
   resolveMaterial3Parent,
 } from '../index';
 
@@ -121,5 +127,112 @@ describe('withPlatformComponents', () => {
     );
 
     expect(typeof config.mods?.android?.styles).toBe('function');
+  });
+
+  it('registers no dangerous mod without drawables', () => {
+    const config = withPlatformComponents(
+      { ...baseConfig },
+      { android: { drawables: [] } }
+    );
+
+    expect(config.mods?.android?.dangerous).toBeUndefined();
+  });
+
+  it('registers an Android dangerous mod for drawables, alongside the theme', () => {
+    const config = withPlatformComponents(
+      { ...baseConfig },
+      { android: { theme: 'material3', drawables: ['./assets/icons'] } }
+    );
+
+    expect(typeof config.mods?.android?.dangerous).toBe('function');
+    expect(typeof config.mods?.android?.styles).toBe('function');
+  });
+});
+
+describe('drawables', () => {
+  const VECTOR =
+    '<vector xmlns:android="http://schemas.android.com/apk/res/android" />';
+  let root: string;
+
+  beforeEach(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-plugin-'));
+    fs.mkdirSync(path.join(root, 'icons'));
+    for (const name of ['search', 'home']) {
+      fs.writeFileSync(path.join(root, 'icons', `${name}.xml`), VECTOR);
+    }
+    fs.writeFileSync(path.join(root, 'icons', 'README.md'), 'not a drawable');
+    fs.writeFileSync(path.join(root, 'bell.xml'), VECTOR);
+  });
+
+  afterEach(() => {
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it('expands directories to their .xml files, sorted, after single files', () => {
+    const files = resolveDrawables(root, ['./bell.xml', './icons']);
+
+    expect(files).toEqual([
+      { name: 'bell', source: path.join(root, 'bell.xml') },
+      { name: 'home', source: path.join(root, 'icons', 'home.xml') },
+      { name: 'search', source: path.join(root, 'icons', 'search.xml') },
+    ]);
+  });
+
+  it('copies the drawables into res/drawable, replacing earlier copies', () => {
+    const resDir = path.join(root, 'android', 'app', 'src', 'main', 'res');
+    fs.mkdirSync(path.join(resDir, 'drawable'), { recursive: true });
+    fs.writeFileSync(path.join(resDir, 'drawable', 'home.xml'), 'stale');
+
+    copyDrawables(resolveDrawables(root, ['./icons']), resDir);
+
+    expect(fs.readdirSync(path.join(resDir, 'drawable')).sort()).toEqual([
+      'home.xml',
+      'search.xml',
+    ]);
+    expect(
+      fs.readFileSync(path.join(resDir, 'drawable', 'home.xml'), 'utf8')
+    ).toBe(VECTOR);
+  });
+
+  it('rejects a missing path', () => {
+    expect(() => resolveDrawables(root, ['./missing.xml'])).toThrow(
+      'drawable not found: ./missing.xml'
+    );
+  });
+
+  it('rejects a file that is not a vector drawable', () => {
+    fs.writeFileSync(path.join(root, 'plus.png'), '');
+
+    expect(() => resolveDrawables(root, ['./plus.png'])).toThrow(
+      'is not a vector drawable'
+    );
+  });
+
+  it('rejects a directory with no .xml files', () => {
+    fs.mkdirSync(path.join(root, 'empty'));
+
+    expect(() => resolveDrawables(root, ['./empty'])).toThrow(
+      'no .xml drawables in ./empty'
+    );
+  });
+
+  it.each(['Home', 'my-icon', '2fa', 'my.icon'])(
+    'rejects the resource name %s',
+    (name) => {
+      fs.writeFileSync(path.join(root, `${name}.xml`), VECTOR);
+
+      expect(() => resolveDrawables(root, [`./${name}.xml`])).toThrow(
+        `"${name}" is not a valid drawable name`
+      );
+    }
+  );
+
+  it('rejects two drawables with the same name', () => {
+    fs.mkdirSync(path.join(root, 'more'));
+    fs.writeFileSync(path.join(root, 'more', 'home.xml'), VECTOR);
+
+    expect(() => resolveDrawables(root, ['./icons', './more'])).toThrow(
+      'more than one drawable named "home"'
+    );
   });
 });

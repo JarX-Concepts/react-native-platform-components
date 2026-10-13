@@ -19,7 +19,8 @@
         "react-native-platform-components/app.plugin",
         {
           "android": {
-            "theme": "material3"
+            "theme": "material3",
+            "drawables": ["./assets/icons"]
           }
         }
       ]
