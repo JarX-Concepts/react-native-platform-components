@@ -37,6 +37,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `NavigationRail`       | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above                                                                  |
 | `FloatingToolbar`      | A pill-shaped surface that lays out its children                                                                                                                                   |
 | `LiquidGlass`          | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                                   |
+| `ActionSheet`          | Its children; while `visible`, a `<dialog>` with the title, message, a `<button>` per action and a cancel button                                                                   |
 | `ContextMenu`          | Its children, without a menu (see below)                                                                                                                                           |
 
 ## Behavior
@@ -46,6 +47,7 @@ Events and controlled props work the way they do on native:
 - **`DatePicker`**: `embedded` reports every change with `confirmed: true`. `modal` works like the iOS popover: changes report `confirmed: false`, **Done** reports `confirmed: true`, and **Cancel**, Escape or a click outside the dialog call `onClosed`. Close the dialog by setting `visible` to `false`. Changing `date` also updates an already open dialog; recreating the same date value preserves the user's pending edits. `minDate` and `maxDate` constrain both typed dates and confirmed selections. Bounds compare the fields shown by the input: days for date inputs, months for month inputs, and times of day for time inputs. `ios.minuteInterval` sets the step for time and date-time inputs only. Dates are in the browser's local time zone; `timeZoneName` is ignored.
 - **`DateRangePicker`**: Done stays disabled until both dates are set, ordered, and within `minDate` / `maxDate`. Confirmation reports the start of each day in the browser’s local time zone, then calls `onClosed`. `timeZoneName` and Android dialog options are ignored.
 - **`SelectionMenu`**: `modal` stays headless. While `visible`, picking an option calls `onSelect`, and Escape or a click outside calls `onRequestClose`. `accessibilityLabel` names the actual select or dialog; it defaults to the placeholder, or “Select an option”.
+- **`ActionSheet`**: picking an action calls `onSelect`; the cancel button (`cancelTitle`, default “Cancel”), Escape or a click outside call `onCancel`. Each button carries its action's `testID` as `data-testid`. Only image icons render; destructive actions use the Material 3 error red.
 - **`SegmentedControl`**: as on iOS, clicking the selected segment keeps it selected. `labelVisibility: 'auto'` shows both the icon and the label.
 - **`TabBar`**: clicking the selected tab calls `onReselect`. `labelVisibility: 'auto'` labels every tab.
 
@@ -189,8 +191,8 @@ on iOS and Android. There is no per-screen platform branch or custom import.
 
 ## Adapter contract
 
-`WebComponents` accepts these keys: `Button`, `ButtonGroup`, `SplitButton`,
-`ContextMenu`, `DatePicker`, `DateRangePicker`, `FloatingActionButton`,
+`WebComponents` accepts these keys: `ActionSheet`, `Button`, `ButtonGroup`,
+`SplitButton`, `ContextMenu`, `DatePicker`, `DateRangePicker`, `FloatingActionButton`,
 `FloatingToolbar`, `LiquidGlass`, `LiquidGlassContainer`, `NavigationRail`,
 `SegmentedControl`, `SelectionMenu`, `TabBar` and `TextField`.
 

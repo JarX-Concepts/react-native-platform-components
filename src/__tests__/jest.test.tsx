@@ -9,6 +9,7 @@ import renderer, {
 import * as Native from '../index';
 import * as Mock from '../jest';
 import {
+  ActionSheet,
   Button,
   ButtonGroup,
   ContextMenu,
@@ -448,6 +449,60 @@ describe('menus, pickers and containers (mock)', () => {
     );
     press(byTestID(tree, 'color-g'));
     expect(onSelect).toHaveBeenCalledWith('g', 'Green', 1);
+  });
+
+  it('ActionSheet lists its actions while visible', () => {
+    const onSelect = jest.fn();
+    const onCancel = jest.fn();
+    const actions = [
+      { id: 'library', title: 'Photo Library', testID: 'source-library' },
+      { id: 'camera', title: 'Take Photo', attributes: { disabled: true } },
+      { id: 'secret', title: 'Secret', attributes: { hidden: true } },
+    ];
+    const tree = render(
+      <ActionSheet
+        testID="sheet"
+        visible={false}
+        title="Add a file"
+        actions={actions}
+        onSelect={onSelect}
+        onCancel={onCancel}
+      >
+        <Button label="Add" />
+      </ActionSheet>
+    );
+    expect(texts(tree)).toEqual(['Add']);
+
+    act(() =>
+      tree.update(
+        <ActionSheet
+          testID="sheet"
+          visible
+          title="Add a file"
+          actions={actions}
+          onSelect={onSelect}
+          onCancel={onCancel}
+        >
+          <Button label="Add" />
+        </ActionSheet>
+      )
+    );
+    expect(texts(tree)).toEqual([
+      'Add',
+      'Add a file',
+      'Photo Library',
+      'Take Photo',
+      'Cancel',
+    ]);
+    press(byTestID(tree, 'source-library'));
+    expect(onSelect).toHaveBeenCalledWith('library');
+    expect(byTestID(tree, 'sheet-camera').props.accessibilityState).toEqual({
+      disabled: true,
+    });
+    press(byTestID(tree, 'sheet-cancel'));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    fire(byTestID(tree, 'sheet'), 'select', 'camera');
+    expect(onSelect).toHaveBeenLastCalledWith('camera');
   });
 
   it('ContextMenu renders its children and exposes its callbacks', () => {

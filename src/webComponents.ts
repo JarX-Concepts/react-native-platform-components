@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode, RefAttributes } from 'react';
+import type { ActionSheetProps } from './ActionSheet';
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { SplitButtonProps } from './SplitButton';
@@ -16,6 +17,7 @@ import type { TextFieldProps, TextFieldRef } from './TextField';
 
 /** Public contracts accepted by consumer-supplied web components. */
 export interface WebComponentProps {
+  ActionSheet: ActionSheetProps;
   Button: ButtonProps;
   ButtonGroup: ButtonGroupProps;
   SplitButton: SplitButtonProps;

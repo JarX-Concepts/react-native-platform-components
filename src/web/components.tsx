@@ -1,5 +1,6 @@
 import { withWebComponent } from './PlatformComponentsProvider';
 import type { WebComponents } from '../webComponents';
+import { ActionSheet as DefaultActionSheet } from './ActionSheet';
 import { Button as DefaultButton } from './Button';
 import { ButtonGroup as DefaultButtonGroup } from './ButtonGroup';
 import { SplitButton as DefaultSplitButton } from './SplitButton';
@@ -19,6 +20,10 @@ import {
 } from './containers';
 
 // Explicit types keep published declarations tied to a resolvable type import.
+export const ActionSheet: WebComponents['ActionSheet'] = withWebComponent(
+  'ActionSheet',
+  DefaultActionSheet
+);
 export const Button: WebComponents['Button'] = withWebComponent(
   'Button',
   DefaultButton
