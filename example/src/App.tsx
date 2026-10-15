@@ -12,6 +12,7 @@ import {
   SelectionMenu,
   useNativeTheme,
 } from 'react-native-platform-components';
+import { ActionSheetDemo } from './ActionSheetDemo';
 import { ButtonDemo } from './ButtonDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
@@ -36,6 +37,7 @@ type DemoKey =
   | 'datePicker'
   | 'selectionMenu'
   | 'contextMenu'
+  | 'actionSheet'
   | 'segmentedControl'
   | 'tabBar'
   | 'navigationRail'
@@ -52,6 +54,7 @@ const COMPONENT_DEMOS = [
   { label: 'Date Picker', data: 'datePicker' },
   { label: 'Selection Menu', data: 'selectionMenu' },
   { label: 'Context Menu', data: 'contextMenu' },
+  { label: 'Action Sheet', data: 'actionSheet' },
   { label: 'Segmented Control', data: 'segmentedControl' },
   { label: 'Tab Bar', data: 'tabBar' },
   { label: 'Navigation Rail', data: 'navigationRail' },
@@ -137,6 +140,7 @@ export default function App(): React.ReactElement {
       {demo === 'datePicker' && <DatePickerDemo />}
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
       {demo === 'contextMenu' && <ContextMenuDemo />}
+      {demo === 'actionSheet' && <ActionSheetDemo />}
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
       {demo === 'tabBar' && <TabBarDemo />}
       {demo === 'navigationRail' && <NavigationRailDemo />}
