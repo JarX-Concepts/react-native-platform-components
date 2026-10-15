@@ -848,13 +848,13 @@ describe('Platform Components Example', () => {
     // Test tap mode
     await element(by.id('context-menu-tap')).tap();
 
-    // Wait for menu to appear
-    await waitFor(element(by.text('Copy')))
+    // Wait for menu to appear; its actions carry test IDs
+    await waitFor(element(by.id('menu-copy')))
       .toBeVisible()
       .withTimeout(6000);
 
-    // Select an action
-    await element(by.text('Paste')).atIndex(0).tap();
+    // Select an action by its test ID
+    await element(by.id('menu-paste')).tap();
 
     // Verify the action was recorded
     await waitFor(element(by.text('Paste (paste)')))
@@ -871,7 +871,7 @@ describe('Platform Components Example', () => {
         .withTimeout(6000);
 
       // Select an action
-      await element(by.text('Share')).atIndex(0).tap();
+      await element(by.id('menu-share')).tap();
 
       // Verify the action was recorded
       await waitFor(element(by.text('Share (share)')))
@@ -903,14 +903,14 @@ describe('Platform Components Example', () => {
     }
 
     // Inline sections, an image-asset icon (Remind Me) and a submenu inside a
-    // section
     await scrollToId('context-menu-sections');
+    // section; the submenu and its action are tapped by test ID
     await openMenuByLongPress('context-menu-sections', 'Remind Me');
-    await element(by.text('Send To')).atIndex(0).tap();
-    await waitFor(element(by.text('Mail')))
+    await element(by.id('menu-send')).tap();
+    await waitFor(element(by.id('menu-send-mail')))
       .toBeVisible()
       .withTimeout(6000);
-    await element(by.text('Mail')).atIndex(0).tap();
+    await element(by.id('menu-send-mail')).tap();
     await expectFieldText('last-action-field', 'Mail (send-mail)');
 
     // A stepper that keeps the menu open on iOS; Android closes it per press
@@ -1506,7 +1506,7 @@ describe('Platform Components Example', () => {
     // A button with a menu opens it instead of pressing
     await scrollToId('button-menu-value');
     await element(by.id('button-menu')).tap();
-    await waitFor(element(by.text('Date')))
+    await waitFor(element(by.id('sort-date')))
       .toBeVisible()
       .withTimeout(6000);
     if (!isAndroid()) {
@@ -1514,8 +1514,20 @@ describe('Platform Components Example', () => {
       // the page under it while it is open
       await expectText('button-menu-value', '(none) · open');
     }
-    await element(by.text('Date')).atIndex(0).tap();
+    await element(by.id('sort-date')).tap();
     await expectText('button-menu-value', 'date · closed');
+
+    // A submenu and its actions are found by test ID too
+    await element(by.id('button-menu')).tap();
+    await waitFor(element(by.id('sort-view')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('sort-view')).tap();
+    await waitFor(element(by.id('sort-view-grid')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('sort-view-grid')).tap();
+    await expectText('button-menu-value', 'grid · closed');
 
     // Icons above and below the label, and clear glass
     await scrollToId('button-icon-bottom');
@@ -1543,8 +1555,10 @@ describe('Platform Components Example', () => {
     await element(by.text('Reply')).atIndex(0).tap();
     await expectText('split-value', 'reply');
     await element(by.label('Reply options')).atIndex(0).tap();
-    await waitFor(menuItem('Forward')).toBeVisible().withTimeout(6000);
-    await menuItem('Forward').tap();
+    await waitFor(element(by.id('reply-forward')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('reply-forward')).tap();
     await expectText('split-value', 'forward');
 
     // Buttons that don't fit fold into an overflow menu; a pick is a press

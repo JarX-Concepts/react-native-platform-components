@@ -75,6 +75,8 @@ export type ButtonGroupMenuItem = Readonly<{
   state: string;
   /** The action's own haptics; '' = the component's */
   haptics: string;
+  /** Test identifier of the menu row; '' = none */
+  testID: string;
 }>;
 
 /** Event emitted when a split button menu item is picked. */

@@ -106,6 +106,7 @@ describe('flattenMenuActions', () => {
       keepsMenuPresented: 'false',
       state: '',
       haptics: '',
+      testID: '',
     });
     expect(count).toMatchObject({
       subtitle: 'By one',
@@ -140,6 +141,27 @@ describe('flattenMenuActions', () => {
     ]);
     expect(warn).toMatchObject({ haptics: 'warning' });
     expect(plain).toMatchObject({ haptics: '' });
+  });
+
+  it('carries test IDs of actions, submenus and their children', () => {
+    const items = flattenMenuActions([
+      {
+        id: 'send',
+        title: 'Send To',
+        testID: 'menu-send',
+        subactions: [
+          { id: 'mail', title: 'Mail', testID: 'menu-send-mail' },
+          { id: 'messages', title: 'Messages' },
+        ],
+      },
+      { id: 'copy', title: 'Copy', testID: 'menu-copy' },
+    ]);
+    expect(items.map((i) => [i.id, i.testID])).toEqual([
+      ['send', 'menu-send'],
+      ['mail', 'menu-send-mail'],
+      ['messages', ''],
+      ['copy', 'menu-copy'],
+    ]);
   });
 
   it('keeps an action with an empty subactions list an action', () => {

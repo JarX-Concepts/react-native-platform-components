@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
+import android.os.Build
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -12,6 +13,12 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.view.WindowManager
+import android.view.inspector.WindowInspector
+import android.widget.ListView
 import androidx.appcompat.R as AppCompatR
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -57,7 +64,9 @@ object PCMenuSupport {
     /** "" | "off" | "on" | "mixed" */
     val state: String,
     /** The item's own `haptics`; "" = the component's */
-    val haptics: String = ""
+    val haptics: String = "",
+    /** Tag of the item's popup row, for UI tests; "" = none */
+    val testID: String = ""
   ) {
     val isAction: Boolean get() = kind != "menu" && kind != "section"
   }
@@ -82,7 +91,8 @@ object PCMenuSupport {
           disabled = map.stringOr("disabled", "false") == "true",
           keepsMenuPresented = map.stringOr("keepsMenuPresented", "false") == "true",
           state = map.stringOr("state", ""),
-          haptics = map.stringOr("haptics", "")
+          haptics = map.stringOr("haptics", ""),
+          testID = map.stringOr("testID", "")
         )
       )
     }
@@ -164,6 +174,60 @@ object PCMenuSupport {
 
   /** The item behind a clicked MenuItem. */
   fun itemFor(menuItem: MenuItem, items: List<Item>): Item? = items.getOrNull(menuItem.itemId)
+
+  /**
+   * Tags the rows of [menu]'s showing popups with their items' testIDs:
+   * Detox and Espresso match `by.id` against the view tag. AppCompat builds
+   * the rows in the popup's own window and keeps its list private, so the
+   * list is found among the app's windows (WindowInspector, Android 10+;
+   * earlier versions leave the rows untagged). Call it after the popup shows,
+   * and after a submenu header is picked: the submenu opens in a new popup.
+   */
+  fun tagPopupRows(menu: Menu, items: List<Item>) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+    if (items.none { it.testID.isNotEmpty() }) return
+    for (root in WindowInspector.getGlobalWindowViews()) {
+      // Popups are sub-windows of the activity's window
+      val type = (root.layoutParams as? WindowManager.LayoutParams)?.type ?: continue
+      if (type < WindowManager.LayoutParams.FIRST_SUB_WINDOW ||
+          type > WindowManager.LayoutParams.LAST_SUB_WINDOW) continue
+      forEachListView(root) { list -> watchRows(list, menu, items) }
+    }
+  }
+
+  private fun forEachListView(view: View, action: (ListView) -> Unit) {
+    if (view is ListView) {
+      action(view)
+    } else if (view is ViewGroup) {
+      for (i in 0 until view.childCount) forEachListView(view.getChildAt(i), action)
+    }
+  }
+
+  /**
+   * Tags [list]'s rows if it lists [menu]'s items, and again before every
+   * frame: the list binds rows to items as it lays out and scrolls.
+   */
+  private fun watchRows(list: ListView, menu: Menu, items: List<Item>) {
+    if (list.getTag(R.id.pc_menu_rows_tagged) != null) return
+    val first = (0 until list.count).firstNotNullOfOrNull { list.getItemAtPosition(it) as? MenuItem }
+    if (first == null || menu.findItem(first.itemId) !== first) return
+
+    fun tagRows() {
+      for (i in 0 until list.childCount) {
+        val menuItem = list.getItemAtPosition(list.firstVisiblePosition + i) as? MenuItem
+        val testID = menuItem?.let { itemFor(it, items)?.testID }.orEmpty()
+        list.getChildAt(i).tag = testID.ifEmpty { null }
+      }
+    }
+    list.setTag(R.id.pc_menu_rows_tagged, true)
+    list.viewTreeObserver.addOnPreDrawListener(
+      ViewTreeObserver.OnPreDrawListener {
+        tagRows()
+        true
+      }
+    )
+    tagRows()
+  }
 
   /** Destructive titles are drawn in the theme's error color. */
   private fun title(context: Context, item: Item): CharSequence {

@@ -285,7 +285,12 @@ describe('Button', () => {
               { id: 'date', title: 'Date' },
             ],
           },
-          { id: 'reset', title: 'Reset', attributes: { destructive: true } },
+          {
+            id: 'reset',
+            title: 'Reset',
+            attributes: { destructive: true },
+            testID: 'sort-reset',
+          },
         ]}
         onMenuSelect={onMenuSelect}
         onMenuOpen={onMenuOpen}
@@ -308,6 +313,8 @@ describe('Button', () => {
     ]);
     expect(props.menu[1].state).toBe('on');
     expect(props.menu[3].destructive).toBe('true');
+    expect(props.menu[3].testID).toBe('sort-reset');
+    expect(props.menu[2].testID).toBe('');
 
     act(() => {
       props.onMenuOpen({ nativeEvent: {} });

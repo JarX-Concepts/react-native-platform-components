@@ -105,11 +105,13 @@ function sortMenu(sortBy: SortKey): ContextMenuAction[] {
         id,
         title,
         state: id === sortBy ? 'on' : 'off',
+        testID: `sort-${id}`,
       })),
     },
     {
       id: 'view',
       title: 'View as',
+      testID: 'sort-view',
       subactions: [
         {
           id: 'list',
@@ -119,6 +121,7 @@ function sortMenu(sortBy: SortKey): ContextMenuAction[] {
         {
           id: 'grid',
           title: 'Grid',
+          testID: 'sort-view-grid',
           image: { ios: 'square.grid.2x2', android: 'grid_view' },
         },
       ],
@@ -142,6 +145,7 @@ const REPLY_MENU: ContextMenuAction[] = [
   {
     id: 'forward',
     title: 'Forward',
+    testID: 'reply-forward',
     image: { ios: 'arrowshape.turn.up.right', android: 'share' },
   },
   {

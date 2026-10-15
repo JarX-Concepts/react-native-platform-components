@@ -402,7 +402,10 @@ class PCButtonView(context: Context) :
     popup.setOnMenuItemClickListener { menuItem ->
       // Submenu headers open their submenu; they aren't picks
       val item = PCMenuSupport.itemFor(menuItem, items)
-      if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      if (item == null || !item.isAction) {
+        post { PCMenuSupport.tagPopupRows(popup.menu, items) }
+        return@setOnMenuItemClickListener false
+      }
       PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
       onMenuSelect?.invoke(item.id, item.title)
       true
@@ -414,6 +417,7 @@ class PCButtonView(context: Context) :
 
     onMenuOpen?.invoke()
     popup.show()
+    PCMenuSupport.tagPopupRows(popup.menu, items)
   }
 
   // ---- Layout ----

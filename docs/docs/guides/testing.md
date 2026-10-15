@@ -89,6 +89,31 @@ fireEvent(screen.getByTestId('sort'), 'menuSelect', 'date', 'Date');
 fireEvent(screen.getByTestId('reply'), 'menuSelect', 'forward', 'Forward');
 ```
 
+## Menu actions in end-to-end tests
+
+Under Jest the menus aren't rendered, but in an end-to-end test they open for real. Give the actions of a `ContextMenu`, a `Button` menu or a `SplitButton` menu a `testID` and the test can tap them by ID once the menu is open, whatever language the titles are in:
+
+```tsx
+<Button
+  testID="sort"
+  label={t('sort')}
+  menu={[
+    { id: 'date', title: t('date'), testID: 'sort-date' },
+    { id: 'name', title: t('name'), testID: 'sort-name' },
+  ]}
+  onMenuSelect={setSortBy}
+/>
+```
+
+```ts
+// Detox
+await element(by.id('sort')).tap();
+await waitFor(element(by.id('sort-date'))).toBeVisible().withTimeout(6000);
+await element(by.id('sort-date')).tap();
+```
+
+On iOS the ID is the menu row's accessibility identifier; on Android 10+ it is the popup row's view tag, which Detox and Espresso match. See [Testing menu actions](/components/contextmenu#testing-menu-actions).
+
 ## Overriding an export
 
 Spread the mock and replace what a test needs:

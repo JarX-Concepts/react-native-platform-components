@@ -21,6 +21,8 @@ struct PCMenuItem {
     let state: String
     /// The item's own `haptics`; "" = the component's
     let haptics: String
+    /// Test identifier of the menu row; "" = none
+    let testID: String
 
     init(
         index: Int,
@@ -35,7 +37,8 @@ struct PCMenuItem {
         disabled: Bool = false,
         keepsMenuPresented: Bool = false,
         state: String = "",
-        haptics: String = ""
+        haptics: String = "",
+        testID: String = ""
     ) {
         self.index = index
         self.id = id
@@ -50,6 +53,7 @@ struct PCMenuItem {
         self.keepsMenuPresented = keepsMenuPresented
         self.state = state
         self.haptics = haptics
+        self.testID = testID
     }
 
     /// Reads an item bridged from ObjC++ as a dictionary (see PCMenuItems.h).
@@ -68,7 +72,8 @@ struct PCMenuItem {
             disabled: string("disabled") == "true",
             keepsMenuPresented: string("keepsMenuPresented") == "true",
             state: string("state"),
-            haptics: string("haptics")
+            haptics: string("haptics"),
+            testID: string("testID")
         )
     }
 }
@@ -166,6 +171,7 @@ enum PCMenuSupport {
                         children: elements
                     )
                     if !item.subtitle.isEmpty { menu.subtitle = item.subtitle }
+                    if !item.testID.isEmpty { menu.accessibilityIdentifier = item.testID }
                     return menu
                 default:
                     return action(for: item, imageState: imageState, onImageLoaded: onImageLoaded, handler: handler)
@@ -189,7 +195,7 @@ enum PCMenuSupport {
             attributes.insert(.keepsMenuPresented)
         }
 
-        return UIAction(
+        let action = UIAction(
             title: item.title,
             subtitle: item.subtitle.isEmpty ? nil : item.subtitle,
             image: image(for: item, imageState: imageState, onImageLoaded: onImageLoaded),
@@ -198,6 +204,10 @@ enum PCMenuSupport {
         ) { _ in
             handler(item)
         }
+        // UIKit carries it over to the action's menu row, where UI tests
+        // find it (Detox `by.id`, XCUITest identifiers).
+        if !item.testID.isEmpty { action.accessibilityIdentifier = item.testID }
+        return action
     }
 
     static func state(_ value: String) -> UIMenuElement.State {

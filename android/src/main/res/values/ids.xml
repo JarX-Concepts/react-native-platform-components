@@ -2,4 +2,6 @@
 <resources>
   <!-- The text size a view was capped at (maxFontSizeMultiplier); see PCThemeSupport.capTextSize -->
   <item name="pc_capped_text_size" type="id" />
+  <!-- A menu popup's list whose rows carry their items' testIDs; see PCMenuSupport.tagPopupRows -->
+  <item name="pc_menu_rows_tagged" type="id" />
 </resources>

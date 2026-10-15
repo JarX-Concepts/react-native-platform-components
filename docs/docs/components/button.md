@@ -243,6 +243,8 @@ const [bold, setBold] = useState(false);
 
 A button with a menu isn't a toggle: a press opens the menu, so leave `selected` unset. The menu stays closed while the button is `disabled` or `loading`.
 
+An item's `testID` lands on its menu row, so end-to-end tests can tap it by ID (Detox `by.id`). See [Testing menu actions](/components/contextmenu#testing-menu-actions).
+
 | iOS 26 | Android |
 | --- | --- |
 | ![The button's menu open on iOS 26](/img/components/button/menu-ios.webp) | ![The button's popup menu open on Android](/img/components/button/menu-android.webp) |
