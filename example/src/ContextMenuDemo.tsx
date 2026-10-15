@@ -9,22 +9,26 @@ import {
 } from 'react-native-platform-components';
 import { ActionField, Divider, PillButton, Row, Section, ui } from './DemoUI';
 
+// Test IDs on the actions let the e2e flows tap them by id (by.id)
 const BASIC_ACTIONS: ContextMenuAction[] = [
   {
     id: 'copy',
     title: 'Copy',
+    testID: 'menu-copy',
     subtitle: 'Copy to clipboard',
     image: Platform.OS === 'ios' ? 'doc.on.doc' : 'content_copy',
   },
   {
     id: 'paste',
     title: 'Paste',
+    testID: 'menu-paste',
     subtitle: 'Paste from clipboard',
     image: Platform.OS === 'ios' ? 'doc.on.clipboard' : 'content_paste',
   },
   {
     id: 'share',
     title: 'Share',
+    testID: 'menu-share',
     subtitle: 'Share with others',
     image: Platform.OS === 'ios' ? 'square.and.arrow.up' : 'share',
   },
@@ -127,10 +131,11 @@ const SECTION_ACTIONS: ContextMenuAction[] = [
       {
         id: 'send',
         title: 'Send To',
+        testID: 'menu-send',
         image: { ios: 'paperplane', android: 'send' },
         subactions: [
           { id: 'send-messages', title: 'Messages' },
-          { id: 'send-mail', title: 'Mail' },
+          { id: 'send-mail', title: 'Mail', testID: 'menu-send-mail' },
         ],
       },
     ],
