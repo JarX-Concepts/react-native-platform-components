@@ -3,6 +3,17 @@ title: 'ActionSheet'
 description: 'Native action sheet for React Native: UIAlertController (.actionSheet) on iOS, anchored as a popover on iPad and iOS 26, and a Material 3 modal bottom sheet on Android, with destructive and disabled actions, icons and testIDs.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-actionsheet.gif" height="480" alt="ActionSheet on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-actionsheet.gif" height="480" alt="ActionSheet on Android" /></td>
+  </tr>
+</table>
+
 A short list of actions presented from the bottom of the screen, or as a popover pointing at its trigger. Use it for a choice the user makes on the spot, such as where a file comes from.
 
 - **iOS**: `UIAlertController` with the `.actionSheet` style, presented from the nearest view controller. On iPad, and on iPhone from iOS 26, UIKit shows it as a popover pointing at the component's children.
