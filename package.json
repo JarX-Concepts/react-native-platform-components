@@ -241,6 +241,7 @@
         "PCSelectionMenu": "PCSelectionMenu",
         "PCDatePicker": "PCDatePicker",
         "PCContextMenu": "PCContextMenu",
+        "PCActionSheet": "PCActionSheet",
         "PCSegmentedControl": "PCSegmentedControl",
         "PCTabBar": "PCTabBar",
         "PCTabBarAccessory": "PCTabBarAccessory",

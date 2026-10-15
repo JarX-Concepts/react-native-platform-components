@@ -27,6 +27,7 @@ import {
   type ViewProps,
 } from 'react-native';
 
+import type { ActionSheetProps } from './ActionSheet';
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { ContextMenuProps } from './ContextMenu';
@@ -54,6 +55,7 @@ import { nextSelection } from './web/ButtonGroup';
 export type * from './DatePicker';
 export type * from './SelectionMenu';
 export type * from './ContextMenu';
+export type * from './ActionSheet';
 export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './SplitButton';
@@ -872,6 +874,76 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
       {...handlers({ onPressAction, onMenuOpen, onMenuClose, onPreviewPress })}
     >
       {children}
+    </View>
+  );
+}
+
+/**
+ * Its children in a view carrying `testID`. While `visible`, the title and
+ * message show as `Text`, and each shown action is a `Pressable` with its
+ * `testID` (else `${testID}-${id}`) that calls `onSelect(id)`; a disabled
+ * one ignores presses. A cancel `Pressable` with `cancelTestID` (else
+ * `${testID}-cancel`) calls `onCancel`. `fireEvent(sheet, 'select', id)` and
+ * `fireEvent(sheet, 'cancel')` also work.
+ */
+export function ActionSheet(props: ActionSheetProps): React.ReactElement {
+  const {
+    visible,
+    title,
+    message,
+    actions,
+    cancelTitle,
+    cancelTestID,
+    haptics,
+    maxFontSizeMultiplier,
+    onSelect,
+    onCancel,
+    testID,
+    children,
+    ...viewProps
+  } = props;
+
+  return (
+    <View
+      {...viewProps}
+      testID={testID}
+      accessibilityState={{ expanded: visible }}
+      {...handlers({ onSelect, onCancel })}
+    >
+      {children}
+      {visible ? (
+        <View accessibilityRole="menu">
+          {title ? <Text>{title}</Text> : null}
+          {message ? <Text>{message}</Text> : null}
+          {actions
+            .filter((action) => !action.attributes?.hidden)
+            .map((action) => {
+              const disabled = !!action.attributes?.disabled;
+              return (
+                <Pressable
+                  key={action.id}
+                  testID={
+                    action.testID ??
+                    (testID ? `${testID}-${action.id}` : undefined)
+                  }
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ disabled }}
+                  disabled={disabled}
+                  onPress={() => onSelect?.(action.id)}
+                >
+                  <Text>{action.title}</Text>
+                </Pressable>
+              );
+            })}
+          <Pressable
+            testID={cancelTestID ?? (testID ? `${testID}-cancel` : undefined)}
+            accessibilityRole="button"
+            onPress={() => onCancel?.()}
+          >
+            <Text>{cancelTitle ?? 'Cancel'}</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -1,6 +1,6 @@
 /** Diagnose identifiers reserved by the native selection protocol. */
 export function warnSelectionIdentifiers(
-  component: 'SelectionMenu' | 'SegmentedControl',
+  component: 'SelectionMenu' | 'SegmentedControl' | 'ActionSheet',
   values: readonly string[]
 ): void {
   if (!__DEV__) return;
