@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -171,6 +171,39 @@ export function Example() {
         <Text>Tap or long-press me</Text>
       </View>
     </ContextMenu>
+  );
+}
+```
+
+---
+
+### ActionSheet
+
+```tsx
+import { useState } from 'react';
+import { ActionSheet, Button } from 'react-native-platform-components';
+
+export function Example() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ActionSheet
+      visible={open}
+      title="Add a file"
+      actions={[
+        { id: 'library', title: 'Photo Library', image: { ios: 'photo', android: 'photo_library' } },
+        { id: 'camera', title: 'Take Photo', image: { ios: 'camera', android: 'photo_camera' } },
+        { id: 'remove', title: 'Remove File', attributes: { destructive: true } },
+      ]}
+      onSelect={(id) => {
+        setOpen(false);
+        console.log('Selected:', id);
+      }}
+      onCancel={() => setOpen(false)}
+    >
+      {/* The iPad (and iOS 26) popover points at the children */}
+      <Button label="Add File…" onPress={() => setOpen(true)} />
+    </ActionSheet>
   );
 }
 ```

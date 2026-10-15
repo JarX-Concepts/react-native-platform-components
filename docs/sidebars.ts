@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
         'components/textfield',
         'components/datepicker',
         'components/contextmenu',
+        'components/actionsheet',
         'components/selectionmenu',
         'components/segmentedcontrol',
         'components/tabbar',
