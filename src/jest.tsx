@@ -29,7 +29,7 @@ import {
 
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
-import type { ContextMenuProps } from './ContextMenu';
+import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
@@ -845,9 +845,12 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
 }
 
 /**
- * Its children in a view carrying `testID`. The menu itself isn't rendered;
- * `fireEvent(menu, 'pressAction', id, title)`, `'menuOpen'`, `'menuClose'`
- * and `'previewPress'` reach the callbacks.
+ * Its children in a view carrying `testID`. While `visible` (or the
+ * deprecated `android.visible`) is true, each action follows them as a
+ * `Pressable` with the `menuitem` role and the action's `testID` (else
+ * `${testID}-${id}`) that calls `onPressAction(id, title)`; submenus and
+ * sections list their actions. `fireEvent(menu, 'pressAction', id, title)`,
+ * `'menuOpen'`, `'menuClose'` and `'previewPress'` reach the callbacks.
  */
 export function ContextMenu(props: ContextMenuProps): React.ReactElement {
   const {
@@ -860,18 +863,47 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger,
+    visible,
     haptics,
     ios,
     android,
+    testID,
     ...viewProps
   } = props;
+
+  const open = !disabled && !!(visible ?? android?.visible);
+  const leaves = (list: ContextMenuProps['actions']): ContextMenuAction[] =>
+    list.flatMap((action) =>
+      action.attributes?.hidden
+        ? []
+        : action.subactions?.length
+          ? leaves(action.subactions)
+          : [action]
+    );
 
   return (
     <View
       {...viewProps}
+      testID={testID}
       {...handlers({ onPressAction, onMenuOpen, onMenuClose, onPreviewPress })}
     >
       {children}
+      {open
+        ? leaves(actions).map((action) => (
+            <Pressable
+              key={action.id}
+              testID={
+                action.testID ?? (testID ? `${testID}-${action.id}` : undefined)
+              }
+              accessibilityRole="menuitem"
+              accessibilityState={{ disabled: !!action.attributes?.disabled }}
+              disabled={action.attributes?.disabled}
+              onPress={() => onPressAction?.(action.id, action.title)}
+            >
+              <Text>{action.title}</Text>
+            </Pressable>
+          ))
+        : null}
     </View>
   );
 }

@@ -27,8 +27,25 @@ export interface ContextMenuProps extends ViewProps {
    * How the menu is triggered:
    * - 'longPress' (default): Long-press opens the menu
    * - 'tap': Single tap opens the menu
+   * - 'none': Only `visible` opens the menu. The wrapped content keeps all
+   *   its touches, so it can hold its own buttons and open the menu from one
+   *   of them.
    */
-  trigger?: 'longPress' | 'tap';
+  trigger?: 'longPress' | 'tap' | 'none';
+
+  /**
+   * Opens the menu from JS, anchored to the wrapped content. Controlled:
+   * set it to true to open the menu, and back to false in `onMenuClose`,
+   * which fires however the menu closes (an action, a tap outside, or
+   * `visible` turning false). False dismisses an open menu. Leave it unset
+   * to leave the menu to the user; menus the user opens still call
+   * `onMenuOpen` and `onMenuClose`.
+   *
+   * iOS 17.4+ (`UIControl.performPrimaryAction()` on an invisible anchor
+   * button); earlier iOS has no public API to open a menu without a touch,
+   * so `visible` does nothing there.
+   */
+  visible?: boolean;
 
   /**
    * Haptic played when the user presses an action. Opening the menu keeps
@@ -74,9 +91,8 @@ export interface ContextMenuProps extends ViewProps {
      */
     anchorPosition?: 'left' | 'right';
     /**
-     * Programmatic visibility control (Android only).
-     * Set to true to open the menu, false to close it.
-     * Note: iOS does not support programmatic menu opening.
+     * @deprecated Use the top-level `visible`, which also works on iOS.
+     * When both are set, the top-level one wins.
      */
     visible?: boolean;
   };
@@ -92,6 +108,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger = 'longPress',
+    visible,
     haptics,
     onPressAction,
     onMenuOpen,
@@ -134,11 +151,11 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
 
   const nativeAndroid = useMemo(() => {
     if (!android) return undefined;
-    return {
-      anchorPosition: android.anchorPosition,
-      visible: android.visible ? 'open' : 'closed',
-    };
+    return { anchorPosition: android.anchorPosition };
   }, [android]);
+
+  // The deprecated android.visible still works, under the top-level prop
+  const open = visible ?? android?.visible;
 
   return (
     <NativeContextMenu
@@ -147,6 +164,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
       actions={nativeActions}
       interactivity={disabled ? 'disabled' : 'enabled'}
       trigger={trigger}
+      visible={open === undefined ? undefined : open ? 'open' : 'closed'}
       haptics={haptics ?? ''}
       onPressAction={onPressAction ? handlePressAction : undefined}
       onMenuOpen={onMenuOpen ? handleMenuOpen : undefined}

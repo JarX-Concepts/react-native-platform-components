@@ -64,6 +64,11 @@ class PCContextMenuViewManager :
     view.applyTrigger(value)
   }
 
+  // "open" | "closed" | "" (unset, treated as closed)
+  override fun setVisible(view: PCContextMenuView, value: String?) {
+    view.applyVisible(value)
+  }
+
   override fun setIos(view: PCContextMenuView, value: ReadableMap?) {
     // Android ignores iOS config
   }
@@ -74,25 +79,12 @@ class PCContextMenuViewManager :
   }
 
   override fun setAndroid(view: PCContextMenuView, value: ReadableMap?) {
-    if (value == null) {
-      view.applyAndroidAnchorPosition(null)
-      view.applyAndroidVisible(null)
-      return
-    }
-
-    val anchorPosition = if (value.hasKey("anchorPosition") && !value.isNull("anchorPosition")) {
+    val anchorPosition = if (value != null && value.hasKey("anchorPosition") && !value.isNull("anchorPosition")) {
       value.getString("anchorPosition")
     } else {
       null
     }
     view.applyAndroidAnchorPosition(anchorPosition)
-
-    val visible = if (value.hasKey("visible") && !value.isNull("visible")) {
-      value.getString("visible")
-    } else {
-      null
-    }
-    view.applyAndroidVisible(visible)
   }
 
   // --- ViewGroupManager child management ---

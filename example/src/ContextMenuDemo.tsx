@@ -155,6 +155,34 @@ const SECTION_ACTIONS: ContextMenuAction[] = [
   },
 ];
 
+// The upload card's sources, opened from its own Choose button
+const SOURCE_ACTIONS: ContextMenuAction[] = [
+  {
+    id: 'photo',
+    title: 'Photo Library',
+    testID: 'source-photo',
+    image: { ios: 'photo.on.rectangle', android: 'photo_library' },
+  },
+  {
+    id: 'document',
+    title: 'Document',
+    testID: 'source-document',
+    image: { ios: 'doc', android: 'description' },
+  },
+  {
+    id: 'camera',
+    title: 'Camera',
+    testID: 'source-camera',
+    image: { ios: 'camera', android: 'photo_camera' },
+  },
+];
+
+const SOURCE_FILES: Record<string, string> = {
+  photo: 'IMG_0042.heic',
+  document: 'Report.pdf',
+  camera: 'Photo.jpg',
+};
+
 const HAPTICS_SEGMENTS = [
   { label: 'Default', value: 'default' },
   { label: 'Light', value: 'light' },
@@ -168,8 +196,10 @@ export function ContextMenuDemo(): React.JSX.Element {
   // Haptic on an action press; 'none' also drops Android's long-press one
   const [haptics, setHaptics] = useState<Haptics | undefined>(undefined);
 
-  // Modal mode state
+  // Menus opened from JS (visible)
   const [modalOpen, setModalOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const [file, setFile] = useState<string | null>(null);
 
   // A stepper and a toggle that keep the menu open (iOS 16+; Android menus
   // close on every press)
@@ -230,7 +260,10 @@ export function ContextMenuDemo(): React.JSX.Element {
             value={disabled}
             onValueChange={(v) => {
               setDisabled(v);
-              if (v) setModalOpen(false);
+              if (v) {
+                setModalOpen(false);
+                setSourceOpen(false);
+              }
             }}
           />
         </Row>
@@ -337,49 +370,80 @@ export function ContextMenuDemo(): React.JSX.Element {
         </Row>
       </Section>
 
-      {Platform.OS === 'android' && (
-        <Section title="Programmatic (Android)">
-          <Row
-            label="Menu"
-            right={
-              <PillButton
-                testID="programmatic-toggle-button"
-                label={modalOpen ? 'Close' : 'Open'}
-                disabled={disabled}
-                onPress={() => {
-                  if (disabled) return;
-                  setModalOpen((p) => !p);
-                }}
-              />
-            }
-          >
-            <ContextMenu
-              testID="context-menu-programmatic"
-              title="Programmatic Menu"
-              actions={BASIC_ACTIONS}
+      {/* trigger 'none': only `visible` opens the menu, and the content keeps
+          its own touches. Each menu closes itself through onMenuClose. */}
+      <Section title="Opened from JS">
+        <Row
+          label="Menu"
+          right={
+            <PillButton
+              testID="programmatic-toggle-button"
+              label={modalOpen ? 'Close' : 'Open'}
               disabled={disabled}
-              haptics={haptics}
-              android={{ visible: modalOpen }}
-              onPressAction={(id, title) => {
-                handleAction(id, title);
-                setModalOpen(false);
-              }}
-              onMenuClose={() => setModalOpen(false)}
-              style={styles.fullFlex}
-            >
-              <ActionField
-                testID="programmatic-field"
-                text={modalOpen ? 'Menu Open' : 'Menu Closed'}
-                onPress={() => {
-                  if (disabled) return;
-                  setModalOpen(true);
-                }}
-                disabled={disabled}
-              />
-            </ContextMenu>
-          </Row>
-        </Section>
-      )}
+              onPress={() => setModalOpen((p) => !p)}
+            />
+          }
+        >
+          <ContextMenu
+            testID="context-menu-programmatic"
+            title="Programmatic Menu"
+            actions={BASIC_ACTIONS}
+            disabled={disabled}
+            haptics={haptics}
+            trigger="none"
+            visible={modalOpen}
+            onPressAction={handleAction}
+            onMenuClose={() => setModalOpen(false)}
+            style={styles.fullFlex}
+          >
+            <View style={styles.demoBox}>
+              <Text testID="programmatic-state" style={styles.demoText}>
+                {modalOpen ? 'Menu Open' : 'Menu Closed'}
+              </Text>
+            </View>
+          </ContextMenu>
+        </Row>
+
+        <Divider />
+
+        <Row label="Upload">
+          <ContextMenu
+            testID="context-menu-upload"
+            title="Add From"
+            actions={SOURCE_ACTIONS}
+            disabled={disabled}
+            haptics={haptics}
+            trigger="none"
+            visible={sourceOpen}
+            onPressAction={(id, title) => {
+              handleAction(id, title);
+              setFile(SOURCE_FILES[id] ?? null);
+            }}
+            onMenuClose={() => setSourceOpen(false)}
+            style={styles.fullFlex}
+          >
+            <View style={styles.uploadBox}>
+              <Text testID="upload-file" style={styles.demoText}>
+                {file ?? 'No file'}
+              </Text>
+              <View style={styles.uploadButtons}>
+                <PillButton
+                  testID="upload-choose"
+                  label="Choose"
+                  disabled={disabled}
+                  onPress={() => setSourceOpen(true)}
+                />
+                <PillButton
+                  testID="upload-remove"
+                  label="Remove"
+                  disabled={disabled || !file}
+                  onPress={() => setFile(null)}
+                />
+              </View>
+            </View>
+          </ContextMenu>
+        </Row>
+      </Section>
 
       <Section title="Destructive Actions">
         <Row label="Danger">
@@ -501,5 +565,15 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     flex: 1,
   },
+  uploadBox: {
+    flex: 1,
+    backgroundColor: '#E8F4FD',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    gap: 10,
+  },
+  uploadButtons: { flexDirection: 'row', gap: 8 },
   fullFlex: { flex: 1 },
 });

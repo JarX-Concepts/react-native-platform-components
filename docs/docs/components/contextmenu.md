@@ -14,7 +14,7 @@ description: "Native context menu for React Native: UIContextMenuInteraction on 
   </tr>
 </table>
 
-Native context menu that wraps content and responds to **long-press** or **tap** gestures.
+Native context menu that wraps content and opens on a **long-press** or a **tap**, or from JS with `visible`.
 
 ### Props
 
@@ -23,7 +23,8 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `title`          | `string`                          | Menu title (shown as header on iOS)                                         |
 | `actions`        | `ContextMenuAction[]`             | Array of menu actions                                                       |
 | `disabled`       | `boolean`                         | Disables the menu                                                           |
-| `trigger`        | `'longPress' \| 'tap'`            | How the menu opens (default: `'longPress'`)                                 |
+| `trigger`        | `'longPress' \| 'tap' \| 'none'`  | How the menu opens (default: `'longPress'`). See [Trigger modes](#trigger-modes) |
+| `visible`        | `boolean`                         | Opens the menu from JS (controlled). See [Opening from JS](#opening-from-js) |
 | `haptics`        | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses an action; an action's own `haptics` wins. The long-press open haptic stays; `'none'` also turns it off on Android. See [Haptics](/guides/haptics). Default: none |
 | `onPressAction`  | `(actionId, actionTitle) => void` | Called when user selects an action                                          |
 | `onMenuOpen`     | `() => void`                      | Called when menu opens                                                      |
@@ -60,15 +61,62 @@ Submenus and sections nest to any depth: a section can hold a submenu, and a sub
 | Prop             | Type                | Description                                    |
 | ---------------- | ------------------- | ---------------------------------------------- |
 | `anchorPosition` | `'left' \| 'right'` | Aligns the popup with the start (`'left'`, default) or end (`'right'`) edge of the wrapped content; mirrored in RTL layouts |
-| `visible`        | `boolean`           | Programmatic visibility control (Android only) |
+| `visible`        | `boolean`           | Deprecated: use the top-level `visible`, which works on both platforms. The top-level prop wins when both are set |
 
-### Trigger Modes
+### Trigger modes
 
-- **Long-Press** (default): Long-press on wrapped content triggers the menu.
-- **Tap** (`trigger="tap"`): Single tap on wrapped content triggers the menu.
-- **Programmatic** (Android only): Use `android.visible` to control menu visibility programmatically. iOS does not support programmatic menu opening due to platform limitations.
+- **Long-press** (default): a long-press on the wrapped content opens the menu. On Android, taps still reach the content's own buttons. On iOS the menu's view takes every touch on the content, so those buttons don't get their taps.
+- **Tap** (`trigger="tap"`): a tap on the wrapped content opens the menu. The menu takes every tap on the content, so buttons inside it don't get theirs.
+- **None** (`trigger="none"`): no gesture opens the menu, and the wrapped content keeps all its touches on both platforms. Open the menu with [`visible`](#opening-from-js). Content with buttons of its own uses this mode.
 
-`onMenuOpen` and `onMenuClose` fire in both modes on both platforms.
+`onMenuOpen` and `onMenuClose` fire in every mode on both platforms, whether the user or `visible` opened the menu.
+
+### Opening from JS
+
+`visible` opens the menu without a touch, anchored to the wrapped content. Like [SelectionMenu](/components/selectionmenu)'s `visible`, it is controlled: set it to `true` to open the menu, and back to `false` in `onMenuClose`, which fires however the menu closes (an action, a tap outside, or `visible` turning `false`). Turning it `false` dismisses an open menu. A menu the user opens with the trigger still calls `onMenuOpen` and `onMenuClose`, and stays open while `visible` stays `false`.
+
+The app then decides whether to show the menu at all: it can skip the menu when only one option applies, run its checks first (a busy state, a permission), or open the menu from a control outside it. With `trigger="none"`, content that has buttons of its own wraps itself and opens the menu from one of them:
+
+```tsx
+const [sourcesOpen, setSourcesOpen] = useState(false);
+
+<ContextMenu
+  trigger="none"
+  visible={sourcesOpen}
+  onMenuClose={() => setSourcesOpen(false)}
+  title="Add From"
+  actions={[
+    { id: 'photo', title: 'Photo Library', image: { ios: 'photo.on.rectangle', android: 'photo_library' } },
+    { id: 'document', title: 'Document', image: { ios: 'doc', android: 'description' } },
+    { id: 'camera', title: 'Camera', image: { ios: 'camera', android: 'photo_camera' } },
+  ]}
+  onPressAction={(id) => addFrom(id)}
+>
+  <UploadBox file={file}>
+    <Button
+      label="Choose"
+      onPress={() => {
+        if (busy) return;
+        if (sources.length === 1) addFrom(sources[0]);
+        else setSourcesOpen(true);
+      }}
+    />
+    <Button label="Remove" onPress={removeFile} />
+  </UploadBox>
+</ContextMenu>
+```
+
+| Platform | Opening from JS |
+| -------- | --------------- |
+| iOS 17.4+ | An invisible `UIButton` over the content presents the menu with `UIControl.performPrimaryAction()` (with `trigger="tap"`, the tap button does). The button takes no touches. Actions, submenus, haptics and the callbacks work as in a menu the user opened; there is no lifted preview |
+| iOS 15 – 17.3 | UIKit has no public API to open a menu without a touch, so `visible` does nothing. Keep a trigger the user can reach, or check `Platform.Version` and show your own UI |
+| Android | `PopupMenu.show()`, anchored to the content like a menu the user opened |
+
+| iOS 26 | Android |
+| --- | --- |
+| ![The source menu opened from the upload card's Choose button on iOS 26](/img/components/contextmenu/visible-ios.webp) | ![The source menu opened from the upload card's Choose button on Android](/img/components/contextmenu/visible-android.webp) |
+
+`android.visible` still works but is deprecated: the top-level `visible` replaces it.
 
 ### Sections
 

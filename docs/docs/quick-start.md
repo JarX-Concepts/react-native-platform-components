@@ -175,6 +175,36 @@ export function Example() {
 }
 ```
 
+### ContextMenu (Opened from JS)
+
+```tsx
+import { useState } from 'react';
+import { ContextMenu } from 'react-native-platform-components';
+import { Button, View } from 'react-native';
+
+export function Example() {
+  const [open, setOpen] = useState(false);
+  return (
+    <ContextMenu
+      trigger="none" // the content keeps its own touches
+      visible={open}
+      onMenuClose={() => setOpen(false)}
+      actions={[
+        { id: 'photo', title: 'Photo Library' },
+        { id: 'camera', title: 'Camera' },
+      ]}
+      onPressAction={(id) => console.log('Selected:', id)}
+    >
+      <View style={{ padding: 16, backgroundColor: '#eee' }}>
+        <Button title="Add a file" onPress={() => setOpen(true)} />
+      </View>
+    </ContextMenu>
+  );
+}
+```
+
+`visible` opens the menu on Android and on iOS 17.4+.
+
 ---
 
 ### SelectionMenu (Headless)
