@@ -930,8 +930,11 @@ describe('Platform Components Example', () => {
     await element(by.text('Increase')).atIndex(0).tap();
     await expectText('stepper-value', 'Qty 2');
     if (!isAndroid()) {
-      // Still open, and the section header shows the new value
-      await expect(element(by.text('Quantity: 2'))).toBeVisible();
+      // Still open, and the section header shows the new value. While UIKit
+      // updates the open menu in place, the header can briefly exist twice.
+      await waitFor(element(by.text('Quantity: 2')).atIndex(0))
+        .toBeVisible()
+        .withTimeout(6000);
       await tapOutsideMenu();
       await waitFor(element(by.text('Increase')))
         .not.toBeVisible()
