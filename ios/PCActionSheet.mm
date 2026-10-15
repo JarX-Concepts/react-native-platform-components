@@ -59,7 +59,7 @@ static inline bool ActionsEqual(
     _props = defaultProps;
 
     // Covers the component's frame without taking touches; the children
-    // mount next to it. It anchors the sheet's popover (iPad).
+    // mount next to it, and the sheet's popover points at them.
     _view = [PCActionSheetView new];
     self.contentView = _view;
 

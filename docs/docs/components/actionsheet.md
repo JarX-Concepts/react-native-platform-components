@@ -102,6 +102,8 @@ The children render in place, like any view: usually the button that opens the s
 - **iPhone, before iOS 26**: the classic sheet at the bottom of the screen, with its Cancel row.
 - **Android**: the bottom sheet doesn't point at anything; the children only render.
 
+Only children anchor the sheet, not the component's own frame: a childless `ActionSheet` placed anywhere (in a column it is full width and 0 high) shows the unanchored sheet.
+
 | iOS 26 (iPhone, no children)                                                                                                 | iPad (no children)                                                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | ![The action sheet in the middle of the screen with a Cancel row on iOS 26](/img/components/actionsheet/unanchored-ios.webp) | ![The action sheet as a popover without an arrow on iPad](/img/components/actionsheet/unanchored-ipad.webp) |

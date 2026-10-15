@@ -106,6 +106,32 @@ export function ActionSheetDemo(): React.JSX.Element {
     />
   );
 
+  // The sheet's children render in place, and the sheet points at them
+  // where UIKit shows it as a popover (iPad, iPhone on iOS 26).
+  const sheet = (children: React.ReactNode) =>
+    mounted ? (
+      <ActionSheet
+        testID="actionsheet"
+        visible={open}
+        title={header ? 'Add a file' : undefined}
+        message={header ? 'Choose where the file comes from' : undefined}
+        actions={actions}
+        cancelTestID="source-cancel"
+        haptics="selection"
+        onSelect={(id) => {
+          setOpen(false);
+          setLastEvent(`select: ${id}`);
+          setFile(id === 'remove' ? null : (FILES[id] ?? id));
+        }}
+        onCancel={() => {
+          setOpen(false);
+          setLastEvent('cancel');
+        }}
+      >
+        {children}
+      </ActionSheet>
+    ) : null;
+
   return (
     <>
       <Section title="File source">
@@ -116,33 +142,12 @@ export function ActionSheetDemo(): React.JSX.Element {
           >
             {file ?? 'No file'}
           </Text>
-          {/* The children render in place, and the sheet points at them
-              where UIKit shows it as a popover (iPad, iPhone on iOS 26).
-              Without children an iPhone shows the sheet with a Cancel row. */}
-          {mounted ? (
-            <ActionSheet
-              testID="actionsheet"
-              visible={open}
-              title={header ? 'Add a file' : undefined}
-              message={header ? 'Choose where the file comes from' : undefined}
-              actions={actions}
-              cancelTestID="source-cancel"
-              haptics="selection"
-              onSelect={(id) => {
-                setOpen(false);
-                setLastEvent(`select: ${id}`);
-                setFile(id === 'remove' ? null : (FILES[id] ?? id));
-              }}
-              onCancel={() => {
-                setOpen(false);
-                setLastEvent('cancel');
-              }}
-            >
-              {anchored ? trigger : null}
-            </ActionSheet>
-          ) : null}
-          {anchored && mounted ? null : trigger}
+          {anchored && mounted ? sheet(trigger) : trigger}
         </View>
+        {/* Childless, stretched full width and 0 high in the column: an
+            iPhone shows the sheet with its Cancel row, an iPad a centered
+            popover */}
+        {anchored ? null : sheet(null)}
         <Divider />
         <Row label="Last event">
           <Text testID="actionsheet-last-event" style={ui.valueText}>

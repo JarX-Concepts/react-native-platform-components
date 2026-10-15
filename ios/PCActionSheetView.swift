@@ -28,10 +28,10 @@ struct PCActionSheetItem {
 /// The ActionSheet: a `UIAlertController` in the `.actionSheet` style,
 /// presented from the nearest view controller while `visible` is "open".
 ///
-/// The view covers the component's frame (the React children render in the
-/// Fabric view around it) and takes no touches. It is the popover's source
-/// wherever UIKit shows the sheet as a popover (iPad, and iPhone on iOS 26),
-/// so the sheet points at the children.
+/// The view covers the component's frame (the React children are mounted
+/// next to it in the Fabric view) and takes no touches. Wherever UIKit shows
+/// the sheet as a popover (iPad, and iPhone on iOS 26), the popover points
+/// at the children; without children the sheet has no source.
 @objcMembers
 public final class PCActionSheetView: UIView {
     // MARK: - Props (set from ObjC++)
@@ -218,10 +218,10 @@ public final class PCActionSheetView: UIView {
         // the middle of the screen on iOS 26, at the bottom before), and an
         // iPad (which needs a source) a centered popover.
         if let popover = alert.popoverPresentationController {
-            if bounds.width > 0 || bounds.height > 0 {
+            if let (host, frame) = childrenFrame() {
                 // Point at the children
-                popover.sourceView = self
-                popover.sourceRect = bounds
+                popover.sourceView = host
+                popover.sourceRect = frame
             } else if traitCollection.userInterfaceIdiom == .pad {
                 // Nothing to point at: the middle of the screen, no arrow
                 popover.sourceView = presenter.view
@@ -239,6 +239,19 @@ public final class PCActionSheetView: UIView {
         self.alert = alert
         presenter.present(alert, animated: true)
         haptics.prepare(in: self)
+    }
+
+    /// The view the React children are mounted in and the frame they cover
+    /// there, or nil without children. Fabric mounts them next to this view
+    /// (its content view), so they are its siblings. The component's own
+    /// frame says nothing: a childless sheet in a column is full width and
+    /// 0 high, and must not become a popover pointing at that line.
+    private func childrenFrame() -> (UIView, CGRect)? {
+        guard let host = superview else { return nil }
+        let children = host.subviews.filter { $0 !== self }
+        guard let first = children.first else { return nil }
+        let frame = children.dropFirst().reduce(first.frame) { $0.union($1.frame) }
+        return (host, frame)
     }
 
     /// The controller to present from: the nearest one, or whatever it is
