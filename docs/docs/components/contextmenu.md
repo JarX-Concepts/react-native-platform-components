@@ -45,6 +45,7 @@ Native context menu that wraps content and responds to **long-press** or **tap**
 | `haptics`       | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when this action is picked, in place of the component's `haptics`. See [Haptics](/guides/haptics) |
 | `subactions`    | `ContextMenuAction[]`                                       | Nested actions: a submenu, or an inline section with `displayInline`                 |
 | `displayInline` | `boolean`                                                   | Shows `subactions` inline as a section instead of a submenu. See [Sections](#sections) |
+| `testID`        | `string`                                                    | Test ID of the action's menu row, for UI tests. See [Testing menu actions](#testing-menu-actions) |
 
 Submenus and sections nest to any depth: a section can hold a submenu, and a submenu can hold sections.
 
@@ -182,6 +183,42 @@ Tapping the preview dismisses the menu back to the content and then calls `onPre
 | iOS 26 |
 | --- |
 | ![The lifted preview above the menu on iOS 26](/img/components/contextmenu/preview-ios.webp) |
+
+### Testing menu actions
+
+An action's `testID` goes on its row in the open menu, so an end-to-end test taps it by ID rather than by its title, which changes with the language. Submenus take one too, for the row that opens them. An inline section has no row of its own; give its actions the IDs.
+
+- **iOS**: the `accessibilityIdentifier` of the `UIAction` (or of the submenu's `UIMenu`). UIKit puts it on the menu row.
+- **Android 10+**: the tag of the popup's row view, which is what Detox and Espresso match `by.id` against. It is not a `resource-id`, so UiAutomator-based tools (Appium, Maestro) don't see it. AppCompat keeps the popup's list private, so the rows are found through `WindowInspector`, which Android 9 and earlier don't have: there the rows carry no ID.
+
+```tsx
+<ContextMenu
+  testID="upload-box"
+  trigger="tap"
+  actions={[
+    { id: 'camera', title: t('camera'), testID: 'source-camera' },
+    {
+      id: 'files',
+      title: t('files'),
+      testID: 'source-files',
+      subactions: [{ id: 'pdf', title: 'PDF', testID: 'source-files-pdf' }],
+    },
+  ]}
+  onPressAction={pick}
+>
+  <UploadBox />
+</ContextMenu>
+```
+
+```ts
+// Detox
+await element(by.id('upload-box')).tap();
+await waitFor(element(by.id('source-camera'))).toBeVisible().withTimeout(6000);
+await element(by.id('source-files')).tap();
+await element(by.id('source-files-pdf')).tap();
+```
+
+[Button](/components/button#menu) and [SplitButton](/components/buttongroup#splitbutton) menus take the same `testID`.
 
 ### Icons
 

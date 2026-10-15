@@ -257,7 +257,10 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     popup.setOnMenuItemClickListener { menuItem ->
       // Submenu headers open their submenu; they aren't actions.
       val item = PCMenuSupport.itemFor(menuItem, items)
-      if (item == null || !item.isAction) return@setOnMenuItemClickListener false
+      if (item == null || !item.isAction) {
+        post { PCMenuSupport.tagPopupRows(popup.menu, items) }
+        return@setOnMenuItemClickListener false
+      }
       Log.d(TAG, "popup onMenuItemClick")
       dismissAfterSelect = true
       PCHaptics.perform(this, item.haptics.ifEmpty { haptics })
@@ -285,6 +288,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
     onMenuOpen?.invoke()
     popup.show()
+    PCMenuSupport.tagPopupRows(popup.menu, items)
   }
 
   override fun onDetachedFromWindow() {

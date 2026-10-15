@@ -69,6 +69,16 @@ export interface ContextMenuAction {
    * - Android: a menu group with group dividers; the title is not shown.
    */
   displayInline?: boolean;
+  /**
+   * Test identifier of the action's menu row, so UI tests (Detox `by.id`)
+   * find it without its title. A submenu's row takes one too; an inline
+   * section has no row of its own.
+   *
+   * - iOS: the `accessibilityIdentifier` of the `UIAction` / `UIMenu`.
+   * - Android 10+: the tag of the popup row view, which Detox and Espresso
+   *   match `by.id` against. Not a resource-id.
+   */
+  testID?: string;
 }
 
 /**
@@ -99,6 +109,8 @@ export type NativeMenuItem = {
   state: string;
   /** The action's own haptics; '' = the component's */
   haptics: string;
+  /** Test identifier of the menu row; '' = none */
+  testID: string;
 };
 
 const flag = (value: boolean | undefined) => (value ? 'true' : 'false');
@@ -141,6 +153,7 @@ export function flattenMenuActions(
         keepsMenuPresented: flag(attributes?.keepsMenuPresented),
         state: action.state ?? '',
         haptics: action.haptics ?? '',
+        testID: action.testID ?? '',
       });
 
       if (kind !== 'action') visit(children, index);
