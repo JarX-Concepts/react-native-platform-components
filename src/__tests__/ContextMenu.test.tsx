@@ -9,11 +9,15 @@ jest.mock('../ContextMenuNativeComponent', () => {
   return {
     __esModule: true,
     default: jest.fn((props) => React.createElement('PCContextMenu', props)),
+    Commands: { handleTap: jest.fn() },
   };
 });
 
 const NativeContextMenu = jest.requireMock('../ContextMenuNativeComponent')
   .default as jest.Mock;
+const { Commands } = jest.requireMock('../ContextMenuNativeComponent') as {
+  Commands: { handleTap: jest.Mock };
+};
 
 function lastNativeProps() {
   const calls = NativeContextMenu.mock.calls;
@@ -268,6 +272,66 @@ describe('ContextMenu', () => {
       </ContextMenu>
     );
     expect(lastNativeProps().onPreviewPress).toBeUndefined();
+    act(() => tree.unmount());
+  });
+
+  it('opens a tap menu for a tap that no inner pressable took', () => {
+    const node = {};
+    let tree: ReturnType<typeof renderer.create> | undefined;
+    act(() => {
+      tree = renderer.create(
+        <ContextMenu actions={ACTIONS} trigger="tap">
+          <Text>Content</Text>
+        </ContextMenu>,
+        { createNodeMock: () => node }
+      );
+    });
+    const props = lastNativeProps();
+    const at = (x: number, y: number) => ({
+      nativeEvent: { pageX: x, pageY: y },
+    });
+    // Bubbles up to the menu only when no deeper responder took the touch
+    expect(props.onStartShouldSetResponder()).toBe(true);
+
+    act(() => {
+      props.onResponderGrant(at(10, 10));
+      props.onResponderMove(at(14, 12));
+      props.onResponderRelease(at(14, 12));
+    });
+    expect(Commands.handleTap).toHaveBeenCalledWith(node);
+
+    // A drag, or a touch a scroll view took over, opens nothing
+    Commands.handleTap.mockClear();
+    act(() => {
+      props.onResponderGrant(at(10, 10));
+      props.onResponderMove(at(40, 10));
+      props.onResponderRelease(at(40, 10));
+      props.onResponderGrant(at(10, 10));
+      props.onResponderTerminate(at(10, 10));
+      props.onResponderRelease(at(10, 10));
+    });
+    expect(Commands.handleTap).not.toHaveBeenCalled();
+    act(() => tree!.unmount());
+  });
+
+  it('takes no touches outside tap mode, or when disabled', () => {
+    const tree = render(
+      <ContextMenu actions={ACTIONS}>
+        <Text>Content</Text>
+      </ContextMenu>
+    );
+    expect(lastNativeProps().onStartShouldSetResponder).toBeUndefined();
+
+    for (const trigger of ['none', 'tap'] as const) {
+      act(() =>
+        tree.update(
+          <ContextMenu actions={ACTIONS} trigger={trigger} disabled>
+            <Text>Content</Text>
+          </ContextMenu>
+        )
+      );
+      expect(lastNativeProps().onStartShouldSetResponder).toBeUndefined();
+    }
     act(() => tree.unmount());
   });
 });

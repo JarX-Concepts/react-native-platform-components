@@ -87,6 +87,13 @@ class PCContextMenuViewManager :
     view.applyAndroidAnchorPosition(anchorPosition)
   }
 
+  // --- Commands ---
+
+  // trigger "tap": a tap on the content that no inner pressable took
+  override fun handleTap(view: PCContextMenuView) {
+    view.handleTap()
+  }
+
   // --- ViewGroupManager child management ---
   override fun addView(parent: PCContextMenuView, child: View, index: Int) {
     parent.addView(child, index)

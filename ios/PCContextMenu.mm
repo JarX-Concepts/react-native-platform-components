@@ -9,6 +9,7 @@
 #import <react/renderer/components/PlatformComponentsViewSpec/ComponentDescriptors.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/EventEmitters.h>
 #import <react/renderer/components/PlatformComponentsViewSpec/Props.h>
+#import <react/renderer/components/PlatformComponentsViewSpec/RCTComponentViewHelpers.h>
 
 #if __has_include(<PlatformComponents/PlatformComponents-Swift.h>)
 #import <PlatformComponents/PlatformComponents-Swift.h>
@@ -20,6 +21,9 @@
 
 using namespace facebook::react;
 using namespace platformcomponents;
+
+@interface PCContextMenu () <RCTPCContextMenuViewProtocol>
+@end
 
 @implementation PCContextMenu {
   PCContextMenuView *_view;
@@ -162,6 +166,17 @@ using namespace platformcomponents;
   }
 
   [super updateProps:props oldProps:oldProps];
+}
+
+#pragma mark - Commands
+
+- (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
+  RCTPCContextMenuHandleCommand(self, commandName, args);
+}
+
+// trigger "tap": a tap on the content that no inner pressable took
+- (void)handleTap {
+  [_view handleTap];
 }
 
 @end
