@@ -930,13 +930,58 @@ describe('Platform Components Example', () => {
     await element(by.text('Increase')).atIndex(0).tap();
     await expectText('stepper-value', 'Qty 2');
     if (!isAndroid()) {
-      // Still open, and the section header shows the new value
-      await expect(element(by.text('Quantity: 2'))).toBeVisible();
+      // Still open, and the section header shows the new value. While UIKit
+      // updates the open menu in place, the header can briefly exist twice.
+      await waitFor(element(by.text('Quantity: 2')).atIndex(0))
+        .toBeVisible()
+        .withTimeout(6000);
       await tapOutsideMenu();
       await waitFor(element(by.text('Increase')))
         .not.toBeVisible()
         .withTimeout(6000);
     }
+  });
+
+  it('should test Context Menu inner buttons', async () => {
+    await selectDemo('Context Menu');
+
+    // Long-press mode: a tap on the inner button goes to the button alone
+    await scrollToId('context-menu-inner');
+    await element(by.id('inner-like')).tap();
+    await expectText('inner-likes', 'Likes 1');
+    await pause(500);
+    await expect(element(by.id('menu-copy'))).not.toExist();
+
+    // A long press on the same button opens the menu, and the press it
+    // started is cancelled rather than counted when the finger lifts
+    await openMenuByLongPress('inner-like', 'Paste');
+    await element(by.id('menu-share')).tap();
+    // The Last Action field is scrolled away
+    await waitFor(element(by.text('Share (share)')))
+      .toExist()
+      .withTimeout(6000);
+    await expectText('inner-likes', 'Likes 1');
+
+    // Tap mode: a tap on an inner button goes to the button, not the menu,
+    // for a JS Pressable (Save) and a native Button (Pin) alike
+    await scrollToId('context-menu-tap-inner');
+    await element(by.id('tap-inner-save')).tap();
+    await expectText('tap-inner-count', 'Saved 1 · Pinned 0');
+    await element(by.id('tap-inner-pin')).tap();
+    await expectText('tap-inner-count', 'Saved 1 · Pinned 1');
+    await pause(500);
+    await expect(element(by.id('menu-copy'))).not.toExist();
+
+    // A tap elsewhere on the card opens the menu
+    await element(by.id('tap-inner-count')).tap();
+    await waitFor(element(by.id('menu-copy')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('menu-copy')).tap();
+    await waitFor(element(by.text('Copy (copy)')))
+      .toExist()
+      .withTimeout(6000);
+    await expectText('tap-inner-count', 'Saved 1 · Pinned 1');
   });
 
   it('should test Action Sheet functionality', async () => {

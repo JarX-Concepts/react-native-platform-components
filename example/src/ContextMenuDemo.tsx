@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
+  Button,
   ContextMenu,
   SegmentedControl,
   type ContextMenuAction,
@@ -200,6 +201,11 @@ export function ContextMenuDemo(): React.JSX.Element {
   const [modalOpen, setModalOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
   const [file, setFile] = useState<string | null>(null);
+
+  // Buttons inside a long-press and a tap menu keep their own taps
+  const [likes, setLikes] = useState(0);
+  const [saves, setSaves] = useState(0);
+  const [pins, setPins] = useState(0);
 
   // A stepper and a toggle that keep the menu open (iOS 16+; Android menus
   // close on every press)
@@ -518,6 +524,70 @@ export function ContextMenuDemo(): React.JSX.Element {
         </Row>
       </Section>
 
+      {/* The content's own buttons keep their taps in both modes */}
+      <Section title="Buttons Inside">
+        {/* A tap on Like goes to Like; a long press anywhere, on Like too,
+            opens the menu */}
+        <Row label="Long-Press">
+          <ContextMenu
+            testID="context-menu-inner"
+            title="Post"
+            actions={BASIC_ACTIONS}
+            disabled={disabled}
+            haptics={haptics}
+            onPressAction={handleAction}
+            ios={{ enablePreview }}
+            style={styles.fullFlex}
+          >
+            <View style={styles.innerBox}>
+              <Text testID="inner-likes" style={styles.demoText}>
+                {`Likes ${likes}`}
+              </Text>
+              <PillButton
+                testID="inner-like"
+                label="Like"
+                onPress={() => setLikes((n) => n + 1)}
+              />
+            </View>
+          </ContextMenu>
+        </Row>
+
+        <Divider />
+
+        {/* A tap on Save (a JS Pressable) or Pin (the native Button) goes to
+            that button; a tap elsewhere on the card opens the menu */}
+        <Row label="Tap">
+          <ContextMenu
+            testID="context-menu-tap-inner"
+            title="Tap Menu"
+            actions={BASIC_ACTIONS}
+            disabled={disabled}
+            haptics={haptics}
+            trigger="tap"
+            onPressAction={handleAction}
+            style={styles.fullFlex}
+          >
+            <View style={styles.innerBox}>
+              <Text testID="tap-inner-count" style={styles.demoText}>
+                {`Saved ${saves} · Pinned ${pins}`}
+              </Text>
+              <PillButton
+                testID="tap-inner-save"
+                label="Save"
+                onPress={() => setSaves((n) => n + 1)}
+              />
+              <Button
+                testID="tap-inner-pin"
+                label="Pin"
+                size="xsmall"
+                variant="tonal"
+                onPress={() => setPins((n) => n + 1)}
+              />
+            </View>
+          </ContextMenu>
+        </Row>
+      </Section>
+
       {/* Haptic on an action press for every menu above; 'None' also drops
           Android's long-press haptic */}
       <Section title="Haptics">
@@ -575,5 +645,15 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   uploadButtons: { flexDirection: 'row', gap: 8 },
+  innerBox: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#E8F4FD',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    gap: 8,
+  },
   fullFlex: { flex: 1 },
 });

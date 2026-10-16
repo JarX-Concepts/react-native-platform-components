@@ -65,9 +65,24 @@ Submenus and sections nest to any depth: a section can hold a submenu, and a sub
 
 ### Trigger modes
 
-- **Long-press** (default): a long-press on the wrapped content opens the menu. On Android, taps still reach the content's own buttons. On iOS the menu's view takes every touch on the content, so those buttons don't get their taps.
-- **Tap** (`trigger="tap"`): a tap on the wrapped content opens the menu. The menu takes every tap on the content, so buttons inside it don't get theirs.
-- **None** (`trigger="none"`): no gesture opens the menu, and the wrapped content keeps all its touches on both platforms. Open the menu with [`visible`](#opening-from-js). Content with buttons of its own uses this mode.
+- **Long-press** (default): a long press anywhere on the wrapped content opens the menu, also when it starts on a button inside the content. That button's press is cancelled, so its `onPress` doesn't fire when the finger lifts. Taps still reach the content's own buttons.
+- **Tap** (`trigger="tap"`): a tap on the wrapped content opens the menu, unless a button inside the content takes it. React Native gives a touch to the deepest view that responds to it, so a `Pressable` (or any touchable) inside keeps its taps, and so does a native control such as this library's `Button`. A tap anywhere else on the content opens the menu.
+- **None** (`trigger="none"`): no gesture opens the menu, and the wrapped content keeps all its touches. Open the menu with [`visible`](#opening-from-js), for example from one of the content's own buttons.
+
+```tsx
+<ContextMenu trigger="tap" actions={actions} onPressAction={handle}>
+  <View style={styles.card}>
+    <Text>{file.name}</Text>
+    {/* Gets its own taps; a tap elsewhere on the card opens the menu */}
+    <Button label="Remove" onPress={removeFile} />
+  </View>
+</ContextMenu>
+```
+
+| Platform | Long-press | Tap |
+| -------- | ---------- | --- |
+| iOS | A `UIContextMenuInteraction` on the view that holds the content, so the long press is recognized wherever it starts. The menu cancels React Native's touch when it opens | The tap reaches the content. A tap no inner button took opens the menu with `UIControl.performPrimaryAction()` on an invisible button, which stays VoiceOver's element for the menu. iOS 15 – 17.3 has no public API for that, so there the invisible button takes every tap on the content, and inner buttons get none: use `trigger="none"` there for content with buttons |
+| Android | Long-press detection on the view, which cancels the touch in React Native and in the content's views when the menu opens | The tap reaches the content; a tap no inner button took opens the `PopupMenu`. TalkBack opens the menu through the view's click action |
 
 `onMenuOpen` and `onMenuClose` fire in every mode on both platforms, whether the user or `visible` opened the menu.
 
@@ -75,7 +90,7 @@ Submenus and sections nest to any depth: a section can hold a submenu, and a sub
 
 `visible` opens the menu without a touch, anchored to the wrapped content. Like [SelectionMenu](/components/selectionmenu)'s `visible`, it is controlled: set it to `true` to open the menu, and back to `false` in `onMenuClose`, which fires however the menu closes (an action, a tap outside, or `visible` turning `false`). Turning it `false` dismisses an open menu. A menu the user opens with the trigger still calls `onMenuOpen` and `onMenuClose`, and stays open while `visible` stays `false`.
 
-The app then decides whether to show the menu at all: it can skip the menu when only one option applies, run its checks first (a busy state, a permission), or open the menu from a control outside it. With `trigger="none"`, content that has buttons of its own wraps itself and opens the menu from one of them:
+The app then decides whether to show the menu at all: it can skip the menu when only one option applies, run its checks first (a busy state, a permission), or open the menu from a control outside it. With `trigger="none"`, content opens the menu from one of its own buttons:
 
 ```tsx
 const [sourcesOpen, setSourcesOpen] = useState(false);

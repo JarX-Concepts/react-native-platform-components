@@ -7,7 +7,10 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import com.facebook.react.uimanager.RootView
+import com.facebook.react.uimanager.events.NativeGestureUtil
 import com.facebook.react.views.view.ReactViewGroup
 
 class PCContextMenuView(context: Context) : ReactViewGroup(context) {
@@ -42,8 +45,12 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
   // Long-press detection
   private var longPressRunnable: Runnable? = null
+  /** A long press opened the menu and cancelled the touch in JS. */
+  private var nativeGestureStarted = false
   private var touchDownX = 0f
   private var touchDownY = 0f
+  /** Tap mode: the last touch went down on a native control (see handleTap). */
+  private var downOnNativeControl = false
   private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
   private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
 
@@ -51,8 +58,8 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     // Enable long-click for longPress mode
     isLongClickable = true
     setOnLongClickListener { handleLongClick() }
-    // Enable click for tap mode
-    setOnClickListener { handleTap() }
+    // Enable click for tap mode (accessibility services; touches go through JS)
+    setOnClickListener { openTapMenu() }
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -64,6 +71,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
       MotionEvent.ACTION_DOWN -> {
         touchDownX = ev.x
         touchDownY = ev.y
+        downOnNativeControl = trigger == "tap" && isOnNativeControl(this, ev.x, ev.y)
         // In longPress mode, schedule long-press detection
         if (trigger == "longPress") {
           // Dispatch recycles MotionEvent instances before this callback runs.
@@ -76,12 +84,18 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
               // The long-press haptic View.performLongClick plays, which this
               // path bypasses; off with haptics "none" (isHapticFeedbackEnabled)
               if (popupShowing) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-              // Cancel any pending touch events on children
+              // Cancel any pending touch events on children, and the touch in
+              // JS, so a pressable under the finger doesn't fire onPress when
+              // it lifts (as a ScrollView does when it starts scrolling)
               val cancel = MotionEvent.obtain(
                 downTime, SystemClock.uptimeMillis(),
                 MotionEvent.ACTION_CANCEL, downX, downY, 0
               )
               super.dispatchTouchEvent(cancel)
+              if (hasReactRoot()) {
+                NativeGestureUtil.notifyNativeGestureStarted(this, cancel)
+                nativeGestureStarted = true
+              }
               cancel.recycle()
             }
           }
@@ -95,22 +109,34 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
           cancelPendingLongPress()
         }
       }
-      MotionEvent.ACTION_UP -> {
+      // Tap mode opens the menu from JS (handleTap), for taps that no inner
+      // pressable took
+      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
         cancelPendingLongPress()
-        // In tap mode, handle tap on ACTION_UP if within slop
-        if (trigger == "tap" &&
-            Math.abs(ev.x - touchDownX) <= touchSlop &&
-            Math.abs(ev.y - touchDownY) <= touchSlop) {
-          handleTap()
-          return true // Consume the event
-        }
-      }
-      MotionEvent.ACTION_CANCEL -> {
-        cancelPendingLongPress()
+        endNativeGesture(ev)
       }
     }
 
     return super.onInterceptTouchEvent(ev)
+  }
+
+  private fun endNativeGesture(ev: MotionEvent) {
+    if (!nativeGestureStarted) return
+    nativeGestureStarted = false
+    if (hasReactRoot()) NativeGestureUtil.notifyNativeGestureEnded(this, ev)
+  }
+
+  /**
+   * Whether a React root (a RootView) is above this view. NativeGestureUtil
+   * asserts on one, and crashes for a view hosted outside React Native.
+   */
+  private fun hasReactRoot(): Boolean {
+    var parent = parent
+    while (parent != null) {
+      if (parent is RootView) return true
+      parent = parent.parent
+    }
+    return false
   }
 
   private fun cancelPendingLongPress() {
@@ -128,11 +154,37 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
     return true
   }
 
-  private fun handleTap() {
+  /**
+   * Tap mode: JS calls this for a tap on the content that no inner pressable
+   * took (React Native's responder system knows: the deepest responder wins).
+   */
+  fun handleTap() {
+    // A native control (this library's Button) handles its own taps,
+    // outside the JS responder system
+    if (downOnNativeControl) return
+    openTapMenu()
+  }
+
+  /** Tap mode: JS taps (handleTap), and TalkBack through the click listener. */
+  private fun openTapMenu() {
     if (trigger != "tap") return
     if (interactivity != "enabled") return
 
     showPopupMenu()
+  }
+
+  /** Whether (x, y) of `group` lands on a descendant with its own click listener. */
+  private fun isOnNativeControl(group: ViewGroup, x: Float, y: Float): Boolean {
+    for (i in group.childCount - 1 downTo 0) {
+      val child = group.getChildAt(i)
+      if (child.visibility != VISIBLE) continue
+      val childX = x + group.scrollX - child.left - child.translationX
+      val childY = y + group.scrollY - child.top - child.translationY
+      if (childX < 0 || childY < 0 || childX >= child.width || childY >= child.height) continue
+      if (child.isEnabled && child.hasOnClickListeners()) return true
+      return child is ViewGroup && isOnNativeControl(child, childX, childY)
+    }
+    return false
   }
 
   // ---- Public apply* (called by manager) ----

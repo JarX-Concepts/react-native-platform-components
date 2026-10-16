@@ -1,12 +1,16 @@
 // ContextMenu.tsx
-import React, { useCallback, useMemo } from 'react';
-import { type ViewProps } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { type GestureResponderEvent, type ViewProps } from 'react-native';
 
 import NativeContextMenu, {
+  Commands,
   type ContextMenuPressActionEvent,
 } from './ContextMenuNativeComponent';
 import { flattenMenuActions, type ContextMenuAction } from './menuItems';
 import type { Haptics } from './haptics';
+
+/** How far (in points) a tap may move before it no longer opens the menu. */
+const TAP_SLOP = 10;
 
 export type {
   ContextMenuAction,
@@ -25,11 +29,12 @@ export interface ContextMenuProps extends ViewProps {
 
   /**
    * How the menu is triggered:
-   * - 'longPress' (default): Long-press opens the menu
-   * - 'tap': Single tap opens the menu
+   * - 'longPress' (default): Long-press opens the menu, also on a button
+   *   inside the content; taps still reach the content's buttons
+   * - 'tap': Single tap opens the menu. A tap on a pressable inside the
+   *   content goes to that pressable instead
    * - 'none': Only `visible` opens the menu. The wrapped content keeps all
-   *   its touches, so it can hold its own buttons and open the menu from one
-   *   of them.
+   *   its touches, so it can open the menu from one of its own buttons.
    */
   trigger?: 'longPress' | 'tap' | 'none';
 
@@ -122,6 +127,40 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
 
   const nativeActions = useMemo(() => flattenMenuActions(actions), [actions]);
 
+  const nativeRef = useRef<React.ComponentRef<typeof NativeContextMenu>>(null);
+  // Where the current tap went down; null once it moved too far
+  const tapStart = useRef<{ x: number; y: number } | null>(null);
+
+  // trigger 'tap': React Native gives a touch to the deepest view that asks
+  // for it, so the content's own pressables keep their taps. A tap none of
+  // them took bubbles up to this view, and opens the menu.
+  const tapHandlers = useMemo(() => {
+    if (trigger !== 'tap' || disabled) return undefined;
+    return {
+      onStartShouldSetResponder: () => true,
+      onResponderGrant: (e: GestureResponderEvent) => {
+        tapStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+      },
+      onResponderMove: (e: GestureResponderEvent) => {
+        const start = tapStart.current;
+        if (!start) return;
+        const { pageX, pageY } = e.nativeEvent;
+        if (Math.hypot(pageX - start.x, pageY - start.y) > TAP_SLOP) {
+          tapStart.current = null;
+        }
+      },
+      onResponderRelease: () => {
+        const node = nativeRef.current;
+        if (tapStart.current && node != null) Commands.handleTap(node);
+        tapStart.current = null;
+      },
+      // A scroll view took the touch over
+      onResponderTerminate: () => {
+        tapStart.current = null;
+      },
+    };
+  }, [trigger, disabled]);
+
   const handlePressAction = useCallback(
     (e: { nativeEvent: ContextMenuPressActionEvent }) => {
       const { actionId, actionTitle } = e.nativeEvent;
@@ -159,6 +198,8 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
 
   return (
     <NativeContextMenu
+      ref={nativeRef}
+      {...tapHandlers}
       style={style}
       title={title}
       actions={nativeActions}

@@ -288,6 +288,10 @@ final class PCMenuButton: UIButton {
 
     private(set) var isMenuVisible = false
 
+    /// VoiceOver's double-tap opens the menu with `presentMenu()` instead of
+    /// a simulated tap, for a button that lets touches through (iOS 17.4+).
+    var opensMenuOnAccessibilityActivate = false
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         showsMenuAsPrimaryAction = true
@@ -325,6 +329,11 @@ final class PCMenuButton: UIButton {
         guard #available(iOS 17.4, *) else { return false }
         performPrimaryAction()
         return true
+    }
+
+    override func accessibilityActivate() -> Bool {
+        if opensMenuOnAccessibilityActivate, menu != nil, presentMenu() { return true }
+        return super.accessibilityActivate()
     }
 
     /// Closes the menu if it is open; a closed menu's interaction is left alone.

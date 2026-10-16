@@ -6,7 +6,7 @@ private let logger = Logger(subsystem: "com.platformcomponents", category: "Cont
 // MARK: - Main View
 
 @objcMembers
-public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
+public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, UIGestureRecognizerDelegate {
     // MARK: - Props (set from ObjC++)
 
     /// Menu title (shown as header on iOS)
@@ -59,8 +59,12 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     /// The long-press menu last handed to UIKit, to find the showing root.
     private var presentedMenu: UIMenu?
 
-    // Tap mode: UIButton with UIMenu for tap-to-show
+    // Tap mode: UIButton with UIMenu for tap-to-show. From iOS 17.4 it takes
+    // no touches (see hitTest), and JS opens it (see handleTap).
     private var tapMenuButton: PCMenuButton?
+    private var touchRecorder: UIGestureRecognizer?
+    /// Where the last touch on the content went down (see installTouchRecorder)
+    private weak var lastTouchView: UIView?
 
     /// Invisible anchor of a menu opened through `visible` in longPress and
     /// none modes (tap mode opens its own button). It never takes a touch;
@@ -98,14 +102,27 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         }
     }
 
-    /// This view lies over the React content. In none mode it lets every
-    /// touch through to the content; otherwise it keeps them, for the
-    /// long-press interaction or the tap button, but never on the anchor.
+    /// This view lies over the React content and lets its touches through,
+    /// so the content's own pressables get them: the long-press interaction
+    /// sits on the parent component view, around the content, and JS opens
+    /// a tap menu for taps no pressable took. Only the tap button keeps its
+    /// touches, before iOS 17.4, where JS can't open its menu.
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        guard trigger != "none" else { return nil }
+        guard let button = tapMenuButton, !PCMenuButton.canPresentMenuProgrammatically else { return nil }
         let view = super.hitTest(point, with: event)
-        if let anchor = anchorMenuButton, view?.isDescendant(of: anchor) == true { return self }
-        return view
+        return view?.isDescendant(of: button) == true ? view : nil
+    }
+
+    public override func willMove(toSuperview newSuperview: UIView?) {
+        super.willMove(toSuperview: newSuperview)
+        removeContextMenuInteraction()
+        removeTouchRecorder()
+    }
+
+    public override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        // The long-press interaction goes on the new parent
+        updateTrigger()
     }
 
     public override func didMoveToWindow() {
@@ -154,34 +171,56 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
             // Tap mode: use UIButton with UIMenu for tap-to-show
             removeContextMenuInteraction()
             installTapMenuButton()
+            installTouchRecorder()
         case "none":
             // Only `visible` opens the menu, from the anchor
             removeContextMenuInteraction()
             removeTapMenuButton()
+            removeTouchRecorder()
         default:
             // Install context menu interaction for long-press
             installContextMenuInteraction()
             removeTapMenuButton()
+            removeTouchRecorder()
         }
     }
 
     private func installContextMenuInteraction() {
-        guard contextMenuInteraction == nil else { return }
+        guard contextMenuInteraction == nil, let parentView = getParentComponentView() else { return }
 
-        // Install interaction on self so that long-press on our view triggers the menu.
+        // Install interaction on the parent component view, which holds the React
+        // content, so a long-press anywhere on it (an inner button too) triggers the
+        // menu while taps still reach the content.
         // We use UITargetedPreview in the delegate methods to show the parent view
-        // (which contains the React content) as the preview.
+        // as the preview.
         let interaction = UIContextMenuInteraction(delegate: self)
-        addInteraction(interaction)
+        parentView.addInteraction(interaction)
         contextMenuInteraction = interaction
-        logger.debug("Installed UIContextMenuInteraction on PCContextMenuView")
+        logger.debug("Installed UIContextMenuInteraction on the parent component view")
     }
 
     private func removeContextMenuInteraction() {
         guard let interaction = contextMenuInteraction else { return }
-        removeInteraction(interaction)
+        interaction.view?.removeInteraction(interaction)
         contextMenuInteraction = nil
         logger.debug("Removed UIContextMenuInteraction")
+    }
+
+    /// The long-press menu took the touch over, but React Native's touch
+    /// handler would still end it as a press of the pressable under the
+    /// finger. Cancels it the way RN does for its own touches: toggling
+    /// `isEnabled` cancels a gesture recognizer, and RN sends touchcancel.
+    private func cancelReactTouches() {
+        guard let handlerClass = NSClassFromString("RCTSurfaceTouchHandler") else { return }
+        var view = superview
+        while let current = view {
+            if let handler = current.gestureRecognizers?.first(where: { $0.isKind(of: handlerClass) }) {
+                handler.isEnabled = false
+                handler.isEnabled = true
+                return
+            }
+            view = current.superview
+        }
     }
 
     // MARK: - Tap Mode Button
@@ -197,7 +236,13 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         button.translatesAutoresizingMaskIntoConstraints = false
         // Make button invisible but still tappable
         button.tintColor = .clear
-        button.onMenuOpen = { [weak self] in self?.onMenuOpen?() }
+        // Still VoiceOver's element for the menu where it lets touches through
+        button.opensMenuOnAccessibilityActivate = true
+        button.onMenuOpen = { [weak self] in
+            guard let self else { return }
+            self.haptics.prepare(in: self)
+            self.onMenuOpen?()
+        }
         button.onMenuClose = { [weak self] in self?.onMenuClose?() }
 
         addSubview(button)
@@ -221,6 +266,57 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     private func updateTapMenuButton() {
         guard let button = tapMenuButton else { return }
         button.setMenu(items.isEmpty ? nil : buildMenu())
+    }
+
+    /// Tap mode, iOS 17.4+: JS calls this for a tap on the content that no
+    /// inner pressable took (React Native's responder system knows that: the
+    /// deepest responder wins). Earlier versions open the menu from the tap
+    /// button's own touch, and do nothing here.
+    public func handleTap() {
+        guard trigger == "tap", interactivity != "disabled", !items.isEmpty else { return }
+        guard let button = tapMenuButton, !isAnyMenuVisible else { return }
+        // A native control (this library's Button, a switch) handles its own
+        // taps, outside the JS responder system
+        guard !isInsideControl(lastTouchView) else { return }
+        logger.debug("handleTap: presenting \(self.items.count) items")
+        button.presentMenu()
+    }
+
+    // MARK: - Tap Mode Touch Recorder
+
+    /// Notes the view each touch on the content lands on, for handleTap,
+    /// without taking part in the touch.
+    private func installTouchRecorder() {
+        guard touchRecorder == nil, let parentView = getParentComponentView() else { return }
+        let recorder = UIGestureRecognizer(target: nil, action: nil)
+        recorder.cancelsTouchesInView = false
+        recorder.delegate = self
+        parentView.addGestureRecognizer(recorder)
+        touchRecorder = recorder
+    }
+
+    private func removeTouchRecorder() {
+        guard let recorder = touchRecorder else { return }
+        recorder.view?.removeGestureRecognizer(recorder)
+        touchRecorder = nil
+        lastTouchView = nil
+    }
+
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        lastTouchView = touch.view
+        return false
+    }
+
+    /// Whether the view is, or is inside, an enabled UIControl of the content.
+    private func isInsideControl(_ view: UIView?) -> Bool {
+        var current = view
+        while let candidate = current, candidate !== superview {
+            if let control = candidate as? UIControl, control !== tapMenuButton, control.isEnabled {
+                return true
+            }
+            current = candidate.superview
+        }
+        return false
     }
 
     // MARK: - Programmatic presentation (`visible`)
@@ -387,6 +483,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     ) {
         logger.debug("contextMenuInteraction: willDisplayMenu")
         isMenuVisible = true
+        cancelReactTouches()
         haptics.prepare(in: self)
         onMenuOpen?()
     }

@@ -1,6 +1,7 @@
 // ContextMenuNativeComponent.ts
+import type * as React from 'react';
 import type { HostComponent, ViewProps } from 'react-native';
-import { codegenNativeComponent } from 'react-native';
+import { codegenNativeCommands, codegenNativeComponent } from 'react-native';
 import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 
 /**
@@ -139,6 +140,22 @@ export interface ContextMenuProps extends ViewProps {
   android?: AndroidProps;
 }
 
+type NativeContextMenuComponent = HostComponent<ContextMenuProps>;
+
+// `React.ElementRef` rather than `React.ComponentRef`: the codegen shipped with
+// React Native 0.81 (and the 0.76 Android floor) only accepts the former.
+interface NativeCommands {
+  /**
+   * trigger 'tap': the user tapped the content and no inner pressable took
+   * the tap. Opens the menu (iOS 17.4+; earlier iOS opens it natively).
+   */
+  handleTap: (viewRef: React.ElementRef<NativeContextMenuComponent>) => void;
+}
+
+export const Commands: NativeCommands = codegenNativeCommands<NativeCommands>({
+  supportedCommands: ['handleTap'],
+});
+
 export default codegenNativeComponent<ContextMenuProps>(
   'PCContextMenu'
-) as HostComponent<ContextMenuProps>;
+) as NativeContextMenuComponent;
