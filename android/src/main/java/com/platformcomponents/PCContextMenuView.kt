@@ -21,8 +21,8 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   /** The flattened menu items (see PCMenuSupport) */
   var actions: List<PCMenuSupport.Item> = emptyList()
   var interactivity: String = "enabled" // "enabled" | "disabled"
-  var trigger: String = "longPress"     // "longPress" | "tap"
-  var androidVisible: String = "closed" // "open" | "closed" (Android-only programmatic)
+  var trigger: String = "longPress"     // "longPress" | "tap" | "none"
+  var visible: String = "closed"        // "open" | "closed" (programmatic)
   var androidAnchorPosition: String? = "left" // "left" | "right"
 
   /** The `haptics` prop, played when an action is picked (an action's own `haptics` wins). */
@@ -161,23 +161,22 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
 
   fun applyTrigger(value: String?) {
     trigger = when (value) {
-      "longPress", "tap" -> value
+      // "none": only `visible` opens the menu; no touch is intercepted
+      "longPress", "tap", "none" -> value
       else -> "longPress"
     }
     Log.d(TAG, "applyTrigger trigger=$trigger")
     updateTriggerState()
   }
 
-  fun applyAndroidVisible(value: String?) {
-    androidVisible = when (value) {
-      "open", "closed" -> value
-      else -> "closed"
-    }
-    Log.d(TAG, "applyAndroidVisible androidVisible=$androidVisible")
+  /** Called only when the prop changes, so a menu the user opened stays open. */
+  fun applyVisible(value: String?) {
+    visible = if (value == "open") "open" else "closed"
+    Log.d(TAG, "applyVisible visible=$visible")
     openToken += 1
     val token = openToken
 
-    if (androidVisible == "open") {
+    if (visible == "open") {
       presentIfNeeded(token)
     } else {
       if (popupShowing) {
@@ -217,7 +216,7 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
         Log.d(TAG, "presentIfNeeded stale token -> skip")
         return@post
       }
-      if (androidVisible != "open") {
+      if (visible != "open") {
         Log.d(TAG, "presentIfNeeded no longer open -> skip")
         return@post
       }

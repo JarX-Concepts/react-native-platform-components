@@ -61,7 +61,7 @@ export type ContextMenuPressActionEvent = Readonly<{
 export type ContextMenuInteractivity = 'enabled' | 'disabled';
 
 /** Trigger mode for opening the menu. */
-export type ContextMenuTrigger = 'longPress' | 'tap';
+export type ContextMenuTrigger = 'longPress' | 'tap' | 'none';
 
 /**
  * iOS-specific configuration.
@@ -77,11 +77,6 @@ export type IOSProps = Readonly<{
 export type AndroidProps = Readonly<{
   /** Anchor position for the popup menu */
   anchorPosition?: string; // 'left' | 'right'
-  /**
-   * Programmatic visibility control (Android only).
-   * 'open' to show the menu, 'closed' to hide it.
-   */
-  visible?: string; // 'open' | 'closed'
 }>;
 
 export interface ContextMenuProps extends ViewProps {
@@ -104,8 +99,15 @@ export interface ContextMenuProps extends ViewProps {
    * How the menu is triggered:
    * - 'longPress' (default): Long-press opens the menu
    * - 'tap': Single tap opens the menu
+   * - 'none': only `visible` opens it; the content keeps its touches
    */
   trigger?: string; // ContextMenuTrigger
+
+  /**
+   * Programmatic visibility: 'open' presents the menu anchored to the view,
+   * 'closed' dismisses it. '' (unset) leaves the menu to the user.
+   */
+  visible?: string; // '' | 'open' | 'closed'
 
   /**
    * Haptic played when an action is pressed: '' (none added) | 'none' | 'selection' |

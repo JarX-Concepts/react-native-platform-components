@@ -22,6 +22,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactElement {
     actions,
     disabled,
     trigger,
+    visible,
     onPressAction,
     onMenuOpen,
     onMenuClose,

@@ -207,6 +207,60 @@ describe('ContextMenu', () => {
     act(() => tree.unmount());
   });
 
+  it('maps visible to the native prop, unset by default', () => {
+    const tree = render(
+      <ContextMenu actions={ACTIONS} trigger="none">
+        <Text>Content</Text>
+      </ContextMenu>
+    );
+    expect(lastNativeProps().visible).toBeUndefined();
+    expect(lastNativeProps().trigger).toBe('none');
+
+    act(() =>
+      tree.update(
+        <ContextMenu actions={ACTIONS} trigger="none" visible>
+          <Text>Content</Text>
+        </ContextMenu>
+      )
+    );
+    expect(lastNativeProps().visible).toBe('open');
+
+    act(() =>
+      tree.update(
+        <ContextMenu actions={ACTIONS} trigger="none" visible={false}>
+          <Text>Content</Text>
+        </ContextMenu>
+      )
+    );
+    expect(lastNativeProps().visible).toBe('closed');
+    act(() => tree.unmount());
+  });
+
+  it('keeps android.visible as an alias, under the top-level prop', () => {
+    const tree = render(
+      <ContextMenu actions={ACTIONS} android={{ visible: true }}>
+        <Text>Content</Text>
+      </ContextMenu>
+    );
+    expect(lastNativeProps().visible).toBe('open');
+    expect(lastNativeProps().android).toEqual({ anchorPosition: undefined });
+
+    act(() =>
+      tree.update(
+        <ContextMenu
+          actions={ACTIONS}
+          visible={false}
+          android={{ visible: true, anchorPosition: 'right' }}
+        >
+          <Text>Content</Text>
+        </ContextMenu>
+      )
+    );
+    expect(lastNativeProps().visible).toBe('closed');
+    expect(lastNativeProps().android).toEqual({ anchorPosition: 'right' });
+    act(() => tree.unmount());
+  });
+
   it('leaves onPreviewPress off when not set', () => {
     const tree = render(
       <ContextMenu actions={[]}>

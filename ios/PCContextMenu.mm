@@ -129,7 +129,7 @@ using namespace platformcomponents;
     }
   }
 
-  // trigger: "longPress" | "tap"
+  // trigger: "longPress" | "tap" | "none"
   if (!prevProps || newProps.trigger != prevProps->trigger) {
     if (!newProps.trigger.empty()) {
       _view.trigger =
@@ -137,6 +137,12 @@ using namespace platformcomponents;
     } else {
       _view.trigger = @"longPress";
     }
+  }
+
+  // visible: "open" | "closed" | "" (unset, treated as closed). Set only on
+  // a change, so a menu the user opened isn't dismissed by an unrelated update.
+  if (!prevProps || newProps.visible != prevProps->visible) {
+    _view.visible = newProps.visible == "open" ? @"open" : @"closed";
   }
 
   if (!prevProps || newProps.haptics != prevProps->haptics) {

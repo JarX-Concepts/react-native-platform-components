@@ -861,23 +861,31 @@ describe('Platform Components Example', () => {
       .toBeVisible()
       .withTimeout(6000);
 
-    // Test Android-only programmatic mode
-    if (isAndroid()) {
-      await element(by.id('programmatic-toggle-button')).tap();
+    // Opened from JS: a button outside the menu sets `visible`
+    await scrollToId('programmatic-toggle-button');
+    await element(by.id('programmatic-toggle-button')).tap();
+    await waitFor(element(by.id('menu-share')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('menu-share')).tap();
+    // onMenuClose set it back; the Last Action field is scrolled away
+    await expectText('programmatic-state', 'Menu Closed');
+    await waitFor(element(by.text('Share (share)')))
+      .toExist()
+      .withTimeout(6000);
 
-      // Wait for menu to appear
-      await waitFor(element(by.text('Copy')))
-        .toBeVisible()
-        .withTimeout(6000);
-
-      // Select an action
-      await element(by.id('menu-share')).tap();
-
-      // Verify the action was recorded
-      await waitFor(element(by.text('Share (share)')))
-        .toBeVisible()
-        .withTimeout(6000);
-    }
+    // trigger 'none': the card's own buttons keep working, and Choose opens
+    // the menu around the card
+    await scrollToId('upload-remove');
+    await element(by.id('upload-choose')).tap();
+    await waitFor(element(by.id('source-document')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('source-document')).tap();
+    await expectText('upload-file', 'Report.pdf');
+    await element(by.id('upload-remove')).tap();
+    await expectText('upload-file', 'No file');
+    await scrollToId('disabled-switch', 'up');
 
     // Test disabled state
     await element(by.id('disabled-switch')).tap();

@@ -28,8 +28,12 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         }
     }
 
-    /// "longPress" | "tap"
+    /// "longPress" | "tap" | "none"
     public var trigger: String = "longPress" { didSet { updateTrigger() } }
+
+    /// "open" | "closed". ObjC++ sets it only when the prop changes, so a
+    /// menu the user opened stays open while the prop stays "closed".
+    public var visible: String = "closed" { didSet { updatePresentation() } }
 
     /// iOS-specific: enable preview
     public var enablePreview: String = "false"
@@ -58,6 +62,16 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     // Tap mode: UIButton with UIMenu for tap-to-show
     private var tapMenuButton: PCMenuButton?
 
+    /// Invisible anchor of a menu opened through `visible` in longPress and
+    /// none modes (tap mode opens its own button). It never takes a touch;
+    /// see hitTest.
+    private var anchorMenuButton: PCMenuButton?
+    private var presentationToken = 0
+
+    private var isAnyMenuVisible: Bool {
+        isMenuVisible || tapMenuButton?.isMenuVisible == true || anchorMenuButton?.isMenuVisible == true
+    }
+
     // MARK: - Init
 
     public override init(frame: CGRect) {
@@ -84,13 +98,28 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         }
     }
 
+    /// This view lies over the React content. In none mode it lets every
+    /// touch through to the content; otherwise it keeps them, for the
+    /// long-press interaction or the tap button, but never on the anchor.
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard trigger != "none" else { return nil }
+        let view = super.hitTest(point, with: event)
+        if let anchor = anchorMenuButton, view?.isDescendant(of: anchor) == true { return self }
+        return view
+    }
 
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        // A menu asked for before the view was on screen opens now.
+        if window != nil, visible == "open" { updatePresentation() }
+    }
 
     private func updateEnabled() {
         let disabled = (interactivity == "disabled")
         alpha = disabled ? 0.5 : 1.0
         isUserInteractionEnabled = !disabled
         accessibilityTraits = disabled ? [.notEnabled] : []
+        if disabled { dismissMenu() }
     }
 
     private func sync() {
@@ -100,6 +129,9 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
         // Update tap menu content if in tap mode
         if trigger == "tap" {
             updateTapMenuButton()
+        } else if let anchor = anchorMenuButton, anchor.isMenuVisible {
+            // A menu opened through `visible`; updates it in place.
+            anchor.setMenu(buildMenu())
         } else if isMenuVisible, let interaction = contextMenuInteraction {
             // An action that keeps the menu presented changed a title or state.
             let menu = buildMenu()
@@ -117,14 +149,19 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     // MARK: - Trigger Mode
 
     private func updateTrigger() {
-        if trigger == "longPress" {
-            // Install context menu interaction for long-press
-            installContextMenuInteraction()
-            removeTapMenuButton()
-        } else {
+        switch trigger {
+        case "tap":
             // Tap mode: use UIButton with UIMenu for tap-to-show
             removeContextMenuInteraction()
             installTapMenuButton()
+        case "none":
+            // Only `visible` opens the menu, from the anchor
+            removeContextMenuInteraction()
+            removeTapMenuButton()
+        default:
+            // Install context menu interaction for long-press
+            installContextMenuInteraction()
+            removeTapMenuButton()
         }
     }
 
@@ -184,6 +221,75 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate {
     private func updateTapMenuButton() {
         guard let button = tapMenuButton else { return }
         button.setMenu(items.isEmpty ? nil : buildMenu())
+    }
+
+    // MARK: - Programmatic presentation (`visible`)
+
+    private func installAnchorMenuButton() -> PCMenuButton {
+        if let button = anchorMenuButton { return button }
+
+        // Over the view's bounds, so the system menu attaches to the content
+        let button = PCMenuButton(type: .custom)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .clear
+        button.isAccessibilityElement = false
+        button.onMenuOpen = { [weak self] in
+            guard let self else { return }
+            self.haptics.prepare(in: self)
+            self.onMenuOpen?()
+        }
+        button.onMenuClose = { [weak self] in self?.onMenuClose?() }
+
+        addSubview(button)
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: topAnchor),
+            button.bottomAnchor.constraint(equalTo: bottomAnchor),
+            button.leadingAnchor.constraint(equalTo: leadingAnchor),
+            button.trailingAnchor.constraint(equalTo: trailingAnchor)
+        ])
+
+        anchorMenuButton = button
+        return button
+    }
+
+    private func updatePresentation() {
+        presentationToken += 1
+        if visible == "open" {
+            presentMenuIfNeeded(token: presentationToken)
+        } else {
+            dismissMenu()
+        }
+    }
+
+    /// iOS 17.4+: opens the menu from the tap button or the anchor with
+    /// `UIControl.performPrimaryAction()`. Earlier versions have no public
+    /// API to open a menu without a touch, and do nothing.
+    private func presentMenuIfNeeded(token: Int) {
+        guard PCMenuButton.canPresentMenuProgrammatically else {
+            logger.debug("presentMenuIfNeeded: needs iOS 17.4")
+            return
+        }
+
+        // Next run loop turn, so the anchor has its final frame.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            guard self.presentationToken == token, self.visible == "open" else { return }
+            guard self.interactivity != "disabled", !self.items.isEmpty else { return }
+            guard self.window != nil, !self.isAnyMenuVisible else { return }
+
+            let button = self.tapMenuButton ?? self.installAnchorMenuButton()
+            logger.debug("presentMenuIfNeeded: presenting \(self.items.count) items")
+            self.layoutIfNeeded()
+            button.setMenu(self.buildMenu())
+            button.presentMenu()
+        }
+    }
+
+    /// Closes the open menu, whichever way it opened.
+    private func dismissMenu() {
+        tapMenuButton?.dismissMenu()
+        anchorMenuButton?.dismissMenu()
+        if isMenuVisible { contextMenuInteraction?.dismissMenu() }
     }
 
     // MARK: - UIContextMenuInteractionDelegate

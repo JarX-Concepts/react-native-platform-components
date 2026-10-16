@@ -522,6 +522,50 @@ describe('menus, pickers and containers (mock)', () => {
     expect(onPressAction).toHaveBeenCalledWith('delete', 'Delete');
   });
 
+  it('ContextMenu lists its actions while visible', () => {
+    const onPressAction = jest.fn();
+    const actions = [
+      {
+        id: 'files',
+        title: 'Files',
+        subactions: [{ id: 'pdf', title: 'PDF', testID: 'source-pdf' }],
+      },
+      { id: 'camera', title: 'Camera' },
+      { id: 'secret', title: 'Secret', attributes: { hidden: true } },
+    ];
+    const tree = render(
+      <ContextMenu
+        testID="source"
+        trigger="none"
+        visible={false}
+        actions={actions}
+        onPressAction={onPressAction}
+      >
+        <Button label="Inside" />
+      </ContextMenu>
+    );
+    expect(texts(tree)).toEqual(['Inside']);
+
+    act(() =>
+      tree.update(
+        <ContextMenu
+          testID="source"
+          trigger="none"
+          visible
+          actions={actions}
+          onPressAction={onPressAction}
+        >
+          <Button label="Inside" />
+        </ContextMenu>
+      )
+    );
+    expect(texts(tree)).toEqual(['Inside', 'PDF', 'Camera']);
+    press(byTestID(tree, 'source-pdf'));
+    expect(onPressAction).toHaveBeenCalledWith('pdf', 'PDF');
+    press(byTestID(tree, 'source-camera'));
+    expect(onPressAction).toHaveBeenCalledWith('camera', 'Camera');
+  });
+
   it('DateRangePicker renders a view that takes onConfirm', () => {
     expect(Mock.isDateRangePickerSupported).toBe(true);
     const onConfirm = jest.fn();
