@@ -318,13 +318,28 @@ const waitForWidth = async (
 // tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
 // underneath (the page's scroll view there); before iOS 26 the menu's
 // full-screen container takes it.
-const tapOutsideMenu = async () => {
-  try {
-    await element(by.id('demo-scroll')).tap({ x: 8, y: 600 });
-  } catch {
-    await element(by.type('_UIContextMenuContainerView'))
-      .atIndex(0)
-      .tap({ x: 8, y: 600 });
+// With `item`, waits for the menu to stop showing it. A tap that lands while
+// UIKit is still updating an open menu in place (an action that keeps it
+// presented) can be swallowed on a slow CI simulator, so it is tapped once
+// more before failing.
+const tapOutsideMenu = async (item?: string) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await element(by.id('demo-scroll')).tap({ x: 8, y: 600 });
+    } catch {
+      await element(by.type('_UIContextMenuContainerView'))
+        .atIndex(0)
+        .tap({ x: 8, y: 600 });
+    }
+    if (!item) return;
+    try {
+      await waitFor(element(by.text(item)))
+        .not.toBeVisible()
+        .withTimeout(attempt === 1 ? 3000 : 6000);
+      return;
+    } catch (error) {
+      if (attempt >= 2) throw error;
+    }
   }
 };
 
@@ -935,10 +950,7 @@ describe('Platform Components Example', () => {
       await waitFor(element(by.text('Quantity: 2')).atIndex(0))
         .toBeVisible()
         .withTimeout(6000);
-      await tapOutsideMenu();
-      await waitFor(element(by.text('Increase')))
-        .not.toBeVisible()
-        .withTimeout(6000);
+      await tapOutsideMenu('Increase');
     }
   });
 
