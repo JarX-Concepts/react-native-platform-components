@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import com.facebook.react.uimanager.RootView
 import com.facebook.react.uimanager.events.NativeGestureUtil
 import com.facebook.react.views.view.ReactViewGroup
 
@@ -91,8 +92,10 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
                 MotionEvent.ACTION_CANCEL, downX, downY, 0
               )
               super.dispatchTouchEvent(cancel)
-              NativeGestureUtil.notifyNativeGestureStarted(this, cancel)
-              nativeGestureStarted = true
+              if (hasReactRoot()) {
+                NativeGestureUtil.notifyNativeGestureStarted(this, cancel)
+                nativeGestureStarted = true
+              }
               cancel.recycle()
             }
           }
@@ -120,7 +123,20 @@ class PCContextMenuView(context: Context) : ReactViewGroup(context) {
   private fun endNativeGesture(ev: MotionEvent) {
     if (!nativeGestureStarted) return
     nativeGestureStarted = false
-    NativeGestureUtil.notifyNativeGestureEnded(this, ev)
+    if (hasReactRoot()) NativeGestureUtil.notifyNativeGestureEnded(this, ev)
+  }
+
+  /**
+   * Whether a React root (a RootView) is above this view. NativeGestureUtil
+   * asserts on one, and crashes for a view hosted outside React Native.
+   */
+  private fun hasReactRoot(): Boolean {
+    var parent = parent
+    while (parent != null) {
+      if (parent is RootView) return true
+      parent = parent.parent
+    }
+    return false
   }
 
   private fun cancelPendingLongPress() {
