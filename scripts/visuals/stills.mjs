@@ -105,19 +105,22 @@ const ROWS = [
     ],
   },
   {
-    height: 350,
+    // What opens over the page: the two menus and the Material action sheet
+    height: 430,
     tiles: [
-      { key: 'contextmenu', platform: 'ios', span: 3, position: 'center' },
-      { key: 'contextmenu', platform: 'android', span: 3, position: 'center' },
-      { key: 'liquidglass', platform: 'ios', span: 6, position: 'center' },
+      { key: 'contextmenu', platform: 'ios', span: 4, position: 'center' },
+      { key: 'contextmenu', platform: 'android', span: 4, position: 'center' },
+      { key: 'actionsheet', platform: 'android', span: 4, position: 'bottom center' },
     ],
   },
   {
-    // The view-switcher capsules are wide and short, so this row is shallow
+    // The capsules and the glass card are wide and short, so this row is
+    // shallow; the toolbars are fitted whole on their screens' color
     height: 210,
     tiles: [
-      { key: 'floatingtoolbar', platform: 'ios', span: 6, position: 'center' },
-      { key: 'floatingtoolbar', platform: 'android', span: 6, position: 'center' },
+      { key: 'floatingtoolbar', platform: 'ios', span: 4, fit: 'contain', position: 'center' },
+      { key: 'floatingtoolbar', platform: 'android', span: 4, fit: 'contain', position: 'center' },
+      { key: 'liquidglass', platform: 'ios', span: 4, position: 'center' },
     ],
   },
   {
@@ -194,14 +197,24 @@ function socialHtml() {
     ['datepicker', 'android'],
     ['contextmenu', 'ios'],
     ['segmentedcontrol', 'android'],
-    ['button', 'ios'],
-  ].map(([key, platform]) => ({ img: tileImage({ key, platform }), key, platform }));
+    ['tabbar', 'ios'],
+  ].map(([key, platform]) => {
+    // A component can frame its card tile differently from its hero tile
+    // (the hero's TabBar tile is a wide strip; the card's tiles are wider
+    // than tall), and fit it whole (`fit: 'contain'`) on its `bg`
+    const c = byKey[key];
+    const shot = c.social?.[platform] ?? c.still[platform];
+    const img = c.social?.[platform]
+      ? frame(`${key}-social`, platform, shot, c.test)
+      : tileImage({ key, platform });
+    return { img, key, platform, shot };
+  });
   const tiles = shots
     .map(
       (s) => `
       <figure class="tile">
         <figcaption><span>${byKey[s.key].name}</span><span class="chip">${platformLabel(s.platform)}</span></figcaption>
-        <div class="shot" style="background:${byKey[s.key].still[s.platform].bg ?? (s.platform === 'ios' ? t.iosBg : t.androidBg)}"><img src="${fileUrl(s.img)}" alt="" /></div>
+        <div class="shot" style="background:${s.shot.bg ?? (s.platform === 'ios' ? t.iosBg : t.androidBg)}"><img src="${fileUrl(s.img)}" alt=""${s.shot.fit ? ` style="object-fit:${s.shot.fit};object-position:center"` : ''} /></div>
       </figure>`
     )
     .join('');
@@ -212,9 +225,11 @@ function socialHtml() {
   body { font-family: ${FONT_STACK}; color: ${t.text}; -webkit-font-smoothing: antialiased;
          display: flex; padding: 48px 56px; gap: 40px; }
   .copy { width: 470px; display: flex; flex-direction: column; justify-content: center; }
-  h1 { font-size: 40px; line-height: 1.08; margin: 0 0 18px; letter-spacing: -0.03em; font-weight: 700; }
+  h1 { font-size: 40px; line-height: 1.04; margin: 0 0 18px; letter-spacing: -0.03em; font-weight: 700; }
+  h1 .ios { color: #0b4fa8; }
+  h1 .android { color: #1b5e20; }
   h1 small { display: block; font-size: 18px; font-weight: 500; color: ${t.muted}; letter-spacing: 0; margin-bottom: 10px; }
-  p { font-size: 19px; line-height: 1.4; color: #424a53; margin: 0 0 22px; }
+  p { font-size: 18px; line-height: 1.42; color: #424a53; margin: 0 0 22px; }
   .tags { display: flex; flex-wrap: wrap; gap: 8px; }
   .tag { font-size: 13px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #ffffff;
          border: 1px solid ${t.border}; color: #24292f; }
@@ -232,8 +247,8 @@ function socialHtml() {
 </style></head>
 <body>
   <div class="copy">
-    <h1><small>react-native-platform-components</small>Native components for React Native, on both platforms</h1>
-    <p>TextField, DatePicker, ContextMenu, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. Real UIKit and Material 3 Expressive widgets behind one typed API.</p>
+    <h1><small>react-native-platform-components</small><span class="ios">Liquid Glass</span> on iOS.<br><span class="android">Material 3 Expressive</span> on Android.</h1>
+    <p>TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. The real native widgets behind one typed API.</p>
     <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>
