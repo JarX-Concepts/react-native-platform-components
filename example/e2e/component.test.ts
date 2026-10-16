@@ -984,6 +984,91 @@ describe('Platform Components Example', () => {
     await expectText('tap-inner-count', 'Saved 1 · Pinned 1');
   });
 
+  it('should test Action Sheet functionality', async () => {
+    await selectDemo('Action Sheet');
+    await expect(element(by.id('actionsheet-open'))).toBeVisible();
+
+    // An action of the open sheet, by its testID. iOS: the alert carries
+    // the identifier on more than one of its views
+    const sheetAction = (testID: string) =>
+      isAndroid() ? element(by.id(testID)) : element(by.id(testID)).atIndex(0);
+    const openSheet = async (first = 'source-library') => {
+      await element(by.id('actionsheet-open')).tap();
+      await waitFor(sheetAction(first)).toBeVisible().withTimeout(6000);
+    };
+    const waitForSheetToClose = async () => {
+      await waitFor(element(by.id('source-library')))
+        .not.toExist()
+        .withTimeout(6000);
+    };
+
+    // Pick a source
+    await openSheet();
+    await sheetAction('source-document').tap();
+    await expectText('actionsheet-last-event', 'select: document');
+    await expectText('actionsheet-file', 'Contract.pdf');
+    await waitForSheetToClose();
+
+    // With a file, the destructive Remove File shows
+    await openSheet();
+    await sheetAction('source-remove').tap();
+    await expectText('actionsheet-last-event', 'select: remove');
+    await expectText('actionsheet-file', 'No file');
+    await waitForSheetToClose();
+
+    // Dismissed without a pick: onCancel. Android: the back button (swipe
+    // down and the scrim also cancel). iOS 26 shows the anchored sheet as a
+    // popover without a Cancel row: a tap outside cancels
+    await openSheet();
+    if (isAndroid()) {
+      await device.pressBack();
+    } else {
+      await tapOutsideMenu();
+    }
+    await expectText('actionsheet-last-event', 'cancel');
+    await waitForSheetToClose();
+
+    // A disabled action can't be picked: the sheet stays up (a pick closes
+    // it; on Android the page behind the dialog isn't readable meanwhile)
+    await element(by.id('actionsheet-camera-switch')).tap();
+    await openSheet();
+    await sheetAction('source-camera').tap();
+    await pause(800);
+    await expect(sheetAction('source-library')).toBeVisible();
+    await sheetAction('source-library').tap();
+    await expectText('actionsheet-last-event', 'select: library');
+    await waitForSheetToClose();
+    await element(by.id('actionsheet-camera-switch')).tap();
+
+    // The app closes the open sheet (visible = false), then unmounts it:
+    // it goes without a callback, and opens again afterwards
+    for (const [mode, event] of [
+      ['close', 'closed by the app'],
+      ['unmount', 'unmounted by the app'],
+    ] as const) {
+      await element(by.id(`actionsheet-timer-${mode}`)).tap();
+      await openSheet();
+      await waitForSheetToClose();
+      await expectText('actionsheet-last-event', event);
+    }
+    await element(by.id('actionsheet-timer-off')).tap();
+    await openSheet();
+    await sheetAction('source-document').tap();
+    await expectText('actionsheet-last-event', 'select: document');
+    await waitForSheetToClose();
+
+    if (!isAndroid()) {
+      // Without children there is nothing to point at: the iPhone sheet has
+      // its Cancel row, found by cancelTestID
+      await element(by.id('actionsheet-anchored-switch')).tap();
+      await openSheet();
+      await sheetAction('source-cancel').tap();
+      await expectText('actionsheet-last-event', 'cancel');
+      await waitForSheetToClose();
+      await element(by.id('actionsheet-anchored-switch')).tap();
+    }
+  });
+
   it('should test Segmented Control functionality', async () => {
     // Navigate to SegmentedControl tab
     await selectDemo('Segmented Control');

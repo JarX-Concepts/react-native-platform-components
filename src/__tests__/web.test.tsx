@@ -9,6 +9,7 @@ import renderer, {
 import * as Native from '../index';
 import * as Web from '../index.web';
 import {
+  ActionSheet,
   Button,
   ButtonGroup,
   ContextMenu,
@@ -614,6 +615,63 @@ describe('TextField (web)', () => {
     expect(tree.root.findByType(TextInput).props.secureTextEntry).toBe(true);
     click(tree.root.findByProps({ 'aria-label': 'Show password' }));
     expect(tree.root.findByType(TextInput).props.secureTextEntry).toBe(false);
+  });
+});
+
+describe('ActionSheet (web)', () => {
+  const actions = [
+    { id: 'library', title: 'Photo Library', testID: 'source-library' },
+    { id: 'camera', title: 'Take Photo', attributes: { disabled: true } },
+    { id: 'secret', title: 'Secret', attributes: { hidden: true } },
+    { id: 'remove', title: 'Remove', attributes: { destructive: true } },
+  ];
+
+  it('renders only its children while hidden', () => {
+    const tree = render(
+      <ActionSheet visible={false} actions={actions}>
+        <Button label="Add" />
+      </ActionSheet>
+    );
+    expect(tree.root.findAllByType('dialog')).toHaveLength(0);
+    expect(tree.root.findByType('button').props['aria-label']).toBe('Add');
+  });
+
+  it('lists the actions in a dialog and reports picks and cancels', () => {
+    const onSelect = jest.fn();
+    const onCancel = jest.fn();
+    const tree = render(
+      <ActionSheet
+        visible
+        title="Add a file"
+        message="Choose a source"
+        actions={actions}
+        cancelTitle="Not now"
+        cancelTestID="source-cancel"
+        onSelect={onSelect}
+        onCancel={onCancel}
+      />
+    );
+    const dialog = tree.root.findByType('dialog');
+    expect(dialog.props['aria-label']).toBe('Add a file');
+    const buttons = tree.root.findAllByType('button');
+    expect(buttons.map((b) => b.props['data-testid'])).toEqual([
+      'source-library',
+      undefined,
+      undefined,
+      'source-cancel',
+    ]);
+    expect(buttons[1]!.props.disabled).toBe(true);
+    expect(buttons[2]!.props.style.color).toBe('#B3261E');
+    expect(buttons[3]!.props.children).toBe('Not now');
+
+    click(buttons[0]!);
+    click(buttons[1]!);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('library');
+
+    click(buttons[3]!);
+    act(() => dialog.props.onClose());
+    expect(onCancel).toHaveBeenCalledTimes(2);
   });
 });
 

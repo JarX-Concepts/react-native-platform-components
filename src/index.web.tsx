@@ -8,6 +8,7 @@
 export type * from './DatePicker';
 export type * from './SelectionMenu';
 export type * from './ContextMenu';
+export type * from './ActionSheet';
 export type * from './SegmentedControl';
 export type * from './TabBar';
 export type * from './FloatingActionButton';
@@ -33,6 +34,7 @@ export type {
 } from './webComponents';
 export { PlatformComponentsProvider } from './web/PlatformComponentsProvider';
 export {
+  ActionSheet,
   Button,
   ButtonGroup,
   SplitButton,
