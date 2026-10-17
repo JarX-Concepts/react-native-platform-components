@@ -14,3 +14,5 @@
 #include "PCTabBarComponentDescriptors-custom.h"
 #include "PCNavigationRailComponentDescriptors-custom.h"
 #include "PCFloatingActionButtonComponentDescriptors-custom.h"
+#include "PCChipComponentDescriptors-custom.h"
+#include "PCChipGroupComponentDescriptors-custom.h"

@@ -1,6 +1,6 @@
 ---
 title: "Haptics"
-description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet."
+description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet."
 ---
 
 The interactive components take a `haptics` prop that plays the platform's own haptic feedback when the user acts on the control: a press, a selection change or a menu pick. There is no separate haptics library to wire up per control, and the haptic plays in native code at the moment the control reports the action, before the event reaches JavaScript.
@@ -11,7 +11,7 @@ The interactive components take a `haptics` prop that plays the platform's own h
 <Button label="Pay" haptics="success" onPress={pay} />
 ```
 
-It is on Button, ButtonGroup, SplitButton, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
+It is on Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
 
 ## Values
 
@@ -37,7 +37,7 @@ Android has fewer distinct effects than iOS. With Android 15's default haptic co
 
 Devices can tune each constant, so the same value can feel different from one phone to the next. Android has no warning constant; `warning` and `error` both play `REJECT`.
 
-On iOS each component creates its generator on first use, attached to the view (`init(view:)` on iOS 17.5+, the plain initializers before), and prepares it when an action is likely: on touch down for Button, ButtonGroup, SplitButton, FloatingActionButton and NavigationRail, when the menu appears for ContextMenu and the modal SelectionMenu, and when the sheet is presented for ActionSheet. On Android the haptic is `View.performHapticFeedback` on the component's view, without flags, so the system's touch-feedback setting applies.
+On iOS each component creates its generator on first use, attached to the view (`init(view:)` on iOS 17.5+, the plain initializers before), and prepares it when an action is likely: on touch down for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton and NavigationRail, when the menu appears for ContextMenu and the modal SelectionMenu, and when the sheet is presented for ActionSheet. On Android the haptic is `View.performHapticFeedback` on the component's view, without flags, so the system's touch-feedback setting applies.
 
 On the web the prop is accepted and ignored.
 
@@ -48,6 +48,8 @@ On the web the prop is accepted and ignored.
 | [Button](/components/button)                           | The button is pressed, a toggle included (once per press, whatever `onSelectedChange` decides); a `menu` item is picked | When a menu button opens its menu; while `loading` or disabled      |
 | [ButtonGroup](/components/buttongroup)                 | A button is pressed, in every selection mode, once per press; a pick from the overflow menu counts as a press | For disabled buttons                                                |
 | [SplitButton](/components/buttongroup#splitbutton)     | The main button is pressed; a menu item is picked                                       | When the trailing button opens the menu                             |
+| [Chip](/components/chip)                               | The chip or its close icon is pressed, a selectable chip included (once per press, whatever the parent does with `selected`) | While disabled                                                      |
+| [ChipGroup](/components/chip)                          | A chip or a close icon is pressed, in every selection mode, once per press             | For disabled chips                                                  |
 | [FloatingActionButton](/components/floatingactionbutton) | The button is pressed                                                                 | While disabled                                                      |
 | [SegmentedControl](/components/segmentedcontrol)       | The user's tap changes the selection: selects a segment, or clears it on Android with `selectionRequired: false`. In iOS momentary mode, every tap | When `selectedValue` changes from JavaScript; tapping the selected segment |
 | [TabBar](/components/tabbar)                           | The user presses a tab, the search tab and the selected one (a reselect) included      | When `selectedValue` changes from JavaScript; for disabled tabs     |
@@ -84,6 +86,7 @@ Unset `haptics` adds nothing, so each component keeps the behavior of the native
 | Button           | `UIButton`, a toggle or a menu button included: no haptic for the press or the pick            | `MaterialButton`, checkable or not, and its `PopupMenu`: no haptic                                |
 | ButtonGroup      | `UIButton`s: no haptic                                                                         | `MaterialButtonGroup` / `MaterialButtonToggleGroup`, and the overflow menu: no haptic            |
 | SplitButton      | `UIButton`s and their `UIMenu`: no haptic for the press or the pick                            | `MaterialSplitButton` and its `PopupMenu`: no haptic                                              |
+| Chip, ChipGroup  | `UIButton`s: no haptic                                                                         | Material `Chip` / `ChipGroup`: no haptic                                                          |
 | FloatingActionButton | `UIButton`: no haptic                                                                      | `FloatingActionButton` / `ExtendedFloatingActionButton`: no haptic                               |
 | SegmentedControl | `UISegmentedControl`: no haptic on iPhone                                                      | `MaterialButtonToggleGroup`: no haptic                                                            |
 | TabBar           | `UITabBar`: no haptic                                                                          | `BottomNavigationView`: no haptic                                                                 |

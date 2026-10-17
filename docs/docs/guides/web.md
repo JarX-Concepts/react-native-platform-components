@@ -32,6 +32,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `FloatingActionButton` | A `<button>` styled after the Material 3 FAB, with the label while extended. `scrollViewNativeID` is ignored                                                                       |
 | `ButtonGroup`          | A row of `<button>`s, with toggle semantics (`aria-pressed`, or radios for single selection) when `selection` is set                                                               |
 | `SplitButton`          | The main button alone: there is no web menu (a warning is logged once)                                                                                                             |
+| `Chip`, `ChipGroup`    | Pill-shaped toggle `<button>`s (`aria-pressed` when selectable) in a wrapping row, or one scrolling row with `wrap={false}`; a close `<button>` beside each removable chip |
 | `SegmentedControl`     | A radio group of `<button>`s in a track, like the iOS control                                                                                                                      |
 | `TabBar`               | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                       |
 | `NavigationRail`       | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above                                                                  |
@@ -48,6 +49,7 @@ Events and controlled props work the way they do on native:
 - **`DateRangePicker`**: Done stays disabled until both dates are set, ordered, and within `minDate` / `maxDate`. Confirmation reports the start of each day in the browser’s local time zone, then calls `onClosed`. `timeZoneName` and Android dialog options are ignored.
 - **`SelectionMenu`**: `modal` stays headless. While `visible`, picking an option calls `onSelect`, and Escape or a click outside calls `onRequestClose`. `accessibilityLabel` names the actual select or dialog; it defaults to the placeholder, or “Select an option”.
 - **`ActionSheet`**: picking an action calls `onSelect`; the cancel button (`cancelTitle`, default “Cancel”), Escape or a click outside call `onCancel`. Each button carries its action's `testID` as `data-testid`. Only image icons render; destructive actions use the Material 3 error red.
+- **`Chip`, `ChipGroup`**: selection follows the native rules and stays controlled. Each chip button carries its `testID` and each close button its `closeTestID` as `data-testid`. Only image icons render.
 - **`SegmentedControl`**: as on iOS, clicking the selected segment keeps it selected. `labelVisibility: 'auto'` shows both the icon and the label.
 - **`TabBar`**: clicking the selected tab calls `onReselect`. `labelVisibility: 'auto'` labels every tab.
 
@@ -192,7 +194,7 @@ on iOS and Android. There is no per-screen platform branch or custom import.
 ## Adapter contract
 
 `WebComponents` accepts these keys: `ActionSheet`, `Button`, `ButtonGroup`,
-`SplitButton`, `ContextMenu`, `DatePicker`, `DateRangePicker`, `FloatingActionButton`,
+`SplitButton`, `Chip`, `ChipGroup`, `ContextMenu`, `DatePicker`, `DateRangePicker`, `FloatingActionButton`,
 `FloatingToolbar`, `LiquidGlass`, `LiquidGlassContainer`, `NavigationRail`,
 `SegmentedControl`, `SelectionMenu`, `TabBar` and `TextField`.
 

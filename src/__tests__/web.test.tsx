@@ -12,6 +12,8 @@ import {
   ActionSheet,
   Button,
   ButtonGroup,
+  Chip,
+  ChipGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,
@@ -213,6 +215,79 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('Chip and ChipGroup (web)', () => {
+  it('Chip is a toggle <button> with a close <button> beside it', () => {
+    const onPress = jest.fn();
+    const onClose = jest.fn();
+    const tree = render(
+      <Chip
+        testID="ada"
+        label="Ada"
+        selected
+        onPress={onPress}
+        onClose={onClose}
+      />
+    );
+    const [chip, close] = tree.root.findAllByType('button');
+    expect(chip!.props['data-testid']).toBe('ada');
+    expect(chip!.props['aria-pressed']).toBe(true);
+    expect(close!.props['data-testid']).toBe('ada-close');
+    expect(close!.props['aria-label']).toBe('Remove Ada');
+
+    click(chip!);
+    click(close!);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('a plain chip has no pressed state and no close button', () => {
+    const tree = render(<Chip label="Share" />);
+    const buttons = tree.root.findAllByType('button');
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]!.props['aria-pressed']).toBeUndefined();
+  });
+
+  it('ChipGroup reports presses, selection changes and closes', () => {
+    const onPress = jest.fn();
+    const onSelectionChange = jest.fn();
+    const onClose = jest.fn();
+    const tree = render(
+      <ChipGroup
+        testID="diet"
+        chips={['a', 'b', 'c'].map((value) => ({ value, label: value }))}
+        selection="multiple"
+        selectedValues={['c']}
+        onPress={onPress}
+        onSelectionChange={onSelectionChange}
+        onClose={onClose}
+      />
+    );
+    const chips = tree.root
+      .findAllByType('button')
+      .filter((b) => !String(b.props['data-testid']).endsWith('-close'));
+    expect(chips.map((b) => b.props['aria-pressed'])).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(chips.map((b) => b.props['data-testid'])).toEqual([
+      'diet-a',
+      'diet-b',
+      'diet-c',
+    ]);
+
+    click(chips[0]!);
+    expect(onPress).toHaveBeenCalledWith('a', 0);
+    expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+
+    const close = tree.root
+      .findAllByType('button')
+      .find((b) => b.props['data-testid'] === 'diet-b-close');
+    click(close!);
+    expect(onClose).toHaveBeenCalledWith('b', 1);
   });
 });
 
