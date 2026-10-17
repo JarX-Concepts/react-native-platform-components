@@ -375,4 +375,22 @@
   <style name="PCNavigationRail.Expanded" parent="Widget.Material3Expressive.NavigationRailView">
     <item name="expanded">true</item>
   </style>
+
+  <!--
+    Chip and ChipGroup: the Material 3 chip types. Chip takes its style from
+    the chipStyle theme attribute, so the variant is chosen by wrapping the
+    context (see PCChipSupport).
+  -->
+  <style name="PCChipOverlay.Assist" parent="">
+    <item name="chipStyle">@style/Widget.Material3.Chip.Assist</item>
+  </style>
+  <style name="PCChipOverlay.Filter" parent="">
+    <item name="chipStyle">@style/Widget.Material3.Chip.Filter</item>
+  </style>
+  <style name="PCChipOverlay.Input" parent="">
+    <item name="chipStyle">@style/Widget.Material3.Chip.Input</item>
+  </style>
+  <style name="PCChipOverlay.Suggestion" parent="">
+    <item name="chipStyle">@style/Widget.Material3.Chip.Suggestion</item>
+  </style>
 </resources>

@@ -30,7 +30,10 @@ export function PlatformComponentsProvider({
 export function useWebComponent<Name extends keyof WebComponents>(
   name: Name
 ): WebComponents[Name] | undefined {
-  return useContext(WebContext)[name];
+  // Narrowed to the one entry first: with this many components, indexing
+  // the whole map with a generic key makes a union too complex for tsc.
+  const components: Partial<Pick<WebComponents, Name>> = useContext(WebContext);
+  return components[name];
 }
 
 export function withWebComponent<Name extends keyof WebComponents>(
