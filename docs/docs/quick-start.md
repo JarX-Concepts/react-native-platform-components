@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -523,6 +523,48 @@ export function Example() {
       onPress={() => console.log('reply')}
       onMenuSelect={(id) => console.log(id)}
     />
+  );
+}
+```
+
+### Chip and ChipGroup
+
+```tsx
+import { useState } from 'react';
+import { Chip, ChipGroup } from 'react-native-platform-components';
+
+export function Example() {
+  const [timeFrame, setTimeFrame] = useState(['month']);
+  const [filters, setFilters] = useState(['vegan', 'gluten']);
+
+  return (
+    <>
+      {/* Single selection that wraps onto rows */}
+      <ChipGroup
+        chips={[
+          { value: 'week', label: 'Last week' },
+          { value: 'month', label: 'Last month' },
+          { value: 'year', label: 'Last year' },
+          { value: 'all', label: 'All time' },
+        ]}
+        selection="single"
+        selectedValues={timeFrame}
+        onSelectionChange={setTimeFrame}
+      />
+
+      {/* Removable input chips */}
+      <ChipGroup
+        variant="input"
+        chips={filters.map((value) => ({ value, label: value }))}
+        onClose={(value) => setFilters((f) => f.filter((v) => v !== value))}
+      />
+
+      <Chip
+        label="Add to calendar"
+        icon={{ ios: 'calendar', android: 'calendar' }}
+        onPress={() => console.log('calendar')}
+      />
+    </>
   );
 }
 ```

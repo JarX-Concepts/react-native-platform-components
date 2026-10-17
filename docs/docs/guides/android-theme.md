@@ -3,7 +3,7 @@ title: "Android Theme Configuration"
 description: "How the Android components use your Material 3 theme, what happens under an AppCompat theme, and the Expo plugin option."
 ---
 
-No theme setup is required to avoid a crash. React Native and Expo templates ship an AppCompat app theme, and every component works with it. When the theme is not a Material theme, `SegmentedControl`, `TabBar`, `NavigationRail`, `Button`, `ButtonGroup`, `FloatingActionButton`, `FloatingToolbar`, `ActionSheet` and the inline M3 `SelectionMenu` render with Material 3 default colors, the M3 date and time pickers use a built-in Material 3 dialog theme, and the library logs one warning under the `PlatformComponents` tag. Give the app a Material 3 theme to have those components use your app's colors instead.
+No theme setup is required to avoid a crash. React Native and Expo templates ship an AppCompat app theme, and every component works with it. When the theme is not a Material theme, `SegmentedControl`, `TabBar`, `NavigationRail`, `Button`, `ButtonGroup`, `Chip`, `ChipGroup`, `FloatingActionButton`, `FloatingToolbar`, `ActionSheet` and the inline M3 `SelectionMenu` render with Material 3 default colors, the M3 date and time pickers use a built-in Material 3 dialog theme, and the library logs one warning under the `PlatformComponents` tag. Give the app a Material 3 theme to have those components use your app's colors instead.
 
 Two different `android.material` props exist, because they answer different questions:
 
@@ -25,6 +25,7 @@ The Expressive styles are applied as a theme overlay over your app theme, so you
 | **NavigationRail**   | (always Material 3 Expressive) | `Theme.Material3.*` | Material 3 default colors, one warning logged        |
 | **FloatingActionButton** | (always Material 3)      | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
 | **ActionSheet**      | (always Material 3)          | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
+| **Chip**, **ChipGroup** | (always Material 3)       | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
 | **DatePicker**       | `android.material: 'm3'`     | `Theme.Material3.*`   | Built-in Material 3 dialog theme, one warning logged |
 | **DatePicker**       | `android.material: 'system'` | `Theme.AppCompat.*`   | Built-in AppCompat dialog theme, one warning logged  |
 | **SelectionMenu**    | `android.material: 'm3'`     | `Theme.Material3.*`   | Material 3 default colors, one warning logged        |
