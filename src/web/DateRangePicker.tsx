@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 
 import type { DateRangePickerProps } from '../DatePicker';
-import { Dialog } from './Dialog';
+import { ModalDialog } from './ModalDialog';
 import {
   formatInputValue,
   isWithinInputBounds,
@@ -101,7 +101,7 @@ function RangeDialog({
   );
 
   return (
-    <Dialog label="Date range" onDismiss={dismiss}>
+    <ModalDialog label="Date range" onDismiss={dismiss}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {renderInput('Start date', start, setStart, minDate)}
         {renderInput('End date', end, setEnd, minimumEndDate)}
@@ -130,6 +130,6 @@ function RangeDialog({
           Done
         </button>
       </div>
-    </Dialog>
+    </ModalDialog>
   );
 }

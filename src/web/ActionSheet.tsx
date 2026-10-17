@@ -3,7 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 import type { ActionSheetProps } from '../ActionSheet';
-import { Dialog } from './Dialog';
+import { ModalDialog } from './ModalDialog';
 import { Icon } from './Icon';
 
 // Material 3 baseline error color, as on Android
@@ -41,7 +41,7 @@ export function ActionSheet(props: ActionSheetProps): React.ReactElement {
     <View {...viewProps}>
       {children}
       {visible ? (
-        <Dialog label={label} onDismiss={cancel}>
+        <ModalDialog label={label} onDismiss={cancel}>
           <div
             style={{ display: 'flex', flexDirection: 'column', minWidth: 240 }}
           >
@@ -123,7 +123,7 @@ export function ActionSheet(props: ActionSheetProps): React.ReactElement {
               {cancelTitle ?? 'Cancel'}
             </button>
           </div>
-        </Dialog>
+        </ModalDialog>
       ) : null}
     </View>
   );
