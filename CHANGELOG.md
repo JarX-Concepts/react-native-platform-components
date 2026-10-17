@@ -1,5 +1,19 @@
 # Changelog
 
+# [1.7.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.6.0...v1.7.0) (2026-10-17)
+
+### Bug Fixes
+
+* **android:** report the ContextMenu long press to React Native only under a React root ([e80e5db](https://github.com/JarX-Concepts/react-native-platform-components/commit/e80e5db9f84b5f3ee2fc6c9601067a05d820a24b))
+* **context-menu:** let the wrapped content keep its own taps ([c171864](https://github.com/JarX-Concepts/react-native-platform-components/commit/c171864efb55ad1e6fcf2d1872b42eb37904189a)), closes [#111](https://github.com/JarX-Concepts/react-native-platform-components/issues/111)
+* **ios:** anchor the ActionSheet to its children, not its frame ([845786d](https://github.com/JarX-Concepts/react-native-platform-components/commit/845786d8e9d35ff851ceeb4f481350f4d7f75538))
+
+### Features
+
+* add ActionSheet component ([63cd3a4](https://github.com/JarX-Concepts/react-native-platform-components/commit/63cd3a4575f57b33641e4e21fc23b54893da1ebe)), closes [#107](https://github.com/JarX-Concepts/react-native-platform-components/issues/107)
+* **context-menu:** open the menu from JS on both platforms ([367c7b5](https://github.com/JarX-Concepts/react-native-platform-components/commit/367c7b52584e99f56d8dcf9cc1ce0cb083cc626a)), closes [#106](https://github.com/JarX-Concepts/react-native-platform-components/issues/106)
+* **context-menu:** testID on ContextMenu and Button menu actions ([ed7f046](https://github.com/JarX-Concepts/react-native-platform-components/commit/ed7f046526721a7210a8c91c9297fd6f177c8ac8)), closes [#105](https://github.com/JarX-Concepts/react-native-platform-components/issues/105)
+
 # [1.6.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.5.0...v1.6.0) (2026-10-13)
 
 ### Bug Fixes
