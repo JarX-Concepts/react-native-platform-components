@@ -6,6 +6,7 @@ import { ButtonGroup as DefaultButtonGroup } from './ButtonGroup';
 import { SplitButton as DefaultSplitButton } from './SplitButton';
 import { DatePicker as DefaultDatePicker } from './DatePicker';
 import { DateRangePicker as DefaultDateRangePicker } from './DateRangePicker';
+import { Dialog as DefaultDialog } from './Dialog';
 import { FloatingActionButton as DefaultFloatingActionButton } from './FloatingActionButton';
 import { NavigationRail as DefaultNavigationRail } from './NavigationRail';
 import { SegmentedControl as DefaultSegmentedControl } from './SegmentedControl';
@@ -42,6 +43,10 @@ export const DatePicker: WebComponents['DatePicker'] = withWebComponent(
 );
 export const DateRangePicker: WebComponents['DateRangePicker'] =
   withWebComponent('DateRangePicker', DefaultDateRangePicker);
+export const Dialog: WebComponents['Dialog'] = withWebComponent(
+  'Dialog',
+  DefaultDialog
+);
 export const FloatingActionButton: WebComponents['FloatingActionButton'] =
   withWebComponent('FloatingActionButton', DefaultFloatingActionButton);
 export const NavigationRail: WebComponents['NavigationRail'] = withWebComponent(

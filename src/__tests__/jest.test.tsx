@@ -14,6 +14,7 @@ import {
   ButtonGroup,
   ContextMenu,
   DatePicker,
+  Dialog,
   FloatingActionButton,
   LiquidGlass,
   LiquidGlassContainer,
@@ -503,6 +504,59 @@ describe('menus, pickers and containers (mock)', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
     fire(byTestID(tree, 'sheet'), 'select', 'camera');
     expect(onSelect).toHaveBeenLastCalledWith('camera');
+  });
+
+  it('Dialog lists its actions while visible and reports show and dismiss', () => {
+    const onSelect = jest.fn();
+    const onCancel = jest.fn();
+    const onShow = jest.fn();
+    const onDismiss = jest.fn();
+    const actions = [
+      { id: 'cancel', title: 'Cancel', role: 'cancel' as const },
+      { id: 'later', title: 'Later', disabled: true },
+      { id: 'secret', title: 'Secret', hidden: true },
+      { id: 'delete', title: 'Delete', testID: 'dialog-delete' },
+    ];
+    const dialog = (visible: boolean) => (
+      <Dialog
+        testID="dialog"
+        visible={visible}
+        title="Delete?"
+        message="It can't be undone."
+        actions={actions}
+        onSelect={onSelect}
+        onCancel={onCancel}
+        onShow={onShow}
+        onDismiss={onDismiss}
+      />
+    );
+    const tree = render(dialog(false));
+    expect(texts(tree)).toEqual([]);
+    expect(onShow).not.toHaveBeenCalled();
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    act(() => tree.update(dialog(true)));
+    expect(onShow).toHaveBeenCalledTimes(1);
+    expect(texts(tree)).toEqual([
+      'Delete?',
+      "It can't be undone.",
+      'Cancel',
+      'Later',
+      'Delete',
+    ]);
+    press(byTestID(tree, 'dialog-delete'));
+    expect(onSelect).toHaveBeenCalledWith('delete');
+    press(byTestID(tree, 'dialog-cancel'));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(byTestID(tree, 'dialog-later').props.accessibilityState).toEqual({
+      disabled: true,
+    });
+    fire(byTestID(tree, 'dialog'), 'select', 'later');
+    expect(onSelect).toHaveBeenLastCalledWith('later');
+
+    act(() => tree.update(dialog(false)));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(texts(tree)).toEqual([]);
   });
 
   it('ContextMenu renders its children and exposes its callbacks', () => {

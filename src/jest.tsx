@@ -14,6 +14,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -28,6 +29,7 @@ import {
 } from 'react-native';
 
 import type { ActionSheetProps } from './ActionSheet';
+import type { DialogProps } from './Dialog';
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
@@ -56,6 +58,7 @@ export type * from './DatePicker';
 export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './ActionSheet';
+export type * from './Dialog';
 export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './SplitButton';
@@ -974,6 +977,79 @@ export function ActionSheet(props: ActionSheetProps): React.ReactElement {
           >
             <Text>{cancelTitle ?? 'Cancel'}</Text>
           </Pressable>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * A view carrying `testID`. While `visible`, the title and message show as
+ * `Text`, and each shown action is a `Pressable` with its `testID` (else
+ * `${testID}-${id}`): the cancel action calls `onCancel`, the others
+ * `onSelect(id)`; a disabled one ignores presses. As on native, `onShow` is
+ * called when `visible` turns `true` and `onDismiss` when it turns `false`;
+ * the dialog always shows, so `onPresentFailed` is never called.
+ * `fireEvent(dialog, 'select', id)`, `'cancel'` and `'presentFailed'` also
+ * work.
+ */
+export function Dialog(props: DialogProps): React.ReactElement {
+  const {
+    visible,
+    title,
+    message,
+    actions,
+    onSelect,
+    onCancel,
+    onShow,
+    onDismiss,
+    onPresentFailed,
+    testID,
+  } = props;
+
+  const callbacks = useRef({ onShow, onDismiss });
+  callbacks.current = { onShow, onDismiss };
+  const wasVisible = useRef(false);
+  useEffect(() => {
+    if (visible === wasVisible.current) return;
+    wasVisible.current = visible;
+    if (visible) callbacks.current.onShow?.();
+    else callbacks.current.onDismiss?.();
+  }, [visible]);
+
+  const shown = actions.filter((action) => !action.hidden);
+  const cancelAction = shown.find((action) => action.role === 'cancel');
+
+  return (
+    <View
+      testID={testID}
+      accessibilityState={{ expanded: visible }}
+      {...handlers({ onSelect, onCancel, onPresentFailed })}
+    >
+      {visible ? (
+        <View accessibilityRole="alert">
+          {title ? <Text>{title}</Text> : null}
+          {message ? <Text>{message}</Text> : null}
+          {shown.map((action) => {
+            const disabled = !!action.disabled;
+            return (
+              <Pressable
+                key={action.id}
+                testID={
+                  action.testID ??
+                  (testID ? `${testID}-${action.id}` : undefined)
+                }
+                accessibilityRole="button"
+                accessibilityState={{ disabled }}
+                disabled={disabled}
+                onPress={() =>
+                  action === cancelAction ? onCancel?.() : onSelect?.(action.id)
+                }
+              >
+                <Text>{action.title}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
     </View>
