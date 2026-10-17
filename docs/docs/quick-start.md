@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass."
 ---
 
 ### TextField
@@ -234,6 +234,40 @@ export function Example() {
       {/* The iPad (and iOS 26) popover points at the children */}
       <Button label="Add File…" onPress={() => setOpen(true)} />
     </ActionSheet>
+  );
+}
+```
+
+---
+
+### Dialog
+
+```tsx
+import { useState } from 'react';
+import { Button, Dialog } from 'react-native-platform-components';
+
+export function Example() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button label="Delete Photo…" onPress={() => setOpen(true)} />
+      <Dialog
+        visible={open}
+        title="Delete this photo?"
+        message="It will be removed from all your devices."
+        actions={[
+          { id: 'cancel', title: 'Cancel', role: 'cancel' },
+          { id: 'delete', title: 'Delete', role: 'destructive', preferred: true },
+        ]}
+        onSelect={(id) => {
+          setOpen(false);
+          console.log('Selected:', id);
+        }}
+        onCancel={() => setOpen(false)}
+        onPresentFailed={() => setOpen(false)}
+      />
+    </>
   );
 }
 ```
