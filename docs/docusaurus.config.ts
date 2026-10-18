@@ -7,7 +7,7 @@ const repo = 'https://github.com/JarX-Concepts/react-native-platform-components'
 const config: Config = {
   title: 'react-native-platform-components',
   tagline:
-    'Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native. Native on Android too.',
+    'Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native. Native on Android too.',
   url: 'https://jarx-concepts.github.io',
   baseUrl: '/react-native-platform-components/',
   organizationName: 'JarX-Concepts',
@@ -54,7 +54,7 @@ const config: Config = {
       {
         name: 'keywords',
         content:
-          'react native, native components, text field, date picker, context menu, action sheet, bottom sheet, segmented control, tab bar, floating action button, material 3, material 3 expressive, liquid glass, expo, fabric',
+          'react native, native components, text field, date picker, context menu, action sheet, bottom sheet, dialog, alert dialog, segmented control, tab bar, chips, floating action button, material 3, material 3 expressive, liquid glass, expo, fabric',
       },
     ],
     colorMode: { respectPrefersColorScheme: true },

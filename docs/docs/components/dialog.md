@@ -3,6 +3,17 @@ title: 'Dialog'
 description: 'Native alert dialog for React Native: UIAlertController (.alert) on iOS and MaterialAlertDialogBuilder (Material 3) on Android, with cancel, destructive, preferred and disabled actions, a testID per button, onShow / onDismiss and onPresentFailed.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-dialog.gif" height="480" alt="Dialog on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-dialog.gif" height="480" alt="Dialog on Android" /></td>
+  </tr>
+</table>
+
 An alert dialog: a title, a message and a few buttons, presented over the screen while `visible`. Use it to confirm an action or to tell the user something they must acknowledge.
 
 - **iOS**: `UIAlertController` with the `.alert` style, presented from the topmost view controller.

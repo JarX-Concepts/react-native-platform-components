@@ -3,6 +3,17 @@ title: 'Chip'
 description: 'Native chips for React Native: Material 3 Chip and ChipGroup (assist, filter, input and suggestion) on Android, capsule UIButtons with Liquid Glass on iOS 26, with single and multiple selection, wrapping or scrolling rows, removable chips and testIDs for the close icon.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-chip.gif" height="480" alt="Chip on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-chip.gif" height="480" alt="Chip on Android" /></td>
+  </tr>
+</table>
+
 Compact elements for a set of options, filters, entered items or suggestions. `ChipGroup` lays out a set of chips, wrapping them onto rows or scrolling one row, with single or multiple selection; `Chip` is one chip on its own.
 
 - **Android**: Material 3 `Chip` in the style of its type (`Widget.Material3.Chip.Assist`, `.Filter`, `.Input`, `.Suggestion`), in a Material `ChipGroup` (`isSingleSelection`, `isSelectionRequired`, `isSingleLine`), in the app's Material theme.
