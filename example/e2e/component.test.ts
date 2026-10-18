@@ -324,15 +324,38 @@ const waitForWidth = async (
   }
 };
 
+// Waits for a check that passes once an iOS menu has finished closing. UIKit
+// animates a menu away on the main thread and reports the close (onMenuClose,
+// SelectionMenu's onRequestClose) when that animation completes. A waitFor
+// re-checks the whole view hierarchy on the main thread every 0.1 s, which on
+// a slow CI simulator starved the animation: its completion came only after
+// an 8 s wait had given up. Checks a second apart leave the main thread to the
+// menu.
+const waitForMenuClosed = async (
+  check: () => Promise<unknown>,
+  timeout = 8000
+) => {
+  const start = Date.now();
+  for (;;) {
+    await pause(1000);
+    try {
+      await check();
+      return;
+    } catch (error) {
+      if (Date.now() - start > timeout) throw error;
+    }
+  }
+};
+
 // Dismisses an open iOS menu with a tap away from it, in the page's empty left
 // margin. An in-app tap: device.tap() starts an XCUITest runner, which takes
 // tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
 // underneath (the page's scroll view there); before iOS 26 the menu's
 // full-screen container takes it.
-// With `item`, waits for the menu to stop showing it. A tap that lands while
-// UIKit is still updating an open menu in place (an action that keeps it
-// presented) can be swallowed on a slow CI simulator, so it is tapped once
-// more before failing.
+// With `item`, waits for the menu to stop showing it (see waitForMenuClosed).
+// A tap that lands while UIKit is still updating an open menu in place (an
+// action that keeps it presented) can be swallowed on a slow CI simulator, so
+// it is tapped once more before failing.
 const tapOutsideMenu = async (item?: string) => {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -344,9 +367,10 @@ const tapOutsideMenu = async (item?: string) => {
     }
     if (!item) return;
     try {
-      await waitFor(element(by.text(item)))
-        .not.toBeVisible()
-        .withTimeout(attempt === 1 ? 3000 : 6000);
+      await waitForMenuClosed(
+        () => expect(element(by.text(item))).not.toBeVisible(),
+        attempt === 1 ? 3000 : 6000
+      );
       return;
     } catch (error) {
       if (attempt >= 2) throw error;
@@ -717,8 +741,12 @@ describe('Platform Components Example', () => {
       await waitFor(element(by.text('Alabama')))
         .toBeVisible()
         .withTimeout(6000);
-      await tapOutsideMenu();
-      await expectFieldText('menu-toggle-field', 'closed');
+      await tapOutsideMenu('Alabama');
+      await waitForMenuClosed(() =>
+        expect(
+          element(by.text('closed').withAncestor(by.id('menu-toggle-field')))
+        ).toBeVisible()
+      );
     }
 
     // Options with icons and subtitles
@@ -914,7 +942,9 @@ describe('Platform Components Example', () => {
       .withTimeout(6000);
     await element(by.id('menu-share')).tap();
     // onMenuClose set it back; the Last Action field is scrolled away
-    await expectText('programmatic-state', 'Menu Closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('programmatic-state'))).toHaveText('Menu Closed')
+    );
     await waitFor(element(by.text('Share (share)')))
       .toExist()
       .withTimeout(6000);
@@ -1711,7 +1741,9 @@ describe('Platform Components Example', () => {
       await expectText('button-menu-value', '(none) · open');
     }
     await element(by.id('sort-date')).tap();
-    await expectText('button-menu-value', 'date · closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('button-menu-value'))).toHaveText('date · closed')
+    );
 
     // A submenu and its actions are found by test ID too
     await element(by.id('button-menu')).tap();
@@ -1723,7 +1755,9 @@ describe('Platform Components Example', () => {
       .toBeVisible()
       .withTimeout(6000);
     await element(by.id('sort-view-grid')).tap();
-    await expectText('button-menu-value', 'grid · closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('button-menu-value'))).toHaveText('grid · closed')
+    );
 
     // Icons above and below the label, and clear glass
     await scrollToId('button-icon-bottom');
