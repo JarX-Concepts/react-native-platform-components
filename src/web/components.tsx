@@ -4,6 +4,7 @@ import { ActionSheet as DefaultActionSheet } from './ActionSheet';
 import { Button as DefaultButton } from './Button';
 import { ButtonGroup as DefaultButtonGroup } from './ButtonGroup';
 import { SplitButton as DefaultSplitButton } from './SplitButton';
+import { Chip as DefaultChip, ChipGroup as DefaultChipGroup } from './Chip';
 import { DatePicker as DefaultDatePicker } from './DatePicker';
 import { DateRangePicker as DefaultDateRangePicker } from './DateRangePicker';
 import { Dialog as DefaultDialog } from './Dialog';
@@ -36,6 +37,14 @@ export const ButtonGroup: WebComponents['ButtonGroup'] = withWebComponent(
 export const SplitButton: WebComponents['SplitButton'] = withWebComponent(
   'SplitButton',
   DefaultSplitButton
+);
+export const Chip: WebComponents['Chip'] = withWebComponent(
+  'Chip',
+  DefaultChip
+);
+export const ChipGroup: WebComponents['ChipGroup'] = withWebComponent(
+  'ChipGroup',
+  DefaultChipGroup
 );
 export const DatePicker: WebComponents['DatePicker'] = withWebComponent(
   'DatePicker',

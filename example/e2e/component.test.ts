@@ -1784,6 +1784,80 @@ describe('Platform Components Example', () => {
     // iOS simulator, over 120 s on a slow runner
   }, 180000);
 
+  it('should test Chip group selection', async () => {
+    await selectDemo('Chip');
+    await expect(element(by.id('chip-timeframe'))).toBeVisible();
+    await expectText('chip-timeframe-value', 'Last month');
+
+    // Single selection: a press selects the chip
+    await element(by.id('chip-timeframe-year')).tap();
+    await expectText('chip-timeframe-value', 'Last year');
+
+    // selectionRequired: pressing the selected chip keeps it selected
+    await element(by.id('chip-timeframe-year')).tap();
+    await pause(500);
+    await expectText('chip-timeframe-value', 'Last year');
+    await expectText('chip-last-event', 'press: year');
+
+    // The one-row group isn't required: a second press clears it
+    await element(by.id('chip-category-coffee')).tap();
+    await expectText('chip-category-value', 'Coffee');
+    await element(by.id('chip-category-coffee')).tap();
+    await expectText('chip-category-value', 'Any');
+
+    // Multiple selection adds and removes chips, reported in chip order
+    await scrollToId('chip-filters-value');
+    await element(by.id('chip-filters-gluten')).tap();
+    await expectText('chip-filters-value', 'Vegetarian, Gluten free');
+    await element(by.id('chip-filters-vegan')).tap();
+    await expectText('chip-filters-value', 'Vegetarian, Vegan, Gluten free');
+    await element(by.id('chip-filters-vegetarian')).tap();
+    await expectText('chip-filters-value', 'Vegan, Gluten free');
+
+    // A disabled chip in the group does nothing
+    await element(by.id('chip-filters-nuts')).tap();
+    await pause(500);
+    await expectText('chip-filters-value', 'Vegan, Gluten free');
+  });
+
+  it('should test Chip close icons and standalone chips', async () => {
+    await selectDemo('Chip');
+    await scrollToId('chip-filters-value');
+    await element(by.id('chip-filters-vegan')).tap();
+    await expectText('chip-filters-value', 'Vegetarian, Vegan');
+
+    // The active filters are input chips; the close icon (found by its
+    // closeTestID) removes one
+    await scrollToId('chip-reset');
+    await element(by.id('chip-active-vegan-close')).tap();
+    await expectText('chip-filters-value', 'Vegetarian');
+    await expectText('chip-last-event', 'close: vegan');
+    await element(by.id('chip-active-vegetarian-close')).tap();
+    await expectText('chip-filters-value', 'None');
+    await expect(element(by.id('chip-active-empty'))).toBeVisible();
+
+    await element(by.id('chip-reset')).tap();
+    await expectText('chip-filters-value', 'Vegetarian');
+    await expectText('chip-last-event', 'reset');
+
+    // Standalone chips: a disabled one does nothing
+    await scrollToId('chip-last-event');
+    await element(by.id('chip-directions')).tap();
+    await pause(500);
+    await expectText('chip-last-event', 'reset');
+
+    await element(by.id('chip-calendar')).tap();
+    await expectText('chip-last-event', 'press: calendar');
+
+    // A selectable chip reports the press; the parent flips `selected`
+    await element(by.id('chip-favorite')).tap();
+    await expectText('chip-last-event', 'press: favorite');
+
+    // A standalone input chip's close icon, by its default closeTestID
+    await element(by.id('chip-person-close')).tap();
+    await expectText('chip-last-event', 'close: person');
+  });
+
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
     await expect(element(by.id('fab-regular'))).toBeVisible();

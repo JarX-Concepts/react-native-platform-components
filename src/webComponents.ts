@@ -3,6 +3,8 @@ import type { ActionSheetProps } from './ActionSheet';
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { SplitButtonProps } from './SplitButton';
+import type { ChipProps } from './Chip';
+import type { ChipGroupProps } from './ChipGroup';
 import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { DialogProps } from './Dialog';
@@ -22,6 +24,8 @@ export interface WebComponentProps {
   Button: ButtonProps;
   ButtonGroup: ButtonGroupProps;
   SplitButton: SplitButtonProps;
+  Chip: ChipProps;
+  ChipGroup: ChipGroupProps;
   ContextMenu: ContextMenuProps;
   DatePicker: DatePickerProps;
   DateRangePicker: DateRangePickerProps;

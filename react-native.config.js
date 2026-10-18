@@ -12,6 +12,8 @@ module.exports = {
           'MeasuringPCTabBarComponentDescriptor',
           'MeasuringPCNavigationRailComponentDescriptor',
           'MeasuringPCFloatingActionButtonComponentDescriptor',
+          'MeasuringPCChipComponentDescriptor',
+          'MeasuringPCChipGroupComponentDescriptor',
         ],
         cmakeListsPath: 'src/main/jni/CMakeLists.txt',
       },

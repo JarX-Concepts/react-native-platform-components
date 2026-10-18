@@ -17,6 +17,8 @@ export type * from './NavigationRail';
 export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './SplitButton';
+export type * from './Chip';
+export type * from './ChipGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -39,6 +41,8 @@ export {
   Button,
   ButtonGroup,
   SplitButton,
+  Chip,
+  ChipGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,

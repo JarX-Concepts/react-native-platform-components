@@ -14,6 +14,7 @@ import {
 } from 'react-native-platform-components';
 import { ActionSheetDemo } from './ActionSheetDemo';
 import { ButtonDemo } from './ButtonDemo';
+import { ChipDemo } from './ChipDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
 import { DialogDemo } from './DialogDemo';
@@ -44,6 +45,7 @@ type DemoKey =
   | 'tabBar'
   | 'navigationRail'
   | 'button'
+  | 'chip'
   | 'floatingActionButton'
   | 'floatingToolbar'
   | 'textField'
@@ -62,6 +64,7 @@ const COMPONENT_DEMOS = [
   { label: 'Tab Bar', data: 'tabBar' },
   { label: 'Navigation Rail', data: 'navigationRail' },
   { label: 'Button', data: 'button' },
+  { label: 'Chip', data: 'chip' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
 ];
@@ -149,6 +152,7 @@ export default function App(): React.ReactElement {
       {demo === 'tabBar' && <TabBarDemo />}
       {demo === 'navigationRail' && <NavigationRailDemo />}
       {demo === 'button' && <ButtonDemo />}
+      {demo === 'chip' && <ChipDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'textField' && <TextFieldDemo />}

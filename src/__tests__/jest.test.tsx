@@ -12,6 +12,8 @@ import {
   ActionSheet,
   Button,
   ButtonGroup,
+  Chip,
+  ChipGroup,
   ContextMenu,
   DatePicker,
   Dialog,
@@ -430,6 +432,76 @@ describe('ButtonGroup (mock)', () => {
     press(byTestID(tree, 'group-a'));
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('Chip and ChipGroup (mock)', () => {
+  it('Chip reports presses and closes, and keeps selected controlled', () => {
+    const onPress = jest.fn();
+    const onClose = jest.fn();
+    const tree = render(
+      <Chip
+        testID="ada"
+        label="Ada"
+        selected={false}
+        onPress={onPress}
+        onClose={onClose}
+      />
+    );
+    const chip = byTestID(tree, 'ada');
+    expect(chip.props.accessibilityRole).toBe('togglebutton');
+    expect(chip.props.accessibilityState).toEqual({
+      disabled: false,
+      checked: false,
+    });
+    press(chip);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(byTestID(tree, 'ada').props.accessibilityState.checked).toBe(false);
+
+    const close = byTestID(tree, 'ada-close');
+    expect(close.props.accessibilityLabel).toBe('Remove Ada');
+    press(close);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('ChipGroup follows the native selection rules and closes chips', () => {
+    const onPress = jest.fn();
+    const onSelectionChange = jest.fn();
+    const onClose = jest.fn();
+    const tree = render(
+      <ChipGroup
+        testID="diet"
+        chips={[
+          { value: 'veg', label: 'Vegetarian' },
+          { value: 'vegan', label: 'Vegan', closeTestID: 'no-vegan' },
+          { value: 'nuts', label: 'Nut free', disabled: true },
+        ]}
+        selection="single"
+        selectedValues={['veg']}
+        onPress={onPress}
+        onSelectionChange={onSelectionChange}
+        onClose={onClose}
+      />
+    );
+    press(byTestID(tree, 'diet-vegan'));
+    expect(onPress).toHaveBeenCalledWith('vegan', 1);
+    expect(onSelectionChange).toHaveBeenCalledWith(['vegan']);
+
+    // Single selection is required by default: the selected chip stays
+    onSelectionChange.mockClear();
+    press(byTestID(tree, 'diet-veg'));
+    expect(onSelectionChange).not.toHaveBeenCalled();
+
+    expect(byTestID(tree, 'diet-nuts').props.accessibilityState.disabled).toBe(
+      true
+    );
+
+    press(byTestID(tree, 'no-vegan'));
+    press(byTestID(tree, 'diet-veg-close'));
+    expect(onClose.mock.calls).toEqual([
+      ['vegan', 1],
+      ['veg', 0],
+    ]);
   });
 });
 

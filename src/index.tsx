@@ -10,6 +10,8 @@ export * from './NavigationRail';
 export * from './Button';
 export * from './ButtonGroup';
 export * from './SplitButton';
+export * from './Chip';
+export * from './ChipGroup';
 export * from './FloatingToolbar';
 export * from './LiquidGlass';
 export * from './LiquidGlassContainer';

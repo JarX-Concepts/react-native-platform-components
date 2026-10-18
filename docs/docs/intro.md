@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -54,6 +54,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**NavigationRail**](/components/navigationrail) | A column of tab-style `UIButton`s (iOS has no rail; use TabBar on iPhone) | Material 3 Expressive `NavigationRailView`: header, badges, menu gravity, expanded rail | React Navigation's drawer or a custom view (JavaScript) |
 | [**Button**](/components/button) | `UIButton` configurations, Liquid Glass variants on iOS 26 | Material 3 Expressive `MaterialButton`: five sizes, shape morph | `react-native-paper` (Material 3, not Expressive, in JavaScript) |
 | [**ButtonGroup**](/components/buttongroup) | A row of `UIButton`s with a "…" overflow menu; SplitButton: a button and a chevron `UIMenu` button | Material 3 Expressive button groups, single or multiple selection, overflow menu; `MaterialSplitButton` | `react-native-paper` segmented buttons (JavaScript) |
+| [**Chip**](/components/chip) | Capsule `UIButton`s (iOS has no chip): Liquid Glass on iOS 26, prominent glass with the tint color while selected; a wrapping flow layout or a scrolling row | Material 3 `Chip` (assist, filter, input, suggestion) in a `ChipGroup`: single or multiple selection, wrapping or single line, close icons | Pills drawn by hand with `Pressable` (no native press feedback, haptics or selection traits) |
 | [**FloatingActionButton**](/components/floatingactionbutton) | A round prominent `UIButton`, Liquid Glass on iOS 26 (iOS has no FAB) | Material `FloatingActionButton` / `ExtendedFloatingActionButton`: four sizes, shrink on scroll | `react-native-paper` FAB (drawn in JavaScript) |
 | [**FloatingToolbar**](/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
 | [**LiquidGlass**](/components/liquidglass) | `UIGlassEffect` on iOS 26+; `LiquidGlassContainer` merges and morphs it (`UIGlassContainerEffect`) | A fallback `View` | `@callstack/liquid-glass`, `expo-glass-effect` |

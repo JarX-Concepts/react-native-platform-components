@@ -32,6 +32,8 @@ import type { ActionSheetProps } from './ActionSheet';
 import type { DialogProps } from './Dialog';
 import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
+import type { ChipProps } from './Chip';
+import type { ChipGroupProps } from './ChipGroup';
 import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
@@ -62,6 +64,8 @@ export type * from './Dialog';
 export type * from './Button';
 export type * from './ButtonGroup';
 export type * from './SplitButton';
+export type * from './Chip';
+export type * from './ChipGroup';
 export type * from './FloatingToolbar';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -514,6 +518,172 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chip, ChipGroup
+
+/**
+ * One chip: a `Pressable` with the label as `Text` (a `togglebutton` with
+ * `accessibilityState.checked` when selectable), and beside it, when it has a
+ * close icon, a close `Pressable` labeled "Remove {label}".
+ */
+function MockChip(props: {
+  label: string;
+  selected: boolean | undefined;
+  closeIcon: boolean;
+  disabled: boolean;
+  accessibilityLabel: string | undefined;
+  closeAccessibilityLabel: string | undefined;
+  testID: string | undefined;
+  closeTestID: string | undefined;
+  onPress: () => void;
+  onClose: () => void;
+}): React.ReactElement {
+  const selectable = props.selected !== undefined;
+  return (
+    <View>
+      <Pressable
+        testID={props.testID}
+        accessibilityRole={selectable ? 'togglebutton' : 'button'}
+        accessibilityLabel={props.accessibilityLabel ?? props.label}
+        accessibilityState={{
+          disabled: props.disabled,
+          ...(selectable ? { checked: props.selected } : null),
+        }}
+        disabled={props.disabled}
+        onPress={props.onPress}
+      >
+        <Text>{props.label}</Text>
+      </Pressable>
+      {props.closeIcon ? (
+        <Pressable
+          testID={props.closeTestID}
+          accessibilityRole="button"
+          accessibilityLabel={
+            props.closeAccessibilityLabel ?? `Remove ${props.label}`
+          }
+          accessibilityState={{ disabled: props.disabled }}
+          disabled={props.disabled}
+          onPress={props.onClose}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * A chip `Pressable` carrying `testID`, plus a close `Pressable` with
+ * `closeTestID` (else `${testID}-close`) when it has a close icon. Pressing
+ * the chip calls `onPress`; it doesn't change `selected`, which stays
+ * controlled.
+ */
+export function Chip(props: ChipProps): React.ReactElement {
+  const {
+    label,
+    icon,
+    variant,
+    selected,
+    onPress,
+    closeIcon,
+    onClose,
+    closeAccessibilityLabel,
+    disabled,
+    haptics,
+    maxFontSizeMultiplier,
+    accessibilityLabel,
+    testID,
+    closeTestID,
+    ...viewProps
+  } = props;
+
+  return (
+    <View {...viewProps}>
+      <MockChip
+        label={label}
+        selected={selected}
+        closeIcon={closeIcon ?? onClose !== undefined}
+        disabled={!!disabled}
+        accessibilityLabel={accessibilityLabel}
+        closeAccessibilityLabel={closeAccessibilityLabel}
+        testID={testID}
+        closeTestID={closeTestID ?? (testID ? `${testID}-close` : undefined)}
+        onPress={() => onPress?.()}
+        onClose={() => onClose?.()}
+      />
+    </View>
+  );
+}
+
+/**
+ * A view of chips (see `Chip`), each with its `testID`, else
+ * `${testID}-${value}`, and its close `Pressable` with its `closeTestID`,
+ * else `${testID}-${value}-close`. Selection follows the native rules.
+ */
+export function ChipGroup(props: ChipGroupProps): React.ReactElement {
+  const {
+    chips,
+    variant,
+    selection = 'none',
+    selectedValues = [],
+    selectionRequired,
+    wrap,
+    spacing,
+    disabled,
+    haptics,
+    maxFontSizeMultiplier,
+    onPress,
+    onSelectionChange,
+    onClose,
+    testID,
+    ...viewProps
+  } = props;
+
+  const selected =
+    selection === 'single' ? selectedValues.slice(0, 1) : selectedValues;
+  const required = selectionRequired ?? selection === 'single';
+
+  const handlePress = (value: string, index: number) => {
+    onPress?.(value, index);
+    if (selection === 'none') return;
+    const next = nextSelection(
+      chips.map((c) => c.value),
+      selected,
+      value,
+      selection,
+      required
+    );
+    if (next.join('\u0000') !== selected.join('\u0000')) {
+      onSelectionChange?.(next);
+    }
+  };
+
+  return (
+    <View {...viewProps} testID={testID}>
+      {chips.map((chip, index) => (
+        <MockChip
+          key={chip.value}
+          label={chip.label}
+          selected={
+            selection === 'none' ? undefined : selected.includes(chip.value)
+          }
+          closeIcon={chip.closeIcon ?? onClose !== undefined}
+          disabled={!!(disabled || chip.disabled)}
+          accessibilityLabel={chip.accessibilityLabel}
+          closeAccessibilityLabel={chip.closeAccessibilityLabel}
+          testID={
+            chip.testID ?? (testID ? `${testID}-${chip.value}` : undefined)
+          }
+          closeTestID={
+            chip.closeTestID ??
+            (testID ? `${testID}-${chip.value}-close` : undefined)
+          }
+          onPress={() => handlePress(chip.value, index)}
+          onClose={() => onClose?.(chip.value, index)}
+        />
+      ))}
     </View>
   );
 }

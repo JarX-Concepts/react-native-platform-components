@@ -259,6 +259,8 @@
         "PCFloatingActionButton": "PCFloatingActionButton",
         "PCButton": "PCButton",
         "PCButtonGroup": "PCButtonGroup",
+        "PCChip": "PCChip",
+        "PCChipGroup": "PCChipGroup",
         "PCFloatingToolbar": "PCFloatingToolbar",
         "PCLiquidGlass": "PCLiquidGlass",
         "PCLiquidGlassContainer": "PCLiquidGlassContainer",
