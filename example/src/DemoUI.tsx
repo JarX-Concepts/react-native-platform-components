@@ -51,6 +51,10 @@ export function Screen(props: {
       // A drag puts the keyboard away, as iOS forms do
       keyboardDismissMode="on-drag"
       style={[ui.container, { backgroundColor: colors.background }]}
+      // The padding goes on the content: Android scrolls through the
+      // content's height only, so padding on the ScrollView itself pushed
+      // as much of the page's end out of reach
+      contentContainerStyle={ui.content}
     >
       {Platform.OS === 'android' && (
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
@@ -220,10 +224,21 @@ export function ActionField(props: {
   );
 }
 
+// Android 15+ draws the app edge to edge (the example targets SDK 36 and
+// doesn't opt out), under a transparent status bar and navigation bar.
+// Before 15 the system bars take their own space.
+const androidEdgeToEdge =
+  Platform.OS === 'android' && (Platform.Version as number) >= 35;
+
 export const ui = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 8 : 54,
+  container: { flex: 1 },
+  content: {
+    // iOS insets the content below the status bar itself
+    // (contentInsetAdjustmentBehavior)
+    paddingTop: Platform.OS === 'ios' ? 8 : androidEdgeToEdge ? 54 : 30,
+    // Room for the navigation bar drawn over the end of the page (48dp with
+    // three buttons)
+    paddingBottom: androidEdgeToEdge ? 48 : 0,
     paddingHorizontal: 20,
   },
   header: {

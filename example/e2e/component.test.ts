@@ -39,6 +39,17 @@ const isVisible = async (matcher: Detox.NativeMatcher, pct?: number) => {
   }
 };
 
+// Scrolls the demo screen until an element is visible, from wherever it is
+const scrollIntoView = async (testID: string) => {
+  if (await isVisible(by.id(testID))) return;
+  try {
+    await scrollToId(testID, 'down');
+  } catch {
+    // It was above: the scroll down stopped at the end of the page
+    await scrollToId(testID, 'up');
+  }
+};
+
 // iOS: moves the Tab Bar demo by about `amount` of the screen, swiping on a
 // section title: the lowest one on screen to go down, the highest to go up.
 const swipeTabBarDemo = async (direction: 'down' | 'up', amount = 0.3) => {
@@ -1310,7 +1321,7 @@ describe('Platform Components Example', () => {
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic');
+      await scrollToId('segment-basic', 'up');
       await element(by.text('Week')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('(none)');
@@ -1324,7 +1335,7 @@ describe('Platform Components Example', () => {
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic');
+      await scrollToId('segment-basic', 'up');
       await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
@@ -1650,6 +1661,9 @@ describe('Platform Components Example', () => {
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
 
+    // The next group can still be partly below the fold (on a phone where the
+    // system bars take their own space, such as Android before 15)
+    await scrollToId('button-group-single');
     await element(by.text('Month')).atIndex(0).tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
@@ -1757,10 +1771,11 @@ describe('Platform Components Example', () => {
     await expectText('overflow-value', 'code');
     await scrollToId('size-picker', 'up');
 
-    // Sizes and shapes: cycle the size picker, then square corners. Larger
-    // buttons push the picker down, so bring it back before every tap.
+    // Sizes and shapes: cycle the size picker, then square corners. The
+    // buttons above it change size and move it down or up, so bring it back
+    // before every tap.
     for (const size of ['M', 'L', 'XL', 'XS', 'S']) {
-      await scrollToId('size-picker');
+      await scrollIntoView('size-picker');
       await element(by.text(size)).atIndex(0).tap();
       await pause(700);
     }
