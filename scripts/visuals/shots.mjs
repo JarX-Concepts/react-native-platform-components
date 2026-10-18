@@ -32,15 +32,15 @@ export const COMPONENTS = [
       // whole on the card's own color. Android's embedded date picker is the
       // spinner, so its tile shows the embedded time picker's clock instead.
       ios: { time: 14.5, crop: { x: 0.05, y: 0.655, w: 0.9, h: 0.33 }, bg: '#fdfdfd' },
-      android: { time: 10.9, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd' },
+      android: { time: 13.6, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd' },
     },
     // The social card's tile is wider than tall: the clock fitted whole
     social: {
-      android: { time: 10.9, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd', fit: 'contain' },
+      android: { time: 13.6, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd', fit: 'contain' },
     },
     clip: {
       ios: { start: 7.4, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
-      android: { start: 7.8, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
+      android: { start: 8.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
     },
   },
   {
@@ -64,7 +64,7 @@ export const COMPONENTS = [
     test: 'Segmented Control',
     native: { ios: 'UISegmentedControl', android: 'MaterialButtonToggleGroup' },
     still: {
-      ios: { time: 10.5, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.52 } },
+      ios: { time: 11.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.52 } },
       android: { time: 9.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.58 } },
     },
     clip: {
@@ -82,7 +82,7 @@ export const COMPONENTS = [
     // the Material bar in a FloatingToolbar on Android.
     still: {
       ios: { time: 30.5, crop: { x: 0.03, y: 0.485, w: 0.94, h: 0.165 } },
-      android: { time: 22.28, crop: { x: 0.03, y: 0.645, w: 0.94, h: 0.175 } },
+      android: { time: 26.0, crop: { x: 0.03, y: 0.645, w: 0.94, h: 0.175 } },
     },
     // The social card's tile is squarer: the rows around the bar too
     social: {
@@ -115,12 +115,32 @@ export const COMPONENTS = [
     test: 'Button',
     native: { ios: 'UIButton', android: 'MaterialButton' },
     still: {
-      ios: { time: 42.0, crop: { x: 0.03, y: 0.093, w: 0.94, h: 0.6 } },
-      android: { time: 60.0, crop: { x: 0.03, y: 0.235, w: 0.94, h: 0.56 } },
+      ios: { time: 48.0, crop: { x: 0.03, y: 0.1, w: 0.94, h: 0.6 } },
+      android: { time: 64.0, crop: { x: 0.03, y: 0.235, w: 0.94, h: 0.56 } },
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
       android: { start: 7.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.46 } },
+    },
+  },
+  {
+    key: 'chip',
+    name: 'Chip',
+    test: 'Chip',
+    flow: 'Chip group selection',
+    native: { ios: 'capsule UIButtons', android: 'Material Chip / ChipGroup' },
+    // The single-select time frame, the scrolling row and the multi-select
+    // filters with their input chips. The clip runs longer than the others
+    // so it reaches the filters; the Android recording ends a little before
+    // it does, and its last frame holds.
+    still: {
+      ios: { time: 12.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
+      android: { time: 12.5, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
+    },
+    clip: {
+      duration: 6.0,
+      ios: { start: 5.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
+      android: { start: 7.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
     },
   },
   {
@@ -146,12 +166,12 @@ export const COMPONENTS = [
     native: { ios: 'UIContextMenuInteraction', android: 'PopupMenu' },
     still: {
       // Cut to the hero's four-column tiles, a little wider than tall
-      ios: { time: 38.5, crop: { x: 0.1, y: 0.29, w: 0.9, h: 0.39 } },
-      android: { time: 17.8, crop: { x: 0.2, y: 0.47, w: 0.78, h: 0.32 } },
+      ios: { time: 51.5, crop: { x: 0.1, y: 0.47, w: 0.9, h: 0.4 } },
+      android: { time: 20.5, crop: { x: 0.2, y: 0.58, w: 0.78, h: 0.34 } },
     },
     clip: {
       ios: { start: 4.5, crop: { x: 0.03, y: 0.25, w: 0.94, h: 0.43 } },
-      android: { start: 7.5, crop: { x: 0.03, y: 0.28, w: 0.94, h: 0.34 } },
+      android: { start: 8.0, crop: { x: 0.03, y: 0.28, w: 0.94, h: 0.34 } },
     },
   },
   {
@@ -165,12 +185,28 @@ export const COMPONENTS = [
     // the sheet with the file set and remove it.
     still: {
       ios: { time: 9.5, crop: { x: 0.05, y: 0.075, w: 0.9, h: 0.38 } },
-      android: { time: 14.5, crop: { x: 0, y: 0.612, w: 1, h: 0.388 } },
+      android: { time: 17.0, crop: { x: 0, y: 0.612, w: 1, h: 0.388 } },
     },
     clip: {
       ios: { start: 5.6, crop: { x: 0.03, y: 0.075, w: 0.94, h: 0.42 } },
       // The file row at the top, the sheet at the bottom
-      android: { start: 7.3, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
+      android: { start: 7.6, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
+    },
+  },
+  {
+    key: 'dialog',
+    name: 'Dialog',
+    test: 'Dialog',
+    native: { ios: 'UIAlertController', android: 'MaterialAlertDialogBuilder' },
+    // The delete confirmation over the dimmed page. The clips delete, and the
+    // next dialog opens from onDismiss.
+    still: {
+      ios: { time: 7.0, crop: { x: 0.05, y: 0.31, w: 0.9, h: 0.42 } },
+      android: { time: 8.7, crop: { x: 0.05, y: 0.3, w: 0.9, h: 0.44 } },
+    },
+    clip: {
+      ios: { start: 5.6, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.5 } },
+      android: { start: 7.6, crop: { x: 0.03, y: 0.17, w: 0.94, h: 0.5 } },
     },
   },
   {
@@ -180,7 +216,7 @@ export const COMPONENTS = [
     native: { ios: 'UIMenu', android: 'Material exposed dropdown' },
     still: {
       ios: { time: 17.5, crop: { x: 0.25, y: 0.33, w: 0.72, h: 0.34 } },
-      android: { time: 9.2, crop: { x: 0.2, y: 0.47, w: 0.75, h: 0.32 } },
+      android: { time: 10.2, crop: { x: 0.2, y: 0.47, w: 0.75, h: 0.32 } },
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.24, w: 0.94, h: 0.48 } },
@@ -196,16 +232,16 @@ export const COMPONENTS = [
     // capsule with a button, the arrangement iOS 26 uses for a bottom bar.
     // Android shows the Expressive FloatingToolbarLayout instead, because the
     // segmented control inside the toolbar there renders as plain Material 3.
-    // The demo's tint toggle turns the toolbar orange between 13-15s on iOS
-    // and 14-15s on Android, so the clips stay clear of those windows.
+    // The demo's tint toggle turns the toolbar orange from 19.5s on iOS and
+    // between 15-16s on Android, so the clips stay clear of those windows.
     still: {
       // Tight around the bars, fitted whole into the tiles on the screen's
       // own color, so the capsules keep their ends
-      ios: { time: 6.5, crop: { x: 0.115, y: 0.8375, w: 0.8, h: 0.099 }, bg: '#f3f3f5' },
-      android: { time: 9.5, crop: { x: 0.1, y: 0.468, w: 0.8, h: 0.105 }, bg: '#eff2f2' },
+      ios: { time: 9.0, crop: { x: 0.115, y: 0.8375, w: 0.8, h: 0.099 }, bg: '#f3f3f5' },
+      android: { time: 7.5, crop: { x: 0.1, y: 0.468, w: 0.8, h: 0.105 }, bg: '#eff2f2' },
     },
     clip: {
-      ios: { start: 4.0, crop: { x: 0.03, y: 0.42, w: 0.94, h: 0.55 } },
+      ios: { start: 9.0, crop: { x: 0.03, y: 0.42, w: 0.94, h: 0.55 } },
       android: { start: 10.3, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.66 } },
     },
   },
@@ -239,3 +275,10 @@ export const THEME_LIGHT = {
 };
 
 export const byKey = Object.fromEntries(COMPONENTS.map((c) => [c.key, c]));
+
+/**
+ * The Detox flow a component's visuals come from, as its title reads after
+ * "should test": "<test> functionality" unless the component names another
+ * `flow`.
+ */
+export const flowOf = (c) => c.flow ?? `${c.test} functionality`;

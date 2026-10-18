@@ -19,7 +19,9 @@ GIF_FPS="${GIF_FPS:-20}"
 # off). 0.6 s still shows each open menu long enough to read.
 ANDROID_PAUSE_CAP="${ANDROID_PAUSE_CAP:-0.6}"
 # A slow emulator also reaches the demo later: the seconds between which to
-# look for the switch to it (see navigation_trim)
+# look for the switch to it (see navigation_trim). On a fast emulator, which
+# shows the demo about 7 s in, use ANDROID_NAV_FROM=1.5 ANDROID_NAV_WINDOW=8:
+# a later window catches the flow's own menus instead
 ANDROID_NAV_FROM="${ANDROID_NAV_FROM:-8}"
 ANDROID_NAV_WINDOW="${ANDROID_NAV_WINDOW:-30}"
 
@@ -47,18 +49,25 @@ echo "Step 3: Finding the newest recording of each flow..."
 
 # The newest passing recording of a flow across every artifacts run, so a
 # single-flow run (see CONTRIBUTING) refreshes just that component's GIFs
-newest_recording() {
-    local config_prefix="$1" test_name="$2"
-    find "$ARTIFACTS_DIR" -type f -path "*/${config_prefix}.*/✓ Platform Components Example should test ${test_name} functionality/test.mp4" -print0 2>/dev/null \
+newest_flow() {
+    local config_prefix="$1" flow="$2"
+    find "$ARTIFACTS_DIR" -type f -path "*/${config_prefix}.*/✓ Platform Components Example should test ${flow}/test.mp4" -print0 2>/dev/null \
         | xargs -0 ls -t 2>/dev/null | head -1
 }
 
-# Locate the 25 video files (LiquidGlass is iOS-only)
+# The same for a flow titled "should test <name> functionality"
+newest_recording() {
+    newest_flow "$1" "$2 functionality"
+}
+
+# Locate the 29 video files (LiquidGlass is iOS-only)
 IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
 IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
 IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
 IOS_CONTEXTMENU=$(newest_recording ios.sim.release "Context Menu")
 IOS_ACTIONSHEET=$(newest_recording ios.sim.release "Action Sheet")
+IOS_DIALOG=$(newest_recording ios.sim.release "Dialog")
+IOS_CHIP=$(newest_flow ios.sim.release "Chip group selection")
 IOS_SEGMENTEDCONTROL=$(newest_recording ios.sim.release "Segmented Control")
 IOS_TABBAR=$(newest_recording ios.sim.release "Tab Bar")
 IOS_NAVIGATIONRAIL=$(newest_recording ios.sim.release "Navigation Rail")
@@ -72,6 +81,8 @@ ANDROID_DATEPICKER=$(newest_recording android.emu.release "Date Picker")
 ANDROID_SELECTIONMENU=$(newest_recording android.emu.release "Selection Menu")
 ANDROID_CONTEXTMENU=$(newest_recording android.emu.release "Context Menu")
 ANDROID_ACTIONSHEET=$(newest_recording android.emu.release "Action Sheet")
+ANDROID_DIALOG=$(newest_recording android.emu.release "Dialog")
+ANDROID_CHIP=$(newest_flow android.emu.release "Chip group selection")
 ANDROID_SEGMENTEDCONTROL=$(newest_recording android.emu.release "Segmented Control")
 ANDROID_TABBAR=$(newest_recording android.emu.release "Tab Bar")
 ANDROID_NAVIGATIONRAIL=$(newest_recording android.emu.release "Navigation Rail")
@@ -81,14 +92,14 @@ ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar
 ANDROID_THEME=$(newest_recording android.emu.release "Theme")
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
+for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
     if [ -z "$f" ] || [ ! -f "$f" ]; then
         echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 25 videos found!"
+echo "All 29 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -165,26 +176,31 @@ navigation_trim() {
 }
 
 # Seconds to trim from a flow whose first step opens a dialog over a dimmed
-# page (the Android action sheet): the GIF starts a little before the scrim
-# first darkens the page, by then on the demo. There the scrim, not the
-# switch to the demo, is the largest scene change, and the switch between the
-# two light pages scores below the demo menu, so navigation_trim would start
-# the GIF on the menu or past the first sheet.
+# page (the Android action sheet and dialog): the GIF starts a little before
+# the scrim first darkens the page, by then on the demo. There the scrim, not
+# the switch to the demo, is the largest scene change, and the switch between
+# the two light pages scores below the demo menu, so navigation_trim would
+# start the GIF on the menu or past the first sheet. The third argument is
+# the scene score that counts as the scrim: the alert dialog's scrim fades in
+# over several frames, none of which scores 0.3 on a fast emulator, so the
+# dialog flow passes a lower one (still twice the switch to the demo's score).
 dialog_trim() {
     local trim
-    trim=$(ffmpeg -i "$1" -vf "select='gt(scene,0.3)*gte(t,1.5)',metadata=print:key=lavfi.scene_score" -f null - 2>&1 \
+    trim=$(ffmpeg -i "$1" -vf "select='gt(scene,${3:-0.3})*gte(t,1.5)',metadata=print:key=lavfi.scene_score" -f null - 2>&1 \
         | grep -oE "pts_time:[0-9.]+" | head -1 \
         | awk -F: -v lead="${2:-1.2}" '{ t = $2 - lead; if (t < 0) t = 0; printf "%.2f", t }')
     echo "${trim:-3}"
 }
 
-# Convert all 25 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 29 videos to GIFs (LiquidGlass is iOS-only)
 convert_to_gif "$IOS_TEXTFIELD" "$ASSETS_DIR/ios-textfield.gif" "$(navigation_trim "$IOS_TEXTFIELD")"
 convert_to_gif "$ANDROID_TEXTFIELD" "$ASSETS_DIR/android-textfield.gif" "$(navigation_trim "$ANDROID_TEXTFIELD" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
 convert_to_gif "$IOS_SELECTIONMENU" "$ASSETS_DIR/ios-selectionmenu.gif" "$(navigation_trim "$IOS_SELECTIONMENU")"
 convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "$(navigation_trim "$IOS_CONTEXTMENU")"
 convert_to_gif "$IOS_ACTIONSHEET" "$ASSETS_DIR/ios-actionsheet.gif" "$(navigation_trim "$IOS_ACTIONSHEET")"
+convert_to_gif "$IOS_DIALOG" "$ASSETS_DIR/ios-dialog.gif" "$(navigation_trim "$IOS_DIALOG")"
+convert_to_gif "$IOS_CHIP" "$ASSETS_DIR/ios-chip.gif" "$(navigation_trim "$IOS_CHIP")"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "$(navigation_trim "$IOS_SEGMENTEDCONTROL")"
 convert_to_gif "$IOS_TABBAR" "$ASSETS_DIR/ios-tabbar.gif" "$(navigation_trim "$IOS_TABBAR")"
 convert_to_gif "$IOS_NAVIGATIONRAIL" "$ASSETS_DIR/ios-navigationrail.gif" "$(navigation_trim "$IOS_NAVIGATIONRAIL")"
@@ -198,6 +214,8 @@ convert_to_gif "$ANDROID_DATEPICKER" "$ASSETS_DIR/android-datepicker.gif" "$(nav
 convert_to_gif "$ANDROID_SELECTIONMENU" "$ASSETS_DIR/android-selectionmenu.gif" "$(navigation_trim "$ANDROID_SELECTIONMENU" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_CONTEXTMENU" "$ASSETS_DIR/android-contextmenu.gif" "$(navigation_trim "$ANDROID_CONTEXTMENU" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_ACTIONSHEET" "$ASSETS_DIR/android-actionsheet.gif" "$(dialog_trim "$ANDROID_ACTIONSHEET")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_DIALOG" "$ASSETS_DIR/android-dialog.gif" "$(dialog_trim "$ANDROID_DIALOG" 1.3 0.15)" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_CHIP" "$ASSETS_DIR/android-chip.gif" "$(navigation_trim "$ANDROID_CHIP" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_SEGMENTEDCONTROL" "$ASSETS_DIR/android-segmentedcontrol.gif" "$(navigation_trim "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_TABBAR" "$ASSETS_DIR/android-tabbar.gif" "$(navigation_trim "$ANDROID_TABBAR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_NAVIGATIONRAIL" "$ASSETS_DIR/android-navigationrail.gif" "$(navigation_trim "$ANDROID_NAVIGATIONRAIL" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
