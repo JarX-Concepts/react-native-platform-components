@@ -1073,6 +1073,25 @@ describe('Platform Components Example', () => {
         .not.toExist()
         .withTimeout(6000);
     };
+    // Dismisses the open sheet without a pick. Android: the back button
+    // (swipe down and the scrim also cancel). iOS: the Cancel row, found by
+    // cancelTestID, where UIKit shows one: the sheet at the bottom of an
+    // iPhone before iOS 26, or in the middle of it on iOS 26 without an
+    // anchor. A popover (iPad, and an anchored iPhone sheet from iOS 26)
+    // hides the row, and a tap outside it cancels.
+    const cancelSheet = async () => {
+      if (isAndroid()) {
+        await device.pressBack();
+        return;
+      }
+      try {
+        await expect(sheetAction('source-cancel')).toBeVisible();
+      } catch {
+        await tapOutsideMenu();
+        return;
+      }
+      await sheetAction('source-cancel').tap();
+    };
 
     // Pick a source
     await openSheet();
@@ -1088,15 +1107,9 @@ describe('Platform Components Example', () => {
     await expectText('actionsheet-file', 'No file');
     await waitForSheetToClose();
 
-    // Dismissed without a pick: onCancel. Android: the back button (swipe
-    // down and the scrim also cancel). iOS 26 shows the anchored sheet as a
-    // popover without a Cancel row: a tap outside cancels
+    // Dismissed without a pick: onCancel
     await openSheet();
-    if (isAndroid()) {
-      await device.pressBack();
-    } else {
-      await tapOutsideMenu();
-    }
+    await cancelSheet();
     await expectText('actionsheet-last-event', 'cancel');
     await waitForSheetToClose();
 
@@ -1131,10 +1144,10 @@ describe('Platform Components Example', () => {
 
     if (!isAndroid()) {
       // Without children there is nothing to point at: the iPhone sheet has
-      // its Cancel row, found by cancelTestID
+      // its Cancel row, and the iPad shows a popover without an arrow
       await element(by.id('actionsheet-anchored-switch')).tap();
       await openSheet();
-      await sheetAction('source-cancel').tap();
+      await cancelSheet();
       await expectText('actionsheet-last-event', 'cancel');
       await waitForSheetToClose();
       await element(by.id('actionsheet-anchored-switch')).tap();
