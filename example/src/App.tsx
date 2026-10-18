@@ -17,6 +17,7 @@ import { ButtonDemo } from './ButtonDemo';
 import { ChipDemo } from './ChipDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
+import { DialogDemo } from './DialogDemo';
 import { FloatingActionButtonDemo } from './FloatingActionButtonDemo';
 import { FloatingToolbarDemo } from './FloatingToolbarDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
@@ -39,6 +40,7 @@ type DemoKey =
   | 'selectionMenu'
   | 'contextMenu'
   | 'actionSheet'
+  | 'dialog'
   | 'segmentedControl'
   | 'tabBar'
   | 'navigationRail'
@@ -57,6 +59,7 @@ const COMPONENT_DEMOS = [
   { label: 'Selection Menu', data: 'selectionMenu' },
   { label: 'Context Menu', data: 'contextMenu' },
   { label: 'Action Sheet', data: 'actionSheet' },
+  { label: 'Dialog', data: 'dialog' },
   { label: 'Segmented Control', data: 'segmentedControl' },
   { label: 'Tab Bar', data: 'tabBar' },
   { label: 'Navigation Rail', data: 'navigationRail' },
@@ -144,6 +147,7 @@ export default function App(): React.ReactElement {
       {demo === 'selectionMenu' && <SelectionMenuDemo />}
       {demo === 'contextMenu' && <ContextMenuDemo />}
       {demo === 'actionSheet' && <ActionSheetDemo />}
+      {demo === 'dialog' && <DialogDemo />}
       {demo === 'segmentedControl' && <SegmentedControlDemo />}
       {demo === 'tabBar' && <TabBarDemo />}
       {demo === 'navigationRail' && <NavigationRailDemo />}

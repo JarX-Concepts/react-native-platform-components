@@ -9,6 +9,7 @@ export type * from './DatePicker';
 export type * from './SelectionMenu';
 export type * from './ContextMenu';
 export type * from './ActionSheet';
+export type * from './Dialog';
 export type * from './SegmentedControl';
 export type * from './TabBar';
 export type * from './FloatingActionButton';
@@ -45,6 +46,7 @@ export {
   ContextMenu,
   DatePicker,
   DateRangePicker,
+  Dialog,
   FloatingActionButton,
   FloatingToolbar,
   LiquidGlass,

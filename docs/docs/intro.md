@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -48,6 +48,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**SelectionMenu**](/components/selectionmenu) | System menus | Material exposed dropdown or `Spinner` | `@react-native-picker/picker` (wheel or dialog, no menu) |
 | [**ContextMenu**](/components/contextmenu) | `UIContextMenuInteraction` | `PopupMenu` | `zeego` (through two more native packages) |
 | [**ActionSheet**](/components/actionsheet) | `UIAlertController` (`.actionSheet`), a popover pointing at its trigger on iPad and iOS 26 | Material 3 modal bottom sheet (`BottomSheetDialog`) with icons | `react-native-actions-sheet` (drawn in JavaScript); `ActionSheetIOS` (iOS only, no testIDs or anchor) |
+| [**Dialog**](/components/dialog) | `UIAlertController` (`.alert`) | Material 3 alert dialog (`MaterialAlertDialogBuilder`), any number of buttons | React Native's `Alert` (no testIDs, AppCompat dialog on Android) |
 | [**SegmentedControl**](/components/segmentedcontrol) | `UISegmentedControl` | Material 3 Expressive connected buttons, or classic segmented buttons | `@react-native-segmented-control/segmented-control` (JavaScript on Android) |
 | [**TabBar**](/components/tabbar) | `UITabBar`, the floating Liquid Glass bar on iOS 26 | Material 3 navigation bar | React Navigation's bottom tabs (JavaScript); `react-native-bottom-tabs` (tied to its navigator) |
 | [**NavigationRail**](/components/navigationrail) | A column of tab-style `UIButton`s (iOS has no rail; use TabBar on iPhone) | Material 3 Expressive `NavigationRailView`: header, badges, menu gravity, expanded rail | React Navigation's drawer or a custom view (JavaScript) |

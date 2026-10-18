@@ -1,6 +1,6 @@
 ---
 title: "Haptics"
-description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet."
+description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog."
 ---
 
 The interactive components take a `haptics` prop that plays the platform's own haptic feedback when the user acts on the control: a press, a selection change or a menu pick. There is no separate haptics library to wire up per control, and the haptic plays in native code at the moment the control reports the action, before the event reaches JavaScript.
@@ -11,7 +11,7 @@ The interactive components take a `haptics` prop that plays the platform's own h
 <Button label="Pay" haptics="success" onPress={pay} />
 ```
 
-It is on Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu and ActionSheet, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
+It is on Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
 
 ## Values
 
@@ -37,7 +37,7 @@ Android has fewer distinct effects than iOS. With Android 15's default haptic co
 
 Devices can tune each constant, so the same value can feel different from one phone to the next. Android has no warning constant; `warning` and `error` both play `REJECT`.
 
-On iOS each component creates its generator on first use, attached to the view (`init(view:)` on iOS 17.5+, the plain initializers before), and prepares it when an action is likely: on touch down for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton and NavigationRail, when the menu appears for ContextMenu and the modal SelectionMenu, and when the sheet is presented for ActionSheet. On Android the haptic is `View.performHapticFeedback` on the component's view, without flags, so the system's touch-feedback setting applies.
+On iOS each component creates its generator on first use, attached to the view (`init(view:)` on iOS 17.5+, the plain initializers before), and prepares it when an action is likely: on touch down for Button, ButtonGroup, SplitButton, Chip, ChipGroup, FloatingActionButton and NavigationRail, when the menu appears for ContextMenu and the modal SelectionMenu, and when the sheet or dialog is presented for ActionSheet and Dialog. On Android the haptic is `View.performHapticFeedback` on the component's view, without flags, so the system's touch-feedback setting applies.
 
 On the web the prop is accepted and ignored.
 
@@ -57,12 +57,13 @@ On the web the prop is accepted and ignored.
 | [SelectionMenu](/components/selectionmenu)             | The user picks an option (whenever `onSelect` is called)                                | On open, or when the menu is dismissed without a pick               |
 | [ContextMenu](/components/contextmenu)                 | The user presses an action                                                              | On a row that opens a submenu                                       |
 | [ActionSheet](/components/actionsheet)                 | The user picks an action                                                                | On cancel, or when the app closes the sheet through `visible`       |
+| [Dialog](/components/dialog)                           | The user picks a default or destructive action                                          | On cancel (the cancel action plays only its own `haptics`), or when the app closes the dialog through `visible` |
 
 A **reselect** plays the haptic too, on TabBar and NavigationRail: pressing the selected tab is a deliberate action (the conventional "scroll to top" or "back to root"), and the press gets the same acknowledgement as any other. The haptic doesn't wait for your `onSelect` handler, so it plays even when your code keeps the selection where it was.
 
 ## Menu items
 
-A menu action can carry its own `haptics`, which plays in place of the component's when that action is picked; `'none'` silences one action. It works everywhere the menu items go: ContextMenu actions, ActionSheet actions, Button `menu` and SplitButton `menu`.
+A menu action can carry its own `haptics`, which plays in place of the component's when that action is picked; `'none'` silences one action. It works everywhere the menu items go: ContextMenu actions, ActionSheet and Dialog actions, Button `menu` and SplitButton `menu`.
 
 ```tsx
 <ContextMenu
@@ -93,6 +94,7 @@ Unset `haptics` adds nothing, so each component keeps the behavior of the native
 | NavigationRail   | `UIButton`s: no haptic                                                                         | `NavigationRailView`: no haptic                                                                   |
 | SelectionMenu    | The system menu (embedded) or the popover list (modal): no haptic for the pick                 | `Spinner`, the exposed dropdown or `PopupMenu`: no haptic                                        |
 | ActionSheet      | `UIAlertController`: no haptic for the pick                                                    | The bottom sheet's rows: no haptic                                                               |
+| Dialog           | `UIAlertController`: no haptic for the pick                                                    | The dialog's buttons: no haptic                                                                  |
 | ContextMenu      | `UIContextMenuInteraction` plays its own haptic when the menu opens from a long press         | The long-press haptic (`LONG_PRESS`) when the menu opens from a long press, as any Android long press plays |
 
 So the haptic you choose doesn't double up with one the control already plays: the controls above play none for the action the prop covers. The context menus' open haptic belongs to the long press, not the action, and stays when `haptics` is set.

@@ -7,6 +7,7 @@ import type { ChipProps } from './Chip';
 import type { ChipGroupProps } from './ChipGroup';
 import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
+import type { DialogProps } from './Dialog';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
 import type { LiquidGlassProps } from './LiquidGlass';
@@ -28,6 +29,7 @@ export interface WebComponentProps {
   ContextMenu: ContextMenuProps;
   DatePicker: DatePickerProps;
   DateRangePicker: DateRangePickerProps;
+  Dialog: DialogProps;
   FloatingActionButton: FloatingActionButtonProps;
   FloatingToolbar: FloatingToolbarProps;
   LiquidGlass: LiquidGlassProps;

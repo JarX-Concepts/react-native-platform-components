@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 
 import type { DatePickerProps } from '../DatePicker';
-import { Dialog } from './Dialog';
+import { ModalDialog } from './ModalDialog';
 import {
   formatInputValue,
   inputTypeForMode,
@@ -170,7 +170,7 @@ function ModalPicker({
   };
 
   return (
-    <Dialog label={label} onDismiss={dismiss}>
+    <ModalDialog label={label} onDismiss={dismiss}>
       {renderInput(
         draft,
         (next) => {
@@ -199,6 +199,6 @@ function ModalPicker({
           Done
         </button>
       </div>
-    </Dialog>
+    </ModalDialog>
   );
 }

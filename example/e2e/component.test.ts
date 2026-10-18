@@ -438,6 +438,25 @@ export const ensureModalMode = async (enabled: boolean) => {
   }
 };
 
+// A button of the open dialog, by its testID. iOS: the alert carries the
+// identifier on more than one of its views
+const dialogAction = (testID: string) =>
+  isAndroid() ? element(by.id(testID)) : element(by.id(testID)).atIndex(0);
+
+// Opens a Dialog demo dialog and waits for one of its buttons
+const openDialog = async (name: string, button: string) => {
+  await element(by.id(`dialog-open-${name}`)).tap();
+  await waitFor(dialogAction(button)).toBeVisible().withTimeout(6000);
+};
+
+// Waits for the dialog with `button` to go. On Android, Espresso reads the
+// page behind a dialog only once it has closed
+const waitForDialogToClose = async (button: string) => {
+  await waitFor(element(by.id(button)))
+    .not.toExist()
+    .withTimeout(6000);
+};
+
 const adbPath = () =>
   process.env.ANDROID_HOME
     ? `${process.env.ANDROID_HOME}/platform-tools/adb`
@@ -1079,6 +1098,104 @@ describe('Platform Components Example', () => {
       await waitForSheetToClose();
       await element(by.id('actionsheet-anchored-switch')).tap();
     }
+  });
+
+  it('should test Dialog functionality', async () => {
+    await selectDemo('Dialog');
+    await expect(element(by.id('dialog-open-confirm'))).toBeVisible();
+
+    // Delete (destructive, preferred), then the next dialog opens from
+    // onDismiss; every event in order
+    await openDialog('confirm', 'dialog-delete');
+    await dialogAction('dialog-delete').tap();
+    await waitFor(dialogAction('dialog-ok')).toBeVisible().withTimeout(6000);
+    await dialogAction('dialog-ok').tap();
+    await waitForDialogToClose('dialog-ok');
+    await expectText(
+      'dialog-events',
+      'show, select: delete, dismiss, show, select: ok, dismiss'
+    );
+
+    // The cancel action: onCancel, then onDismiss
+    await openDialog('confirm', 'dialog-cancel');
+    await dialogAction('dialog-cancel').tap();
+    await waitForDialogToClose('dialog-cancel');
+    await expectText('dialog-events', 'show, cancel, dismiss');
+
+    // Five actions (stacked on Android): pick one, then cancel
+    await openDialog('share', 'dialog-share-copy');
+    await dialogAction('dialog-share-copy').tap();
+    await waitForDialogToClose('dialog-share-copy');
+    await expectText('dialog-events', 'show, select: copy, dismiss');
+    await openDialog('share', 'dialog-share-cancel');
+    await dialogAction('dialog-share-cancel').tap();
+    await waitForDialogToClose('dialog-share-cancel');
+    await expectText('dialog-events', 'show, cancel, dismiss');
+
+    // A disabled action can't be picked: the dialog stays up (a pick closes
+    // it; on Android the page behind the dialog isn't readable meanwhile)
+    await openDialog('save', 'dialog-save');
+    await dialogAction('dialog-save').tap();
+    await pause(800);
+    await expect(dialogAction('dialog-discard')).toBeVisible();
+    await dialogAction('dialog-discard').tap();
+    await waitForDialogToClose('dialog-discard');
+    await expectText('dialog-events', 'show, select: discard, dismiss');
+  });
+
+  it('should test Dialog dismissal', async () => {
+    await selectDemo('Dialog');
+    await expect(element(by.id('dialog-open-confirm'))).toBeVisible();
+
+    if (isAndroid()) {
+      // Back cancels a dismissable dialog
+      await openDialog('confirm', 'dialog-cancel');
+      await device.pressBack();
+      await waitForDialogToClose('dialog-cancel');
+      await expectText('dialog-events', 'show, cancel, dismiss');
+    }
+
+    // dismissable={false}: back does nothing (an iOS alert never closes on
+    // a tap outside either); only its button closes it
+    await openDialog('update', 'dialog-update');
+    if (isAndroid()) {
+      await device.pressBack();
+      await pause(800);
+      await expect(dialogAction('dialog-update')).toBeVisible();
+    }
+    await dialogAction('dialog-update').tap();
+    await waitForDialogToClose('dialog-update');
+    await expectText('dialog-events', 'show, select: update, dismiss');
+
+    // A second dialog asked for while one is up doesn't show:
+    // onPresentFailed('busy')
+    await openDialog('two', 'dialog-cancel');
+    await pause(1500);
+    await expect(dialogAction('dialog-cancel')).toBeVisible();
+    await dialogAction('dialog-cancel').tap();
+    await waitForDialogToClose('dialog-cancel');
+    await expectText('dialog-failure', 'busy');
+    await expectText('dialog-events', 'show, cancel, dismiss');
+    await expect(element(by.id('dialog-second-ok'))).not.toExist();
+
+    // The app closes the open dialog (visible = false): only onDismiss.
+    // Then it unmounts it, which reports nothing
+    await element(by.id('dialog-timer-close')).tap();
+    await openDialog('confirm', 'dialog-cancel');
+    await waitForDialogToClose('dialog-cancel');
+    await expectText('dialog-events', 'show, closed by the app, dismiss');
+    await element(by.id('dialog-timer-unmount')).tap();
+    await openDialog('confirm', 'dialog-cancel');
+    await waitForDialogToClose('dialog-cancel');
+    await expectText('dialog-events', 'show, unmounted by the app');
+    await element(by.id('dialog-timer-off')).tap();
+
+    // And it opens again afterwards
+    await openDialog('confirm', 'dialog-delete');
+    await dialogAction('dialog-delete').tap();
+    await waitFor(dialogAction('dialog-ok')).toBeVisible().withTimeout(6000);
+    await dialogAction('dialog-ok').tap();
+    await waitForDialogToClose('dialog-ok');
   });
 
   it('should test Segmented Control functionality', async () => {

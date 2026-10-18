@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
         'components/datepicker',
         'components/contextmenu',
         'components/actionsheet',
+        'components/dialog',
         'components/selectionmenu',
         'components/segmentedcontrol',
         'components/tabbar',

@@ -3,7 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 import type { SelectionMenuProps } from '../SelectionMenu';
-import { Dialog } from './Dialog';
+import { ModalDialog } from './ModalDialog';
 import { Icon } from './Icon';
 import { eventValue, usePrimaryColor } from './shared';
 
@@ -87,7 +87,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   return (
     <View {...viewProps}>
       {visible && !disabled ? (
-        <Dialog label={label} onDismiss={dismiss}>
+        <ModalDialog label={label} onDismiss={dismiss}>
           <div
             role="listbox"
             aria-label={label}
@@ -142,7 +142,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
               );
             })}
           </div>
-        </Dialog>
+        </ModalDialog>
       ) : null}
     </View>
   );
