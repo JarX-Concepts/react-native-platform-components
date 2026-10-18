@@ -698,10 +698,15 @@ describe('Platform Components Example', () => {
       await pause(800);
       await swipeWheelUntilSet('year-month-value', 0.3);
       // The pending block belongs to the touch-tracking run loop mode; a
-      // drag on the list runs that mode again and lets it go
+      // drag on the list runs that mode again and lets it go. On a tall
+      // screen (iPad) the page fits and doesn't scroll; a short swipe still
+      // drags it (it bounces)
       await element(by.id('demo-scroll'))
         .scroll(40, 'down', NaN, 0.15)
-        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15));
+        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15))
+        .catch(() =>
+          element(by.id('demo-scroll')).swipe('up', 'slow', 0.05, 0.5, 0.15)
+        );
       await pause(500);
     } finally {
       await device.enableSynchronization();
@@ -1457,7 +1462,9 @@ describe('Platform Components Example', () => {
       await pause(400);
       await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
       await pause(1200);
-      await element(by.id('tab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+      // Back up with a flick: the iPad's bar stays minimized through a slow
+      // scroll back, all the way to the feed's top
+      await element(by.id('tab-feed')).swipe('down', 'fast', 0.4, 0.5, 0.3);
       await pause(1200);
     }
     await element(by.id('tab-search-minimize')).tap();
@@ -1521,9 +1528,10 @@ describe('Platform Components Example', () => {
     if (isAndroid()) {
       await element(by.id('tab-player-feed')).scroll(150, 'up', NaN, 0.5);
     } else {
+      // A flick, as above
       await element(by.id('tab-player-feed')).swipe(
         'down',
-        'slow',
+        'fast',
         0.25,
         0.5,
         0.3
@@ -1804,17 +1812,31 @@ describe('Platform Components Example', () => {
     await element(by.id('reply-forward')).tap();
     await expectText('split-value', 'forward');
 
-    // Buttons that don't fit fold into an overflow menu; a pick is a press
+    // Buttons that don't fit fold into an overflow menu; a pick is a press.
+    // A wide screen (iPad) has room for all of them.
     await scrollToId('overflow-value');
-    await element(
+    const overflowButton = element(
       by
         .label(isAndroid() ? 'Overflow menu' : 'More')
         .withAncestor(by.id('button-group-overflow'))
-    )
-      .atIndex(0)
-      .tap();
-    await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
-    await menuItem('Code').tap();
+    ).atIndex(0);
+    let folded = true;
+    try {
+      await expect(overflowButton).toBeVisible();
+    } catch {
+      folded = false;
+    }
+    if (folded) {
+      await overflowButton.tap();
+      await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
+      await menuItem('Code').tap();
+    } else {
+      await element(
+        by.text('Code').withAncestor(by.id('button-group-overflow'))
+      )
+        .atIndex(0)
+        .tap();
+    }
     await expectText('overflow-value', 'code');
     await scrollToId('size-picker', 'up');
 
