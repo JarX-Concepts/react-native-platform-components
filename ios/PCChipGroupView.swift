@@ -154,6 +154,7 @@ public final class PCChipGroupView: UIView {
             }
             cell.onPress = { [weak self] in self?.press(at: index) }
             cell.onClose = { [weak self] in self?.close(at: index) }
+            cell.onTextSizeChange = { [weak self] in self?.textSizeChanged() }
             scrollView.addSubview(cell)
             cells.append(cell)
         }
@@ -194,15 +195,20 @@ public final class PCChipGroupView: UIView {
         setNeedsLayout()
     }
 
-    // The title font is fixed at the current text size, so the chips are
-    // rebuilt when the text size changes
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
-        else { return }
-        cells.forEach { $0.refresh() }
-        setNeedsLayout()
-        onNeedsRemeasure?()
+    /// Every cell reports a text size change (each rebuilds its own title);
+    /// the group lays out and remeasures once for all of them.
+    private var textSizeChangePending = false
+
+    private func textSizeChanged() {
+        guard !textSizeChangePending else { return }
+        textSizeChangePending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.textSizeChangePending = false
+            self.invalidateIntrinsicContentSize()
+            self.setNeedsLayout()
+            self.onNeedsRemeasure?()
+        }
     }
 
     // MARK: - Presses

@@ -22,7 +22,8 @@ final class PCChipCell: UIView {
         var closeTestID = ""
     }
 
-    /// Width of the close button at the chip's trailing end.
+    /// Width of the close button at the chip's trailing end, at the default
+    /// text size; it grows with the xmark at larger sizes.
     static let closeWidth: CGFloat = 30
     /// The chip's horizontal padding.
     static let horizontalPadding: CGFloat = 12
@@ -33,10 +34,15 @@ final class PCChipCell: UIView {
     private(set) var model = Model()
     private var image: UIImage?
     private var maxFontSizeMultiplier: CGFloat = 0
+    /// The close button's width for the current text size
+    private var closeSlotWidth = PCChipCell.closeWidth
 
     var onPress: (() -> Void)?
     var onClose: (() -> Void)?
     var onTouchDown: (() -> Void)?
+    /// Called after the cell rebuilt its title for a new text size, so the
+    /// owner can lay out and remeasure
+    var onTextSizeChange: (() -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -58,13 +64,24 @@ final class PCChipCell: UIView {
         apply()
     }
 
-    /// Re-applies the configuration, for a text size change.
-    func refresh() {
+    // The title font is fixed at the current text size, so it is rebuilt when
+    // the text size changes. The cell handles this itself: when its owner
+    // hears of the change, UIKit hasn't passed the new traits down to the
+    // cell yet, and a font built then keeps the old size.
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard let previousTraitCollection,
+              previousTraitCollection.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
         apply()
+        onTextSizeChange?()
     }
 
     private func apply() {
         let font = titleFont()
+        // Room for the xmark (sized from the font in updateCloseButton) and
+        // the padding around it
+        closeSlotWidth = max(Self.closeWidth, Self.xmarkPointSize(for: font) + 19)
         // Unselected glass / gray, selected prominent glass / filled
         var config = PCButtonSupport.makeConfiguration(
             variant: model.selected ? "prominentGlass" : "glass",
@@ -83,7 +100,7 @@ final class PCChipCell: UIView {
             top: 6,
             leading: Self.horizontalPadding,
             bottom: 6,
-            trailing: model.closeIcon ? Self.closeWidth : Self.horizontalPadding
+            trailing: model.closeIcon ? closeSlotWidth : Self.horizontalPadding
         )
         button.configuration = config
         // The selected trait, which VoiceOver announces. The configuration
@@ -101,6 +118,10 @@ final class PCChipCell: UIView {
     /// on the tinted prominent glass (filled).
     private var foregroundColor: UIColor {
         model.selected ? .white : .label
+    }
+
+    private static func xmarkPointSize(for font: UIFont) -> CGFloat {
+        round(font.pointSize * 0.75)
     }
 
     /// Subheadline, medium weight, capped at `maxFontSizeMultiplier`.
@@ -133,7 +154,7 @@ final class PCChipCell: UIView {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "xmark")
         config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(
-            pointSize: round(font.pointSize * 0.75),
+            pointSize: Self.xmarkPointSize(for: font),
             weight: .semibold
         )
         config.baseForegroundColor = model.selected ? UIColor.white.withAlphaComponent(0.85) : .secondaryLabel
@@ -152,7 +173,7 @@ final class PCChipCell: UIView {
         if let close = closeButton {
             // The xmark sits in the button's trailing padding
             let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
-            let width = min(Self.closeWidth + 4, bounds.width)
+            let width = min(closeSlotWidth + 4, bounds.width)
             close.frame = CGRect(
                 x: rtl ? 0 : bounds.width - width,
                 y: 0,
@@ -264,6 +285,12 @@ public final class PCChipView: UIView {
         }
         cell.onPress = { [weak self] in self?.onPress?() }
         cell.onClose = { [weak self] in self?.onClose?() }
+        cell.onTextSizeChange = { [weak self] in
+            guard let self else { return }
+            self.invalidateIntrinsicContentSize()
+            self.setNeedsLayout()
+            self.onNeedsRemeasure?()
+        }
         apply()
     }
 
@@ -305,16 +332,6 @@ public final class PCChipView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         cell.frame = bounds
-    }
-
-    // The title font is fixed at the current text size, so it is rebuilt
-    // when the text size changes
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
-        else { return }
-        cell.refresh()
-        onNeedsRemeasure?()
     }
 
     // MARK: - Sizing
