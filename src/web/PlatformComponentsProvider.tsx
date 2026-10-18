@@ -30,7 +30,10 @@ export function PlatformComponentsProvider({
 export function useWebComponent<Name extends keyof WebComponents>(
   name: Name
 ): WebComponents[Name] | undefined {
-  return useContext(WebContext)[name];
+  // Annotated: inferring the indexed type expands every entry's props into
+  // one union, which TypeScript gives up on.
+  const components: Partial<Pick<WebComponents, Name>> = useContext(WebContext);
+  return components[name];
 }
 
 export function withWebComponent<Name extends keyof WebComponents>(

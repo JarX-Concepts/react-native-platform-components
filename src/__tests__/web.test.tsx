@@ -15,6 +15,7 @@ import {
   ContextMenu,
   DatePicker,
   DateRangePicker,
+  Dialog,
   FloatingActionButton,
   LiquidGlass,
   LiquidGlassContainer,
@@ -672,6 +673,124 @@ describe('ActionSheet (web)', () => {
     click(buttons[3]!);
     act(() => dialog.props.onClose());
     expect(onCancel).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Dialog (web)', () => {
+  const actions = [
+    { id: 'cancel', title: 'Cancel', role: 'cancel' as const, testID: 'c' },
+    { id: 'later', title: 'Later', disabled: true },
+    { id: 'secret', title: 'Secret', hidden: true },
+    {
+      id: 'delete',
+      title: 'Delete',
+      role: 'destructive' as const,
+      preferred: true,
+      testID: 'd',
+    },
+  ];
+
+  it('renders nothing while hidden', () => {
+    const tree = render(<Dialog visible={false} actions={actions} />);
+    expect(tree.toJSON()).toBeNull();
+  });
+
+  it('shows an alertdialog and reports picks, cancels, show and dismiss', () => {
+    const onSelect = jest.fn();
+    const onCancel = jest.fn();
+    const onShow = jest.fn();
+    const onDismiss = jest.fn();
+    const dialog = (visible: boolean) => (
+      <Dialog
+        visible={visible}
+        title="Delete?"
+        message="It can't be undone."
+        actions={actions}
+        onSelect={onSelect}
+        onCancel={onCancel}
+        onShow={onShow}
+        onDismiss={onDismiss}
+      />
+    );
+    const tree = render(dialog(true));
+    const element = tree.root.findByType('dialog');
+    expect(element.props.role).toBe('alertdialog');
+    expect(element.props['aria-label']).toBe('Delete?');
+    expect(element.props['aria-describedby']).toBe(
+      tree.root.findByType('p').props.id
+    );
+    expect(onShow).toHaveBeenCalledTimes(1);
+
+    const buttons = tree.root.findAllByType('button');
+    expect(buttons.map((b) => b.props['data-testid'])).toEqual([
+      'c',
+      undefined,
+      'd',
+    ]);
+    expect(buttons[1]!.props.disabled).toBe(true);
+    expect(buttons[2]!.props.style.color).toBe('#B3261E');
+    expect(buttons[2]!.props.autoFocus).toBe(true);
+
+    click(buttons[2]!);
+    click(buttons[1]!);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('delete');
+    click(buttons[0]!);
+    act(() => element.props.onClose());
+    expect(onCancel).toHaveBeenCalledTimes(2);
+
+    act(() => tree.update(dialog(false)));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(tree.toJSON()).toBeNull();
+  });
+
+  it('keeps a dialog that is not dismissable open on Escape and outside clicks', () => {
+    const onCancel = jest.fn();
+    const tree = render(
+      <Dialog
+        visible
+        dismissable={false}
+        actions={actions}
+        onCancel={onCancel}
+      />
+    );
+    const element = tree.root.findByType('dialog');
+    const preventDefault = jest.fn();
+    act(() => element.props.onCancel({ preventDefault }));
+    expect(preventDefault).toHaveBeenCalled();
+    act(() =>
+      element.props.onClick({ target: element, currentTarget: element })
+    );
+    expect(onCancel).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('reports busy for a second dialog while one is open', () => {
+    const onPresentFailed = jest.fn();
+    const onShow = jest.fn();
+    const tree = render(
+      <>
+        <Dialog visible title="First" actions={actions} />
+        <Dialog
+          visible
+          title="Second"
+          actions={actions}
+          onShow={onShow}
+          onPresentFailed={onPresentFailed}
+        />
+      </>
+    );
+    expect(onPresentFailed).toHaveBeenCalledWith('busy');
+    expect(onShow).not.toHaveBeenCalled();
+    expect(tree.root.findAllByType('dialog')).toHaveLength(1);
+    act(() => tree.unmount());
+
+    // Once the first has gone, a dialog shows again
+    const again = render(
+      <Dialog visible title="Third" actions={actions} onShow={onShow} />
+    );
+    expect(onShow).toHaveBeenCalledTimes(1);
+    act(() => again.unmount());
   });
 });
 

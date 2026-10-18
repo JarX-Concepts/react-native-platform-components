@@ -2,6 +2,7 @@ export * from './DatePicker';
 export * from './SelectionMenu';
 export * from './ContextMenu';
 export * from './ActionSheet';
+export * from './Dialog';
 export * from './SegmentedControl';
 export * from './TabBar';
 export * from './FloatingActionButton';
