@@ -39,6 +39,17 @@ const isVisible = async (matcher: Detox.NativeMatcher, pct?: number) => {
   }
 };
 
+// Scrolls the demo screen until an element is visible, from wherever it is
+const scrollIntoView = async (testID: string) => {
+  if (await isVisible(by.id(testID))) return;
+  try {
+    await scrollToId(testID, 'down');
+  } catch {
+    // It was above: the scroll down stopped at the end of the page
+    await scrollToId(testID, 'up');
+  }
+};
+
 // iOS: moves the Tab Bar demo by about `amount` of the screen, swiping on a
 // section title: the lowest one on screen to go down, the highest to go up.
 const swipeTabBarDemo = async (direction: 'down' | 'up', amount = 0.3) => {
@@ -313,15 +324,38 @@ const waitForWidth = async (
   }
 };
 
+// Waits for a check that passes once an iOS menu has finished closing. UIKit
+// animates a menu away on the main thread and reports the close (onMenuClose,
+// SelectionMenu's onRequestClose) when that animation completes. A waitFor
+// re-checks the whole view hierarchy on the main thread every 0.1 s, which on
+// a slow CI simulator starved the animation: its completion came only after
+// an 8 s wait had given up. Checks a second apart leave the main thread to the
+// menu.
+const waitForMenuClosed = async (
+  check: () => Promise<unknown>,
+  timeout = 8000
+) => {
+  const start = Date.now();
+  for (;;) {
+    await pause(1000);
+    try {
+      await check();
+      return;
+    } catch (error) {
+      if (Date.now() - start > timeout) throw error;
+    }
+  }
+};
+
 // Dismisses an open iOS menu with a tap away from it, in the page's empty left
 // margin. An in-app tap: device.tap() starts an XCUITest runner, which takes
 // tens of seconds on CI. iOS 26 passes the dismissing tap on to the view
 // underneath (the page's scroll view there); before iOS 26 the menu's
 // full-screen container takes it.
-// With `item`, waits for the menu to stop showing it. A tap that lands while
-// UIKit is still updating an open menu in place (an action that keeps it
-// presented) can be swallowed on a slow CI simulator, so it is tapped once
-// more before failing.
+// With `item`, waits for the menu to stop showing it (see waitForMenuClosed).
+// A tap that lands while UIKit is still updating an open menu in place (an
+// action that keeps it presented) can be swallowed on a slow CI simulator, so
+// it is tapped once more before failing.
 const tapOutsideMenu = async (item?: string) => {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -333,9 +367,10 @@ const tapOutsideMenu = async (item?: string) => {
     }
     if (!item) return;
     try {
-      await waitFor(element(by.text(item)))
-        .not.toBeVisible()
-        .withTimeout(attempt === 1 ? 3000 : 6000);
+      await waitForMenuClosed(
+        () => expect(element(by.text(item))).not.toBeVisible(),
+        attempt === 1 ? 3000 : 6000
+      );
       return;
     } catch (error) {
       if (attempt >= 2) throw error;
@@ -663,10 +698,15 @@ describe('Platform Components Example', () => {
       await pause(800);
       await swipeWheelUntilSet('year-month-value', 0.3);
       // The pending block belongs to the touch-tracking run loop mode; a
-      // drag on the list runs that mode again and lets it go
+      // drag on the list runs that mode again and lets it go. On a tall
+      // screen (iPad) the page fits and doesn't scroll; a short swipe still
+      // drags it (it bounces)
       await element(by.id('demo-scroll'))
         .scroll(40, 'down', NaN, 0.15)
-        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15));
+        .catch(() => element(by.id('demo-scroll')).scroll(40, 'up', NaN, 0.15))
+        .catch(() =>
+          element(by.id('demo-scroll')).swipe('up', 'slow', 0.05, 0.5, 0.15)
+        );
       await pause(500);
     } finally {
       await device.enableSynchronization();
@@ -706,8 +746,12 @@ describe('Platform Components Example', () => {
       await waitFor(element(by.text('Alabama')))
         .toBeVisible()
         .withTimeout(6000);
-      await tapOutsideMenu();
-      await expectFieldText('menu-toggle-field', 'closed');
+      await tapOutsideMenu('Alabama');
+      await waitForMenuClosed(() =>
+        expect(
+          element(by.text('closed').withAncestor(by.id('menu-toggle-field')))
+        ).toBeVisible()
+      );
     }
 
     // Options with icons and subtitles
@@ -903,7 +947,9 @@ describe('Platform Components Example', () => {
       .withTimeout(6000);
     await element(by.id('menu-share')).tap();
     // onMenuClose set it back; the Last Action field is scrolled away
-    await expectText('programmatic-state', 'Menu Closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('programmatic-state'))).toHaveText('Menu Closed')
+    );
     await waitFor(element(by.text('Share (share)')))
       .toExist()
       .withTimeout(6000);
@@ -1032,6 +1078,25 @@ describe('Platform Components Example', () => {
         .not.toExist()
         .withTimeout(6000);
     };
+    // Dismisses the open sheet without a pick. Android: the back button
+    // (swipe down and the scrim also cancel). iOS: the Cancel row, found by
+    // cancelTestID, where UIKit shows one: the sheet at the bottom of an
+    // iPhone before iOS 26, or in the middle of it on iOS 26 without an
+    // anchor. A popover (iPad, and an anchored iPhone sheet from iOS 26)
+    // hides the row, and a tap outside it cancels.
+    const cancelSheet = async () => {
+      if (isAndroid()) {
+        await device.pressBack();
+        return;
+      }
+      try {
+        await expect(sheetAction('source-cancel')).toBeVisible();
+      } catch {
+        await tapOutsideMenu();
+        return;
+      }
+      await sheetAction('source-cancel').tap();
+    };
 
     // Pick a source
     await openSheet();
@@ -1047,15 +1112,9 @@ describe('Platform Components Example', () => {
     await expectText('actionsheet-file', 'No file');
     await waitForSheetToClose();
 
-    // Dismissed without a pick: onCancel. Android: the back button (swipe
-    // down and the scrim also cancel). iOS 26 shows the anchored sheet as a
-    // popover without a Cancel row: a tap outside cancels
+    // Dismissed without a pick: onCancel
     await openSheet();
-    if (isAndroid()) {
-      await device.pressBack();
-    } else {
-      await tapOutsideMenu();
-    }
+    await cancelSheet();
     await expectText('actionsheet-last-event', 'cancel');
     await waitForSheetToClose();
 
@@ -1090,10 +1149,10 @@ describe('Platform Components Example', () => {
 
     if (!isAndroid()) {
       // Without children there is nothing to point at: the iPhone sheet has
-      // its Cancel row, found by cancelTestID
+      // its Cancel row, and the iPad shows a popover without an arrow
       await element(by.id('actionsheet-anchored-switch')).tap();
       await openSheet();
-      await sheetAction('source-cancel').tap();
+      await cancelSheet();
       await expectText('actionsheet-last-event', 'cancel');
       await waitForSheetToClose();
       await element(by.id('actionsheet-anchored-switch')).tap();
@@ -1310,7 +1369,7 @@ describe('Platform Components Example', () => {
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic');
+      await scrollToId('segment-basic', 'up');
       await element(by.text('Week')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('(none)');
@@ -1324,7 +1383,7 @@ describe('Platform Components Example', () => {
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic');
+      await scrollToId('segment-basic', 'up');
       await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
@@ -1403,7 +1462,9 @@ describe('Platform Components Example', () => {
       await pause(400);
       await element(by.id('tab-feed')).scroll(300, 'down', NaN, 0.5);
       await pause(1200);
-      await element(by.id('tab-feed')).swipe('down', 'slow', 0.4, 0.5, 0.3);
+      // Back up with a flick: the iPad's bar stays minimized through a slow
+      // scroll back, all the way to the feed's top
+      await element(by.id('tab-feed')).swipe('down', 'fast', 0.4, 0.5, 0.3);
       await pause(1200);
     }
     await element(by.id('tab-search-minimize')).tap();
@@ -1467,9 +1528,10 @@ describe('Platform Components Example', () => {
     if (isAndroid()) {
       await element(by.id('tab-player-feed')).scroll(150, 'up', NaN, 0.5);
     } else {
+      // A flick, as above
       await element(by.id('tab-player-feed')).swipe(
         'down',
-        'slow',
+        'fast',
         0.25,
         0.5,
         0.3
@@ -1650,6 +1712,9 @@ describe('Platform Components Example', () => {
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
 
+    // The next group can still be partly below the fold (on a phone where the
+    // system bars take their own space, such as Android before 15)
+    await scrollToId('button-group-single');
     await element(by.text('Month')).atIndex(0).tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
@@ -1697,7 +1762,9 @@ describe('Platform Components Example', () => {
       await expectText('button-menu-value', '(none) · open');
     }
     await element(by.id('sort-date')).tap();
-    await expectText('button-menu-value', 'date · closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('button-menu-value'))).toHaveText('date · closed')
+    );
 
     // A submenu and its actions are found by test ID too
     await element(by.id('button-menu')).tap();
@@ -1709,7 +1776,9 @@ describe('Platform Components Example', () => {
       .toBeVisible()
       .withTimeout(6000);
     await element(by.id('sort-view-grid')).tap();
-    await expectText('button-menu-value', 'grid · closed');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('button-menu-value'))).toHaveText('grid · closed')
+    );
 
     // Icons above and below the label, and clear glass
     await scrollToId('button-icon-bottom');
@@ -1743,24 +1812,39 @@ describe('Platform Components Example', () => {
     await element(by.id('reply-forward')).tap();
     await expectText('split-value', 'forward');
 
-    // Buttons that don't fit fold into an overflow menu; a pick is a press
+    // Buttons that don't fit fold into an overflow menu; a pick is a press.
+    // A wide screen (iPad) has room for all of them.
     await scrollToId('overflow-value');
-    await element(
+    const overflowButton = element(
       by
         .label(isAndroid() ? 'Overflow menu' : 'More')
         .withAncestor(by.id('button-group-overflow'))
-    )
-      .atIndex(0)
-      .tap();
-    await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
-    await menuItem('Code').tap();
+    ).atIndex(0);
+    let folded = true;
+    try {
+      await expect(overflowButton).toBeVisible();
+    } catch {
+      folded = false;
+    }
+    if (folded) {
+      await overflowButton.tap();
+      await waitFor(menuItem('Code')).toBeVisible().withTimeout(6000);
+      await menuItem('Code').tap();
+    } else {
+      await element(
+        by.text('Code').withAncestor(by.id('button-group-overflow'))
+      )
+        .atIndex(0)
+        .tap();
+    }
     await expectText('overflow-value', 'code');
     await scrollToId('size-picker', 'up');
 
-    // Sizes and shapes: cycle the size picker, then square corners. Larger
-    // buttons push the picker down, so bring it back before every tap.
+    // Sizes and shapes: cycle the size picker, then square corners. The
+    // buttons above it change size and move it down or up, so bring it back
+    // before every tap.
     for (const size of ['M', 'L', 'XL', 'XS', 'S']) {
-      await scrollToId('size-picker');
+      await scrollIntoView('size-picker');
       await element(by.text(size)).atIndex(0).tap();
       await pause(700);
     }
