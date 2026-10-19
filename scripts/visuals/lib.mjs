@@ -61,11 +61,12 @@ export function probe(file) {
 
 /**
  * The newest passing recording of a Detox flow across every artifacts run
- * (single-flow runs count), or null.
+ * (single-flow runs count), or null. `flow` is the test's title after
+ * "should test" (see flowOf in shots.mjs).
  */
-export function newestRecording(platform, testName) {
+export function newestRecording(platform, flow) {
   const prefix = CONFIG_PREFIX[platform];
-  const wanted = `✓ Platform Components Example should test ${testName} functionality`;
+  const wanted = `✓ Platform Components Example should test ${flow}`;
   if (!fs.existsSync(ARTIFACTS_DIR)) return null;
   const candidates = [];
   for (const runDir of fs.readdirSync(ARTIFACTS_DIR)) {

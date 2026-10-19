@@ -22,16 +22,16 @@ import {
   newestRecording,
   renderHtml,
 } from './lib.mjs';
-import { COMPONENTS, THEME_DARK, byKey } from './shots.mjs';
+import { COMPONENTS, THEME_DARK, byKey, flowOf } from './shots.mjs';
 
 const work = makeTempDir('rnpc-stills-');
 const frames = {};
 
-function frame(key, platform, shot, testName) {
+function frame(key, platform, shot, flow) {
   const id = `${key}-${platform}`;
   if (frames[id]) return frames[id];
-  const input = newestRecording(platform, testName);
-  if (!input) throw new Error(`No ${platform} recording for "${testName}" under example/artifacts`);
+  const input = newestRecording(platform, flow);
+  if (!input) throw new Error(`No ${platform} recording for "${flow}" under example/artifacts`);
   const out = path.join(work, `${id}.png`);
   extractFrame({ input, time: shot.time, crop: shot.crop, out });
   frames[id] = out;
@@ -105,6 +105,15 @@ const ROWS = [
     ],
   },
   {
+    height: 380,
+    tiles: [
+      { key: 'chip', platform: 'ios', span: 3 },
+      { key: 'chip', platform: 'android', span: 3 },
+      { key: 'dialog', platform: 'ios', span: 3, position: 'center' },
+      { key: 'dialog', platform: 'android', span: 3, position: 'center' },
+    ],
+  },
+  {
     // What opens over the page: the two menus and the Material action sheet
     height: 430,
     tiles: [
@@ -136,10 +145,10 @@ const ROWS = [
 
 function tileImage(tile) {
   if (tile.key === 'theme-dark') {
-    return frame('theme-dark', tile.platform, THEME_DARK[tile.platform], byKey.theme.test);
+    return frame('theme-dark', tile.platform, THEME_DARK[tile.platform], flowOf(byKey.theme));
   }
   const c = byKey[tile.key];
-  return frame(tile.key, tile.platform, c.still[tile.platform], c.test);
+  return frame(tile.key, tile.platform, c.still[tile.platform], flowOf(c));
 }
 
 function platformLabel(p) {
@@ -205,7 +214,7 @@ function socialHtml() {
     const c = byKey[key];
     const shot = c.social?.[platform] ?? c.still[platform];
     const img = c.social?.[platform]
-      ? frame(`${key}-social`, platform, shot, c.test)
+      ? frame(`${key}-social`, platform, shot, flowOf(c))
       : tileImage({ key, platform });
     return { img, key, platform, shot };
   });
@@ -248,7 +257,7 @@ function socialHtml() {
 <body>
   <div class="copy">
     <h1><small>react-native-platform-components</small><span class="ios">Liquid Glass</span> on iOS.<br><span class="android">Material 3 Expressive</span> on Android.</h1>
-    <p>TextField, DatePicker, ContextMenu, ActionSheet, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, FloatingActionButton, FloatingToolbar and LiquidGlass. The real native widgets behind one typed API.</p>
+    <p>TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass. The real native widgets behind one typed API.</p>
     <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>

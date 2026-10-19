@@ -15,8 +15,9 @@
 // scripts/generate-readme-gifs.sh), then:
 //   node scripts/visuals/showreel.mjs
 // CLIP_SECONDS (default 3.5) is the length of a component's clip; the Theme
-// clip sets its own. GIF_WIDTH (default 928) sets the GIF's width; the README
-// shows it at half that, so it stays crisp on a retina display.
+// and Chip clips set their own. GIF_WIDTH (default 880) sets the
+// GIF's width: wider than the README shows it, so it stays sharp on a retina
+// display, and narrow enough to keep 15 components under 8 MB.
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -31,7 +32,7 @@ import {
   probe,
   renderHtml,
 } from './lib.mjs';
-import { COMPONENTS } from './shots.mjs';
+import { COMPONENTS, flowOf } from './shots.mjs';
 
 const W = 1160;
 const H = 760;
@@ -146,8 +147,8 @@ function buildClip(component, index) {
   const platforms = component.iosOnly ? ['ios'] : ['ios', 'android'];
   const specs = {};
   for (const p of platforms) {
-    const video = newestRecording(p, component.test);
-    if (!video) throw new Error(`No ${p} recording for "${component.test}" under example/artifacts`);
+    const video = newestRecording(p, flowOf(component));
+    if (!video) throw new Error(`No ${p} recording for "${flowOf(component)}" under example/artifacts`);
     specs[p] = panelSpec(component, p, video);
   }
   const panels = platforms.map((p) => {
@@ -216,8 +217,8 @@ function buildCard(index) {
 console.log('=== README showreel ===');
 const clips = [];
 COMPONENTS.forEach((component) => {
-  const hasIos = newestRecording('ios', component.test);
-  const hasAndroid = component.iosOnly || newestRecording('android', component.test);
+  const hasIos = newestRecording('ios', flowOf(component));
+  const hasAndroid = component.iosOnly || newestRecording('android', flowOf(component));
   if (!hasIos || !hasAndroid) {
     console.log(`  ${component.name}: skipped (missing recording)`);
     return;
@@ -274,7 +275,7 @@ const cuts = path.join(work, 'cuts.mp4');
   fs.writeFileSync(list, clips.map((c) => `file '${c.file}'`).join('\n') + '\n');
   ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', cuts]);
 }
-const gifWidth = parseInt(process.env.GIF_WIDTH || '928', 10);
+const gifWidth = parseInt(process.env.GIF_WIDTH || '880', 10);
 const gif = path.join(ASSETS_DIR, 'showreel.gif');
 const palette = path.join(work, 'palette.png');
 const pre = `fps=${GIF_FPS},scale=${gifWidth}:-2:flags=lanczos`;
