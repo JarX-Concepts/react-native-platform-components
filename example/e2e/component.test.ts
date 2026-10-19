@@ -1845,7 +1845,15 @@ describe('Platform Components Example', () => {
         .tap();
     }
     await expectText('overflow-value', 'code');
-    await scrollToId('size-picker', 'up');
+    // Toggles, menus, split buttons and overflow: about 50-80 s on CI's
+    // iOS simulator, over 120 s on a slow runner
+  }, 180000);
+
+  // The Button demo's controls. Split from the flow above, which ran 142 to
+  // 183 s on CI's iOS runner against its 180 s limit; that flow is the one
+  // the README GIF is cut from
+  it('should test Button sizes, shapes and disabled state', async () => {
+    await selectDemo('Button');
 
     // Sizes and shapes: cycle the size picker, then square corners. The
     // buttons above it change size and move it down or up, so bring it back
@@ -1861,19 +1869,20 @@ describe('Platform Components Example', () => {
     await element(by.id('square-switch')).tap();
     await pause(600);
 
-    // Disabled buttons don't report presses
+    // Disabled buttons don't report presses. Brand, just above the controls,
+    // reports one while enabled and none once disabled
+    await scrollToId('button-styled', 'up');
+    await element(by.id('button-styled')).tap();
+    await pause(350);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
     await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
-    await scrollToId('button-filled', 'up');
-    await element(by.id('button-filled')).tap();
+    await scrollToId('button-styled', 'up');
+    await element(by.id('button-styled')).tap();
     await pause(350);
-    await expect(element(by.id('button-last-pressed'))).toHaveText(
-      'clear glass'
-    );
-    // Toggles, menus, split buttons and overflow: about 50-80 s on CI's
-    // iOS simulator, over 120 s on a slow runner
-  }, 180000);
+    await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
+  });
 
   it('should test Chip group selection', async () => {
     await selectDemo('Chip');
