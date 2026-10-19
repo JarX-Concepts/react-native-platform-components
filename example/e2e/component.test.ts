@@ -1871,14 +1871,26 @@ describe('Platform Components Example', () => {
 
     // Disabled buttons don't report presses. Brand, just above the controls,
     // reports one while enabled and none once disabled
+    // On Android a tap on a page still settling from the scroll only stops
+    // it, so the enabled press gets a second tap if the first one didn't land
     await scrollToId('button-styled', 'up');
     await element(by.id('button-styled')).tap();
-    await pause(350);
-    await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
+    try {
+      await waitFor(element(by.id('button-last-pressed')))
+        .toHaveText('brand')
+        .withTimeout(3000);
+    } catch {
+      await element(by.id('button-styled')).tap();
+      await waitFor(element(by.id('button-last-pressed')))
+        .toHaveText('brand')
+        .withTimeout(3000);
+    }
     await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
     await scrollToId('button-styled', 'up');
+    // Let the page come to rest, so this tap does reach the disabled button
+    await pause(800);
     await element(by.id('button-styled')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
