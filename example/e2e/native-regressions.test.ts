@@ -77,7 +77,9 @@ describe('Native regression cases', () => {
     const picker = isAndroid()
       ? element(by.text('Regression time'))
       : element(by.type('UIDatePicker'));
-    await waitFor(picker).toBeVisible().withTimeout(5000);
+    // A slow CI simulator has taken over 5 s to present the picker; the wait
+    // stays under the fixture's 8 s unmount timer
+    await waitFor(picker).toBeVisible().withTimeout(7000);
     if (!isAndroid()) {
       await expect(element(by.label('Done'))).not.toExist();
       await expect(element(by.label('Cancel'))).not.toExist();
