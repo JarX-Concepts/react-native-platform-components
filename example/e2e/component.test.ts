@@ -953,6 +953,13 @@ describe('Platform Components Example', () => {
     await waitFor(element(by.text('Share (share)')))
       .toExist()
       .withTimeout(6000);
+  });
+
+  // The rest of the Context Menu demo. Split from the flow above, which ran
+  // 63 to 131 s on CI's iOS runner against the 120 s limit; that flow is the
+  // one the README GIF is cut from
+  it('should test Context Menu card, disabled state and sections', async () => {
+    await selectDemo('Context Menu');
 
     // trigger 'none': the card's own buttons keep working, and Choose opens
     // the menu around the card
