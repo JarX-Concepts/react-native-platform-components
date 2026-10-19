@@ -1870,27 +1870,24 @@ describe('Platform Components Example', () => {
     await pause(600);
 
     // Disabled buttons don't report presses. Brand, just above the controls,
-    // reports one while enabled and none once disabled
-    // On Android a tap on a page still settling from the scroll only stops
-    // it, so the enabled press gets a second tap if the first one didn't land
-    await scrollToId('button-styled', 'up');
+    // reports one while enabled and none once disabled. The scroll back up
+    // stops with Brand at the top edge, which on an edge-to-edge Android
+    // screen is under the status bar, where a tap lands on the system bar:
+    // scroll a little more so it is clear of it, and let the page come to rest
+    const bringBrandIntoReach = async () => {
+      await scrollToId('button-styled', 'up');
+      await element(by.id('demo-scroll')).scroll(200, 'up');
+      await pause(500);
+    };
+    await bringBrandIntoReach();
     await element(by.id('button-styled')).tap();
-    try {
-      await waitFor(element(by.id('button-last-pressed')))
-        .toHaveText('brand')
-        .withTimeout(3000);
-    } catch {
-      await element(by.id('button-styled')).tap();
-      await waitFor(element(by.id('button-last-pressed')))
-        .toHaveText('brand')
-        .withTimeout(3000);
-    }
+    await waitFor(element(by.id('button-last-pressed')))
+      .toHaveText('brand')
+      .withTimeout(3000);
     await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
-    await scrollToId('button-styled', 'up');
-    // Let the page come to rest, so this tap does reach the disabled button
-    await pause(800);
+    await bringBrandIntoReach();
     await element(by.id('button-styled')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
