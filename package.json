@@ -1,6 +1,6 @@
 {
   "name": "react-native-platform-components",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Native UI components for React Native, the real platform widgets on both iOS and Android: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass. UIKit on iOS, Material 3 Expressive on Android. Fabric, TypeScript, Expo config plugin.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",

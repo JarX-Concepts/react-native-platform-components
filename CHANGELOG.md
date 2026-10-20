@@ -1,5 +1,16 @@
 # Changelog
 
+# [1.8.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.7.0...v1.8.0) (2026-10-20)
+
+### Bug Fixes
+
+* **ios:** resize chips when the text size changes while the app runs ([1fe36a8](https://github.com/JarX-Concepts/react-native-platform-components/commit/1fe36a89aa2ae98cffa00799d228a87cd78ff0ca))
+
+### Features
+
+* add Chip and ChipGroup ([e9305d7](https://github.com/JarX-Concepts/react-native-platform-components/commit/e9305d7874039872b7ce24211ac6f625b60d2915)), closes [#116](https://github.com/JarX-Concepts/react-native-platform-components/issues/116)
+* add Dialog component ([63fe21b](https://github.com/JarX-Concepts/react-native-platform-components/commit/63fe21bf587b48c41a518d033a7b32bc045fca42)), closes [#115](https://github.com/JarX-Concepts/react-native-platform-components/issues/115)
+
 # [1.7.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.6.0...v1.7.0) (2026-10-17)
 
 ### Bug Fixes
