@@ -109,7 +109,16 @@ public final class PCActionSheetView: UIView {
     private var items: [PCActionSheetItem] = []
     /// The sheet on screen (or on its way), until an action ends it or it is
     /// dismissed through `visible`
-    private var alert: UIAlertController?
+    private var alert: UIAlertController? {
+        didSet {
+            // Let go of the old sheet's actions (and through them, the sheet).
+            if alert == nil {
+                shownActions = []
+                shownItems = []
+                shownCancel = nil
+            }
+        }
+    }
     /// The sheet's actions and the items they show now: the items it was
     /// presented with, updated while the actions keep their shape
     private var shownActions: [UIAlertAction] = []
@@ -243,9 +252,9 @@ public final class PCActionSheetView: UIView {
                 style: item.destructive ? .destructive : .default
             ) { [weak self, weak alert] _ in
                 guard let self, let alert, self.alert === alert else { return }
-                self.alert = nil
                 // The item as it is now: its haptic may have changed since.
                 let item = self.shownItems[index]
+                self.alert = nil
                 self.haptics.perform(in: self, override: item.haptics)
                 self.onSelect?(item.id)
             }

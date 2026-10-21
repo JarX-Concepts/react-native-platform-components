@@ -126,7 +126,15 @@ public final class PCDialogView: UIView {
     private var items: [PCDialogItem] = []
     /// The alert on screen (or on its way), until an action ends it, it is
     /// dismissed through `visible`, or it goes behind our back
-    private var alert: PCAlertController?
+    private var alert: PCAlertController? {
+        didSet {
+            // Let go of the old alert's buttons (and through them, the alert).
+            if alert == nil {
+                shownActions = []
+                shownItems = []
+            }
+        }
+    }
     /// The alert's buttons and the items they show now: the items it was
     /// presented with, updated while the actions keep their shape
     private var shownActions: [UIAlertAction] = []
@@ -301,9 +309,9 @@ public final class PCDialogView: UIView {
             let isCancel = style == .cancel
             let action = UIAlertAction(title: item.title, style: style) { [weak self, weak alert] _ in
                 guard let self, let alert, self.alert === alert else { return }
-                self.alert = nil
                 // The item as it is now: its haptic may have changed since.
                 let item = self.shownItems[index]
+                self.alert = nil
                 if isCancel {
                     // Only an action's own haptic: cancelling isn't a pick.
                     if !item.haptics.isEmpty { self.haptics.perform(in: self, override: item.haptics) }
