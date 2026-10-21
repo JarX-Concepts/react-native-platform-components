@@ -1,6 +1,6 @@
 // ActionSheet.tsx
 import React, { useCallback, useMemo } from 'react';
-import type { ViewProps } from 'react-native';
+import { Platform, type ViewProps } from 'react-native';
 
 import NativeActionSheet, {
   type ActionSheetItem,
@@ -8,6 +8,7 @@ import NativeActionSheet, {
 } from './ActionSheetNativeComponent';
 import type { Haptics } from './haptics';
 import { resolveIcon, type PlatformIcon } from './icons';
+import { useActionStructureWarning } from './presentedActions';
 import { warnSelectionIdentifiers } from './selectionIdentifiers';
 
 /**
@@ -16,7 +17,7 @@ import { warnSelectionIdentifiers } from './selectionIdentifiers';
 export interface ActionSheetActionAttributes {
   /** Draws the action in the destructive style (red) */
   destructive?: boolean;
-  /** Shows the action dimmed; it can't be picked */
+  /** Shows the action dimmed; it can't be picked. Applies while presented. */
   disabled?: boolean;
   /** Leaves the action out */
   hidden?: boolean;
@@ -42,14 +43,14 @@ export interface ActionSheetAction {
   attributes?: ActionSheetActionAttributes;
   /**
    * Haptic played when this action is picked, in place of the component's
-   * `haptics` (`'none'` plays nothing). Unset uses the component's. See
-   * {@link Haptics}.
+   * `haptics` (`'none'` plays nothing). Unset uses the component's.
+   * Applies while presented. See {@link Haptics}.
    */
   haptics?: Haptics;
   /**
    * Test identifier of the action's row: the `UIAlertAction`'s
    * `accessibilityIdentifier` on iOS, the row's view tag on Android, so
-   * Detox's `by.id` finds it.
+   * Detox's `by.id` finds it. Applies while presented.
    */
   testID?: string;
 }
@@ -62,22 +63,29 @@ export interface ActionSheetProps extends ViewProps {
    */
   visible: boolean;
 
-  /** Title above the actions */
+  /** Title above the actions. Applies while presented. */
   title?: string;
 
-  /** Message under the title */
+  /** Message under the title. Applies while presented. */
   message?: string;
 
-  /** The actions, top to bottom */
+  /**
+   * The actions, top to bottom. While the sheet is up, each action's
+   * `disabled`, `testID` and `haptics` apply; any other change (an action
+   * added, removed, reordered or retitled, or a changed `destructive`,
+   * `hidden`, `image` or `imageColor`) applies the next time it is
+   * presented, with a warning in development.
+   */
   actions: readonly ActionSheetAction[];
 
   /**
    * Title of the cancel action. iOS only: default the system's localized
-   * "Cancel". Android bottom sheets have no cancel row.
+   * "Cancel". Android bottom sheets have no cancel row. A change applies the
+   * next time the sheet is presented.
    */
   cancelTitle?: string;
 
-  /** Test identifier of the iOS cancel action. */
+  /** Test identifier of the iOS cancel action. Applies while presented. */
   cancelTestID?: string;
 
   /**
@@ -157,21 +165,55 @@ export function ActionSheet(props: ActionSheetProps): React.ReactElement {
 
   const nativeActions = useMemo(() => normalizeActions(actions), [actions]);
 
+  // What the sheet on screen can't change: it keeps the actions it was
+  // presented with until the next presentation. iOS: the cancel action's
+  // title too (Android has no cancel row).
+  const structure = useMemo(
+    () =>
+      __DEV__
+        ? JSON.stringify([
+            nativeActions.map((a) => [
+              a.id,
+              a.title,
+              a.destructive,
+              a.iconType,
+              a.iconName,
+              a.iconRequest,
+              a.iconUri,
+              a.iconScale,
+              a.iconTinted,
+              a.imageColor,
+            ]),
+            Platform.OS === 'ios' ? (cancelTitle ?? '') : '',
+          ])
+        : '',
+    [nativeActions, cancelTitle]
+  );
+  const endPresentation = useActionStructureWarning(
+    'ActionSheet',
+    visible,
+    structure
+  );
+
   const handleSelect = useCallback(
     (e: { nativeEvent: ActionSheetSelectEvent }) => {
       const { actionId } = e.nativeEvent;
+      endPresentation();
+      // A row of the sheet on screen, which keeps its actions when they
+      // change shape: an id that is gone (or hidden) since is still the
+      // user's pick. Native refuses disabled rows; a current action that is
+      // disabled isn't a pick.
       const action = actions.find((a) => a.id === actionId);
-      // Only actions that were shown and enabled can be picked.
-      if (!action || action.attributes?.hidden || action.attributes?.disabled)
-        return;
+      if (action?.attributes?.disabled) return;
       onSelect?.(actionId);
     },
-    [actions, onSelect]
+    [actions, endPresentation, onSelect]
   );
 
   const handleCancel = useCallback(() => {
+    endPresentation();
     onCancel?.();
-  }, [onCancel]);
+  }, [endPresentation, onCancel]);
 
   return (
     <NativeActionSheet

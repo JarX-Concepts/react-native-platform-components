@@ -34,6 +34,12 @@ struct PCDialogItem {
         default: return .default
         }
     }
+
+    /// Whether the alert's button for `self` can show `other`: the fields a
+    /// presented `UIAlertAction` can't change are the same.
+    func sameButton(as other: PCDialogItem) -> Bool {
+        id == other.id && title == other.title && role == other.role && preferred == other.preferred
+    }
 }
 
 /// The alert, telling the view when it has gone for good.
@@ -59,12 +65,29 @@ final class PCAlertController: UIAlertController {
 /// reports `onPresentFailed` instead of waiting: one alert never goes over
 /// another (UIKit would stack them), so an app that shows one dialog at a
 /// time learns that this one didn't show.
+///
+/// While the alert is up, the title, the message and each button's enabled
+/// state, identifier and haptic follow the props. Its buttons themselves
+/// can't change once presented: a list of another shape (added, removed,
+/// reordered or retitled actions, a changed role or preferred action) shows
+/// from the next presentation.
 @objcMembers
 public final class PCDialogView: UIView {
     // MARK: - Props (set from ObjC++)
 
-    public var dialogTitle: String = ""
-    public var message: String = ""
+    public var dialogTitle: String = "" {
+        didSet {
+            guard dialogTitle != oldValue, let alert else { return }
+            alert.title = dialogTitle.isEmpty ? nil : dialogTitle
+        }
+    }
+
+    public var message: String = "" {
+        didSet {
+            guard message != oldValue, let alert else { return }
+            alert.message = message.isEmpty ? nil : message
+        }
+    }
 
     /// ObjC++ sets this as an array of dictionaries (see PCDialog.mm)
     public var actions: [Any] = [] {
@@ -73,6 +96,7 @@ public final class PCDialogView: UIView {
                 guard let dict = any as? [String: Any] else { return nil }
                 return PCDialogItem(dictionary: dict)
             }
+            updateShownActions()
         }
     }
 
@@ -103,6 +127,10 @@ public final class PCDialogView: UIView {
     /// The alert on screen (or on its way), until an action ends it, it is
     /// dismissed through `visible`, or it goes behind our back
     private var alert: PCAlertController?
+    /// The alert's buttons and the items they show now: the items it was
+    /// presented with, updated while the actions keep their shape
+    private var shownActions: [UIAlertAction] = []
+    private var shownItems: [PCDialogItem] = []
     /// Bumped on every visibility change, so a deferred presentation that
     /// has been overtaken does nothing
     private var presentationToken = 0
@@ -240,6 +268,19 @@ public final class PCDialogView: UIView {
         }
     }
 
+    /// Applies the actions to the alert on screen when they keep the shape it
+    /// was presented with; otherwise they wait for the next presentation.
+    private func updateShownActions() {
+        guard alert != nil, items.count == shownItems.count,
+              zip(items, shownItems).allSatisfy({ $0.sameButton(as: $1) })
+        else { return }
+        shownItems = items
+        for (action, item) in zip(shownActions, items) {
+            action.isEnabled = !item.disabled
+            action.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
+        }
+    }
+
     private func present(from presenter: UIViewController) {
         let alert = PCAlertController(
             title: dialogTitle.isEmpty ? nil : dialogTitle,
@@ -249,7 +290,8 @@ public final class PCDialogView: UIView {
 
         var preferred: UIAlertAction?
         var cancelSeen = false
-        for item in items {
+        var actions: [UIAlertAction] = []
+        for (index, item) in items.enumerated() {
             // The JS side keeps one cancel action; a second would throw.
             var style = item.style
             if style == .cancel {
@@ -260,6 +302,8 @@ public final class PCDialogView: UIView {
             let action = UIAlertAction(title: item.title, style: style) { [weak self, weak alert] _ in
                 guard let self, let alert, self.alert === alert else { return }
                 self.alert = nil
+                // The item as it is now: its haptic may have changed since.
+                let item = self.shownItems[index]
                 if isCancel {
                     // Only an action's own haptic: cancelling isn't a pick.
                     if !item.haptics.isEmpty { self.haptics.perform(in: self, override: item.haptics) }
@@ -272,9 +316,12 @@ public final class PCDialogView: UIView {
             action.isEnabled = !item.disabled
             action.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
             alert.addAction(action)
+            actions.append(action)
             if item.preferred, preferred == nil { preferred = action }
         }
         alert.preferredAction = preferred
+        shownActions = actions
+        shownItems = items
 
         let generation = self.generation
         alert.onGone = { [weak self, weak alert] in

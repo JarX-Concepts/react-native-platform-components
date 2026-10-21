@@ -115,9 +115,20 @@ static inline bool ActionsEqual(
   if (!prevProps || !ActionsEqual(newProps.actions, prevProps->actions)) {
     NSMutableArray *arr = [NSMutableArray arrayWithCapacity:newProps.actions.size()];
     for (const auto &action : newProps.actions) {
+      // iOS draws no icons; the sheet on screen only compares them, so a
+      // changed icon waits for the next presentation, as on Android.
+      NSString *icon = [NSString stringWithFormat:@"%@\n%@\n%@\n%@\n%g\n%@\n%@",
+                                                  ToNSString(action.iconType),
+                                                  ToNSString(action.iconName),
+                                                  ToNSString(action.iconRequest),
+                                                  ToNSString(action.iconUri),
+                                                  action.iconScale,
+                                                  ToNSString(action.iconTinted),
+                                                  ToNSString(action.imageColor)];
       [arr addObject:@{
         @"id" : ToNSString(action.id),
         @"title" : ToNSString(action.title),
+        @"icon" : icon,
         @"destructive" : ToNSString(action.destructive),
         @"disabled" : ToNSString(action.disabled),
         @"haptics" : ToNSString(action.haptics),

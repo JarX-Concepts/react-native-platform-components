@@ -28,6 +28,13 @@ import kotlin.math.roundToInt
  * `visible` is "open". Following Material, there is no cancel row: a swipe
  * down, a tap on the scrim and the back button dismiss it and report a
  * cancel. The view itself only hosts the React children.
+ *
+ * While the sheet is up, the title, the message and each row's enabled
+ * state, tag and haptic follow the props. Its rows themselves stay as
+ * presented, as on iOS (a presented `UIAlertController` can't change its
+ * actions): a list of another shape (added, removed, reordered or retitled
+ * actions, a changed destructive style or icon) shows from the next
+ * presentation.
  */
 class PCActionSheetView(context: Context) : ReactViewGroup(context) {
 
@@ -59,7 +66,15 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
     val haptics: String,
     /** The row's view tag, which Detox's `by.id` matches */
     val testID: String
-  )
+  ) {
+    /** Whether the sheet's row for this action can show [other]: same id, title, style and icon. */
+    fun sameRow(other: Action): Boolean =
+      id == other.id && title == other.title && icon == other.icon &&
+        imageColor == other.imageColor && destructive == other.destructive
+  }
+
+  /** A row of the sheet on screen, with the views its state changes. */
+  private class Row(val view: View, val label: TextView, val icon: ImageView?)
 
   // --- Props ---
   var sheetTitle: String = ""
@@ -79,6 +94,16 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
   /** The sheet on screen, until a pick, a cancel or `visible` ends it */
   private var dialog: BottomSheetDialog? = null
   private var openToken = 0
+
+  // What the sheet on screen shows. Its actions are the ones it was
+  // presented with, updated while they keep their shape.
+  private var shownTitle = ""
+  private var shownMessage = ""
+  private var shownActions: List<Action> = emptyList()
+  /** The sheet's title and message, filled again when they change */
+  private var header: LinearLayout? = null
+  /** The sheet's rows, in [shownActions]' order */
+  private var rows: List<Row> = emptyList()
 
   // ---- Public apply* (called by manager) ----
 
@@ -148,6 +173,26 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
     sheet.show()
   }
 
+  /**
+   * Called once every prop of an update is in: the sheet on screen takes
+   * the new title and message, and the rows' enabled state, tag and haptic
+   * while the actions keep their shape.
+   */
+  fun commit() {
+    if (dialog == null) return
+
+    if (actions != shownActions && actions.size == shownActions.size &&
+      actions.zip(shownActions).all { (next, shown) -> next.sameRow(shown) }
+    ) {
+      shownActions = actions
+      rows.forEachIndexed { index, row -> applyRowState(row, actions[index]) }
+    }
+
+    if (sheetTitle != shownTitle || message != shownMessage) {
+      header?.let { fillHeader(it) }
+    }
+  }
+
   private fun buildContent(sheet: BottomSheetDialog, ctx: Context): View {
     val density = ctx.resources.displayMetrics.density
     fun dp(value: Int) = (value * density).roundToInt()
@@ -163,43 +208,24 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
       LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
     )
 
-    if (sheetTitle.isNotEmpty() || message.isNotEmpty()) {
-      val header = LinearLayout(ctx).apply {
-        orientation = LinearLayout.VERTICAL
-        setPadding(dp(ROW_START_PADDING_DP), 0, dp(ROW_END_PADDING_DP), dp(HEADER_BOTTOM_PADDING_DP))
-      }
-      if (sheetTitle.isNotEmpty()) {
-        header.addView(
-          TextView(ctx).apply {
-            applyTextAppearance(this, MaterialR.attr.textAppearanceTitleMedium)
-            PCMenuSupport.themeColor(ctx, MaterialR.attr.colorOnSurface)?.let { setTextColor(it) }
-            text = sheetTitle
-            ViewCompat.setAccessibilityHeading(this, true)
-          }
-        )
-      }
-      if (message.isNotEmpty()) {
-        header.addView(
-          TextView(ctx).apply {
-            applyTextAppearance(this, MaterialR.attr.textAppearanceBodyMedium)
-            PCMenuSupport.themeColor(ctx, MaterialR.attr.colorOnSurfaceVariant)?.let { setTextColor(it) }
-            text = message
-            if (sheetTitle.isNotEmpty()) setPadding(0, dp(4), 0, 0)
-          }
-        )
-      }
-      root.addView(header)
+    // The title and message; gone without either
+    val header = LinearLayout(ctx).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(ROW_START_PADDING_DP), 0, dp(ROW_END_PADDING_DP), dp(HEADER_BOTTOM_PADDING_DP))
     }
+    this.header = header
+    fillHeader(header, capText = false)
+    root.addView(header)
 
     val list = LinearLayout(ctx).apply {
       orientation = LinearLayout.VERTICAL
       setPadding(0, 0, 0, dp(LIST_BOTTOM_PADDING_DP))
     }
     // Rows line up: with any icon, every row keeps the icon column.
+    shownActions = actions
     val iconColumn = actions.any { it.icon.isPresent }
-    for (action in actions) {
-      list.addView(buildRow(sheet, ctx, action, iconColumn))
-    }
+    rows = actions.indices.map { index -> buildRow(sheet, ctx, index, iconColumn) }
+    for (row in rows) list.addView(row.view)
 
     // Long lists scroll inside the sheet; the header and handle stay.
     val scroll = NestedScrollView(ctx).apply {
@@ -215,7 +241,42 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
     return root
   }
 
-  private fun buildRow(sheet: BottomSheetDialog, ctx: Context, action: Action, iconColumn: Boolean): View {
+  /** Fills [header] with the current title and message (the text size capped unless [capText] is false). */
+  private fun fillHeader(header: LinearLayout, capText: Boolean = true) {
+    val ctx = header.context
+    val density = ctx.resources.displayMetrics.density
+    fun dp(value: Int) = (value * density).roundToInt()
+
+    shownTitle = sheetTitle
+    shownMessage = message
+    header.removeAllViews()
+    header.visibility = if (sheetTitle.isEmpty() && message.isEmpty()) View.GONE else View.VISIBLE
+    if (sheetTitle.isNotEmpty()) {
+      header.addView(
+        TextView(ctx).apply {
+          applyTextAppearance(this, MaterialR.attr.textAppearanceTitleMedium)
+          PCMenuSupport.themeColor(ctx, MaterialR.attr.colorOnSurface)?.let { setTextColor(it) }
+          text = sheetTitle
+          ViewCompat.setAccessibilityHeading(this, true)
+        }
+      )
+    }
+    if (message.isNotEmpty()) {
+      header.addView(
+        TextView(ctx).apply {
+          applyTextAppearance(this, MaterialR.attr.textAppearanceBodyMedium)
+          PCMenuSupport.themeColor(ctx, MaterialR.attr.colorOnSurfaceVariant)?.let { setTextColor(it) }
+          text = message
+          if (sheetTitle.isNotEmpty()) setPadding(0, dp(4), 0, 0)
+        }
+      )
+    }
+    if (capText) PCThemeSupport.capTextSizes(header, maxFontSizeMultiplier)
+  }
+
+  /** Builds the row for the action at [index] of [shownActions]. */
+  private fun buildRow(sheet: BottomSheetDialog, ctx: Context, index: Int, iconColumn: Boolean): Row {
+    val action = shownActions[index]
     val density = ctx.resources.displayMetrics.density
     fun dp(value: Int) = (value * density).roundToInt()
 
@@ -233,10 +294,9 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
       setBackgroundResource(resolveStyle(ctx, android.R.attr.selectableItemBackground))
       isClickable = true
       isFocusable = true
-      isEnabled = !action.disabled
-      tag = action.testID.ifEmpty { null }
     }
 
+    var iconView: ImageView? = null
     if (iconColumn) {
       val icon = ImageView(ctx).apply {
         scaleType = ImageView.ScaleType.CENTER_INSIDE
@@ -261,25 +321,36 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
           if (tint != null) ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(tint))
         }
       }
-      if (action.disabled) icon.alpha = DISABLED_ALPHA
+      iconView = icon
     }
 
     val label = TextView(ctx).apply {
       applyTextAppearance(this, MaterialR.attr.textAppearanceBodyLarge)
       contentColor?.let { setTextColor(it) }
       text = action.title
-      if (action.disabled) alpha = DISABLED_ALPHA
     }
     row.addView(label, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
     row.setOnClickListener {
-      if (dialog !== sheet || action.disabled) return@setOnClickListener
+      if (dialog !== sheet) return@setOnClickListener
+      // The action as it is now: its haptic may have changed since.
+      val current = shownActions[index]
+      if (current.disabled) return@setOnClickListener
       dialog = null
-      PCHaptics.perform(this, action.haptics.ifEmpty { haptics })
+      PCHaptics.perform(this, current.haptics.ifEmpty { haptics })
       sheet.dismiss()
-      onSelect?.invoke(action.id)
+      onSelect?.invoke(current.id)
     }
-    return row
+    return Row(row, label, iconView).also { applyRowState(it, action) }
+  }
+
+  /** The row's enabled state and tag, from [action]. */
+  private fun applyRowState(row: Row, action: Action) {
+    row.view.isEnabled = !action.disabled
+    row.view.tag = action.testID.ifEmpty { null }
+    val alpha = if (action.disabled) DISABLED_ALPHA else 1f
+    row.label.alpha = alpha
+    row.icon?.alpha = alpha
   }
 
   /** Applies the theme's text appearance [attr], when the theme has one. */

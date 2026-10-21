@@ -131,16 +131,121 @@ describe('Dialog', () => {
     const props = lastNativeProps();
     act(() => {
       props.onSelect({ nativeEvent: { actionId: 'delete' } });
-      // Disabled, hidden, cancel and unknown actions aren't picks
+      // Disabled and cancel actions aren't picks
       props.onSelect({ nativeEvent: { actionId: 'later' } });
-      props.onSelect({ nativeEvent: { actionId: 'secret' } });
       props.onSelect({ nativeEvent: { actionId: 'cancel' } });
-      props.onSelect({ nativeEvent: { actionId: 'nope' } });
       props.onCancel({ nativeEvent: {} });
     });
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('delete');
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards picks of buttons the actions no longer have', () => {
+    // The dialog on screen keeps the buttons it was presented with, so a
+    // button whose action went (or was hidden) since is still the pick
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const onSelect = jest.fn();
+    const tree = render(
+      <Dialog visible actions={ACTIONS} onSelect={onSelect} />
+    );
+    act(() =>
+      tree.update(
+        <Dialog
+          visible
+          actions={[{ id: 'secret', title: 'Secret', hidden: true }]}
+          onSelect={onSelect}
+        />
+      )
+    );
+    act(() => {
+      lastNativeProps().onSelect({ nativeEvent: { actionId: 'delete' } });
+      lastNativeProps().onSelect({ nativeEvent: { actionId: 'secret' } });
+    });
+    expect(onSelect.mock.calls).toEqual([['delete'], ['secret']]);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  describe('changes while presented', () => {
+    const warnings = (warn: jest.SpyInstance) =>
+      warn.mock.calls.filter(([text]) =>
+        String(text).includes('the actions of a presented Dialog changed')
+      );
+
+    it('warns once when the actions change shape', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const tree = render(<Dialog visible actions={ACTIONS} />);
+      // Removed, then retitled: one warning per presentation
+      act(() => tree.update(<Dialog visible actions={ACTIONS.slice(1)} />));
+      act(() =>
+        tree.update(
+          <Dialog visible actions={[{ id: 'later', title: 'Not now' }]} />
+        )
+      );
+      expect(warnings(warn)).toHaveLength(1);
+      expect(warnings(warn)[0]![0]).toContain(
+        'applies the next time it is presented'
+      );
+      expect(warnings(warn)[0]![0]).toContain(
+        '/components/dialog#updates-while-presented'
+      );
+
+      // The next presentation compares with its own actions
+      act(() => tree.update(<Dialog visible={false} actions={ACTIONS} />));
+      act(() => tree.update(<Dialog visible actions={ACTIONS} />));
+      expect(warnings(warn)).toHaveLength(1);
+      act(() =>
+        tree.update(
+          <Dialog
+            visible
+            actions={ACTIONS.map((a) =>
+              a.id === 'delete' ? { ...a, preferred: false } : a
+            )}
+          />
+        )
+      );
+      expect(warnings(warn)).toHaveLength(2);
+    });
+
+    it("doesn't warn for what applies live, or while not presented", () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const tree = render(<Dialog visible={false} actions={ACTIONS} />);
+      act(() => tree.update(<Dialog visible={false} actions={[]} />));
+      act(() => tree.update(<Dialog visible actions={ACTIONS} />));
+      act(() =>
+        tree.update(
+          <Dialog
+            visible
+            title="Now with a title"
+            message="And a message"
+            dismissable={false}
+            actions={ACTIONS.map((a) => ({
+              ...a,
+              disabled: !a.disabled,
+              testID: `${a.id}-next`,
+              haptics: 'heavy' as const,
+            }))}
+          />
+        )
+      );
+      expect(warnings(warn)).toHaveLength(0);
+    });
+
+    it("doesn't warn once the user has closed it", () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const onSelect = jest.fn();
+      const tree = render(
+        <Dialog visible actions={ACTIONS} onSelect={onSelect} />
+      );
+      act(() =>
+        lastNativeProps().onSelect({ nativeEvent: { actionId: 'delete' } })
+      );
+      // The app updates the actions before it sets visible back to false
+      act(() =>
+        tree.update(<Dialog visible actions={[]} onSelect={onSelect} />)
+      );
+      expect(warnings(warn)).toHaveLength(0);
+    });
   });
 
   it('passes on show, dismiss and present failures', () => {
