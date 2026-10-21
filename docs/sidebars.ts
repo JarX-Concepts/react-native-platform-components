@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
         'guides/icons',
         'guides/theming',
         'guides/testing',
+        'guides/troubleshooting',
         'guides/web',
       ],
     },

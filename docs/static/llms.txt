@@ -34,6 +34,7 @@ Platform-only props live under `ios={{ ... }}` and `android={{ ... }}` on every 
 - [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, Android drawables, image sources; `{ ios, android, web }` per-platform icons (the web draws images only and warns in development when an icon has none)
 - [Testing](https://jarx-concepts.github.io/react-native-platform-components/guides/testing): the Jest mock (`react-native-platform-components/jest`), and menu action `testID`s for end-to-end tests
 - [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
+- [Troubleshooting](https://jarx-concepts.github.io/react-native-platform-components/guides/troubleshooting): an Android native control that gets no touches (it lies outside its parent's bounds), Detox waits for native dialogs, harmless "Could not find generated setter" logcat warnings
 
 ## Full content
 
