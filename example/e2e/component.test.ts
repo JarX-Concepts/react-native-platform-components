@@ -492,6 +492,42 @@ const waitForDialogToClose = async (button: string) => {
     .withTimeout(6000);
 };
 
+// An action of the open Action Sheet demo sheet, by its testID. iOS: the
+// alert carries the identifier on more than one of its views
+const sheetAction = (testID: string) =>
+  isAndroid() ? element(by.id(testID)) : element(by.id(testID)).atIndex(0);
+
+const openSheet = async (first = 'source-library') => {
+  await element(by.id('actionsheet-open')).tap();
+  await waitFor(sheetAction(first)).toBeVisible().withTimeout(6000);
+};
+
+const waitForSheetToClose = async () => {
+  await waitFor(element(by.id('source-library')))
+    .not.toExist()
+    .withTimeout(6000);
+};
+
+// Dismisses the open sheet without a pick. Android: the back button (swipe
+// down and the scrim also cancel). iOS: the Cancel row, found by
+// cancelTestID, where UIKit shows one: the sheet at the bottom of an iPhone
+// before iOS 26, or in the middle of it on iOS 26 without an anchor. A
+// popover (iPad, and an anchored iPhone sheet from iOS 26) hides the row,
+// and a tap outside it cancels.
+const cancelSheet = async () => {
+  if (isAndroid()) {
+    await device.pressBack();
+    return;
+  }
+  try {
+    await expect(sheetAction('source-cancel')).toBeVisible();
+  } catch {
+    await tapOutsideMenu();
+    return;
+  }
+  await sheetAction('source-cancel').tap();
+};
+
 const adbPath = () =>
   process.env.ANDROID_HOME
     ? `${process.env.ANDROID_HOME}/platform-tools/adb`
@@ -1072,39 +1108,6 @@ describe('Platform Components Example', () => {
     await selectDemo('Action Sheet');
     await expect(element(by.id('actionsheet-open'))).toBeVisible();
 
-    // An action of the open sheet, by its testID. iOS: the alert carries
-    // the identifier on more than one of its views
-    const sheetAction = (testID: string) =>
-      isAndroid() ? element(by.id(testID)) : element(by.id(testID)).atIndex(0);
-    const openSheet = async (first = 'source-library') => {
-      await element(by.id('actionsheet-open')).tap();
-      await waitFor(sheetAction(first)).toBeVisible().withTimeout(6000);
-    };
-    const waitForSheetToClose = async () => {
-      await waitFor(element(by.id('source-library')))
-        .not.toExist()
-        .withTimeout(6000);
-    };
-    // Dismisses the open sheet without a pick. Android: the back button
-    // (swipe down and the scrim also cancel). iOS: the Cancel row, found by
-    // cancelTestID, where UIKit shows one: the sheet at the bottom of an
-    // iPhone before iOS 26, or in the middle of it on iOS 26 without an
-    // anchor. A popover (iPad, and an anchored iPhone sheet from iOS 26)
-    // hides the row, and a tap outside it cancels.
-    const cancelSheet = async () => {
-      if (isAndroid()) {
-        await device.pressBack();
-        return;
-      }
-      try {
-        await expect(sheetAction('source-cancel')).toBeVisible();
-      } catch {
-        await tapOutsideMenu();
-        return;
-      }
-      await sheetAction('source-cancel').tap();
-    };
-
     // Pick a source
     await openSheet();
     await sheetAction('source-document').tap();
@@ -1166,6 +1169,36 @@ describe('Platform Components Example', () => {
     }
   });
 
+  it('should test Action Sheet updates while presented', async () => {
+    await selectDemo('Action Sheet');
+    await expect(element(by.id('actionsheet-open'))).toBeVisible();
+
+    // The camera is unavailable when the sheet opens; 2 s later the app
+    // makes it available and drops the title and message. The open sheet
+    // shows both: the header goes, and Take Photo can be picked
+    await element(by.id('actionsheet-camera-switch')).tap();
+    await element(by.id('actionsheet-timer-update')).tap();
+    await openSheet();
+    await waitFor(element(by.text('Choose where the file comes from')))
+      .not.toExist()
+      .withTimeout(6000);
+    await sheetAction('source-camera').tap();
+    await expectText('actionsheet-last-event', 'select: camera');
+    await waitForSheetToClose();
+
+    // And back: the header returns, and the camera is unavailable again
+    await openSheet();
+    await waitFor(element(by.text('Choose where the file comes from')))
+      .toExist()
+      .withTimeout(6000);
+    await sheetAction('source-camera').tap();
+    await pause(800);
+    await expect(sheetAction('source-library')).toBeVisible();
+    await cancelSheet();
+    await expectText('actionsheet-last-event', 'cancel');
+    await waitForSheetToClose();
+  });
+
   it('should test Dialog functionality', async () => {
     await selectDemo('Dialog');
     await expect(element(by.id('dialog-open-confirm'))).toBeVisible();
@@ -1207,6 +1240,39 @@ describe('Platform Components Example', () => {
     await dialogAction('dialog-discard').tap();
     await waitForDialogToClose('dialog-discard');
     await expectText('dialog-events', 'show, select: discard, dismiss');
+  });
+
+  it('should test Dialog updates while presented', async () => {
+    await selectDemo('Dialog');
+    await expect(element(by.id('dialog-open-live'))).toBeVisible();
+
+    // A second after it opens, the dialog gets a message and Install turns
+    // enabled under a new testID (on Android a new dialog takes the place
+    // of the first, which had no message). It still reports one show and
+    // one dismiss
+    await openDialog('live', 'dialog-live-cancel');
+    await waitFor(dialogAction('dialog-live-install'))
+      .toBeVisible()
+      .withTimeout(6000);
+    await expect(
+      element(by.text('Version 2.0 is ready to install.')).atIndex(0)
+    ).toBeVisible();
+    await dialogAction('dialog-live-install').tap();
+    await waitForDialogToClose('dialog-live-install');
+    await expectText('dialog-events', 'show, select: install, dismiss');
+
+    // The updated dialog still cancels (Android: the back button too)
+    await openDialog('live', 'dialog-live-cancel');
+    await waitFor(dialogAction('dialog-live-install'))
+      .toBeVisible()
+      .withTimeout(6000);
+    if (isAndroid()) {
+      await device.pressBack();
+    } else {
+      await dialogAction('dialog-live-cancel').tap();
+    }
+    await waitForDialogToClose('dialog-live-cancel');
+    await expectText('dialog-events', 'show, cancel, dismiss');
   });
 
   it('should test Dialog dismissal', async () => {

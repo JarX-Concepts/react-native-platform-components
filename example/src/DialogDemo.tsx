@@ -25,12 +25,34 @@ const TIMERS: readonly { label: string; value: Timer }[] = [
   { label: 'Unmount', value: 'unmount' },
 ];
 
-type DialogKey = 'confirm' | 'deleted' | 'share' | 'update' | 'save';
+type DialogKey = 'confirm' | 'deleted' | 'share' | 'update' | 'save' | 'live';
 
 type DemoDialog = Pick<
   DialogProps,
   'title' | 'message' | 'actions' | 'dismissable' | 'haptics'
 >;
+
+// A dialog whose content changes while it is up: a second after it opens,
+// the message shows up and Install turns enabled (with a new testID)
+const liveDialog = (ready: boolean): DemoDialog => ({
+  title: 'Checking for updates…',
+  message: ready ? 'Version 2.0 is ready to install.' : undefined,
+  actions: [
+    {
+      id: 'cancel',
+      title: 'Cancel',
+      role: 'cancel',
+      testID: 'dialog-live-cancel',
+    },
+    {
+      id: 'install',
+      title: 'Install',
+      preferred: true,
+      disabled: !ready,
+      testID: ready ? 'dialog-live-install' : 'dialog-live-waiting',
+    },
+  ],
+});
 
 const DIALOGS: Record<DialogKey, DemoDialog> = {
   // A confirmation: Cancel and a destructive, preferred Delete
@@ -116,6 +138,8 @@ const DIALOGS: Record<DialogKey, DemoDialog> = {
       },
     ],
   },
+  // Changes while it is up (see liveDialog)
+  live: liveDialog(false),
 };
 
 const SECOND_DIALOG_ACTIONS: readonly DialogAction[] = [
@@ -130,6 +154,7 @@ export function DialogDemo(): React.JSX.Element {
   const [failure, setFailure] = useState('(none)');
   const [timer, setTimer] = useState<Timer>('off');
   const [mounted, setMounted] = useState(true);
+  const [liveReady, setLiveReady] = useState(false);
   // The dialog to show once the current one has gone (onDismiss)
   const next = useRef<DialogKey | null>(null);
   const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -145,6 +170,10 @@ export function DialogDemo(): React.JSX.Element {
     setEvents([]);
     setFailure('(none)');
     setActive(key);
+    if (key === 'live') {
+      setLiveReady(false);
+      timeouts.current.push(setTimeout(() => setLiveReady(true), 1000));
+    }
     if (timer === 'off') return;
     timeouts.current.push(
       setTimeout(() => {
@@ -202,6 +231,14 @@ export function DialogDemo(): React.JSX.Element {
           />
         </Row>
         <Divider />
+        <Row label="Changes while up">
+          <PillButton
+            testID="dialog-open-live"
+            label="Check…"
+            onPress={() => open('live')}
+          />
+        </Row>
+        <Divider />
         <Row label="Two at once">
           <PillButton
             testID="dialog-open-two"
@@ -248,7 +285,7 @@ export function DialogDemo(): React.JSX.Element {
               key={key}
               testID={`${key}-dialog`}
               visible={active === key}
-              {...DIALOGS[key]}
+              {...(key === 'live' ? liveDialog(liveReady) : DIALOGS[key])}
               haptics="selection"
               onShow={() => log('show')}
               onSelect={(id) => {
