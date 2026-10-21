@@ -63,7 +63,7 @@ The browser handles keyboard input for embedded date fields and selection menus.
 
 `useNativeTheme` and `setNativeTheme` set the brand color the web components use for filled buttons, focus and selection, and the browser's own controls through `accent-color`. Without a theme they use the Material 3 baseline purple. `PlatformColor` and `DynamicColorIOS` values don't exist on the web and fall back to the defaults.
 
-Only image icons (`{ type: 'image', source }`) render on the web. SF Symbols and Android drawables have no web equivalent and are left out, so pass an image in a per-platform pair when a control needs an icon on every platform. See [Icons](/guides/icons).
+Only image icons (`{ type: 'image', source }`) render on the web. SF Symbols and Android drawables have no web equivalent, so give a per-platform icon a `web` image (`{ ios: 'trash', android: 'delete', web: { type: 'image', source } }`). An icon with nothing to draw is left out and logs a warning once in development. See [Icons](/guides/icons#web).
 
 ## ContextMenu
 

@@ -149,7 +149,7 @@ When a design specifies a radius, set `cornerRadius` (points on iOS, dp on Andro
 
 ### Icons
 
-`icon` accepts the same shapes as [SegmentedControl](/components/segmentedcontrol#icon-support): an SF Symbol or drawable name, an image asset, or an `{ ios, android }` pair.
+`icon` accepts the same shapes as [SegmentedControl](/components/segmentedcontrol#icon-support): an SF Symbol or drawable name, an image asset, or an `{ ios, android, web }` set (the web draws images only; see [Icons](/guides/icons#web)).
 
 ```tsx
 // Native symbol on each platform

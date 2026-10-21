@@ -1,9 +1,9 @@
 ---
 title: 'Icons'
-description: 'SF Symbols on iOS and drawables or images on Android for ContextMenu, SegmentedControl, Button, ButtonGroup and TextField icons, including your own SVG icons.'
+description: 'SF Symbols on iOS, drawables or images on Android, and images on the web for ContextMenu, SegmentedControl, Button, ButtonGroup and TextField icons, including your own SVG icons.'
 ---
 
-ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl, Button, ButtonGroup and TextField accept the same names, plus image assets and per-platform pairs (the `PlatformIcon` type); see [SegmentedControl Icon Support](/components/segmentedcontrol#icon-support).
+ContextMenu supports icons on menu items. Icons are specified by name and resolved differently on each platform. SegmentedControl, Button, ButtonGroup and TextField accept the same names, plus image assets and per-platform sets (the `PlatformIcon` type); see [SegmentedControl Icon Support](/components/segmentedcontrol#icon-support).
 
 ### iOS
 
@@ -155,29 +155,48 @@ additional HTTP request options.
 These guarantees apply to the native iOS and Android loaders. Web continues
 to use its existing image fallback and browser restrictions.
 
-### Cross-platform pattern
+### Web
 
-Use `Platform.OS` to provide the correct icon name for each platform:
+Browsers have no SF Symbols or drawables, so the [web components](/guides/web) draw only image icons. Give a per-platform icon a `web` image, which iOS and Android ignore:
 
 ```tsx
-import { Platform } from 'react-native';
+<Button
+  label="Delete"
+  icon={{
+    ios: 'trash',
+    android: 'delete',
+    web: { type: 'image', source: require('./icons/trash.png') },
+  }}
+/>
+```
+
+`web` takes `{ type: 'image', source, tinted? }`: a bundled asset or a `{ uri }`, which can point at an SVG file or be a `data:` URI. Without `web`, the web components draw the `ios` or `android` source when it is an image. An icon left with nothing to draw renders nothing and logs a warning once in development, naming the symbols or drawables it skipped.
+
+### Cross-platform pattern
+
+Give every icon prop a per-platform set rather than branching on `Platform.OS`, so one action list serves iOS, Android and the web:
+
+```tsx
+const trashImage = { type: 'image', source: require('./icons/trash.png') } as const;
 
 const actions = [
   {
     id: 'copy',
     title: 'Copy',
-    image: Platform.OS === 'ios' ? 'doc.on.doc' : 'content_copy',
+    image: { ios: 'doc.on.doc', android: 'content_copy' },
   },
   {
     id: 'share',
     title: 'Share',
-    image: Platform.OS === 'ios' ? 'square.and.arrow.up' : 'share',
+    image: { ios: 'square.and.arrow.up', android: 'share' },
   },
   {
     id: 'delete',
     title: 'Delete',
-    image: Platform.OS === 'ios' ? 'trash' : 'delete',
+    image: { ios: 'trash', android: 'delete', web: trashImage },
     attributes: { destructive: true },
   },
 ];
 ```
+
+An icon that has to show on the web needs a `web` image, or an image source on every platform. Without one it is left out there, with the development warning described under [Web](#web).

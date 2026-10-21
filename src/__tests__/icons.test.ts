@@ -53,6 +53,15 @@ describe('resolveIcon', () => {
     expect(resolveOn('android', { ios: 'trash' })).toEqual(NO_ICON);
   });
 
+  it('ignores the web image on iOS and Android', () => {
+    const web = { type: 'image' as const, source: { uri: 'trash.svg' } };
+    expect(resolveOn('ios', { ios: 'trash', web })).toMatchObject({
+      iconType: 'sfSymbol',
+      iconName: 'trash',
+    });
+    expect(resolveOn('android', { web })).toEqual(NO_ICON);
+  });
+
   it('resolves image sources with their scale and tint flag', () => {
     const spy = jest
       .spyOn(Image, 'resolveAssetSource')

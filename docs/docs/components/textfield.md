@@ -209,7 +209,7 @@ A field without a `label` has the placeholder as its only hint and, on Android, 
 
 ### Icons
 
-`leadingIcon` and `trailingIcon` accept the same shapes as [Button](/components/button#icons): an SF Symbol or drawable name, an image asset, or an `{ ios, android }` pair. The trailing icon is a button; `onTrailingIconPress` is called when it is pressed.
+`leadingIcon` and `trailingIcon` accept the same shapes as [Button](/components/button#icons): an SF Symbol or drawable name, an image asset, or an `{ ios, android, web }` set. The trailing icon is a button; `onTrailingIconPress` is called when it is pressed.
 
 ```tsx
 <TextField

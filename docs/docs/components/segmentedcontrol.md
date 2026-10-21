@@ -85,15 +85,16 @@ On Android the control is a `MaterialButtonToggleGroup`. By default it uses the 
 
 ### Icon Support
 
-`icon` accepts a single source, or an `{ ios, android }` pair so you never branch on `Platform.OS`:
+`icon` accepts a single source, or an `{ ios, android, web }` set so you never branch on `Platform.OS`:
 
-| Shape                                  | iOS                               | Android                           |
-| -------------------------------------- | --------------------------------- | --------------------------------- |
-| `'name'` (string)                      | SF Symbol name                    | Drawable resource name            |
-| `{ type: 'sfSymbol', name }`           | SF Symbol                         | Ignored (segment shows its label) |
-| `{ type: 'drawable', name }`           | Ignored (segment shows its label) | Drawable from `res/drawable`      |
-| `{ type: 'image', source, tinted? }`   | Image asset or `{ uri }`          | Image asset or `{ uri }`          |
-| `{ ios: <source>, android: <source> }` | Uses `ios`                        | Uses `android`                    |
+| Shape                                  | iOS                               | Android                           | Web                                        |
+| -------------------------------------- | --------------------------------- | --------------------------------- | ------------------------------------------ |
+| `'name'` (string)                      | SF Symbol name                    | Drawable resource name            | Ignored, with a dev warning                |
+| `{ type: 'sfSymbol', name }`           | SF Symbol                         | Ignored (segment shows its label) | Ignored, with a dev warning                |
+| `{ type: 'drawable', name }`           | Ignored (segment shows its label) | Drawable from `res/drawable`      | Ignored, with a dev warning                |
+| `{ type: 'image', source, tinted? }`   | Image asset or `{ uri }`          | Image asset or `{ uri }`          | Image asset or `{ uri }`                   |
+| `{ ios: <source>, android: <source> }` | Uses `ios`                        | Uses `android`                    | The `ios` or `android` source, if an image |
+| `{ ios, android, web: <image> }`       | Uses `ios`                        | Uses `android`                    | Uses `web`                                 |
 
 ```tsx
 // A bundled asset works everywhere and is tinted like a template.

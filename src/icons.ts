@@ -29,21 +29,30 @@ export type PlatformIconSource =
   | string
   | { type: 'sfSymbol'; name: string }
   | { type: 'drawable'; name: string }
-  | {
-      type: 'image';
-      source: ImageRequireSource | ImageURISource;
-      tinted?: boolean;
-    };
+  | PlatformIconImage;
 
 /**
- * An icon: a single source used on both platforms, or a per-platform pair so
- * callers don't need to branch on `Platform.OS`.
+ * An image icon source: the one kind every platform draws, the web
+ * included. See {@link PlatformIconSource}.
+ */
+export type PlatformIconImage = {
+  type: 'image';
+  source: ImageRequireSource | ImageURISource;
+  tinted?: boolean;
+};
+
+/**
+ * An icon: a single source used on every platform, or a per-platform set so
+ * callers don't need to branch on `Platform.OS`. `web` is the image the web
+ * components draw, as browsers have no SF Symbols or drawables; without it
+ * they draw the `ios` or `android` source if that is an image.
  */
 export type PlatformIcon =
   | PlatformIconSource
   | {
       ios?: PlatformIconSource;
       android?: PlatformIconSource;
+      web?: PlatformIconImage;
     };
 
 /** The flat icon fields the native specs expect. */

@@ -7,7 +7,8 @@ import { webIcon } from './shared';
 
 /**
  * Draws an icon on web, tinted with `color` unless the source opts out.
- * Renders nothing for SF Symbols and Android drawables.
+ * Renders nothing (and warns once in development) for an icon with only SF
+ * Symbols and Android drawables.
  */
 export function Icon({
   icon,
