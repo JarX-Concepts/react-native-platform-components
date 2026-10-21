@@ -840,6 +840,33 @@ describe('Dialog (web)', () => {
     act(() => tree.unmount());
   });
 
+  it('applies every change while open, without a warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const onShow = jest.fn();
+    const tree = render(
+      <Dialog visible title="Checking…" actions={actions} onShow={onShow} />
+    );
+    act(() =>
+      tree.update(
+        <Dialog
+          visible
+          title="Checking…"
+          message="Ready."
+          actions={[{ id: 'install', title: 'Install', testID: 'i' }]}
+          onShow={onShow}
+        />
+      )
+    );
+    expect(tree.root.findByType('p').props.children).toBe('Ready.');
+    expect(
+      tree.root.findAllByType('button').map((b) => b.props['data-testid'])
+    ).toEqual(['i']);
+    expect(onShow).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+    warn.mockRestore();
+  });
+
   it('reports busy for a second dialog while one is open', () => {
     const onPresentFailed = jest.fn();
     const onShow = jest.fn();

@@ -1,5 +1,6 @@
 package com.platformcomponents
 
+import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
 import android.content.res.ColorStateList
@@ -7,6 +8,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
@@ -28,6 +30,13 @@ import kotlin.math.roundToInt
  * at the end as the positive button, the cancel action as the negative
  * one). More than three are stacked one per row, end aligned, as Material
  * stacks dialog buttons that don't fit side by side.
+ *
+ * While the dialog is up, the title, the message, `dismissable` and each
+ * button's enabled state, tag and haptic follow the props. Its buttons
+ * themselves stay as presented, as on iOS (a presented `UIAlertController`
+ * can't change its actions): a list of another shape (added, removed,
+ * reordered or retitled actions, a changed role or preferred action) shows
+ * from the next presentation.
  */
 class PCDialogView(context: Context) : ReactViewGroup(context) {
 
@@ -69,7 +78,20 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     val testID: String
   ) {
     val isCancel: Boolean get() = role == "cancel"
+
+    /** Whether the dialog's button for this action can show [other]: same id, title, role and slot. */
+    fun sameButton(other: Action): Boolean =
+      id == other.id && title == other.title && role == other.role && preferred == other.preferred
   }
+
+  /** A dialog built from the props, with the buttons to set up once it is shown. */
+  private class Built(
+    val dialog: AlertDialog,
+    /** The builder's slots in use; their buttons exist once the dialog is shown */
+    val slots: Map<Int, Action>,
+    /** The stacked buttons, for more than three actions */
+    val stacked: List<Pair<Button, Action>>
+  )
 
   // --- Props ---
   var dialogTitle: String = ""
@@ -94,6 +116,22 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
   /** The dialog on screen, until a pick, a cancel or `visible` ends it */
   private var dialog: AlertDialog? = null
   private var openToken = 0
+  /** The presentation hasn't reported onShow yet */
+  private var showPending = false
+  /**
+   * The dialog a replacement took the place of, still on screen under it
+   * until the new one has drawn (see [replace])
+   */
+  private var retiring: AlertDialog? = null
+
+  // What the dialog on screen shows. Its actions are the ones it was
+  // presented with, updated while they keep their shape.
+  private var shownTitle = ""
+  private var shownMessage = ""
+  private var shownDismissable = true
+  private var shownActions: List<Action> = emptyList()
+  /** The dialog's buttons, each with the index of its action in [shownActions] */
+  private var shownButtons: List<Pair<Button, Int>> = emptyList()
 
   // ---- Public apply* (called by manager) ----
 
@@ -126,9 +164,17 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
 
   /** Dismisses without onSelect or onCancel; onDismiss follows. */
   private fun dismissIfNeeded() {
+    dismissRetiring()
     val current = dialog ?: return
     dialog = null
     current.dismiss()
+  }
+
+  /** Removes the dialog a replacement took the place of, if it is still up. */
+  private fun dismissRetiring() {
+    val old = retiring ?: return
+    retiring = null
+    old.dismiss()
   }
 
   private fun fail(reason: String, detail: String) {
@@ -149,6 +195,27 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
       return
     }
 
+    val built = build(activity, actions)
+    val created = built.dialog
+    showPending = true
+
+    dialog = created
+    try {
+      created.show()
+    } catch (e: WindowManager.BadTokenException) {
+      dialog = null
+      fail("rejected", "BadTokenException: ${e.message}")
+      return
+    }
+    showing.add(created)
+    finishShow(built, actions)
+  }
+
+  /**
+   * A dialog from the current title, message and `dismissable`, with a
+   * button per action in [actions], and its cancel and dismiss listeners.
+   */
+  private fun build(activity: Activity, actions: List<Action>): Built {
     // The app's Material theme, or Material 3 defaults when it has none;
     // the builder adds the theme's materialAlertDialogTheme overlay.
     val builder = MaterialAlertDialogBuilder(PCThemeSupport.materialContext(activity, "Dialog"))
@@ -166,44 +233,157 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
         else -> builder.setNeutralButton(action.title, null)
       }
     }
-    val stacked = if (actions.size > SLOT_COUNT) buildStack(builder.context) else null
+    val stacked = if (actions.size > SLOT_COUNT) buildStack(builder.context, actions) else null
     if (stacked != null) builder.setView(stacked.first)
 
     val created = builder.create()
     if (!dismissable) created.setCanceledOnTouchOutside(false)
 
+    // Once per presentation: a dialog that replaces one that hadn't shown
+    // yet reports it.
+    created.setOnShowListener {
+      if (dialog !== created || !showPending) return@setOnShowListener
+      showPending = false
+      onShow?.invoke()
+    }
     // Back and a tap outside
     created.setOnCancelListener {
       if (dialog !== created) return@setOnCancelListener
       dialog = null
       onCancel?.invoke()
     }
-    created.setOnShowListener {
-      if (dialog === created) onShow?.invoke()
-    }
     // Every way out, after onSelect / onCancel
     created.setOnDismissListener {
       showing.remove(created)
+      // Gone before it drew: the dialog it replaced goes with it.
+      dismissRetiring()
       if (dialog === created) dialog = null
       onDismiss?.invoke()
     }
+    return Built(created, slots, stacked?.second ?: emptyList())
+  }
+
+  /** Once [built] is shown: its buttons get their [actions], its text the size cap. */
+  private fun finishShow(built: Built, actions: List<Action>) {
+    val created = built.dialog
+    // The views exist once shown, before the first frame draws.
+    val buttons = built.slots.mapNotNull { (which, action) ->
+      created.getButton(which)?.let { it to action }
+    } + built.stacked
+    shownTitle = dialogTitle
+    shownMessage = message
+    shownDismissable = dismissable
+    shownActions = actions
+    shownButtons = buttons.map { (button, action) ->
+      button to actions.indexOfFirst { it === action }
+    }
+    for ((button, index) in shownButtons) configureButton(created, button, index)
+    created.window?.decorView?.let { PCThemeSupport.capTextSizes(it, maxFontSizeMultiplier) }
+  }
+
+  /**
+   * Called once every prop of an update is in: the dialog on screen takes
+   * the new title, message, `dismissable`, and the buttons' enabled state,
+   * tag and haptic while the actions keep their shape.
+   */
+  fun commit() {
+    val current = dialog ?: return
+
+    if (actions != shownActions && actions.size == shownActions.size &&
+      actions.zip(shownActions).all { (next, shown) -> next.sameButton(shown) }
+    ) {
+      shownActions = actions
+      for ((button, index) in shownButtons) {
+        val action = actions[index]
+        button.tag = action.testID.ifEmpty { null }
+        button.isEnabled = !action.disabled
+      }
+    }
+
+    if (dismissable != shownDismissable) {
+      shownDismissable = dismissable
+      current.setCancelable(dismissable)
+      current.setCanceledOnTouchOutside(dismissable)
+    }
+
+    // AppCompat hides the title panel and removes the message view when the
+    // dialog is created without them, so setTitle and setMessage can't add
+    // one (nor take one away): a new dialog takes its place.
+    if (dialogTitle.isEmpty() != shownTitle.isEmpty() || message.isEmpty() != shownMessage.isEmpty()) {
+      replace(current)
+      return
+    }
+    if (dialogTitle != shownTitle) {
+      shownTitle = dialogTitle
+      current.setTitle(dialogTitle)
+    }
+    if (message != shownMessage) {
+      shownMessage = message
+      current.setMessage(message)
+    }
+  }
+
+  /**
+   * Replaces the dialog on screen with one built from the props and the
+   * actions it shows. Neither window animates, so the new dialog is simply
+   * there; the swap reports no onShow, onCancel or onDismiss.
+   */
+  private fun replace(old: AlertDialog) {
+    val activity = PCNativeTheme.findActivity(context)
+    if (activity == null || activity.isFinishing || activity.isDestroyed) return
+    // A replacement that hasn't drawn yet is replaced in turn: the one
+    // before it goes now, so one window at most waits under the new one.
+    dismissRetiring()
+    val built = build(activity, shownActions)
+    val created = built.dialog
+    // Created now (not in show), so the theme's animations are in to turn off.
+    created.create()
+    val window = created.window
+    val animations = window?.attributes?.windowAnimations ?: 0
+    window?.setWindowAnimations(0)
+    old.window?.setWindowAnimations(0)
 
     dialog = created
     try {
       created.show()
     } catch (e: WindowManager.BadTokenException) {
-      dialog = null
-      fail("rejected", "BadTokenException: ${e.message}")
+      Log.w(TAG, "replace: BadTokenException: ${e.message}")
+      dialog = old
       return
     }
     showing.add(created)
+    finishShow(built, shownActions)
 
-    // The views exist once shown, before the first frame draws.
-    val buttons = slots.mapNotNull { (which, action) ->
-      created.getButton(which)?.let { it to action }
-    } + (stacked?.second ?: emptyList())
-    for ((button, action) in buttons) configureButton(created, button, action)
-    created.window?.decorView?.let { PCThemeSupport.capTextSizes(it, maxFontSizeMultiplier) }
+    // The old dialog goes without a word.
+    old.setOnShowListener(null)
+    old.setOnCancelListener(null)
+    old.setOnDismissListener(null)
+    showing.remove(old)
+    // Once the new one has drawn over it: the scrim stays put as long as a
+    // window asks for it, where removing the old one first fades it out and
+    // back in. Until then it is retiring, so whatever ends the new one
+    // (visible, unmount, another replacement) takes it along.
+    retiring = old
+    val decor = window?.decorView
+    if (decor == null) {
+      dismissRetiring()
+    } else {
+      decor.viewTreeObserver.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
+        private var drawn = false
+
+        override fun onDraw() {
+          if (drawn) return
+          drawn = true
+          decor.post {
+            decor.viewTreeObserver.removeOnDrawListener(this)
+            if (retiring === old) dismissRetiring()
+          }
+        }
+      })
+    }
+
+    // Its own animation back, for when it closes.
+    window?.decorView?.post { window.setWindowAnimations(animations) }
   }
 
   /**
@@ -236,7 +416,7 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
    * aligned, in the actions' order with the cancel action last. It scrolls
    * when it doesn't fit.
    */
-  private fun buildStack(ctx: Context): Pair<View, List<Pair<Button, Action>>> {
+  private fun buildStack(ctx: Context, actions: List<Action>): Pair<View, List<Pair<Button, Action>>> {
     val density = ctx.resources.displayMetrics.density
     fun dp(value: Int) = (value * density).roundToInt()
 
@@ -268,7 +448,9 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     return scroll to buttons
   }
 
-  private fun configureButton(owner: AlertDialog, button: Button, action: Action) {
+  /** Sets up [button] for the action at [index] of [shownActions]. */
+  private fun configureButton(owner: AlertDialog, button: Button, index: Int) {
+    val action = shownActions[index]
     button.tag = action.testID.ifEmpty { null }
     button.isEnabled = !action.disabled
     if (action.role == "destructive") {
@@ -285,7 +467,10 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     // Replaces the dialog's own handler, so the dialog closes here, after
     // the event.
     button.setOnClickListener {
-      if (dialog !== owner || action.disabled) return@setOnClickListener
+      if (dialog !== owner) return@setOnClickListener
+      // The action as it is now: its haptic may have changed since.
+      val action = shownActions[index]
+      if (action.disabled) return@setOnClickListener
       dialog = null
       if (action.isCancel) {
         // Only an action's own haptic: cancelling isn't a pick.

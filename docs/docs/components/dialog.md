@@ -63,7 +63,7 @@ The dialog is controlled: `visible` presents it, and the app sets it back to `fa
 | `visible`               | `boolean`                                                                                      | Whether the dialog is presented (required)                                                                                                                      |
 | `title`                 | `string`                                                                                       | Title                                                                                                                                                           |
 | `message`               | `string`                                                                                       | Message under the title                                                                                                                                         |
-| `actions`               | `DialogAction[]`                                                                               | The buttons. See [DialogAction](#dialogaction) and [Button layout](#button-layout)                                                                              |
+| `actions`               | `DialogAction[]`                                                                               | The buttons. See [DialogAction](#dialogaction), [Button layout](#button-layout) and [Updates while presented](#updates-while-presented)                         |
 | `dismissable`           | `boolean`                                                                                      | Android and web: whether a tap outside and the back button (Escape on the web) cancel the dialog. Default `true`. See [Cancel](#cancel)                         |
 | `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks a default or destructive action; an action's own `haptics` wins. See [Haptics](/guides/haptics). Default: none                |
 | `maxFontSizeMultiplier` | `number`                                                                                       | Android: largest scale the dialog's text may reach with the system font scale, as on `Text`. Unset or `0`: no cap. iOS sizes the alert with Dynamic Type itself |
@@ -87,7 +87,7 @@ The dialog is controlled: `visible` presents it, and the app sets it back to `fa
 | `haptics`   | `'selection' \| ... \| 'none'`           | Haptic played when this action is picked, in place of the component's `haptics`. The cancel action plays only its own                            |
 | `testID`    | `string`                                 | Test identifier of the button: the `UIAlertAction`'s `accessibilityIdentifier` on iOS, the button's view tag on Android. See [Testing](#testing) |
 
-A dialog takes **one cancel action**: UIKit throws an exception on a second `.cancel` action, so the component warns in development and shows any extra as a default action. A second `preferred` action is ignored the same way. Disabled, hidden and cancel actions never reach `onSelect`.
+A dialog takes **one cancel action**: UIKit throws an exception on a second `.cancel` action, so the component warns in development and shows any extra as a default action. A second `preferred` action is ignored the same way. Disabled and cancel actions never reach `onSelect`, and hidden ones aren't shown.
 
 ### Button layout
 
@@ -143,6 +143,17 @@ const next = useRef<'done' | null>(null);
   }}
 />;
 ```
+
+### Updates while presented
+
+The props keep applying while the dialog is up, with one exception: its buttons.
+
+- **Applied right away**: `title` and `message` (including adding or removing one), `dismissable`, and each action's `disabled`, `testID` and `haptics`. A dialog can open with a disabled button and enable it once something has loaded, or change its message as a check runs.
+- **Applied the next time it is presented**: any other change to `actions`, such as an action added, removed (or `hidden`), reordered or retitled, or a changed `role` or `preferred`. `UIAlertController` can't change its actions once it is presented, so the dialog on screen keeps the buttons it opened with on both platforms. In development the component warns once per presentation when this happens. On the web, which draws the dialog itself, every change applies right away.
+
+A pick from the dialog on screen is still reported: `onSelect` gets the id of the button the user tapped, even if that action has left `actions` since, unless the current action with that id is disabled or the cancel action.
+
+On Android, adding or removing the title or the message replaces the dialog with a new one built from the props, without animation and without `onShow` or `onDismiss`: the Material dialog lays out its title and message panels once, when it is created.
 
 ### Presentation failures
 

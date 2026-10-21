@@ -3,11 +3,14 @@ import UIKit
 
 private let logger = Logger(subsystem: "com.platformcomponents", category: "ActionSheet")
 
-/// One action bridged from ObjC++ (src/ActionSheet.tsx). Icons aren't read:
+/// One action bridged from ObjC++ (src/ActionSheet.tsx). Icons aren't drawn:
 /// UIAlertAction has no public image API.
 struct PCActionSheetItem {
     let id: String
     let title: String
+    /// The icon fields in one string (see PCActionSheet.mm), only compared:
+    /// a changed icon waits for the next presentation, as on Android
+    let icon: String
     let destructive: Bool
     let disabled: Bool
     /// The action's own `haptics`; "" = the component's
@@ -18,10 +21,18 @@ struct PCActionSheetItem {
         func string(_ key: String) -> String { (dict[key] as? String) ?? "" }
         id = string("id")
         title = string("title")
+        icon = string("icon")
         destructive = string("destructive") == "true"
         disabled = string("disabled") == "true"
         haptics = string("haptics")
         testID = string("testID")
+    }
+
+    /// Whether the sheet's action for `self` can show `other`: the fields a
+    /// presented `UIAlertAction` can't change (and the icon, which Android
+    /// doesn't change either) are the same.
+    func sameAction(as other: PCActionSheetItem) -> Bool {
+        id == other.id && title == other.title && icon == other.icon && destructive == other.destructive
     }
 }
 
@@ -32,12 +43,29 @@ struct PCActionSheetItem {
 /// next to it in the Fabric view) and takes no touches. Wherever UIKit shows
 /// the sheet as a popover (iPad, and iPhone on iOS 26), the popover points
 /// at the children; without children the sheet has no source.
+///
+/// While the sheet is up, the title, the message and each action's enabled
+/// state, identifier and haptic follow the props. Its actions themselves
+/// can't change once presented: a list of another shape (added, removed,
+/// reordered or retitled actions, a changed style or icon, a new cancel
+/// title) shows from the next presentation.
 @objcMembers
 public final class PCActionSheetView: UIView {
     // MARK: - Props (set from ObjC++)
 
-    public var sheetTitle: String = ""
-    public var message: String = ""
+    public var sheetTitle: String = "" {
+        didSet {
+            guard sheetTitle != oldValue, let alert else { return }
+            alert.title = sheetTitle.isEmpty ? nil : sheetTitle
+        }
+    }
+
+    public var message: String = "" {
+        didSet {
+            guard message != oldValue, let alert else { return }
+            alert.message = message.isEmpty ? nil : message
+        }
+    }
 
     /// ObjC++ sets this as an array of dictionaries (see PCActionSheet.mm)
     public var actions: [Any] = [] {
@@ -46,12 +74,18 @@ public final class PCActionSheetView: UIView {
                 guard let dict = any as? [String: Any] else { return nil }
                 return PCActionSheetItem(dictionary: dict)
             }
+            updateShownActions()
         }
     }
 
     /// "" = the system's localized "Cancel"
     public var cancelTitle: String = ""
-    public var cancelTestID: String = ""
+    public var cancelTestID: String = "" {
+        didSet {
+            guard cancelTestID != oldValue, alert != nil else { return }
+            shownCancel?.accessibilityIdentifier = cancelTestID.isEmpty ? nil : cancelTestID
+        }
+    }
 
     /// "open" | "closed"
     public var visible: String = "closed" {
@@ -75,7 +109,21 @@ public final class PCActionSheetView: UIView {
     private var items: [PCActionSheetItem] = []
     /// The sheet on screen (or on its way), until an action ends it or it is
     /// dismissed through `visible`
-    private var alert: UIAlertController?
+    private var alert: UIAlertController? {
+        didSet {
+            // Let go of the old sheet's actions (and through them, the sheet).
+            if alert == nil {
+                shownActions = []
+                shownItems = []
+                shownCancel = nil
+            }
+        }
+    }
+    /// The sheet's actions and the items they show now: the items it was
+    /// presented with, updated while the actions keep their shape
+    private var shownActions: [UIAlertAction] = []
+    private var shownItems: [PCActionSheetItem] = []
+    private var shownCancel: UIAlertAction?
     /// Bumped on every visibility change, so a deferred presentation that
     /// has been overtaken does nothing
     private var presentationToken = 0
@@ -177,6 +225,19 @@ public final class PCActionSheetView: UIView {
         }
     }
 
+    /// Applies the actions to the sheet on screen when they keep the shape it
+    /// was presented with; otherwise they wait for the next presentation.
+    private func updateShownActions() {
+        guard alert != nil, items.count == shownItems.count,
+              zip(items, shownItems).allSatisfy({ $0.sameAction(as: $1) })
+        else { return }
+        shownItems = items
+        for (action, item) in zip(shownActions, items) {
+            action.isEnabled = !item.disabled
+            action.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
+        }
+    }
+
     private func present(from presenter: UIViewController) {
         let alert = UIAlertController(
             title: sheetTitle.isEmpty ? nil : sheetTitle,
@@ -184,12 +245,15 @@ public final class PCActionSheetView: UIView {
             preferredStyle: .actionSheet
         )
 
-        for item in items {
+        var actions: [UIAlertAction] = []
+        for (index, item) in items.enumerated() {
             let action = UIAlertAction(
                 title: item.title,
                 style: item.destructive ? .destructive : .default
             ) { [weak self, weak alert] _ in
                 guard let self, let alert, self.alert === alert else { return }
+                // The item as it is now: its haptic may have changed since.
+                let item = self.shownItems[index]
                 self.alert = nil
                 self.haptics.perform(in: self, override: item.haptics)
                 self.onSelect?(item.id)
@@ -197,7 +261,10 @@ public final class PCActionSheetView: UIView {
             action.isEnabled = !item.disabled
             action.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
             alert.addAction(action)
+            actions.append(action)
         }
+        shownActions = actions
+        shownItems = items
 
         // The cancel action: a row on iPhone, and on a popover (iPad) UIKit
         // calls it for a tap outside instead of showing it.
@@ -211,6 +278,7 @@ public final class PCActionSheetView: UIView {
         }
         cancel.accessibilityIdentifier = cancelTestID.isEmpty ? nil : cancelTestID
         alert.addAction(cancel)
+        shownCancel = cancel
 
         // With a source, UIKit shows the sheet as a popover pointing at it: on
         // iPad, and on iPhone from iOS 26. Without children there is nothing

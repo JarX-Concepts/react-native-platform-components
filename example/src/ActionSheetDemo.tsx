@@ -15,13 +15,16 @@ import {
   useDemoColors,
 } from './DemoUI';
 
-// While the sheet is up, the app closes it (visible = false) or unmounts it
-type Timer = 'off' | 'close' | 'unmount';
+// While the sheet is up, the app closes it (visible = false), unmounts it,
+// or changes its content: the title and message and whether the camera is
+// available flip
+type Timer = 'off' | 'close' | 'unmount' | 'update';
 
 const TIMERS: readonly { label: string; value: Timer }[] = [
   { label: 'Off', value: 'off' },
   { label: 'Close', value: 'close' },
   { label: 'Unmount', value: 'unmount' },
+  { label: 'Update', value: 'update' },
 ];
 
 const FILES: Record<string, string> = {
@@ -52,6 +55,11 @@ export function ActionSheetDemo(): React.JSX.Element {
     if (timer === 'off') return;
     timeouts.current.push(
       setTimeout(() => {
+        if (timer === 'update') {
+          setHeader((value) => !value);
+          setCameraAvailable((value) => !value);
+          return;
+        }
         setOpen(false);
         if (timer === 'close') {
           setLastEvent('closed by the app');

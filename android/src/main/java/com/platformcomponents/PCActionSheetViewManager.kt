@@ -40,6 +40,12 @@ class PCActionSheetViewManager :
     }
   }
 
+  /** Applies an update's props to the sheet on screen, once they are all in. */
+  override fun onAfterUpdateTransaction(view: PCActionSheetView) {
+    super.onAfterUpdateTransaction(view)
+    view.commit()
+  }
+
   // "open" | "closed"
   override fun setVisible(view: PCActionSheetView, value: String?) {
     view.applyVisible(value)

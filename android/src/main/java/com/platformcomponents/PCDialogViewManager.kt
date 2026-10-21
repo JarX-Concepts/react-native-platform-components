@@ -51,6 +51,12 @@ class PCDialogViewManager :
     }
   }
 
+  /** Applies an update's props to the dialog on screen, once they are all in. */
+  override fun onAfterUpdateTransaction(view: PCDialogView) {
+    super.onAfterUpdateTransaction(view)
+    view.commit()
+  }
+
   // "open" | "closed"
   override fun setVisible(view: PCDialogView, value: String?) {
     view.applyVisible(value)

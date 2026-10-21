@@ -80,7 +80,7 @@ The sheet is controlled: `visible` presents it, and the app sets it back to `fal
 | `visible`               | `boolean`                                                                                      | Whether the sheet is presented (required)                                                                                                                      |
 | `title`                 | `string`                                                                                       | Title above the actions                                                                                                                                        |
 | `message`               | `string`                                                                                       | Message under the title                                                                                                                                        |
-| `actions`               | `ActionSheetAction[]`                                                                          | The actions, top to bottom. See [ActionSheetAction](#actionsheetaction)                                                                                        |
+| `actions`               | `ActionSheetAction[]`                                                                          | The actions, top to bottom. See [ActionSheetAction](#actionsheetaction) and [Updates while presented](#updates-while-presented)                                |
 | `cancelTitle`           | `string`                                                                                       | iOS: title of the cancel action. Default: the system's localized "Cancel". See [Cancel](#cancel)                                                               |
 | `cancelTestID`          | `string`                                                                                       | iOS: test identifier of the cancel action                                                                                                                      |
 | `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an action (not on cancel); an action's own `haptics` wins. See [Haptics](/guides/haptics). Default: none                     |
@@ -127,12 +127,21 @@ Every dismissal without a pick calls `onCancel`:
 - **Android**: following Material, the bottom sheet has no cancel row. A swipe down, a tap on the scrim and the back button dismiss it and call `onCancel`. `cancelTitle` and `cancelTestID` are ignored.
 - **Web**: the cancel button, Escape and a click outside.
 
+### Updates while presented
+
+The props keep applying while the sheet is up, with one exception: its actions.
+
+- **Applied right away**: `title` and `message` (including adding or removing one), `cancelTestID`, and each action's `disabled`, `testID` and `haptics`. A sheet can open with an action disabled and enable it once it is available.
+- **Applied the next time it is presented**: any other change to `actions`, such as an action added, removed (or `hidden`), reordered or retitled, or a changed `destructive`, `image` or `imageColor`, and on iOS `cancelTitle`. `UIAlertController` can't change its actions once it is presented, so the sheet on screen keeps the actions it opened with, on Android too. In development the component warns once per presentation when this happens. On the web, which draws the sheet itself, every change applies right away.
+
+A pick from the sheet on screen is still reported: `onSelect` gets the id of the action the user tapped, even if it has left `actions` since, unless the current action with that id is disabled.
+
 ### Destructive and disabled actions
 
 - **iOS**: `destructive` uses `UIAlertAction.Style.destructive` (the system red); `disabled` sets `isEnabled = false`.
 - **Android**: destructive rows draw their title and icon in the theme's `colorError` (the Material 3 error red when the theme has none); an explicit `imageColor` still wins for the icon. Disabled rows are dimmed to Material's 38% and ignore taps.
 
-Disabled and hidden actions never reach `onSelect`.
+Disabled actions never reach `onSelect`, and hidden ones aren't shown.
 
 ### Icons
 

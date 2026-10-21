@@ -8,6 +8,7 @@ import NativeDialog, {
   type DialogSelectEvent,
 } from './DialogNativeComponent';
 import type { Haptics } from './haptics';
+import { useActionStructureWarning } from './presentedActions';
 import { warnSelectionIdentifiers } from './selectionIdentifiers';
 
 /**
@@ -45,20 +46,20 @@ export interface DialogAction {
    * fewer. At most one.
    */
   preferred?: boolean;
-  /** Shows the button dimmed; it can't be picked */
+  /** Shows the button dimmed; it can't be picked. Applies while presented. */
   disabled?: boolean;
   /** Leaves the action out */
   hidden?: boolean;
   /**
    * Haptic played when this action is picked, in place of the component's
    * `haptics` (`'none'` plays nothing). The cancel action plays only its own.
-   * See {@link Haptics}.
+   * Applies while presented. See {@link Haptics}.
    */
   haptics?: Haptics;
   /**
    * Test identifier of the button: the `UIAlertAction`'s
    * `accessibilityIdentifier` on iOS, the button's view tag on Android, so
-   * Detox's `by.id` finds it.
+   * Detox's `by.id` finds it. Applies while presented.
    */
   testID?: string;
 }
@@ -72,19 +73,26 @@ export interface DialogProps {
    */
   visible: boolean;
 
-  /** Title */
+  /** Title. Applies while presented. */
   title?: string;
 
-  /** Message under the title */
+  /** Message under the title. Applies while presented. */
   message?: string;
 
-  /** The buttons. See {@link DialogAction}. */
+  /**
+   * The buttons. See {@link DialogAction}. While the dialog is up, each
+   * action's `disabled`, `testID` and `haptics` apply; any other change (an
+   * action added, removed, reordered or retitled, or a changed `role`,
+   * `preferred` or `hidden`) applies the next time it is presented, with a
+   * warning in development.
+   */
   actions: readonly DialogAction[];
 
   /**
    * Android and web: whether a tap outside the dialog and the back button
-   * (Escape on the web) cancel it. Default `true`. An iOS alert never closes
-   * on a tap outside, so this changes nothing there.
+   * (Escape on the web) cancel it. Default `true`. Applies while presented.
+   * An iOS alert never closes on a tap outside, so this changes nothing
+   * there.
    */
   dismissable?: boolean;
 
@@ -214,21 +222,43 @@ export function Dialog(props: DialogProps): React.ReactElement {
 
   const nativeActions = useMemo(() => normalizeActions(actions), [actions]);
 
+  // What the dialog on screen can't change: it keeps the buttons it was
+  // presented with until the next presentation.
+  const structure = useMemo(
+    () =>
+      __DEV__
+        ? JSON.stringify(
+            nativeActions.map((a) => [a.id, a.title, a.role, a.preferred])
+          )
+        : '',
+    [nativeActions]
+  );
+  const endPresentation = useActionStructureWarning(
+    'Dialog',
+    visible,
+    structure
+  );
+
   const handleSelect = useCallback(
     (e: { nativeEvent: DialogSelectEvent }) => {
       const { actionId } = e.nativeEvent;
+      endPresentation();
+      // A button of the dialog on screen, which keeps its buttons when the
+      // actions change shape: an id that is gone (or hidden) since is still
+      // the user's pick. Native refuses disabled buttons; a current action
+      // that is disabled or the cancel action isn't a pick.
       const action = nativeActions.find((a) => a.id === actionId);
-      // Only enabled default and destructive actions that were shown.
-      if (!action || action.disabled === 'true' || action.role === 'cancel')
+      if (action && (action.disabled === 'true' || action.role === 'cancel'))
         return;
       onSelect?.(actionId);
     },
-    [nativeActions, onSelect]
+    [endPresentation, nativeActions, onSelect]
   );
 
   const handleCancel = useCallback(() => {
+    endPresentation();
     onCancel?.();
-  }, [onCancel]);
+  }, [endPresentation, onCancel]);
 
   const handleShow = useCallback(() => {
     onShow?.();
