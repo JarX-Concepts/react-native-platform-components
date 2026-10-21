@@ -118,6 +118,11 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
   private var openToken = 0
   /** The presentation hasn't reported onShow yet */
   private var showPending = false
+  /**
+   * The dialog a replacement took the place of, still on screen under it
+   * until the new one has drawn (see [replace])
+   */
+  private var retiring: AlertDialog? = null
 
   // What the dialog on screen shows. Its actions are the ones it was
   // presented with, updated while they keep their shape.
@@ -159,9 +164,17 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
 
   /** Dismisses without onSelect or onCancel; onDismiss follows. */
   private fun dismissIfNeeded() {
+    dismissRetiring()
     val current = dialog ?: return
     dialog = null
     current.dismiss()
+  }
+
+  /** Removes the dialog a replacement took the place of, if it is still up. */
+  private fun dismissRetiring() {
+    val old = retiring ?: return
+    retiring = null
+    old.dismiss()
   }
 
   private fun fail(reason: String, detail: String) {
@@ -242,6 +255,8 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     // Every way out, after onSelect / onCancel
     created.setOnDismissListener {
       showing.remove(created)
+      // Gone before it drew: the dialog it replaced goes with it.
+      dismissRetiring()
       if (dialog === created) dialog = null
       onDismiss?.invoke()
     }
@@ -316,6 +331,9 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
   private fun replace(old: AlertDialog) {
     val activity = PCNativeTheme.findActivity(context)
     if (activity == null || activity.isFinishing || activity.isDestroyed) return
+    // A replacement that hasn't drawn yet is replaced in turn: the one
+    // before it goes now, so one window at most waits under the new one.
+    dismissRetiring()
     val built = build(activity, shownActions)
     val created = built.dialog
     // Created now (not in show), so the theme's animations are in to turn off.
@@ -343,10 +361,12 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     showing.remove(old)
     // Once the new one has drawn over it: the scrim stays put as long as a
     // window asks for it, where removing the old one first fades it out and
-    // back in.
+    // back in. Until then it is retiring, so whatever ends the new one
+    // (visible, unmount, another replacement) takes it along.
+    retiring = old
     val decor = window?.decorView
     if (decor == null) {
-      old.dismiss()
+      dismissRetiring()
     } else {
       decor.viewTreeObserver.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
         private var drawn = false
@@ -356,7 +376,7 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
           drawn = true
           decor.post {
             decor.viewTreeObserver.removeOnDrawListener(this)
-            old.dismiss()
+            if (retiring === old) dismissRetiring()
           }
         }
       })
