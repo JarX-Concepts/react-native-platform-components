@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { StyleSheet, TextInput } from 'react-native';
+import { Image, StyleSheet, TextInput } from 'react-native';
 import renderer, {
   act,
   type ReactTestInstance,
@@ -36,7 +36,7 @@ import {
   inputTypeForMode,
   parseInputValue,
 } from '../web/dateInput';
-import { resetWarnings } from '../web/shared';
+import { resetWarnings, webIcon } from '../web/shared';
 
 function render(element: React.ReactElement): ReactTestRenderer {
   let tree: ReactTestRenderer;
@@ -927,5 +927,53 @@ describe('LiquidGlass (web)', () => {
     const group = host(tree, 'group');
     expect(group.props.spacing).toBeUndefined();
     expect(host(tree, 'glass')).toBeDefined();
+  });
+});
+
+describe('icons (web)', () => {
+  const trashSvg = { uri: 'https://example.com/trash.svg' };
+  const trashPng = { uri: 'https://example.com/trash.png' };
+
+  it('draws the web image of a per-platform icon', () => {
+    const tree = render(
+      <Button
+        label="Delete"
+        icon={{
+          ios: 'trash',
+          android: { type: 'image', source: trashPng },
+          web: { type: 'image', source: trashSvg, tinted: false },
+        }}
+      />
+    );
+    const image = tree.root.findByType(Image);
+    expect(image.props.source).toBe(trashSvg);
+    expect(image.props.style.tintColor).toBeUndefined();
+  });
+
+  it('falls back to an iOS or Android image', () => {
+    expect(
+      webIcon({ ios: 'trash', android: { type: 'image', source: trashPng } })
+    ).toEqual({ source: trashPng, tinted: true });
+  });
+
+  it('warns once for an icon with nothing to draw', () => {
+    resetWarnings();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const icon = {
+      ios: { type: 'sfSymbol' as const, name: 'trash' },
+      android: 'delete',
+    };
+    const tree = render(<Button label="Delete" icon={icon} />);
+    expect(tree.root.findAllByType(Image)).toHaveLength(0);
+    act(() => tree.update(<Button label="Remove" icon={icon} />));
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toContain('"trash" / "delete"');
+
+    // No icon, or an image, is nothing to warn about.
+    webIcon(undefined);
+    webIcon('');
+    webIcon({ type: 'image', source: trashPng });
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });

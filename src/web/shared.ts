@@ -63,18 +63,36 @@ export function cssFont(labelStyle: LabelStyle | undefined): CSSStyle {
 
 /**
  * The image to draw for an icon on web. Only `{ type: 'image' }` sources
- * render: SF Symbols and Android drawables don't exist in a browser.
+ * render: SF Symbols and Android drawables don't exist in a browser. A
+ * per-platform icon draws its `web` image, else its `ios` or `android` one;
+ * an icon with none of them logs a development warning once.
  */
 export function webIcon(
   icon: PlatformIcon | undefined
 ): { source: ImageSourcePropType; tinted: boolean } | undefined {
-  if (icon === undefined || typeof icon === 'string') return undefined;
+  if (icon === undefined || icon === '') return undefined;
   const candidates: (PlatformIconSource | undefined)[] =
-    'type' in icon ? [icon] : [icon.ios, icon.android];
+    typeof icon === 'string' || 'type' in icon
+      ? [icon]
+      : [icon.web, icon.ios, icon.android];
   for (const source of candidates) {
     if (source && typeof source !== 'string' && source.type === 'image') {
       return { source: source.source, tinted: source.tinted !== false };
     }
+  }
+  // Nothing to draw: name the SF Symbols and drawables that were left out.
+  const names = candidates.flatMap((source) => {
+    if (typeof source === 'string') return source ? [source] : [];
+    return source && 'name' in source ? [source.name] : [];
+  });
+  if (names.length > 0) {
+    const label = names.map((name) => `"${name}"`).join(' / ');
+    warnOnce(
+      `icon:${names.join('/')}`,
+      `The icon ${label} renders nothing on the web, which has no SF Symbols ` +
+        `or drawables. Add a web image: { ios, android, web: { type: 'image', source } }. ` +
+        'See https://jarx-concepts.github.io/react-native-platform-components/guides/icons#web'
+    );
   }
   return undefined;
 }
