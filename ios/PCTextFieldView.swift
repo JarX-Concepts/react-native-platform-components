@@ -1485,9 +1485,8 @@ final class PCInputTextField: UITextField {
         inset(super.editingRect(forBounds: bounds))
     }
 
-    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-        inset(super.placeholderRect(forBounds: bounds))
-    }
+    // No placeholderRect override: UIKit derives it from textRect, which
+    // already has the insets, and insetting it again doubled the padding
 
     override func accessibilityActivate() -> Bool {
         onActivate?() == true || super.accessibilityActivate()
