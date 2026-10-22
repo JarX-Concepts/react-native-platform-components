@@ -1353,6 +1353,8 @@ class PCTextFieldView(context: Context) :
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     val child = widget ?: return
+    val edit = editText
+    val compoundBefore = edit?.let { it.compoundPaddingStart to it.compoundPaddingEnd }
     // Keep the widget at its natural height even when Yoga hasn't caught up
     child.layout(0, 0, right - left, child.measuredHeight)
     // Material creates the helper, error, counter and placeholder views as
@@ -1362,8 +1364,19 @@ class PCTextFieldView(context: Context) :
     // compound drawables on the edit text) from a ViewTreeObserver global
     // layout callback, which only a window traversal delivers. React Native's
     // root doesn't run one for a native subtree that laid itself out, so run
-    // it here; when it changes something it asks for another pass.
+    // it here.
     layout?.onGlobalLayout()
+    // When that made room for an icon, Material posts a layout request that
+    // can stop at a parent already marked for layout, leaving the resting
+    // label where the text started before, under the icon. Lay the field out
+    // again so the label is placed from the new room.
+    if (edit != null && compoundBefore != (edit.compoundPaddingStart to edit.compoundPaddingEnd)) {
+      post {
+        forceLayout()
+        child.forceLayout()
+        runManualLayout()
+      }
+    }
   }
 
   /** Reports the intrinsic height to Fabric; called as soon as the state wrapper is available. */
