@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
+  Button,
   TextField,
   type PlatformIcon,
   type TextFieldRef,
@@ -26,6 +27,10 @@ const CALENDAR_ICON: PlatformIcon = {
   ios: { type: 'sfSymbol', name: 'calendar' },
   android: { type: 'drawable', name: 'calendar' },
 };
+// A field level with the button beside it: large on iOS, medium (56dp,
+// the Material field's height) on Android
+const JOIN_SIZE = Platform.select({ ios: 'large', default: 'medium' } as const);
+const FIELD_HEIGHT = Platform.select({ ios: 50, default: 56 });
 const DUE_DATES = ['Today', 'Tomorrow', 'Next week'];
 const BIG_AMOUNT_STYLE = { fontSize: 36, fontWeight: '600' } as const;
 // Rules for the strong password iOS offers, unlike its default
@@ -51,6 +56,8 @@ export function TextFieldDemo(): React.JSX.Element {
   const [dueIndex, setDueIndex] = useState(0);
   const [brand, setBrand] = useState('');
   const [bigAmount, setBigAmount] = useState('');
+  const [code, setCode] = useState('');
+  const [comment, setComment] = useState('');
   const [lastEvent, setLastEvent] = useState('(none)');
   const [editable, setEditable] = useState(true);
   const [filled, setFilled] = useState(false);
@@ -439,6 +446,52 @@ export function TextFieldDemo(): React.JSX.Element {
         </View>
       </Section>
 
+      <Section title="Field size">
+        <View style={styles.fields}>
+          {/* A taller box with roomier padding, level with the button */}
+          <View style={styles.inline}>
+            <TextField
+              testID="field-code"
+              style={styles.grow}
+              placeholder="Invite code"
+              value={code}
+              onChangeText={setCode}
+              autoCapitalize="characters"
+              minFieldHeight={FIELD_HEIGHT}
+              fieldPaddingHorizontal={14}
+              {...common}
+            />
+            <Button
+              testID="field-code-join"
+              label="Join"
+              size={JOIN_SIZE}
+              onPress={() => setLastEvent(`join: ${code}`)}
+            />
+          </View>
+          <TextField
+            testID="field-sized-search"
+            label="Search"
+            leadingIcon={SEARCH_ICON}
+            minFieldHeight={FIELD_HEIGHT}
+            fieldPaddingHorizontal={14}
+            clearButtonMode="while-editing"
+            {...common}
+          />
+          <TextField
+            testID="field-comment"
+            label="Comment"
+            placeholder="Grows from one line"
+            value={comment}
+            onChangeText={setComment}
+            multiline
+            maxLines={4}
+            minFieldHeight={FIELD_HEIGHT}
+            fieldPaddingHorizontal={14}
+            {...common}
+          />
+        </View>
+      </Section>
+
       <Section title="Controls">
         <Row label="Editable">
           <Switch
@@ -507,6 +560,14 @@ const styles = StyleSheet.create({
     ios: { paddingHorizontal: 16, paddingVertical: 4, gap: 6 },
     default: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
   }),
+  inline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  grow: {
+    flex: 1,
+  },
   actions: {
     flexDirection: 'row',
     flexWrap: 'wrap',

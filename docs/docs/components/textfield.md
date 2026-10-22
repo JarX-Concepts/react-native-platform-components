@@ -70,6 +70,8 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `secureTextEntry`     | `boolean`                                                | Obscures the text                                                                               |
 | `multiline`           | `boolean`                                                | A field that grows with its text. Return inserts a newline, unless `submitBehavior` says otherwise |
 | `minLines`, `maxLines` | `number`                                                | Multi-line height bounds, in lines. See [Multi-line text](#multi-line-text)                    |
+| `minFieldHeight`      | `number`                                                 | Minimum height of the box, in points (dp). See [Field size](#field-size)                        |
+| `fieldPaddingHorizontal` | `number`                                              | Space between the box's sides and the text. See [Field size](#field-size)                       |
 | `editable`            | `boolean`                                                | Default: `true`. A non-editable field is drawn disabled, unless it has `onPress`                |
 | `autoFocus`           | `boolean`                                                | Focuses the field when it mounts                                                                |
 | `selectTextOnFocus`   | `boolean`                                                | Selects all text on focus                                                                       |
@@ -346,6 +348,24 @@ Material 3 has two text field styles, both on `android.variant`: `'outlined'` (t
   android={{ variant: 'plain' }}
   ios={{ borderStyle: 'none' }}
 />
+```
+
+### Field size
+
+Each platform's field has its own height: the iOS rounded rectangle is 34pt, below the 44pt touch target and short next to a `size="large"` [Button](/components/button); the Material field is 56dp (dense: 48dp), level with a `size="medium"` Button. `minFieldHeight` sets a minimum height for the box, in points (dp), on both platforms. It doesn't count the label above the box or the supporting text below it. The extra height goes above and below the text, so a single line stays centred and the resting Material label stays level with it. It sets the height of a multi-line field's first line too, and of the field beside an iOS leading label. The box still grows past it for large text sizes.
+
+`fieldPaddingHorizontal` sets the space between the box's left and right sides and the text: 7pt on iOS and 16dp on Android by default. A side with an icon, prefix, suffix or clear button keeps that accessory's own spacing. UIKit's rounded rectangle has fixed padding, so on iOS the field draws the rectangle itself when this is set, as it does for the [colors](#colors).
+
+```tsx
+<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+  <TextField
+    style={{ flex: 1 }}
+    placeholder="Invite code"
+    minFieldHeight={Platform.select({ ios: 50, default: 56 })}
+    fieldPaddingHorizontal={14}
+  />
+  <Button label="Join" size={Platform.select({ ios: 'large', default: 'medium' })} />
+</View>
 ```
 
 ### Material style

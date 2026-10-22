@@ -116,6 +116,8 @@ class PCTextFieldView(context: Context) :
   var minLines: Int = 0
   var maxLines: Int = 0
   var pressable: Boolean = false
+  var minFieldHeight: Float = 0f // dp; 0 = the style's height
+  var fieldPaddingHorizontal: Float = -1f // dp; negative = the style's padding
 
   // --- Events ---
   var onChange: ((text: String, eventCount: Int) -> Unit)? = null
@@ -131,6 +133,11 @@ class PCTextFieldView(context: Context) :
   private var settingTextInternally = false
   private var initialTextApplied = false
   private var autoFocusDone = false
+
+  // The edit text's padding as built by the style, before the field size
+  // props. Declared before init, which builds the edit text.
+  private var stylePadding = IntArray(4)
+  private var fieldMetricsApplied = false
 
   // The selection JS last heard of, so a change is reported once. Text and
   // selection set from JS update it without an event. Declared before init:
@@ -229,6 +236,7 @@ class PCTextFieldView(context: Context) :
     if (prefix == value) return
     prefix = value
     layout?.prefixText = value.ifEmpty { null }
+    applyFieldMetrics()
     requestLayout()
   }
 
@@ -236,6 +244,7 @@ class PCTextFieldView(context: Context) :
     if (suffix == value) return
     suffix = value
     layout?.suffixText = value.ifEmpty { null }
+    applyFieldMetrics()
     requestLayout()
   }
 
@@ -243,24 +252,28 @@ class PCTextFieldView(context: Context) :
     if (leadingIcon == value) return
     leadingIcon = value
     applyStartIcon()
+    applyFieldMetrics()
   }
 
   fun applyTrailingIcon(value: PCButtonSupport.Icon) {
     if (trailingIcon == value) return
     trailingIcon = value
     applyEndIcon()
+    applyFieldMetrics()
   }
 
   fun applyClearButtonMode(value: String) {
     if (clearButtonMode == value) return
     clearButtonMode = value
     applyEndIcon()
+    applyFieldMetrics()
   }
 
   fun applyPasswordToggle(value: Boolean) {
     if (passwordToggle == value) return
     passwordToggle = value
     applyEndIcon()
+    applyFieldMetrics()
   }
 
   fun applyCharacterCount(value: Boolean) {
@@ -446,6 +459,13 @@ class PCTextFieldView(context: Context) :
     applyPressMode()
   }
 
+  fun applyFieldSize(minHeight: Float, paddingHorizontal: Float) {
+    if (minFieldHeight == minHeight && fieldPaddingHorizontal == paddingHorizontal) return
+    minFieldHeight = minHeight
+    fieldPaddingHorizontal = paddingHorizontal
+    applyFieldMetrics()
+  }
+
   // ---- Commands ----
 
   fun focusFromJS() {
@@ -629,6 +649,10 @@ class PCTextFieldView(context: Context) :
       til.prefixText = prefix.ifEmpty { null }
       til.suffixText = suffix.ifEmpty { null }
     }
+
+    // The style's padding, which minFieldHeight and fieldPaddingHorizontal adjust
+    stylePadding = intArrayOf(edit.paddingStart, edit.paddingTop, edit.paddingEnd, edit.paddingBottom)
+    fieldMetricsApplied = false
 
     applyInputType()
     applyHintAndPlaceholder()
@@ -1089,6 +1113,46 @@ class PCTextFieldView(context: Context) :
     }
 
     applyFont(edit)
+    applyFieldMetrics()
+    requestLayout()
+  }
+
+  /**
+   * minFieldHeight and fieldPaddingHorizontal, as padding on the edit text.
+   * The extra height goes above and below the first line, rather than into
+   * minHeight, so the resting Material label stays level with the text (it
+   * sits at the top padding, not at the centre of a taller edit text).
+   * Sides with an icon, prefix or suffix keep the style's padding.
+   */
+  private fun applyFieldMetrics() {
+    val edit = editText ?: return
+    // Without the props the padding stays Material's, which it may change
+    // itself (filled fields at large font scales)
+    val (start, top, end, bottom) = stylePadding
+    val sized = minFieldHeight > 0 || fieldPaddingHorizontal >= 0
+    if (!sized && !fieldMetricsApplied) return
+    fieldMetricsApplied = sized
+    val horizontal = if (fieldPaddingHorizontal >= 0) PixelUtil.toPixelFromDIP(fieldPaddingHorizontal).toInt() else -1
+    // Sides with an accessory keep the style's padding: Material lays the
+    // text and the resting label out after the icon from it
+    val startTaken = leadingIcon != PCButtonSupport.NO_ICON || prefix.isNotEmpty()
+    val endTaken = trailingIcon != PCButtonSupport.NO_ICON || passwordToggle ||
+      clearButtonMode != "never" || suffix.isNotEmpty()
+    var extra = 0
+    if (minFieldHeight > 0) {
+      // The height of one line, as the edit text's layout gives it
+      val metrics = edit.paint.fontMetricsInt
+      val line = if (edit.includeFontPadding) metrics.bottom - metrics.top else metrics.descent - metrics.ascent
+      val natural = top + bottom + line
+      extra = maxOf(0, PixelUtil.toPixelFromDIP(minFieldHeight).toInt() - natural)
+    }
+    edit.setPaddingRelative(
+      if (horizontal >= 0 && !startTaken) horizontal else start,
+      top + extra / 2,
+      if (horizontal >= 0 && !endTaken) horizontal else end,
+      bottom + extra - extra / 2
+    )
+    // The prefix and suffix copy this padding as the layout measures
     requestLayout()
   }
 
