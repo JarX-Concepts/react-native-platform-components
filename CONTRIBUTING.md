@@ -92,6 +92,12 @@ Running "PlatformComponentsExample" with {"fabric":true,"initialProps":{"concurr
 3. Android: `PC<Name>View.kt` and `PC<Name>ViewManager.kt`, registered in `PlatformComponentsPackage.kt`. Build Material widgets from `PCThemeSupport.materialContext(...)`.
 4. Demo in `example/src/<Name>Demo.tsx` and `example-expo/src/App.tsx`, a Detox flow in `example/e2e/component.test.ts`, unit tests for the native wrapper and web implementation, component documentation in `docs/docs/components/`, and visuals.
 
+### Sizing props
+
+Let the platform decide. Use a named size only when a platform defines that scale, and map each name onto it. The platform's size sets the font, icon, padding, corner shape and touch target together, so the same name may give different heights on iOS and Android. Examples: `Button`'s `size` uses `UIButton.Configuration.Size` and the Material 3 Expressive sizes, `FloatingActionButton`'s `size` uses the Material FAB sizes, and `TextField`'s `android.dense` uses Material density. Don't invent a scale the platforms don't have.
+
+Everywhere else, take numbers in points (dp), named after what they set. Field-like controls use `minFieldHeight` and `fieldPaddingHorizontal`, as `TextField` does. Other boxes use `minHeight` and a padding prop. Keep the platform's own size as the default, and let a `style` height override a named size when exact alignment matters.
+
 ## Scripts
 
 | Command                   | Description                                                                  |
