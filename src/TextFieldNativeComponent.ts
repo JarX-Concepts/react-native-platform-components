@@ -2,7 +2,12 @@
 import type * as React from 'react';
 import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeCommands, codegenNativeComponent } from 'react-native';
-import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
+import type {
+  BubblingEventHandler,
+  Double,
+  Int32,
+  WithDefault,
+} from './codegenTypes';
 
 /**
  * Icon fields, pre-resolved on the JS side (see icons.ts).
@@ -249,6 +254,12 @@ export interface TextFieldNativeProps extends ViewProps {
 
   /** 'none' | 'button': a non-editable field that fires onFieldPress. */
   pressMode?: string;
+
+  /** Minimum height of the field's box in points (dp); 0 = the platform's. */
+  minFieldHeight?: Double;
+
+  /** Space between the box's sides and the text; -1 = the platform's. */
+  fieldPaddingHorizontal?: WithDefault<Double, -1>;
 
   ios?: TextFieldIOSProps;
   android?: TextFieldAndroidProps;

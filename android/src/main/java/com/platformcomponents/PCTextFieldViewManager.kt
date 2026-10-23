@@ -268,6 +268,14 @@ class PCTextFieldViewManager :
     view.applyPressable(value == "button")
   }
 
+  override fun setMinFieldHeight(view: PCTextFieldView, value: Double) {
+    view.applyFieldSize(value.toFloat(), view.fieldPaddingHorizontal)
+  }
+
+  override fun setFieldPaddingHorizontal(view: PCTextFieldView, value: Double) {
+    view.applyFieldSize(view.minFieldHeight, value.toFloat())
+  }
+
   override fun setIos(view: PCTextFieldView, value: ReadableMap?) {
     // Android ignores iOS config
   }

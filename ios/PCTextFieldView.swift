@@ -240,15 +240,26 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         didSet { if oldValue != pressable { applyEnabled() } }
     }
 
+    /// Minimum height of the field's box; 0 = the rounded rect's 34pt
+    public var minFieldHeight: CGFloat = 0 {
+        didSet { if oldValue != minFieldHeight { applyInputInsets() } }
+    }
+
+    /// Space between the box's sides and the text; negative = the default
+    public var fieldPaddingHorizontal: CGFloat = -1 {
+        didSet { if oldValue != fieldPaddingHorizontal { applyBorderStyle() } }
+    }
+
     private var leadingLabel: Bool { labelPlacement == "leading" && !label.isEmpty }
 
     /// Whether the field acts as a button: pressable and not editable
     private var actsAsButton: Bool { pressable && interactivity == "disabled" }
 
-    /// The rounded rect drawn here instead of by UIKit, whose border can't be colored
+    /// The rounded rect drawn here instead of by UIKit, whose border can't be
+    /// colored and whose text padding is fixed
     private var drawsBox: Bool {
         (borderStyle.isEmpty || borderStyle == "roundedRect")
-            && (activeColor != nil || outlineColor != nil || containerColor != nil)
+            && (activeColor != nil || outlineColor != nil || containerColor != nil || fieldPaddingHorizontal >= 0)
     }
     private var leadingColumnWidth: CGFloat { labelWidth > 0 ? labelWidth : 100 }
     private let leadingSpacing: CGFloat = 8
@@ -308,6 +319,12 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     private let footerSpacing: CGFloat = 4
     private let singleLineMinHeight: CGFloat = 34
     private let textViewInsets = UIEdgeInsets(top: 7, left: 4, bottom: 7, right: 4)
+    /// The drawn box's text padding, UIKit's rounded-rect padding
+    private let boxTextPadding: CGFloat = 7
+
+    /// The box's minimum height: single-line fields, the first line of a
+    /// multi-line field, and the field beside a leading label
+    private var minInputHeight: CGFloat { minFieldHeight > 0 ? minFieldHeight : singleLineMinHeight }
 
     // MARK: - Init
 
@@ -778,6 +795,30 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         textField.font = inputFont
         textView.font = inputFont
         textView.placeholderLabel.font = inputFont
+        applyInputInsets()
+    }
+
+    /// The text view's insets: the horizontal padding, and a taller
+    /// `minFieldHeight` split above and below the first line, so one line
+    /// sits centred as in a single-line field. The text field centres its
+    /// text itself.
+    private func applyInputInsets() {
+        var insets = textViewInsets
+        if fieldPaddingHorizontal >= 0 {
+            let side = max(0, fieldPaddingHorizontal - textView.textContainer.lineFragmentPadding)
+            insets.left = side
+            insets.right = side
+        }
+        if minFieldHeight > 0 {
+            let line = ceil(inputFont.lineHeight)
+            let extra = max(0, minFieldHeight - (line + insets.top + insets.bottom))
+            insets.top += floor(extra / 2)
+            insets.bottom += extra - floor(extra / 2)
+        }
+        if textView.textContainerInset != insets {
+            textView.textContainerInset = insets
+            textView.setNeedsLayout()
+        }
         setNeedsLayout()
         onNeedsRemeasure?()
     }
@@ -827,7 +868,9 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         textField.borderStyle = drawsBox ? .none : style
         textField.layer.borderWidth = drawsBox ? 1 : 0
         textField.layer.cornerRadius = drawsBox ? 5 : 0
-        textField.textInsets = drawsBox ? UIEdgeInsets(top: 0, left: 7, bottom: 0, right: 7) : .zero
+        // With UIKit's own border the padding adds to UIKit's
+        let padding = fieldPaddingHorizontal >= 0 ? fieldPaddingHorizontal : (drawsBox ? boxTextPadding : 0)
+        textField.textInsets = UIEdgeInsets(top: 0, left: padding, bottom: 0, right: padding)
         if drawsBox {
             textField.backgroundColor = containerColor ?? .systemBackground
         } else {
@@ -839,8 +882,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         textView.layer.cornerRadius = style == .roundedRect ? 5 : 0
         textView.backgroundColor = containerColor ?? (bordered ? .systemBackground : .clear)
         applyColors()
-        setNeedsLayout()
-        onNeedsRemeasure?()
+        applyInputInsets()
     }
 
     private func applyEnabled() {
@@ -1206,20 +1248,20 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         var inputScrolls = false
         if multiline {
             let fitted = ceil(textView.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude)).height)
-            inputHeight = max(singleLineMinHeight, fitted)
+            inputHeight = max(minInputHeight, fitted)
             let lineHeight = inputFont.lineHeight
-            let chrome = textViewInsets.top + textViewInsets.bottom
+            let chrome = textView.textContainerInset.top + textView.textContainerInset.bottom
             if minLines > 0 {
                 inputHeight = max(inputHeight, ceil(lineHeight * CGFloat(minLines) + chrome))
             }
             if maxLines > 0 {
-                let cap = max(singleLineMinHeight, ceil(lineHeight * CGFloat(maxLines) + chrome))
+                let cap = max(minInputHeight, ceil(lineHeight * CGFloat(maxLines) + chrome))
                 inputScrolls = fitted > cap
                 inputHeight = min(inputHeight, cap)
             }
         } else {
             let fitted = textField.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude))
-            inputHeight = max(singleLineMinHeight, ceil(fitted.height))
+            inputHeight = max(minInputHeight, ceil(fitted.height))
         }
 
         var footerHeight: CGFloat = 0
@@ -1485,9 +1527,8 @@ final class PCInputTextField: UITextField {
         inset(super.editingRect(forBounds: bounds))
     }
 
-    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
-        inset(super.placeholderRect(forBounds: bounds))
-    }
+    // No placeholderRect override: UIKit derives it from textRect, which
+    // already has the insets, and insetting it again doubled the padding
 
     override func accessibilityActivate() -> Bool {
         onActivate?() == true || super.accessibilityActivate()

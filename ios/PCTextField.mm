@@ -413,6 +413,12 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
   if (!prevProps || newProps.pressMode != prevProps->pressMode) {
     _view.pressable = newProps.pressMode == "button";
   }
+  if (!prevProps || newProps.minFieldHeight != prevProps->minFieldHeight) {
+    _view.minFieldHeight = newProps.minFieldHeight;
+  }
+  if (!prevProps || newProps.fieldPaddingHorizontal != prevProps->fieldPaddingHorizontal) {
+    _view.fieldPaddingHorizontal = newProps.fieldPaddingHorizontal;
+  }
 
   // ios: the text traits
   const auto &newIOS = newProps.ios;

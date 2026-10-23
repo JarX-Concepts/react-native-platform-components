@@ -377,6 +377,28 @@ export interface TextFieldProps extends Omit<
   maxLines?: number;
 
   /**
+   * Minimum height of the field's box, in points (dp), not counting the
+   * label above it or the supporting text below. The extra height goes above
+   * and below the text, so a single line stays centred and a Material
+   * field's resting label stays level with it. Applies to the first line of
+   * a multi-line field, and to the field beside an iOS leading label. The
+   * box still grows for large text sizes. Default: the platform's, 34pt for
+   * the iOS rounded rect and 56dp for the Material field (dense: 48dp).
+   * `50` lines a field up with a `size="large"` `Button` on iOS.
+   */
+  minFieldHeight?: number;
+
+  /**
+   * Space between the left and right sides of the box and the text, in
+   * points (dp). A side with an icon, prefix, suffix or clear button keeps
+   * that accessory's own spacing. Default: the platform's, 7pt on iOS and
+   * 16dp on Android. On iOS the rounded rect is then
+   * drawn by the field (UIKit's can't change its padding), as it is with the
+   * color props.
+   */
+  fieldPaddingHorizontal?: number;
+
+  /**
    * When to show a clear button inside the field. Default: `'never'`.
    * Android shows the Material clear icon while the field has text.
    * Clearing fires `onChange` and `onChangeText('')` on both platforms.
@@ -610,6 +632,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       textAlign,
       minLines,
       maxLines,
+      minFieldHeight,
+      fieldPaddingHorizontal,
       clearButtonMode,
       passwordToggle,
       showCharacterCount,
@@ -882,6 +906,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         textAlign={textAlign ?? ''}
         minLines={minLines ?? 0}
         maxLines={maxLines ?? 0}
+        minFieldHeight={minFieldHeight ?? 0}
+        fieldPaddingHorizontal={fieldPaddingHorizontal ?? -1}
         pressMode={pressable ? 'button' : 'none'}
         ios={nativeIOS}
         android={nativeAndroid}
