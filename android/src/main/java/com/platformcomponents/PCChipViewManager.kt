@@ -106,6 +106,15 @@ class PCChipViewManager :
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }
 
+  // Negative means the platform's own size
+  override fun setChipMinHeight(view: PCChipView, value: Double) {
+    view.applyMinHeight(value.toFloat())
+  }
+
+  override fun setChipPaddingHorizontal(view: PCChipView, value: Double) {
+    view.applyPaddingHorizontal(value.toFloat())
+  }
+
   override fun setSpokenLabel(view: PCChipView, value: String?) {
     view.applySpokenLabel(value ?: "")
   }

@@ -67,6 +67,16 @@ public final class PCChipGroupView: UIView {
         didSet { if oldValue != maxFontSizeMultiplier { applyConfigurations() } }
     }
 
+    /// Smallest height of every chip in points; negative = the natural height
+    public var chipMinHeight: CGFloat = -1 {
+        didSet { if oldValue != chipMinHeight { applyConfigurations() } }
+    }
+
+    /// Space between each chip's edges and its content in points; negative = default
+    public var chipPaddingHorizontal: CGFloat = -1 {
+        didSet { if oldValue != chipPaddingHorizontal { applyConfigurations() } }
+    }
+
     /// The `haptics` prop: PCChipGroup.mm plays it on a press or a close
     public let haptics = PCHaptics()
 
@@ -185,7 +195,9 @@ public final class PCChipGroupView: UIView {
                     accessibilityLabel: item.accessibilityLabel,
                     closeAccessibilityLabel: item.closeAccessibilityLabel,
                     testID: item.testID,
-                    closeTestID: item.closeTestID
+                    closeTestID: item.closeTestID,
+                    minHeight: chipMinHeight,
+                    paddingHorizontal: chipPaddingHorizontal
                 ),
                 image: index < iconImages.count ? iconImages[index] : nil,
                 maxFontSizeMultiplier: maxFontSizeMultiplier

@@ -149,6 +149,15 @@ class PCChipGroupViewManager :
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }
 
+  // Negative means the platform's own size
+  override fun setChipMinHeight(view: PCChipGroupView, value: Double) {
+    view.applyChipMinHeight(value.toFloat())
+  }
+
+  override fun setChipPaddingHorizontal(view: PCChipGroupView, value: Double) {
+    view.applyChipPaddingHorizontal(value.toFloat())
+  }
+
   // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
   override fun setHaptics(view: PCChipGroupView, value: String?) {
     view.haptics = PCHaptics.configure(view, value)

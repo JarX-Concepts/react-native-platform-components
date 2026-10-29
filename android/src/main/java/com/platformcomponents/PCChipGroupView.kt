@@ -44,6 +44,7 @@ class PCChipGroupView(context: Context) :
   var spacing: Float = -1f // dp; negative = style default
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
+  var sizing = PCChipSupport.Sizing()
 
   /** The `haptics` prop: the manager plays it on a press or a close. */
   var haptics: String = ""
@@ -142,6 +143,18 @@ class PCChipGroupView(context: Context) :
     needsRebuild = true
   }
 
+  fun applyChipMinHeight(value: Float) {
+    if (sizing.minHeight == value) return
+    sizing = sizing.copy(minHeight = value)
+    needsRebuild = true
+  }
+
+  fun applyChipPaddingHorizontal(value: Float) {
+    if (sizing.paddingHorizontal == value) return
+    sizing = sizing.copy(paddingHorizontal = value)
+    needsRebuild = true
+  }
+
   /** Rebuilds the chips if a prop needs it, then applies `selectedValues`. */
   fun commit() {
     if (needsRebuild) {
@@ -199,7 +212,7 @@ class PCChipGroupView(context: Context) :
 
     for ((index, item) in items.withIndex()) {
       val chip = PCChipSupport.createChip(
-        base, variant, item, selectable, groupEnabled && !item.disabled, maxFontSizeMultiplier,
+        base, variant, item, selectable, groupEnabled && !item.disabled, maxFontSizeMultiplier, sizing,
         { generation == rebuildGeneration }
       ) { requestLayout() }
       chip.id = View.generateViewId()

@@ -2033,6 +2033,30 @@ describe('Platform Components Example', () => {
     await expectText('chip-last-event', 'close: person');
   });
 
+  // minHeight / paddingHorizontal: the Large size (44 tall, 20 of padding)
+  // widens every chip, and a larger chip's close icon still works
+  it('should test Chip sizing', async () => {
+    await selectDemo('Chip');
+    await scrollToId('chip-sized-person');
+    const defaultWidth = await widthOf('chip-sized-open');
+    await element(by.id('chip-size-large')).tap();
+    // "Open now" has no icon: 4 more on each side on Android (16 by
+    // default), 8 on iOS (12)
+    await waitForWidth('chip-sized-open', (w) => w > defaultWidth + 6);
+    if (!isAndroid()) {
+      // Android keeps its 48dp touch target around a 44dp chip
+      const { frame } = (await element(
+        by.id('chip-sized-open')
+      ).getAttributes()) as { frame: { height: number } };
+      if (Math.round(frame.height) !== 44) {
+        throw new Error(`A large chip is ${frame.height}pt tall, not 44`);
+      }
+    }
+    await scrollToId('chip-sized-person-close');
+    await element(by.id('chip-sized-person-close')).tap();
+    await expectText('chip-last-event', 'close: Grace');
+  });
+
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
     await expect(element(by.id('fab-regular'))).toBeVisible();
