@@ -170,11 +170,14 @@ public final class PCDatePickerView: UIControl,
             let pickerSize = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
             let xOffset = (bounds.width - pickerSize.width) / 2
             if xOffset > 0 {
+                // The compact pill keeps its own height and sits centered in a
+                // taller row (as in a form cell); the other styles fill the row.
+                let height = isCompactStyle ? min(pickerSize.height, bounds.height) : bounds.height
                 picker.frame = CGRect(
                     x: xOffset,
-                    y: 0,
+                    y: (bounds.height - height) / 2,
                     width: pickerSize.width,
-                    height: bounds.height
+                    height: height
                 )
             }
         }
@@ -186,22 +189,21 @@ public final class PCDatePickerView: UIControl,
         superview?.setNeedsLayout()
     }
 
-    /// ✅ Inline only takes space; modal/headless must be 0 height.
-    public override var intrinsicContentSize: CGSize {
-        guard presentation == "embedded" else {
-            return CGSize(width: UIView.noIntrinsicMetric, height: 0)
-        }
-
-        picker.setNeedsLayout()
-        picker.layoutIfNeeded()
-        let fitted = picker.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        return CGSize(
-            width: UIView.noIntrinsicMetric,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height))
+    /// The style UIKit resolved (`.automatic` is compact on iPhone and iPad).
+    private var isCompactStyle: Bool {
+        guard #available(iOS 13.4, *) else { return false }
+        return picker.datePickerStyle == .compact
     }
 
     /// ✅ Called by your measuring pipeline.
-    /// Modal/headless should be zero so Yoga reserves nothing.
+    /// Modal/headless should be zero so Yoga reserves nothing. Every style
+    /// takes UIKit's own fitted height: the compact pill is as tall as in a
+    /// system form row, and a taller row comes from the app's style.
+    ///
+    /// There's no `intrinsicContentSize`: the picker is pinned to this view, so
+    /// an intrinsic height becomes a constraint that keeps the old style's
+    /// height (an inline picker switched to compact stays 324pt inside a 34pt
+    /// view, with the pill out of sight).
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
         guard presentation == "embedded" else { return .zero }
 
@@ -216,9 +218,7 @@ public final class PCDatePickerView: UIControl,
             withHorizontalFittingPriority: .required,
             verticalFittingPriority: .fittingSizeLevel
         )
-        return CGSize(
-            width: constrainedSize.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height))
+        return CGSize(width: constrainedSize.width, height: fitted.height)
     }
 
     /// Separate sizing for popover content. Accounts for the Cancel/Done
