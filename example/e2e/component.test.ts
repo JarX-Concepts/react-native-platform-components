@@ -628,6 +628,11 @@ describe('Platform Components Example', () => {
       // restart adbd, dropping the adb reverse port) or a failed flow left it
       // stuck. Without a new process every later flow fails too.
       console.warn(`Relaunching the app after a failed reload: ${error}`);
+      if (!isAndroid()) {
+        // The CI runner has also shut the whole simulator down; boot it again
+        // (a no-op when it is still up) and wait until it accepts the launch
+        execSync(`xcrun simctl bootstatus ${device.id} -b`);
+      }
       await device.launchApp({ newInstance: true });
       await appReady();
     }

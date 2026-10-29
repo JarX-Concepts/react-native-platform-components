@@ -296,7 +296,7 @@ jobs:
           yarn workspace react-native-platform-components-example test:e2e:ios:ci
 
       # The Detox logs, plus the crash reports macOS writes when the simulated
-      # app dies
+      # app dies and CoreSimulator's logs for when the simulator itself stops
       - name: Upload Detox logs and crash reports (iOS)
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -305,7 +305,9 @@ jobs:
           path: |
             example/artifacts/**/*.log
             example/artifacts/**/*.json
-            /Users/runner/Library/Logs/DiagnosticReports/PlatformComponentsExample*
+            /Users/runner/Library/Logs/DiagnosticReports/*.ips
+            /Users/runner/Library/Logs/CoreSimulator/*.log
+            /Users/runner/Library/Logs/CoreSimulator/${{ env.SIM_UDID }}/*.log
           if-no-files-found: ignore
 
   # These jobs build a throwaway app against old versions, so the compatibility
