@@ -151,6 +151,8 @@ describe('SelectionMenu', () => {
     expect(lastNativeProps().android).toEqual({
       material: 'm3',
       searchable: 'true',
+      variant: 'outlined',
+      density: 'standard',
     });
 
     act(() =>
@@ -166,7 +168,44 @@ describe('SelectionMenu', () => {
     expect(lastNativeProps().android).toEqual({
       material: 'm3',
       searchable: 'false',
+      variant: 'outlined',
+      density: 'standard',
     });
+    act(() => tree.unmount());
+  });
+
+  it('passes the field size and style to native', () => {
+    Platform.OS = 'android';
+    const tree = render(
+      <SelectionMenu
+        selected={null}
+        options={[]}
+        presentation="embedded"
+        minFieldHeight={44}
+        fieldPaddingHorizontal={12}
+        ios={{ borderStyle: 'roundedRect' }}
+        android={{ material: 'm3', variant: 'filled', dense: true }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.minFieldHeight).toBe(44);
+    expect(props.fieldPaddingHorizontal).toBe(12);
+    expect(props.ios).toEqual({ borderStyle: 'roundedRect' });
+    expect(props.android).toMatchObject({
+      variant: 'filled',
+      density: 'dense',
+    });
+    act(() => tree.unmount());
+  });
+
+  it('leaves the field size to the platform by default', () => {
+    const tree = render(
+      <SelectionMenu selected={null} options={[]} presentation="embedded" />
+    );
+    const props = lastNativeProps();
+    expect(props.minFieldHeight).toBe(0);
+    expect(props.fieldPaddingHorizontal).toBe(-1);
+    expect(props.ios).toBeUndefined();
     act(() => tree.unmount());
   });
 });

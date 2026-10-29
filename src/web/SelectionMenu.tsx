@@ -24,6 +24,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     visible,
     onSelect,
     onRequestClose,
+    minFieldHeight,
+    fieldPaddingHorizontal,
     ios,
     android,
     ...viewProps
@@ -52,8 +54,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
           style={{
             boxSizing: 'border-box',
             width: '100%',
-            minHeight: 40,
-            padding: '0 8px',
+            minHeight: minFieldHeight || 40,
+            padding: `0 ${fieldPaddingHorizontal ?? 8}px`,
             border: '1px solid color-mix(in srgb, CanvasText 30%, transparent)',
             borderRadius: 8,
             fontFamily: 'inherit',
