@@ -14,13 +14,14 @@ const CHIP_HEIGHT = 32;
 function chipStyle(
   primary: string,
   selected: boolean,
-  disabled: boolean
+  disabled: boolean,
+  minHeight: number | undefined
 ): CSSStyle {
   return {
     display: 'inline-flex',
     alignItems: 'center',
     boxSizing: 'border-box',
-    height: CHIP_HEIGHT,
+    height: Math.max(CHIP_HEIGHT, minHeight ?? 0),
     borderRadius: 8,
     border: selected
       ? `1px solid color-mix(in srgb, ${primary} 18%, Canvas)`
@@ -54,6 +55,8 @@ interface WebChipProps {
   closeAccessibilityLabel?: string;
   testID?: string;
   closeTestID?: string;
+  minHeight?: number;
+  paddingHorizontal?: number;
   onPress: () => void;
   onClose: () => void;
 }
@@ -75,11 +78,13 @@ function WebChip(props: WebChipProps): React.ReactElement {
     closeAccessibilityLabel,
     testID,
     closeTestID,
+    minHeight,
+    paddingHorizontal,
     onPress,
     onClose,
   } = props;
   return (
-    <span style={chipStyle(primary, !!selected, disabled)}>
+    <span style={chipStyle(primary, !!selected, disabled, minHeight)}>
       <button
         type="button"
         data-testid={testID}
@@ -89,8 +94,8 @@ function WebChip(props: WebChipProps): React.ReactElement {
         onClick={onPress}
         style={{
           ...PLAIN_BUTTON,
-          paddingLeft: icon ? 8 : 16,
-          paddingRight: closeIcon ? 8 : 16,
+          paddingLeft: paddingHorizontal ?? (icon ? 8 : 16),
+          paddingRight: closeIcon ? 8 : (paddingHorizontal ?? 16),
           cursor: disabled ? 'default' : 'pointer',
         }}
       >
@@ -106,8 +111,8 @@ function WebChip(props: WebChipProps): React.ReactElement {
           onClick={onClose}
           style={{
             ...PLAIN_BUTTON,
-            width: 28,
-            paddingRight: 4,
+            width: 24 + (paddingHorizontal ?? 4),
+            paddingRight: paddingHorizontal ?? 4,
             cursor: disabled ? 'default' : 'pointer',
           }}
         >
@@ -133,6 +138,8 @@ export function Chip(props: ChipProps): React.ReactElement {
     haptics: _haptics,
     // Browsers scale text with page zoom, which has no cap
     maxFontSizeMultiplier: _maxFontSizeMultiplier,
+    minHeight,
+    paddingHorizontal,
     accessibilityLabel,
     testID,
     closeTestID,
@@ -152,6 +159,8 @@ export function Chip(props: ChipProps): React.ReactElement {
         closeAccessibilityLabel={closeAccessibilityLabel}
         testID={testID}
         closeTestID={closeTestID ?? (testID ? `${testID}-close` : undefined)}
+        minHeight={minHeight}
+        paddingHorizontal={paddingHorizontal}
         onPress={() => onPress?.()}
         onClose={() => onClose?.()}
       />
@@ -175,6 +184,8 @@ export function ChipGroup(props: ChipGroupProps): React.ReactElement {
     disabled,
     haptics: _haptics,
     maxFontSizeMultiplier: _maxFontSizeMultiplier,
+    chipMinHeight,
+    chipPaddingHorizontal,
     onPress,
     onSelectionChange,
     onClose,
@@ -237,6 +248,8 @@ export function ChipGroup(props: ChipGroupProps): React.ReactElement {
             chip.closeTestID ??
             (testID ? `${testID}-${chip.value}-close` : undefined)
           }
+          minHeight={chipMinHeight}
+          paddingHorizontal={chipPaddingHorizontal}
           onPress={() => handlePress(chip.value, index)}
           onClose={() => onClose?.(chip.value, index)}
         />

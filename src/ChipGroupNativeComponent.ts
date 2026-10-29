@@ -71,6 +71,15 @@ export interface ChipGroupNativeProps extends ViewProps {
   /** Cap on the labels' font scaling; 0 (or below 1) = no cap. */
   maxFontSizeMultiplier?: Double;
 
+  /** Smallest height of every chip in points (dp); negative = the platform's. */
+  chipMinHeight?: Double;
+
+  /**
+   * Space between each chip's edges and its content in points (dp);
+   * negative = the platform's.
+   */
+  chipPaddingHorizontal?: Double;
+
   /**
    * Haptic played when a chip or a close icon is pressed: '' (none added) |
    * 'none' | 'selection' | 'light' | 'medium' | 'heavy' | 'success' |

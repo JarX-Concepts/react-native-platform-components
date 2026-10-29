@@ -147,6 +147,14 @@ static inline bool IconEqual(const PCChipIconStruct &a, const PCChipIconStruct &
     _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
   }
 
+  if (!prevProps || newProps.chipMinHeight != prevProps->chipMinHeight) {
+    _view.chipMinHeight = newProps.chipMinHeight;
+  }
+
+  if (!prevProps || newProps.chipPaddingHorizontal != prevProps->chipPaddingHorizontal) {
+    _view.chipPaddingHorizontal = newProps.chipPaddingHorizontal;
+  }
+
   if (!prevProps || newProps.spokenLabel != prevProps->spokenLabel) {
     _view.spokenLabel = NSStringFromStd(newProps.spokenLabel, @"");
   }

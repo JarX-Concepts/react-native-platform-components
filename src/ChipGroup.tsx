@@ -113,6 +113,18 @@ export interface ChipGroupProps extends ViewProps {
   maxFontSizeMultiplier?: number;
 
   /**
+   * Smallest height of every chip in points (dp). Default: the platform's
+   * (30 on iOS, 32 on Android). See `ChipProps.minHeight`.
+   */
+  chipMinHeight?: number;
+
+  /**
+   * Space in points (dp) between each chip's edges and its content.
+   * Default: the platform's. See `ChipProps.paddingHorizontal`.
+   */
+  chipPaddingHorizontal?: number;
+
+  /**
    * Called when a chip is pressed, in every selection mode.
    * @param value - The chip's value
    * @param index - The chip's index
@@ -149,6 +161,8 @@ export function ChipGroup(props: ChipGroupProps): React.ReactElement {
     disabled,
     haptics,
     maxFontSizeMultiplier,
+    chipMinHeight,
+    chipPaddingHorizontal,
     onPress,
     onSelectionChange,
     onClose,
@@ -223,6 +237,8 @@ export function ChipGroup(props: ChipGroupProps): React.ReactElement {
       spacing={spacing ?? -1}
       interactivity={disabled ? 'disabled' : 'enabled'}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
+      chipMinHeight={chipMinHeight ?? -1}
+      chipPaddingHorizontal={chipPaddingHorizontal ?? -1}
       haptics={haptics ?? ''}
       onChipPress={onPress ? handlePress : undefined}
       onChipClose={onClose ? handleClose : undefined}

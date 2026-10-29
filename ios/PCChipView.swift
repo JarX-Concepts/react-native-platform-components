@@ -20,13 +20,28 @@ final class PCChipCell: UIView {
         var closeAccessibilityLabel = ""
         var testID = ""
         var closeTestID = ""
+        /// Smallest chip height in points; negative = the natural height
+        var minHeight: CGFloat = -1
+        /// Space between the chip's edges and its content in points;
+        /// negative = `horizontalPadding`
+        var paddingHorizontal: CGFloat = -1
     }
 
     /// Width of the close button at the chip's trailing end, at the default
     /// text size; it grows with the xmark at larger sizes.
     static let closeWidth: CGFloat = 30
-    /// The chip's horizontal padding.
+    /// The chip's horizontal padding, unless `paddingHorizontal` sets it.
     static let horizontalPadding: CGFloat = 12
+
+    private var padding: CGFloat {
+        model.paddingHorizontal >= 0 ? model.paddingHorizontal : Self.horizontalPadding
+    }
+
+    /// How much further in than the default the close button sits (the
+    /// xmark keeps the same distance from the edge as a leading icon)
+    private var closeInset: CGFloat {
+        max(0, padding - Self.horizontalPadding)
+    }
 
     let button = UIButton(type: .system)
     private var closeButton: UIButton?
@@ -98,9 +113,9 @@ final class PCChipCell: UIView {
         config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(font: font, scale: .small)
         config.contentInsets = NSDirectionalEdgeInsets(
             top: 6,
-            leading: Self.horizontalPadding,
+            leading: padding,
             bottom: 6,
-            trailing: model.closeIcon ? closeSlotWidth : Self.horizontalPadding
+            trailing: model.closeIcon ? closeSlotWidth + closeInset : padding
         )
         button.configuration = config
         // The selected trait, which VoiceOver announces. The configuration
@@ -174,8 +189,9 @@ final class PCChipCell: UIView {
             // The xmark sits in the button's trailing padding
             let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
             let width = min(closeSlotWidth + 4, bounds.width)
+            let inset = min(closeInset, bounds.width - width)
             close.frame = CGRect(
-                x: rtl ? 0 : bounds.width - width,
+                x: rtl ? inset : bounds.width - width - inset,
                 y: 0,
                 width: width,
                 height: bounds.height
@@ -183,11 +199,13 @@ final class PCChipCell: UIView {
         }
     }
 
-    /// The chip's natural size: one line of label, at most `maxWidth` wide.
+    /// The chip's natural size: one line of label, at least `minHeight` tall
+    /// (the content stays centered), at most `maxWidth` wide.
     func fittingSize(maxWidth: CGFloat = .greatestFiniteMagnitude) -> CGSize {
         let size = button.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude))
-        let width = min(max(ceil(size.width), ceil(size.height)), maxWidth)
-        return CGSize(width: width, height: ceil(size.height))
+        let height = max(ceil(size.height), model.minHeight)
+        let width = min(max(ceil(size.width), height), maxWidth)
+        return CGSize(width: width, height: height)
     }
 
     @objc private func touchedDown() {
@@ -245,6 +263,16 @@ public final class PCChipView: UIView {
     /// Screen-reader label; empty = the label
     public var spokenLabel: String = "" {
         didSet { if oldValue != spokenLabel { apply() } }
+    }
+
+    /// Smallest height in points; negative = the natural height
+    public var chipMinHeight: CGFloat = -1 {
+        didSet { if oldValue != chipMinHeight { apply() } }
+    }
+
+    /// Space between the edges and the content in points; negative = default
+    public var chipPaddingHorizontal: CGFloat = -1 {
+        didSet { if oldValue != chipPaddingHorizontal { apply() } }
     }
 
     /// The `haptics` prop: PCChip.mm plays it on a press or a close
@@ -320,7 +348,9 @@ public final class PCChipView: UIView {
                 accessibilityLabel: spokenLabel,
                 closeAccessibilityLabel: closeAccessibilityLabel,
                 testID: "",
-                closeTestID: closeTestID
+                closeTestID: closeTestID,
+                minHeight: chipMinHeight,
+                paddingHorizontal: chipPaddingHorizontal
             ),
             image: image,
             maxFontSizeMultiplier: maxFontSizeMultiplier

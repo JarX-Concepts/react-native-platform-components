@@ -42,6 +42,7 @@ class PCChipView(context: Context) :
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var spokenLabel: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
+  var sizing = PCChipSupport.Sizing()
 
   /** The `haptics` prop: the manager plays it on a press or a close. */
   var haptics: String = ""
@@ -153,6 +154,18 @@ class PCChipView(context: Context) :
     needsRebuild = true
   }
 
+  fun applyMinHeight(value: Float) {
+    if (sizing.minHeight == value) return
+    sizing = sizing.copy(minHeight = value)
+    needsRebuild = true
+  }
+
+  fun applyPaddingHorizontal(value: Float) {
+    if (sizing.paddingHorizontal == value) return
+    sizing = sizing.copy(paddingHorizontal = value)
+    needsRebuild = true
+  }
+
   // The chip has a generated view id, which React Native's touch handling would
   // take for a React tag. Claim the touch for this view instead; the chip still
   // receives it natively.
@@ -195,7 +208,7 @@ class PCChipView(context: Context) :
       closeAccessibilityLabel = closeAccessibilityLabel
     )
     val c = PCChipSupport.createChip(
-      base, variant, item, selectable, enabled, maxFontSizeMultiplier,
+      base, variant, item, selectable, enabled, maxFontSizeMultiplier, sizing,
       { generation == rebuildGeneration }
     ) { requestLayout() }
     c.isChecked = selectable && controlledSelected
