@@ -782,6 +782,32 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // The compact style is the system date pill at UIKit's own height (about
+  // 34pt, not stretched to 44), and it draws after a switch from inline
+  itOnIOS('should test Date Picker compact style', async () => {
+    // The app opens on the inline style (beforeEach waits for it)
+    await selectMenuOption('ios-style-menu', 'Compact');
+    await scrollToId('date-picker');
+    // Visible only when the pill is inside the picker's bounds
+    await waitFor(
+      element(
+        by
+          .type('_UIDatePickerCompactDateLabel')
+          .withAncestor(by.id('date-picker'))
+      )
+    )
+      .toBeVisible()
+      .withTimeout(5000);
+    for (const id of ['date-picker', 'form-row-date-picker']) {
+      const { frame } = (await element(by.id(id)).getAttributes()) as {
+        frame: { height: number };
+      };
+      if (frame.height >= 44) {
+        throw new Error(`${id} is ${frame.height}pt tall, expected the pill's`);
+      }
+    }
+  });
+
   it('should test Selection Menu functionality', async () => {
     // Navigate to SelectionMenu tab
     await selectDemo('Selection Menu');

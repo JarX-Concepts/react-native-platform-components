@@ -105,6 +105,26 @@ In `countDownTimer` mode the selection is a duration, not a date. `onConfirm` re
 
 ![Month and year wheels on iOS 26](/img/components/datepicker/year-and-month-ios.webp)
 
+### Compact style (iOS)
+
+Embedded with `ios.preferredStyle: 'compact'` (or `'automatic'`, which is compact on iPhone and iPad), the picker is the system date pill that opens a calendar popover. It takes UIKit's own height, about 34pt at the default text size, so it lines up with a `TextField` or a label in a form row, as in Settings. For a taller row, give the picker (or its row) a height in `style`; the pill stays its own size and sits centered. The inline and wheels styles take their own heights too.
+
+![The compact date pill in a form row and on its own](/img/components/datepicker/compact-ios.webp)
+
+```tsx
+// The pill is centered in the width the picker gets: here, the rest of the row
+<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+  <Text style={{ width: 100 }}>Due</Text>
+  <DatePicker
+    style={{ flex: 1 }}
+    presentation="embedded"
+    date={due}
+    ios={{ preferredStyle: 'compact' }}
+    onConfirm={setDue}
+  />
+</View>
+```
+
 ### Text input (Android)
 
 `android.inputMode: 'text'` opens the Material pickers on their keyboard entry: `MaterialDatePicker`'s date field (`INPUT_MODE_TEXT`), the start and end fields of the range picker, and `MaterialTimePicker`'s hour and minute fields (`INPUT_MODE_KEYBOARD`). `'calendar'` opens them on the calendar and the clock dial, the default. People can switch in the dialog either way. The system dialogs have no text mode, so this applies with `material: 'm3'` and to `DateRangePicker`.
