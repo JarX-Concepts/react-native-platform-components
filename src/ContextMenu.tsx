@@ -15,6 +15,7 @@ const TAP_SLOP = 10;
 export type {
   ContextMenuAction,
   ContextMenuActionAttributes,
+  MenuElementSize,
 } from './menuItems';
 
 export interface ContextMenuProps extends ViewProps {

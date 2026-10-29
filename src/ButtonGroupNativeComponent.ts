@@ -77,6 +77,8 @@ export type ButtonGroupMenuItem = Readonly<{
   haptics: string;
   /** Test identifier of the menu row; '' = none */
   testID: string;
+  /** Submenus and sections: '' | 'small' | 'medium' | 'large' (iOS 16+) */
+  elementSize: string;
 }>;
 
 /** Event emitted when a split button menu item is picked. */
