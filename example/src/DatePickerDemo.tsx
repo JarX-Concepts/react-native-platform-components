@@ -364,6 +364,22 @@ export function DatePickerDemo(): React.JSX.Element {
         </Section>
       )}
 
+      {Platform.OS === 'ios' && (
+        <Section title="Form Row">
+          {/* The compact pill at its native height, as in a Settings row */}
+          <Row label="Due">
+            <DatePicker
+              testID="form-row-date-picker"
+              presentation="embedded"
+              date={date}
+              mode="date"
+              ios={{ preferredStyle: 'compact' }}
+              onConfirm={(newDate: Date) => setDate(newDate)}
+            />
+          </Row>
+        </Section>
+      )}
+
       {Platform.OS === 'android' && (
         <Section title="Android">
           <Row label="Material">
