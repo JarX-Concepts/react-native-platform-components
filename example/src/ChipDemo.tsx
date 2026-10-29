@@ -6,7 +6,15 @@ import {
   ChipGroup,
   type ChipGroupItem,
 } from 'react-native-platform-components';
-import { Divider, PillButton, Row, Section, ui, useDemoColors } from './DemoUI';
+import {
+  ChipTabs,
+  Divider,
+  PillButton,
+  Row,
+  Section,
+  ui,
+  useDemoColors,
+} from './DemoUI';
 
 // A report's time frame: too many options, with labels too long, for a
 // segmented control
@@ -39,6 +47,19 @@ const DIETS: readonly ChipGroupItem[] = [
 
 const DEFAULT_DIETS = ['vegetarian'];
 
+// Larger chips for a touch-heavy filter row
+const SIZES = [
+  { label: 'Default', value: 'default' },
+  { label: 'Large', value: 'large' },
+] as const;
+type Size = (typeof SIZES)[number]['value'];
+
+const PLACE_FILTERS: readonly ChipGroupItem[] = [
+  { value: 'saved', label: 'Saved', icon: { ios: 'star', android: 'star' } },
+  { value: 'open', label: 'Open now' },
+  { value: 'rated', label: 'Top rated' },
+];
+
 function labelOf(items: readonly ChipGroupItem[], value: string): string {
   return items.find((item) => item.value === value)?.label ?? value;
 }
@@ -50,6 +71,9 @@ export function ChipDemo(): React.JSX.Element {
   const [diets, setDiets] = useState<string[]>(DEFAULT_DIETS);
   const [favorite, setFavorite] = useState(false);
   const [lastEvent, setLastEvent] = useState('(none)');
+  const [size, setSize] = useState<Size>('default');
+  const [placeFilters, setPlaceFilters] = useState<string[]>(['saved']);
+  const large = size === 'large';
 
   // The active filters, as removable input chips
   const active: ChipGroupItem[] = diets.map((value) => ({
@@ -202,6 +226,38 @@ export function ChipDemo(): React.JSX.Element {
             {lastEvent}
           </Text>
         </Row>
+      </Section>
+
+      <Section title="Size (minHeight, paddingHorizontal)">
+        <View style={styles.actions}>
+          <ChipTabs
+            testID="chip-size"
+            value={size}
+            options={SIZES}
+            onChange={setSize}
+          />
+        </View>
+        <ChipGroup
+          testID="chip-sized"
+          style={styles.group}
+          chips={PLACE_FILTERS}
+          selection="multiple"
+          selectedValues={placeFilters}
+          onSelectionChange={setPlaceFilters}
+          chipMinHeight={large ? 44 : undefined}
+          chipPaddingHorizontal={large ? 20 : undefined}
+        />
+        <View style={styles.standalone}>
+          <Chip
+            testID="chip-sized-person"
+            variant="input"
+            label="Grace Hopper"
+            icon={{ ios: 'person.crop.circle', android: 'person' }}
+            minHeight={large ? 44 : undefined}
+            paddingHorizontal={large ? 20 : undefined}
+            onClose={() => setLastEvent('close: Grace')}
+          />
+        </View>
       </Section>
 
       <Section title="Notes">

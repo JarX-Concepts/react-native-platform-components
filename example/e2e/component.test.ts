@@ -564,6 +564,32 @@ const cleanStatusBar = async () => {
   }
 };
 
+// Text Field demo: a drag from near the top of the list, which also puts
+// the keyboard away as it does for a TextInput. Near the end of the content
+// there is less to scroll than asked, which is fine here.
+const dragList = async (distance: number) => {
+  try {
+    await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
+  } catch {
+    // At the end of the content
+  }
+};
+
+// Text Field demo: scrolls a field into view. On iOS it then goes into the
+// upper part of the screen, clear of the keyboard and its toolbar, in one
+// drag sized from the frame the field reports (the screens differ).
+// Scrolling to an anchor further down first keeps that drag short.
+const liftField = async (fieldId: string, anchorId = fieldId) => {
+  await scrollToId(anchorId);
+  if (isAndroid()) return;
+  const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
+    frame: { y: number };
+  };
+  const distance = Math.round(frame.y - 200);
+  if (distance > 40) await dragList(distance);
+  await pause(300);
+};
+
 describe('Platform Components Example', () => {
   const itOnIOS = isAndroid() ? it.skip : it;
 
@@ -2059,6 +2085,30 @@ describe('Platform Components Example', () => {
     await expectText('chip-last-event', 'close: person');
   });
 
+  // minHeight / paddingHorizontal: the Large size (44 tall, 20 of padding)
+  // widens every chip, and a larger chip's close icon still works
+  it('should test Chip sizing', async () => {
+    await selectDemo('Chip');
+    await scrollToId('chip-sized-person');
+    const defaultWidth = await widthOf('chip-sized-open');
+    await element(by.id('chip-size-large')).tap();
+    // "Open now" has no icon: 4 more on each side on Android (16 by
+    // default), 8 on iOS (12)
+    await waitForWidth('chip-sized-open', (w) => w > defaultWidth + 6);
+    if (!isAndroid()) {
+      // Android keeps its 48dp touch target around a 44dp chip
+      const { frame } = (await element(
+        by.id('chip-sized-open')
+      ).getAttributes()) as { frame: { height: number } };
+      if (Math.round(frame.height) !== 44) {
+        throw new Error(`A large chip is ${frame.height}pt tall, not 44`);
+      }
+    }
+    await scrollToId('chip-sized-person-close');
+    await element(by.id('chip-sized-person-close')).tap();
+    await expectText('chip-last-event', 'close: Grace');
+  });
+
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
     await expect(element(by.id('fab-regular'))).toBeVisible();
@@ -2444,32 +2494,6 @@ describe('Platform Components Example', () => {
     await selectDemo('Text Field');
     await expect(element(by.id('field-name'))).toBeVisible();
 
-    // A drag from near the top of the list, which also puts the keyboard
-    // away as it does for a TextInput. Near the end of the content there is
-    // less to scroll than asked, which is fine here.
-    const dragList = async (distance: number) => {
-      try {
-        await element(by.id('demo-scroll')).scroll(distance, 'down', NaN, 0.15);
-      } catch {
-        // At the end of the content
-      }
-    };
-
-    // Scrolls a field into view. On iOS it then goes into the upper part of
-    // the screen, clear of the keyboard and its toolbar, in one drag sized
-    // from the frame the field reports (the screens differ). Scrolling to
-    // an anchor further down first keeps that drag short.
-    const liftField = async (fieldId: string, anchorId = fieldId) => {
-      await scrollToId(anchorId);
-      if (isAndroid()) return;
-      const { frame } = (await element(by.id(fieldId)).getAttributes()) as {
-        frame: { y: number };
-      };
-      const distance = Math.round(frame.y - 200);
-      if (distance > 40) await dragList(distance);
-      await pause(300);
-    };
-
     // iOS: the number pad's toolbar steps the value, and Done dismisses it
     if (!isAndroid()) {
       await liftField('field-quantity', 'field-select-word');
@@ -2487,23 +2511,23 @@ describe('Platform Components Example', () => {
     // the field keeps focus and the keyboard stays up. Android types the
     // return with a tap that focuses the field, and without a hardware
     // keyboard (CI) the soft keyboard then stays over the list, where the
-    // scrolls start, so Android does this last.
-    const chatSendsOnReturn = async () => {
-      await liftField('field-chat');
-      await typeInto('field-chat', 'Hello');
-      await inputOf('field-chat').tapReturnKey();
-      await expectText('field-chat-sent', 'Hello');
-      await expect(inputOf('field-chat')).toHaveText('');
-      if (!isAndroid()) {
-        await expectText('field-last-event', 'focus: chat');
-      }
-    };
-    if (!isAndroid()) await chatSendsOnReturn();
+    // scrolls start, so this is the flow's last step.
+    await liftField('field-chat');
+    await typeInto('field-chat', 'Hello');
+    await inputOf('field-chat').tapReturnKey();
+    await expectText('field-chat-sent', 'Hello');
+    await expect(inputOf('field-chat')).toHaveText('');
+    if (!isAndroid()) {
+      await expectText('field-last-event', 'focus: chat');
+    }
+  });
 
-    // Selection events from native, and a selection set from JS: on iOS by
-    // a keyboard toolbar button, on Android by the demo's button. On iOS
-    // the chat keyboard is still up; a drag puts it away first.
-    if (!isAndroid()) await dragList(40);
+  // Selection events from native, and a selection set from JS: on iOS by a
+  // keyboard toolbar button, on Android by the demo's button. A flow of its
+  // own: with the keyboard features, it ran past CI's 120 s limit.
+  it('should test Text Field selection', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
     await liftField('field-selection');
     if (isAndroid()) {
       await typeInto('field-selection', 'Hello there');
@@ -2514,7 +2538,6 @@ describe('Platform Components Example', () => {
       // tap, so no keyboard
       await typeInto('field-selection', 'Hi there');
       await expectText('field-selection-value', '0–0');
-      await chatSendsOnReturn();
     } else {
       await inputOf('field-selection').tap();
       await waitFor(element(by.id('toolbar-select-word')))

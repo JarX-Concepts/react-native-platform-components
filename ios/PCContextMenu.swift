@@ -56,6 +56,9 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, 
     private var contextMenuInteraction: UIContextMenuInteraction?
     /// Whether the long-press menu is showing, so new actions update it in place.
     private var isMenuVisible = false
+    /// React Native's touch handler, held disabled while the long-press menu
+    /// owns the touch (see cancelReactTouches)
+    private weak var suspendedTouchHandler: UIGestureRecognizer?
     /// The long-press menu last handed to UIKit, to find the showing root.
     private var presentedMenu: UIMenu?
 
@@ -129,6 +132,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, 
         super.didMoveToWindow()
         // A menu asked for before the view was on screen opens now.
         if window != nil, visible == "open" { updatePresentation() }
+        if window == nil { resumeReactTouches() }
     }
 
     private func updateEnabled() {
@@ -200,6 +204,7 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, 
     }
 
     private func removeContextMenuInteraction() {
+        resumeReactTouches()
         guard let interaction = contextMenuInteraction else { return }
         interaction.view?.removeInteraction(interaction)
         contextMenuInteraction = nil
@@ -208,19 +213,31 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, 
 
     /// The long-press menu took the touch over, but React Native's touch
     /// handler would still end it as a press of the pressable under the
-    /// finger. Cancels it the way RN does for its own touches: toggling
-    /// `isEnabled` cancels a gesture recognizer, and RN sends touchcancel.
+    /// finger. Disabling a gesture recognizer cancels it, and RN sends
+    /// touchcancel (RN cancels its own touches the same way).
+    ///
+    /// The handler stays disabled until the menu has closed. Enabled again
+    /// while the finger is still down, it gets that touch's end with no record
+    /// of the touch, and RN asserts ("Inconsistency between local and UIKit
+    /// touch registries", a crash in debug builds). The menu owns every touch
+    /// while it is open, so the handler misses nothing.
     private func cancelReactTouches() {
-        guard let handlerClass = NSClassFromString("RCTSurfaceTouchHandler") else { return }
+        guard suspendedTouchHandler == nil,
+              let handlerClass = NSClassFromString("RCTSurfaceTouchHandler") else { return }
         var view = superview
         while let current = view {
             if let handler = current.gestureRecognizers?.first(where: { $0.isKind(of: handlerClass) }) {
                 handler.isEnabled = false
-                handler.isEnabled = true
+                suspendedTouchHandler = handler
                 return
             }
             view = current.superview
         }
+    }
+
+    private func resumeReactTouches() {
+        suspendedTouchHandler?.isEnabled = true
+        suspendedTouchHandler = nil
     }
 
     // MARK: - Tap Mode Button
@@ -495,6 +512,12 @@ public final class PCContextMenuView: UIView, UIContextMenuInteractionDelegate, 
     ) {
         logger.debug("contextMenuInteraction: willEnd")
         isMenuVisible = false
+        // Once the menu has gone, the finger is up
+        if let animator {
+            animator.addCompletion { [weak self] in self?.resumeReactTouches() }
+        } else {
+            resumeReactTouches()
+        }
         onMenuClose?()
     }
 

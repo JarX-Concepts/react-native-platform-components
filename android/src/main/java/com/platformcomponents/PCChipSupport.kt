@@ -36,6 +36,12 @@ object PCChipSupport {
     val closeAccessibilityLabel: String
   )
 
+  /**
+   * Numeric chip sizing in dp (the `minHeight` and `paddingHorizontal`
+   * props); negative = the style's own.
+   */
+  data class Sizing(val minHeight: Float = -1f, val paddingHorizontal: Float = -1f)
+
   /** "assist" | "filter" | "input" | "suggestion"; anything else is assist. */
   fun parseVariant(value: String?): String =
     when (value) {
@@ -63,6 +69,7 @@ object PCChipSupport {
     checkable: Boolean,
     enabled: Boolean,
     maxFontSizeMultiplier: Float,
+    sizing: Sizing,
     isCurrent: () -> Boolean,
     onIconLoaded: () -> Unit
   ): Chip {
@@ -75,9 +82,60 @@ object PCChipSupport {
     chip.closeIconContentDescription = item.closeAccessibilityLabel.ifEmpty { null }
     // Detox's by.id matches the view tag
     chip.tag = item.testID.ifEmpty { null }
-    applyIcon(chip, variant, item.icon, isCurrent, onIconLoaded)
+    val applyPadding = applySizing(chip, sizing)
+    applyIcon(chip, variant, item.icon, isCurrent) {
+      applyPadding()
+      onIconLoaded()
+    }
+    applyPadding()
     PCThemeSupport.capTextSize(chip, maxFontSizeMultiplier)
     return chip
+  }
+
+  /**
+   * Applies [sizing] to [chip] and returns the function that sets its
+   * horizontal padding again, for when the leading icon appears or goes.
+   *
+   * Material spreads a chip's edge padding over several values: at the start
+   * `chipStartPadding` plus `iconStartPadding` before an icon, or plus
+   * `textStartPadding` before the label; at the end `textEndPadding` after the
+   * label, or `closeIconEndPadding` after the close icon, plus
+   * `chipEndPadding`. `paddingHorizontal` is the whole edge padding, so the
+   * chip padding takes what the style's text and icon paddings leave.
+   */
+  private fun applySizing(chip: Chip, sizing: Sizing): () -> Unit {
+    val density = chip.resources.displayMetrics.density
+    if (sizing.minHeight >= 0) chip.chipMinHeight = sizing.minHeight * density
+    if (sizing.paddingHorizontal < 0) return {}
+
+    val padding = sizing.paddingHorizontal * density
+    val iconStart = chip.iconStartPadding
+    val textStart = chip.textStartPadding
+    val textEnd = chip.textEndPadding
+    val closeEnd = chip.closeIconEndPadding
+    val apply = {
+      // The checkmark of a checked filter chip takes the icon's place
+      val showsIcon = (chip.isChipIconVisible && chip.chipIcon != null) ||
+        (chip.isChecked && chip.isCheckedIconVisible && chip.checkedIcon != null)
+      if (showsIcon) {
+        chip.textStartPadding = textStart
+        chip.chipStartPadding = maxOf(0f, padding - iconStart)
+      } else {
+        chip.textStartPadding = minOf(textStart, padding)
+        chip.chipStartPadding = maxOf(0f, padding - textStart)
+      }
+      if (chip.isCloseIconVisible) {
+        chip.textEndPadding = textEnd
+        chip.chipEndPadding = maxOf(0f, padding - closeEnd)
+      } else {
+        chip.textEndPadding = minOf(textEnd, padding)
+        chip.chipEndPadding = maxOf(0f, padding - textEnd)
+      }
+    }
+    // Material's ChipGroup listens through an internal listener, so this one
+    // is free
+    chip.setOnCheckedChangeListener { _, _ -> apply() }
+    return apply
   }
 
   /**
