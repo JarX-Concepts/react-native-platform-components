@@ -6,16 +6,23 @@ const isAndroid = () => device.getPlatform() === 'android';
 const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Scroll the demo screen until an element is visible
+// Scroll the demo screen until an element is visible. `startX` is where
+// across the page each drag starts (0 to 1; default the middle).
 const scrollToId = async (
   testID: string,
-  direction: 'down' | 'up' = 'down'
+  direction: 'down' | 'up' = 'down',
+  startX = NaN
 ) => {
   await waitFor(element(by.id(testID)))
     .toBeVisible()
     .whileElement(by.id('demo-scroll'))
-    .scroll(200, direction);
+    .scroll(200, direction, startX);
 };
+
+// iOS 26: a drag that starts on a UISegmentedControl can move its selection
+// instead of scrolling the page, so the Segmented Control demo is scrolled
+// from the page's right margin, outside the cards
+const SEGMENTED_PAGE_START_X = isAndroid() ? NaN : 0.97;
 
 // The Tab Bar demo's section titles, top to bottom. Its feeds are
 // ScrollViews of their own and its bars take drags, so a scroll of the page
@@ -1365,7 +1372,7 @@ describe('Platform Components Example', () => {
     await expectText('segment-basic-value', 'week');
 
     // Icons: the same segments render SF Symbols, drawables, and a shared PNG
-    await scrollToId('segment-icons');
+    await scrollToId('segment-icons', 'down', SEGMENTED_PAGE_START_X);
     await tapSegment('Grid');
     await pause(400);
     await expect(element(by.id('segment-icons-value'))).toHaveText('grid');
@@ -1393,7 +1400,7 @@ describe('Platform Components Example', () => {
     await pause(600);
 
     // Badges: bump the unread count, switch mailboxes, then clear it
-    await scrollToId('segment-badges');
+    await scrollToId('segment-badges', 'down', SEGMENTED_PAGE_START_X);
     await element(by.id('badge-increment')).tap();
     await pause(400);
     await element(by.id('badge-increment')).tap();
@@ -1412,7 +1419,7 @@ describe('Platform Components Example', () => {
     await pause(400);
 
     // Styling: custom colors and font, then back to the platform defaults
-    await scrollToId('segment-styled');
+    await scrollToId('segment-styled', 'down', SEGMENTED_PAGE_START_X);
     await element(by.text('High')).atIndex(0).tap();
     await pause(400);
 
@@ -1429,7 +1436,7 @@ describe('Platform Components Example', () => {
     await pause(500);
 
     // Test disabled state - toggle on and off
-    await scrollToId('disabled-switch');
+    await scrollToId('disabled-switch', 'down', SEGMENTED_PAGE_START_X);
     await element(by.id('disabled-switch')).tap();
     await pause(600);
 
@@ -1438,11 +1445,15 @@ describe('Platform Components Example', () => {
 
     if (isAndroid()) {
       // Allow clearing the selection, then tap the selected segment to clear it
-      await scrollToId('selection-required-switch');
+      await scrollToId(
+        'selection-required-switch',
+        'down',
+        SEGMENTED_PAGE_START_X
+      );
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic', 'up');
+      await scrollToId('segment-basic', 'up', SEGMENTED_PAGE_START_X);
       await element(by.text('Week')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('(none)');
@@ -1452,37 +1463,77 @@ describe('Platform Components Example', () => {
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
 
       // Restore the default (selection required) and confirm a tap no longer clears
-      await scrollToId('selection-required-switch');
+      await scrollToId(
+        'selection-required-switch',
+        'down',
+        SEGMENTED_PAGE_START_X
+      );
       await element(by.id('selection-required-switch')).tap();
       await pause(400);
 
-      await scrollToId('segment-basic', 'up');
+      await scrollToId('segment-basic', 'up', SEGMENTED_PAGE_START_X);
       await element(by.text('Day')).atIndex(0).tap();
       await pause(400);
       await expect(element(by.id('segment-basic-value'))).toHaveText('day');
 
       // Classic Material 3 segmented buttons, then back to Expressive
-      await scrollToId('expressive-switch');
+      await scrollToId('expressive-switch', 'down', SEGMENTED_PAGE_START_X);
       await element(by.id('expressive-switch')).tap();
       await pause(400);
-      await scrollToId('segment-basic', 'up');
+      await scrollToId('segment-basic', 'up', SEGMENTED_PAGE_START_X);
       await element(by.text('Month')).atIndex(0).tap();
       await pause(900);
-      await scrollToId('expressive-switch');
+      await scrollToId('expressive-switch', 'down', SEGMENTED_PAGE_START_X);
       await element(by.id('expressive-switch')).tap();
       await pause(400);
-      await scrollToId('segment-basic', 'up');
+      await scrollToId('segment-basic', 'up', SEGMENTED_PAGE_START_X);
       await element(by.text('Week')).atIndex(0).tap();
       await pause(600);
     } else {
-      // Final cycle: Week -> Year -> Day
-      await scrollToId('segment-basic');
+      // Final cycle: Week -> Year -> Day, back at the top of the page
+      await scrollToId('segment-basic', 'up', SEGMENTED_PAGE_START_X);
       await element(by.text('Year')).atIndex(0).tap();
       await pause(300);
 
       await element(by.text('Day')).atIndex(0).tap();
       await pause(300);
     }
+  });
+
+  // The control's own height (UIKit's, not stretched to 44pt on iOS),
+  // minHeight, and on iOS the 44pt touch target around a shorter control
+  it('should test Segmented Control height', async () => {
+    await selectDemo('Segmented Control');
+    await scrollToId('segment-sized-value', 'down', SEGMENTED_PAGE_START_X);
+    const own = await frameOf(by.id('segment-sized'));
+    const tall = await frameOf(by.id('segment-sized-tall'));
+    if (tall.height <= own.height) {
+      throw new Error(`minHeight 44 left the control at ${tall.height}`);
+    }
+    if (!isAndroid()) {
+      if (Math.round(own.height) >= 44 || Math.round(tall.height) !== 44) {
+        throw new Error(
+          `Heights ${own.height} and ${tall.height}, not ~32 and 44`
+        );
+      }
+      // A tap 4pt above the control, inside its 44pt touch target, selects
+      // the segment under it. Detox only taps inside an element, so the tap
+      // goes to the row around the control.
+      const row = await frameOf(by.id('segment-sized-row'));
+      await element(by.id('segment-sized-row')).tap({
+        x: own.x - row.x + own.width * 0.85,
+        y: own.y - row.y - 4,
+      });
+      await expectText('segment-sized-value', 'high');
+    }
+    // The Styling section has a Medium segment too
+    const medium = by.label('Medium').withAncestor(by.id('segment-sized-tall'));
+    await (
+      isAndroid()
+        ? element(medium)
+        : element(by.type('UIView').withAncestor(medium)).atIndex(0)
+    ).tap();
+    await expectText('segment-sized-value', 'medium');
   });
 
   it('should test Tab Bar functionality', async () => {

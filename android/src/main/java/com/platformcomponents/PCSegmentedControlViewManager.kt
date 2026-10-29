@@ -125,6 +125,11 @@ class PCSegmentedControlViewManager :
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }
 
+  // Negative means Material's own height
+  override fun setControlMinHeight(view: PCSegmentedControlView, value: Double) {
+    view.applyControlMinHeight(value.toFloat())
+  }
+
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}; empty / 0 = default
   override fun setLabelStyle(view: PCSegmentedControlView, value: ReadableMap?) {
     view.applyLabelStyle(

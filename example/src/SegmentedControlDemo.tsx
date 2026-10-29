@@ -73,8 +73,12 @@ const PARTIAL_DISABLED_SEGMENTS = [
 ];
 
 // A full-width row so four segments fit comfortably on a phone.
-function ControlRow(props: { children: React.ReactNode }) {
-  return <View style={styles.controlRow}>{props.children}</View>;
+function ControlRow(props: { children: React.ReactNode; testID?: string }) {
+  return (
+    <View testID={props.testID} style={styles.controlRow}>
+      {props.children}
+    </View>
+  );
 }
 
 export function SegmentedControlDemo(): React.JSX.Element {
@@ -100,6 +104,10 @@ export function SegmentedControlDemo(): React.JSX.Element {
   const [prioritySelected, setPrioritySelected] = useState<string>('medium');
   const [styled, setStyled] = useState(true);
   const [partialSelected, setPartialSelected] = useState<string>('active');
+  // Low, not Medium: on iOS 26 a drag that starts on the selected segment
+  // moves the selection instead of scrolling the page, and the middle
+  // segment is where E2E scrolls start
+  const [sizedSelected, setSizedSelected] = useState<string>('low');
 
   const [disabled, setDisabled] = useState(false);
   const [momentary, setMomentary] = useState(false);
@@ -230,6 +238,34 @@ export function SegmentedControlDemo(): React.JSX.Element {
         <Divider />
         <Row label="Selected">
           <Text style={ui.valueText}>{partialSelected}</Text>
+        </Row>
+      </Section>
+
+      <Section title="Height (minHeight)">
+        {/* The platform's own height: about 32pt on iOS, 40dp on Android */}
+        <ControlRow testID="segment-sized-row">
+          <SegmentedControl
+            testID="segment-sized"
+            segments={PRIORITY_SEGMENTS}
+            selectedValue={sizedSelected}
+            onSelect={(value) => setSizedSelected(value)}
+          />
+        </ControlRow>
+        <Divider />
+        <ControlRow>
+          <SegmentedControl
+            testID="segment-sized-tall"
+            segments={PRIORITY_SEGMENTS}
+            selectedValue={sizedSelected}
+            minHeight={44}
+            onSelect={(value) => setSizedSelected(value)}
+          />
+        </ControlRow>
+        <Divider />
+        <Row label="Selected">
+          <Text testID="segment-sized-value" style={ui.valueText}>
+            {sizedSelected}
+          </Text>
         </Row>
       </Section>
 

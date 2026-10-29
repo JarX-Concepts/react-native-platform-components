@@ -882,6 +882,7 @@ export function SegmentedControl(
     labelStyle,
     maxFontSizeMultiplier,
     badgeStyle,
+    minHeight,
     ...viewProps
   } = props;
 

@@ -18,21 +18,22 @@ Native segmented control using **UISegmentedControl** on iOS and **MaterialButto
 
 ### Props
 
-| Prop                    | Type                                                                                           | Description                                                                                                                          |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `segments`              | `SegmentedControlSegment[]`                                                                    | Array of segments to display                                                                                                         |
-| `selectedValue`         | `string \| null`                                                                               | Currently selected segment's `value`                                                                                                 |
-| `disabled`              | `boolean`                                                                                      | Disables the entire control                                                                                                          |
-| `labelVisibility`       | `'auto' \| 'labeled' \| 'unlabeled'`                                                           | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                           |
-| `selectedSegmentColor`  | `ColorValue`                                                                                   | Background of the selected segment                                                                                                   |
-| `activeTintColor`       | `ColorValue`                                                                                   | Text and icon color of the selected segment                                                                                          |
-| `inactiveTintColor`     | `ColorValue`                                                                                   | Text and icon color of unselected segments                                                                                           |
-| `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`                                          | Font for segment labels. See [Styling](#styling)                                                                                     |
-| `badgeStyle`            | `{ backgroundColor?, color? }`                                                                 | Colors for segment badges. See [Badges](#badges)                                                                                     |
-| `maxFontSizeMultiplier` | `number`                                                                                       | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                        |
-| `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user changes the selection, not when `selectedValue` does. See [Haptics](/guides/haptics). Default: none      |
-| `onSelect`              | `(value: string, index: number) => void`                                                       | Called when user selects a segment                                                                                                   |
-| `onDeselect`            | `() => void`                                                                                   | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false` |
+| Prop                    | Type                                                                                           | Description                                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `segments`              | `SegmentedControlSegment[]`                                                                    | Array of segments to display                                                                                                                |
+| `selectedValue`         | `string \| null`                                                                               | Currently selected segment's `value`                                                                                                        |
+| `disabled`              | `boolean`                                                                                      | Disables the entire control                                                                                                                 |
+| `labelVisibility`       | `'auto' \| 'labeled' \| 'unlabeled'`                                                           | How labels and icons combine. See [Label visibility](#label-visibility). Default: `'auto'`                                                  |
+| `selectedSegmentColor`  | `ColorValue`                                                                                   | Background of the selected segment                                                                                                          |
+| `activeTintColor`       | `ColorValue`                                                                                   | Text and icon color of the selected segment                                                                                                 |
+| `inactiveTintColor`     | `ColorValue`                                                                                   | Text and icon color of unselected segments                                                                                                  |
+| `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`                                          | Font for segment labels. See [Styling](#styling)                                                                                            |
+| `badgeStyle`            | `{ backgroundColor?, color? }`                                                                 | Colors for segment badges. See [Badges](#badges)                                                                                            |
+| `maxFontSizeMultiplier` | `number`                                                                                       | Cap on the font scale of the labels, as on `Text`. Android only: iOS segment titles don't follow Dynamic Type                               |
+| `minHeight`             | `number`                                                                                       | Smallest height of the segments in points (dp), as drawn. Default: the platform's (about 32 on iOS, 40dp on Android). See [Height](#height) |
+| `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user changes the selection, not when `selectedValue` does. See [Haptics](/guides/haptics). Default: none             |
+| `onSelect`              | `(value: string, index: number) => void`                                                       | Called when user selects a segment                                                                                                          |
+| `onDeselect`            | `() => void`                                                                                   | Called when the user clears the selection by tapping the selected segment. Android only; requires `android.selectionRequired: false`        |
 
 ### SegmentedControlSegment
 
@@ -146,6 +147,27 @@ A segment's `testID` goes on the segment itself: the segment's accessibility ele
 ```ts
 await element(by.id('tab-invest')).tap();
 ```
+
+### Height
+
+The control takes each platform's own height: about 32 points for `UISegmentedControl` (at the default text size), and Material's 40dp buttons inside their 48dp touch target on Android. Neither control has a size scale, so `minHeight` takes a number of points (dp) instead of a named size.
+
+```tsx
+<SegmentedControl
+  segments={segments}
+  selectedValue={priority}
+  onSelect={setPriority}
+  minHeight={44}
+/>
+```
+
+| iOS 26                                                                                             | Android                                                                                                 |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| ![The default height and minHeight 44 on iOS 26](/img/components/segmentedcontrol/height-ios.webp) | ![The default height and minHeight 44 on Android](/img/components/segmentedcontrol/height-android.webp) |
+
+- **`minHeight`** is the height of the segments as drawn. iOS: the `UISegmentedControl` is at least this tall. Android: the buttons are at least this tall, and Material's touch target insets stay above and below them, so `minHeight={44}` takes 52dp of layout.
+- **A `style` height** sets the whole control on both platforms, taller or shorter. On Android the buttons fill it. When it is shorter than the buttons, they give up Material's touch target insets first and then their vertical padding, and the labels stay centered.
+- **Touch target (iOS):** a control shorter than 44 points still takes taps up to 44 points tall. A tap just above or below the control selects the segment under it, as long as the parent view contains the point.
 
 ### Styling
 

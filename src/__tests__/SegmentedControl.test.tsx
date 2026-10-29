@@ -59,6 +59,23 @@ describe('SegmentedControl', () => {
     expect(props.onSelect).toBeUndefined();
     expect(props.segments[0].testID).toBe('');
     expect(props.maxFontSizeMultiplier).toBe(0);
+    expect(props.controlMinHeight).toBe(-1);
+    act(() => tree.unmount());
+  });
+
+  it('passes minHeight to native, with no style of its own', () => {
+    const tree = render(
+      <SegmentedControl
+        segments={SEGMENTS}
+        selectedValue={null}
+        minHeight={44}
+        style={{ marginTop: 4 }}
+      />
+    );
+    const props = lastNativeProps();
+    expect(props.controlMinHeight).toBe(44);
+    // The native measurement sizes the control on both platforms
+    expect(props.style).toEqual({ marginTop: 4 });
     act(() => tree.unmount());
   });
 
