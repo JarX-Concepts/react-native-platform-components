@@ -51,6 +51,8 @@ describe('Chip', () => {
     expect(props.closeAccessibilityLabel).toBe('');
     expect(props.interactivity).toBe('enabled');
     expect(props.maxFontSizeMultiplier).toBe(0);
+    expect(props.chipMinHeight).toBe(-1);
+    expect(props.chipPaddingHorizontal).toBe(-1);
     expect(props.spokenLabel).toBe('');
     expect(props.haptics).toBe('');
     expect(props.icon).toEqual(expect.objectContaining({ iconType: '' }));
@@ -126,6 +128,8 @@ describe('Chip', () => {
         disabled
         haptics="selection"
         maxFontSizeMultiplier={1.3}
+        minHeight={40}
+        paddingHorizontal={16}
       />
     );
 
@@ -139,6 +143,8 @@ describe('Chip', () => {
     expect(props.interactivity).toBe('disabled');
     expect(props.haptics).toBe('selection');
     expect(props.maxFontSizeMultiplier).toBe(1.3);
+    expect(props.chipMinHeight).toBe(40);
+    expect(props.chipPaddingHorizontal).toBe(16);
     act(() => tree.unmount());
   });
 });
@@ -197,6 +203,8 @@ describe('ChipGroup', () => {
     expect(props.spacing).toBe(-1);
     expect(props.interactivity).toBe('enabled');
     expect(props.maxFontSizeMultiplier).toBe(0);
+    expect(props.chipMinHeight).toBe(-1);
+    expect(props.chipPaddingHorizontal).toBe(-1);
     expect(props.haptics).toBe('');
     expect(props.onChipPress).toBeUndefined();
     expect(props.onChipClose).toBeUndefined();
@@ -246,6 +254,8 @@ describe('ChipGroup', () => {
         selectedValues={['custom', 'week']}
         wrap={false}
         spacing={4}
+        chipMinHeight={40}
+        chipPaddingHorizontal={10}
         disabled
       />
     );
@@ -256,6 +266,8 @@ describe('ChipGroup', () => {
     expect(props.selectedValues).toEqual(['custom', 'week']);
     expect(props.wrap).toBe('false');
     expect(props.spacing).toBe(4);
+    expect(props.chipMinHeight).toBe(40);
+    expect(props.chipPaddingHorizontal).toBe(10);
     expect(props.interactivity).toBe('disabled');
     act(() => tree.unmount());
   });

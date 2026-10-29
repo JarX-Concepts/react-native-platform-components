@@ -74,6 +74,8 @@ const [timeFrame, setTimeFrame] = useState(['month']);
 | `disabled`              | `boolean`                                                                                      | Disables every chip                                                                                                                      |
 | `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when a chip or a close icon is pressed. See [Haptics](/guides/haptics). Default: none                                      |
 | `maxFontSizeMultiplier` | `number`                                                                                       | Largest scale the labels may reach with the system text size (Dynamic Type / font scale), as on `Text`. Unset or `0`: no cap             |
+| `chipMinHeight`         | `number`                                                                                       | Smallest height of every chip in points (dp). Default: the platform's (30 on iOS, 32dp on Android). See [Sizing](#sizing)                |
+| `chipPaddingHorizontal` | `number`                                                                                       | Space in points (dp) between each chip's edges and its content. Default: the platform's. See [Sizing](#sizing)                           |
 | `onPress`               | `(value: string, index: number) => void`                                                       | Called when a chip is pressed, in every selection mode                                                                                   |
 | `onSelectionChange`     | `(values: string[]) => void`                                                                   | Called when the selection changes, with the selected values in chip order                                                                |
 | `onClose`               | `(value: string, index: number) => void`                                                       | Called when a chip's close icon is pressed. Gives every chip a close icon unless the chip sets `closeIcon: false`                        |
@@ -95,22 +97,24 @@ const [timeFrame, setTimeFrame] = useState(['month']);
 
 ### Chip props
 
-| Prop                      | Type                                                                                           | Description                                                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `label`                   | `string`                                                                                       | Chip text (required)                                                                                              |
-| `icon`                    | `PlatformIcon`                                                                                 | Leading icon. See [Button icons](/components/button#icons)                                                        |
-| `variant`                 | `'assist' \| 'filter' \| 'input' \| 'suggestion'`                                              | Material 3 chip type. See [Variants](#variants). Default: `'filter'` when `selected` is set, `'assist'` otherwise |
-| `selected`                | `boolean`                                                                                      | Makes the chip selectable, with this as its controlled state. See [Selection](#selection)                         |
-| `onPress`                 | `() => void`                                                                                   | Called when the chip is pressed                                                                                   |
-| `closeIcon`               | `boolean`                                                                                      | Shows the close icon. Default: `true` when `onClose` is set                                                       |
-| `onClose`                 | `() => void`                                                                                   | Called when the close icon is pressed                                                                             |
-| `closeAccessibilityLabel` | `string`                                                                                       | Screen-reader label of the close icon. Default: "Remove {label}" (Material's localized string on Android)         |
-| `disabled`                | `boolean`                                                                                      | Disables the chip and its close icon                                                                              |
-| `haptics`                 | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the chip or its close icon is pressed. See [Haptics](/guides/haptics). Default: none           |
-| `maxFontSizeMultiplier`   | `number`                                                                                       | Largest scale the label may reach with the system text size, as on `Text`. Unset or `0`: no cap                   |
-| `accessibilityLabel`      | `string`                                                                                       | Screen-reader label. Defaults to `label`                                                                          |
-| `testID`                  | `string`                                                                                       | Test identifier of the chip                                                                                       |
-| `closeTestID`             | `string`                                                                                       | Test identifier of the close icon. Default: `` `${testID}-close` ``. See [Testing](#testing)                      |
+| Prop                      | Type                                                                                           | Description                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `label`                   | `string`                                                                                       | Chip text (required)                                                                                                    |
+| `icon`                    | `PlatformIcon`                                                                                 | Leading icon. See [Button icons](/components/button#icons)                                                              |
+| `variant`                 | `'assist' \| 'filter' \| 'input' \| 'suggestion'`                                              | Material 3 chip type. See [Variants](#variants). Default: `'filter'` when `selected` is set, `'assist'` otherwise       |
+| `selected`                | `boolean`                                                                                      | Makes the chip selectable, with this as its controlled state. See [Selection](#selection)                               |
+| `onPress`                 | `() => void`                                                                                   | Called when the chip is pressed                                                                                         |
+| `closeIcon`               | `boolean`                                                                                      | Shows the close icon. Default: `true` when `onClose` is set                                                             |
+| `onClose`                 | `() => void`                                                                                   | Called when the close icon is pressed                                                                                   |
+| `closeAccessibilityLabel` | `string`                                                                                       | Screen-reader label of the close icon. Default: "Remove {label}" (Material's localized string on Android)               |
+| `disabled`                | `boolean`                                                                                      | Disables the chip and its close icon                                                                                    |
+| `haptics`                 | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the chip or its close icon is pressed. See [Haptics](/guides/haptics). Default: none                 |
+| `maxFontSizeMultiplier`   | `number`                                                                                       | Largest scale the label may reach with the system text size, as on `Text`. Unset or `0`: no cap                         |
+| `minHeight`               | `number`                                                                                       | Smallest height of the chip in points (dp). Default: the platform's (30 on iOS, 32dp on Android). See [Sizing](#sizing) |
+| `paddingHorizontal`       | `number`                                                                                       | Space in points (dp) between the chip's edges and its content. Default: the platform's. See [Sizing](#sizing)           |
+| `accessibilityLabel`      | `string`                                                                                       | Screen-reader label. Defaults to `label`                                                                                |
+| `testID`                  | `string`                                                                                       | Test identifier of the chip                                                                                             |
+| `closeTestID`             | `string`                                                                                       | Test identifier of the close icon. Default: `` `${testID}-close` ``. See [Testing](#testing)                            |
 
 ### Variants
 
@@ -176,6 +180,28 @@ Right to left, rows start at the right edge on both platforms, and a scrolling r
 ### Spacing
 
 `spacing` is the gap between chips, across and between rows. On iOS it is the gap between the capsules (8 points by default). On Android it sets `ChipGroup`'s `chipSpacing`, the gap between the chips' views. Material chips are 32dp tall inside a 48dp touch target, so the visible gap between rows is `spacing` plus 16dp (24dp by default, as in a Material `ChipGroup`).
+
+### Sizing
+
+Material 3 has one chip size, and iOS has no system chip, so the chips take numbers rather than a named size: `minHeight` and `paddingHorizontal` on `Chip`, and `chipMinHeight` and `chipPaddingHorizontal` on `ChipGroup` for every chip. Leave them unset for each platform's own size. Use them for a touch-heavy filter row, or to match the height of the controls around the chips.
+
+| iOS 26                                                                                            | Android                                                                                                           |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| ![Chips at minHeight 44 and paddingHorizontal 20 on iOS 26](/img/components/chip/sizing-ios.webp) | ![Material 3 chips at minHeight 44 and paddingHorizontal 20 on Android](/img/components/chip/sizing-android.webp) |
+
+- **`minHeight`** is the smallest height of the chip's shape. The label and icon stay centered, and the font keeps its size (it follows the system text size as usual). iOS: the capsule is at least this tall. Android: `chipMinHeight`. Material keeps a 48dp touch target around a chip, so a chip under 48dp still takes 48dp of layout.
+- **`paddingHorizontal`** is the space between the chip's edges and its content: the leading icon or the label at the start, and the label or the close icon at the end. iOS: the button's leading and trailing content insets (12 points by default), and the close button moves in with it. Android: Material splits the edge padding across `chipStartPadding`, the icon and text paddings, and `chipEndPadding`, by variant (4 to 16dp). The chip padding takes up whatever the text and icon paddings leave, and it is applied again when a filter chip's checkmark appears or goes.
+
+```tsx
+<ChipGroup
+  chips={FILTERS}
+  selection="multiple"
+  selectedValues={filters}
+  onSelectionChange={setFilters}
+  chipMinHeight={44}
+  chipPaddingHorizontal={20}
+/>
+```
 
 ### Close icon
 

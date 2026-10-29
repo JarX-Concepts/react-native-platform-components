@@ -198,6 +198,14 @@ static inline NSArray<NSString *> *NSArrayFromStd(const std::vector<std::string>
     _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
   }
 
+  if (!prevProps || newProps.chipMinHeight != prevProps->chipMinHeight) {
+    _view.chipMinHeight = newProps.chipMinHeight;
+  }
+
+  if (!prevProps || newProps.chipPaddingHorizontal != prevProps->chipPaddingHorizontal) {
+    _view.chipPaddingHorizontal = newProps.chipPaddingHorizontal;
+  }
+
   if (!prevProps || newProps.haptics != prevProps->haptics) {
     _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }

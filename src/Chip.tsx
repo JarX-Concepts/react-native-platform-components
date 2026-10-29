@@ -79,6 +79,27 @@ export interface ChipProps extends ViewProps {
    */
   maxFontSizeMultiplier?: number;
 
+  /**
+   * Smallest height of the chip in points (dp). Default: the platform's
+   * (30 on iOS, 32 on Android). The label stays centered and the font
+   * keeps its size; see "Sizing" in the Chip docs.
+   *
+   * iOS: a minimum height for the capsule button. Android: `chipMinHeight`.
+   */
+  minHeight?: number;
+
+  /**
+   * Space in points (dp) between the chip's edges and its content (the
+   * icon or label at the start, the label or close icon at the end).
+   * Default: the platform's (12 on iOS; 4 to 16 on Android, by variant and
+   * icon).
+   *
+   * iOS: the button configuration's leading and trailing `contentInsets`.
+   * Android: `chipStartPadding` and `chipEndPadding`, less the text and icon
+   * paddings Material already puts at the edges.
+   */
+  paddingHorizontal?: number;
+
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
 
@@ -107,6 +128,8 @@ export function Chip(props: ChipProps): React.ReactElement {
     disabled,
     haptics,
     maxFontSizeMultiplier,
+    minHeight,
+    paddingHorizontal,
     accessibilityLabel,
     testID,
     closeTestID,
@@ -139,6 +162,8 @@ export function Chip(props: ChipProps): React.ReactElement {
       closeTestID={closeTestID ?? (testID ? `${testID}-close` : '')}
       interactivity={disabled ? 'disabled' : 'enabled'}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
+      chipMinHeight={minHeight ?? -1}
+      chipPaddingHorizontal={paddingHorizontal ?? -1}
       spokenLabel={accessibilityLabel ?? ''}
       haptics={haptics ?? ''}
       onChipPress={onPress || isSelectable ? handlePress : undefined}

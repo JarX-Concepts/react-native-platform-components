@@ -49,6 +49,15 @@ export interface ChipNativeProps extends ViewProps {
   /** Cap on the label's font scaling; 0 (or below 1) = no cap. */
   maxFontSizeMultiplier?: Double;
 
+  /** Smallest chip height in points (dp); negative = the platform's. */
+  chipMinHeight?: Double;
+
+  /**
+   * Space between the chip's edges and its content in points (dp);
+   * negative = the platform's.
+   */
+  chipPaddingHorizontal?: Double;
+
   /**
    * Screen-reader label, applied to the native chip rather than the host
    * view. Empty means "use the label".
