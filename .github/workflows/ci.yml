@@ -259,6 +259,18 @@ jobs:
           brew trust --tap wix/brew
           brew install applesimutils
 
+      # The runner has 3 cores and 7 GB. A newly booted iOS 26 simulator spends
+      # its first minutes on widgets, wallpaper extensions, media analysis and
+      # indexing, which pushed the load average past 500 and stalled single
+      # Detox actions for minutes. Booting it now (the simulator Detox picks)
+      # puts that work under the builds instead of the flows.
+      - name: Boot the simulator
+        run: |
+          sudo mdutil -a -i off || true
+          UDID=$(applesimutils --list --byType "iPhone 17 Pro Max" --maxResults 1 | node -p 'JSON.parse(require("fs").readFileSync(0))[0].udid')
+          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+
       - name: Install cocoapods
         run: |
           cd example
@@ -270,10 +282,17 @@ jobs:
         run: |
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
-      - name: Run Detox e2e tests (iOS)
+      - name: Build example for Detox (iOS)
         run: |
           yarn workspace react-native-platform-components-example detox clean-framework-cache
           yarn workspace react-native-platform-components-example detox build-framework-cache
+          yarn workspace react-native-platform-components-example detox build --configuration ios.sim.release
+          # The build service holds on to its memory after the build
+          killall -9 SWBBuildService XCBBuildService 2>/dev/null || true
+          xcrun simctl bootstatus "$SIM_UDID"
+
+      - name: Run Detox e2e tests (iOS)
+        run: |
           yarn workspace react-native-platform-components-example test:e2e:ios:ci
 
       # The Detox logs, plus the crash reports macOS writes when the simulated
