@@ -1217,9 +1217,11 @@ describe('Platform Components Example', () => {
       ['unmount', 'unmounted by the app'],
     ] as const) {
       await element(by.id(`actionsheet-timer-${mode}`)).tap();
-      await openSheet();
-      await waitForSheetToClose();
+      // Not openSheet(): the app takes the sheet away 2 s after it opens, and
+      // on a loaded CI runner the tap alone has taken that long
+      await element(by.id('actionsheet-open')).tap();
       await expectText('actionsheet-last-event', event);
+      await waitForSheetToClose();
     }
     await element(by.id('actionsheet-timer-off')).tap();
     await openSheet();
