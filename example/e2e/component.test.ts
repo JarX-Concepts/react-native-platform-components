@@ -1488,15 +1488,17 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('dialog-second-ok'))).not.toExist();
 
     // The app closes the open dialog (visible = false): only onDismiss.
-    // Then it unmounts it, which reports nothing
+    // Then it unmounts it, which reports nothing. Not openDialog(): the app
+    // takes the dialog away 2 s after it opens, and on a loaded CI runner it
+    // has come and gone before a wait for it saw it
     await element(by.id('dialog-timer-close')).tap();
-    await openDialog('confirm', 'dialog-cancel');
-    await waitForDialogToClose('dialog-cancel');
+    await element(by.id('dialog-open-confirm')).tap();
     await expectText('dialog-events', 'show, closed by the app, dismiss');
-    await element(by.id('dialog-timer-unmount')).tap();
-    await openDialog('confirm', 'dialog-cancel');
     await waitForDialogToClose('dialog-cancel');
+    await element(by.id('dialog-timer-unmount')).tap();
+    await element(by.id('dialog-open-confirm')).tap();
     await expectText('dialog-events', 'show, unmounted by the app');
+    await waitForDialogToClose('dialog-cancel');
     await element(by.id('dialog-timer-off')).tap();
 
     // And it opens again afterwards
