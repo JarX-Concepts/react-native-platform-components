@@ -61,6 +61,8 @@ export type ButtonMenuItem = Readonly<{
   haptics: string;
   /** Test identifier of the menu row; '' = none */
   testID: string;
+  /** Submenus and sections: '' | 'small' | 'medium' | 'large' (iOS 16+) */
+  elementSize: string;
 }>;
 
 /** Event emitted when a toggle button is pressed. */

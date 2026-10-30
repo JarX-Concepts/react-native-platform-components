@@ -49,9 +49,12 @@ export type SelectionMenuInteractivity = 'enabled' | 'disabled';
 export type SelectionMenuAnchorMode = 'inline' | 'headless';
 
 /**
- * iOS-specific configuration (reserved).
+ * iOS-specific configuration.
  */
-export type IOSProps = Readonly<{}>;
+export type IOSProps = Readonly<{
+  /** Embedded: 'none' (borderless button) | 'roundedRect' (field box) */
+  borderStyle?: string;
+}>;
 
 /**
  * Android-specific configuration.
@@ -60,6 +63,10 @@ export type AndroidProps = Readonly<{
   material?: string; // AndroidMaterialMode
   /** Embedded M3 dropdown: accept typing to filter the options */
   searchable?: string; // 'true' | 'false'
+  /** Embedded M3 dropdown: 'outlined' | 'filled' */
+  variant?: string;
+  /** Embedded M3 dropdown: 'standard' | 'dense' */
+  density?: string;
 }>;
 
 export interface SelectionMenuProps extends ViewProps {
@@ -102,6 +109,18 @@ export interface SelectionMenuProps extends ViewProps {
    * 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'
    */
   haptics?: string;
+
+  /**
+   * Embedded only: smallest height of the field in points (dp); 0 = the
+   * platform's.
+   */
+  minFieldHeight?: Double;
+
+  /**
+   * Embedded only: space between the field's sides and its content in
+   * points (dp); negative = the platform's.
+   */
+  fieldPaddingHorizontal?: Double;
 
   /**
    * Fired when the user selects an option.

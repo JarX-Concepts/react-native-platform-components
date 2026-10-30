@@ -58,6 +58,24 @@ public final class PCSelectionMenuView: UIControl {
     /// Android material preference (ignored on iOS; retained for debugging/log parity)
     public var androidMaterial: String? = nil
 
+    /// Embedded only: "none" (a borderless pop-up button) | "roundedRect" (a
+    /// field box, drawn as TextField draws its rounded rect)
+    public var borderStyle: String = "none" {
+        didSet { if oldValue != borderStyle { applyInlineStyle() } }
+    }
+
+    /// Embedded only: smallest height in points; 0 = the default (44pt
+    /// borderless, UIKit's 34pt rounded rect boxed)
+    public var minFieldHeight: CGFloat = 0 {
+        didSet { if oldValue != minFieldHeight { applyInlineStyle() } }
+    }
+
+    /// Embedded only: space between the sides and the content in points;
+    /// negative = the default (none borderless, 7pt boxed, as TextField)
+    public var fieldPaddingHorizontal: CGFloat = -1 {
+        didSet { if oldValue != fieldPaddingHorizontal { applyInlineStyle() } }
+    }
+
     /// The `haptics` prop; PCSelectionMenu.mm plays it on a pick
     public let haptics = PCHaptics()
 
@@ -69,6 +87,21 @@ public final class PCSelectionMenuView: UIControl {
     // MARK: - Internal (inline UIKit views)
 
     private var menuButton: UIButton?
+    /// The boxed field's chevron, at its trailing edge
+    private var chevronView: UIImageView?
+
+    private var boxed: Bool { borderStyle == "roundedRect" }
+    private var horizontalPadding: CGFloat {
+        fieldPaddingHorizontal >= 0 ? fieldPaddingHorizontal : (boxed ? Self.boxTextPadding : 0)
+    }
+
+    /// UIKit's rounded-rect text field: its height and its text padding
+    private static let boxHeight: CGFloat = 34
+    private static let boxTextPadding: CGFloat = 7
+    private static let chevronSpacing: CGFloat = 6
+    private static let boxBorderColor = UIColor { traits in
+        UIColor(white: traits.userInterfaceStyle == .dark ? 0.2 : 0.8, alpha: 1)
+    }
 
     // MARK: - Internal (headless)
 
@@ -139,8 +172,8 @@ public final class PCSelectionMenuView: UIControl {
     }
 
     private func sync() {
-        // Update the button title
-        menuButton?.setTitle(displayTitle, for: .normal)
+        // Update the button title (and the boxed field's value color)
+        applyInlineStyle()
 
         // Rebuild the UIMenu with current options (and update it if it's open)
         rebuildMenu()
@@ -154,22 +187,70 @@ public final class PCSelectionMenuView: UIControl {
     private func installInlineIfNeeded() {
         guard menuButton == nil else { return }
 
-        var config = UIButton.Configuration.plain()
-        config.baseForegroundColor = .tintColor
-        config.image = UIImage(systemName: "chevron.up.chevron.down")
-        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(scale: .small)
-        config.imagePlacement = .trailing
-        config.imagePadding = 8
-        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0)
-
-        let button = UIButton(configuration: config)
+        let button = UIButton(configuration: .plain())
         button.showsMenuAsPrimaryAction = true
         button.changesSelectionAsPrimaryAction = false
 
         addSubview(button)
         menuButton = button
 
+        applyInlineStyle()
         rebuildMenu()
+    }
+
+    /// The embedded button's look: a borderless pop-up button (the tint
+    /// colored title and chevron), or a field box (the value in the label
+    /// color, the placeholder in the placeholder color, a gray chevron at the
+    /// trailing edge).
+    private func applyInlineStyle() {
+        guard let button = menuButton else { return }
+        let chevron = UIImage(systemName: "chevron.up.chevron.down")
+        let chevronSymbol = UIImage.SymbolConfiguration(scale: .small)
+
+        var config = UIButton.Configuration.plain()
+        config.title = displayTitle
+        config.titleLineBreakMode = .byTruncatingTail
+        if boxed {
+            let hasValue = !selectedData.isEmpty && parsedOptions.contains { $0.data == selectedData }
+            config.baseForegroundColor = hasValue ? .label : .placeholderText
+            // UIKit's rounded-rect field: a hairline border, white 0.8
+            // (light) / 0.2 (dark), on the system background
+            config.background.backgroundColor = .systemBackground
+            config.background.strokeColor = Self.boxBorderColor
+            config.background.strokeWidth = 1 / max(1, traitCollection.displayScale)
+            config.background.cornerRadius = 5
+            config.cornerStyle = .fixed
+
+            let imageView = chevronView ?? UIImageView()
+            imageView.image = chevron
+            imageView.preferredSymbolConfiguration = chevronSymbol
+            imageView.tintColor = .secondaryLabel
+            imageView.isUserInteractionEnabled = false
+            if chevronView == nil {
+                addSubview(imageView)
+                chevronView = imageView
+            }
+            config.contentInsets = NSDirectionalEdgeInsets(
+                top: 6,
+                leading: horizontalPadding,
+                bottom: 6,
+                trailing: horizontalPadding + imageView.intrinsicContentSize.width + Self.chevronSpacing
+            )
+            button.contentHorizontalAlignment = .leading
+        } else {
+            chevronView?.removeFromSuperview()
+            chevronView = nil
+            config.baseForegroundColor = .tintColor
+            config.image = chevron
+            config.preferredSymbolConfigurationForImage = chevronSymbol
+            config.imagePlacement = .trailing
+            config.imagePadding = 8
+            config.contentInsets = NSDirectionalEdgeInsets(
+                top: 10, leading: horizontalPadding, bottom: 10, trailing: horizontalPadding)
+            button.contentHorizontalAlignment = .center
+        }
+        button.configuration = config
+        invalidateIntrinsicContentSize()
         setNeedsLayout()
     }
 
@@ -177,6 +258,8 @@ public final class PCSelectionMenuView: UIControl {
         guard let button = menuButton else { return }
         button.removeFromSuperview()
         menuButton = nil
+        chevronView?.removeFromSuperview()
+        chevronView = nil
     }
 
     private func rebuildMenu() {
@@ -230,13 +313,30 @@ public final class PCSelectionMenuView: UIControl {
     override public func layoutSubviews() {
         super.layoutSubviews()
         guard let button = menuButton else { return }
-        let fitted = button.intrinsicContentSize
-        button.frame = CGRect(
-            x: 0,
-            y: (bounds.height - fitted.height) / 2,
-            width: fitted.width,
-            height: fitted.height
-        )
+        if boxed {
+            // The box takes the view's size (an app's style height or width
+            // included), with the chevron at its trailing edge
+            button.frame = bounds
+            if let chevron = chevronView {
+                let size = chevron.intrinsicContentSize
+                let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
+                chevron.frame = CGRect(
+                    x: rtl ? horizontalPadding : bounds.width - horizontalPadding - size.width,
+                    y: (bounds.height - size.height) / 2,
+                    width: size.width,
+                    height: size.height
+                )
+            }
+        } else {
+            // The borderless button keeps its own size, centered in a taller row
+            let fitted = button.intrinsicContentSize
+            button.frame = CGRect(
+                x: 0,
+                y: (bounds.height - fitted.height) / 2,
+                width: fitted.width,
+                height: fitted.height
+            )
+        }
     }
 
     // MARK: - Headless
@@ -295,6 +395,8 @@ public final class PCSelectionMenuView: UIControl {
         super.didMoveToWindow()
         // A menu asked for before the view was on screen opens now.
         if window != nil, visible == "open" { updatePresentation() }
+        // The boxed field's hairline needs the screen's scale
+        if window != nil, boxed { applyInlineStyle() }
     }
 
     private func nearestViewController() -> UIViewController? {
@@ -470,45 +572,34 @@ public final class PCSelectionMenuView: UIControl {
 
     // MARK: - Sizing
 
+    /// The embedded button's size: its content, at least `minFieldHeight`
+    /// tall (by default 44pt borderless, UIKit's 34pt rounded rect boxed).
+    private func inlineSize() -> CGSize {
+        let minimum = minFieldHeight > 0
+            ? minFieldHeight
+            : (boxed ? Self.boxHeight : PCConstants.minTouchTargetHeight)
+        guard let button = menuButton else { return CGSize(width: 0, height: minimum) }
+        let fitted = button.intrinsicContentSize
+        return CGSize(width: ceil(fitted.width), height: max(ceil(fitted.height), minimum))
+    }
+
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
         if anchorMode != "inline" { return CGSize(width: size.width, height: 1) }
-
-        guard let button = menuButton else {
-            return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
-        }
-
-        let fitted = button.intrinsicContentSize
-        return CGSize(
-            width: fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
-        )
+        return inlineSize()
     }
 
     public override var intrinsicContentSize: CGSize {
         if anchorMode != "inline" {
             return CGSize(width: UIView.noIntrinsicMetric, height: 1)
         }
-        let fitted = sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude))
-        return CGSize(
-            width: fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
-        )
+        return inlineSize()
     }
 
     /// Called by the measuring pipeline to get the size for Yoga layout.
     /// Headless mode returns zero so Yoga reserves nothing.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
         guard anchorMode == "inline" else { return .zero }
-
-        guard let button = menuButton else {
-            return CGSize(width: 0, height: PCConstants.minTouchTargetHeight)
-        }
-
-        let fitted = button.intrinsicContentSize
-        return CGSize(
-            width: fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
-        )
+        return inlineSize()
     }
 }
 

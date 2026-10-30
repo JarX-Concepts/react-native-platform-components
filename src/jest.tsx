@@ -988,6 +988,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     onSelect,
     onRequestClose,
     testID,
+    minFieldHeight,
+    fieldPaddingHorizontal,
     ios,
     android,
     ...viewProps

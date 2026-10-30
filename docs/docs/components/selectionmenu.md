@@ -18,19 +18,24 @@ Native selection menu with **modal** and **embedded** modes.
 
 ### Props
 
-| Prop                 | Type                                                                                           | Description                                                                                             |
-| -------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `options`            | `SelectionMenuOption[]`                                                                        | Options to display. See [SelectionMenuOption](#selectionmenuoption)                                     |
-| `selected`           | `string \| null`                                                                               | Currently selected option's `data` value                                                                |
-| `disabled`           | `boolean`                                                                                      | Disables the menu                                                                                       |
-| `placeholder`        | `string`                                                                                       | Placeholder text when no selection                                                                      |
-| `presentation`       | `'modal' \| 'embedded'`                                                                        | Presentation mode (default: `'modal'`)                                                                  |
-| `visible`            | `boolean`                                                                                      | Controls modal mode menu visibility                                                                     |
-| `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none              |
-| `onSelect`           | `(data, label, index) => void`                                                                 | Called when user selects an option                                                                      |
-| `onRequestClose`     | `() => void`                                                                                   | Called when menu is dismissed without selection                                                         |
-| `android.material`   | `'system' \| 'm3'`                                                                             | Material Design style preference                                                                        |
-| `android.searchable` | `boolean`                                                                                      | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android) |
+| Prop                     | Type                                                                                           | Description                                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `options`                | `SelectionMenuOption[]`                                                                        | Options to display. See [SelectionMenuOption](#selectionmenuoption)                                       |
+| `selected`               | `string \| null`                                                                               | Currently selected option's `data` value                                                                  |
+| `disabled`               | `boolean`                                                                                      | Disables the menu                                                                                         |
+| `placeholder`            | `string`                                                                                       | Placeholder text when no selection                                                                        |
+| `presentation`           | `'modal' \| 'embedded'`                                                                        | Presentation mode (default: `'modal'`)                                                                    |
+| `visible`                | `boolean`                                                                                      | Controls modal mode menu visibility                                                                       |
+| `haptics`                | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none                |
+| `onSelect`               | `(data, label, index) => void`                                                                 | Called when user selects an option                                                                        |
+| `onRequestClose`         | `() => void`                                                                                   | Called when menu is dismissed without selection                                                           |
+| `android.material`       | `'system' \| 'm3'`                                                                             | Material Design style preference                                                                          |
+| `android.searchable`     | `boolean`                                                                                      | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android)   |
+| `minFieldHeight`         | `number`                                                                                       | Embedded only: smallest height of the field in points (dp). See [Form field](#form-field)                 |
+| `fieldPaddingHorizontal` | `number`                                                                                       | Embedded only: space between the field's sides and its text in points (dp). See [Form field](#form-field) |
+| `ios.borderStyle`        | `'none' \| 'roundedRect'`                                                                      | Embedded only: a borderless pop-up button (default) or a field box. See [Form field](#form-field)         |
+| `android.variant`        | `'outlined' \| 'filled'`                                                                       | Embedded `m3` only: the Material exposed dropdown style (default: `'outlined'`)                           |
+| `android.dense`          | `boolean`                                                                                      | Embedded `m3` only: the dense, shorter field                                                              |
 
 ### SelectionMenuOption
 
@@ -149,6 +154,32 @@ Image sources are drawn as templates in the menu's icon color unless `tinted: fa
 | Android embedded (`m3`)                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------ |
 | ![Dropdown rows with icons and subtitles in the M3 exposed dropdown](/img/components/selectionmenu/rich-m3-android.webp) |
+
+### Form field
+
+In a form, the embedded menu can take the same size as a [TextField](/components/textfield) beside it.
+
+- **iOS:** `ios.borderStyle: 'roundedRect'` draws the field box, a copy of `UITextField`'s rounded rect (34pt, a hairline border, 7pt of padding). The selected option shows in the label color, the placeholder in the placeholder color, and a chevron sits at the trailing edge. The default, `'none'`, is the borderless pop-up button in the tint color, 44pt tall.
+- **Android:** `android.material: 'm3'` is the Material 3 exposed dropdown menu. `android.variant` (`'outlined'` or `'filled'`) and `android.dense` select the same styles as on TextField: 56dp, or 48dp dense. The `placeholder` is the field's floating label, as a TextField's `label` is. The default `'system'` Spinner is as tall as Material's 48dp touch target.
+
+`minFieldHeight` and `fieldPaddingHorizontal` work as they do on TextField. `minFieldHeight` is the smallest height of the field: the extra space goes above and below the text, which stays centered, and Material's resting label stays level with it. `fieldPaddingHorizontal` is the space between the field's leading side and its text; the trailing side keeps room for the arrow or chevron. A `style` height taller than the field centers it on Android; on iOS the box takes the full height.
+
+```tsx
+<TextField label="City" value={city} onChangeText={setCity} />
+<SelectionMenu
+  presentation="embedded"
+  options={STATES}
+  selected={state}
+  placeholder="State"
+  onSelect={setState}
+  ios={{ borderStyle: 'roundedRect' }}
+  android={{ material: 'm3' }}
+/>
+```
+
+| iOS 26                                                                                                                                | Android                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ![A TextField and a SelectionMenu with the rounded rect, the same size, on iOS 26](/img/components/selectionmenu/form-field-ios.webp) | ![A Material TextField and an exposed dropdown menu, the same size, on Android](/img/components/selectionmenu/form-field-android.webp) |
 
 ### Searchable dropdown (Android)
 

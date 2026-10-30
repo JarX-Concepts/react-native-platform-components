@@ -110,6 +110,16 @@ class PCSelectionMenuViewManager :
       if (value != null && value.hasKey("material") && !value.isNull("material")) value.getString("material") else null
     view.applyAndroidMaterial(material)
     view.applyAndroidSearchable(value?.stringOr("searchable", "false") == "true")
+    view.applyAndroidStyle(value?.stringOr("variant", "outlined"), value?.stringOr("density", "standard") == "dense")
+  }
+
+  // 0 / negative: the widget's own height and padding
+  override fun setMinFieldHeight(view: PCSelectionMenuView, value: Double) {
+    view.applyFieldSize(value.toFloat(), view.fieldPaddingHorizontal)
+  }
+
+  override fun setFieldPaddingHorizontal(view: PCSelectionMenuView, value: Double) {
+    view.applyFieldSize(view.minFieldHeight, value.toFloat())
   }
 
   override fun setIos(view: PCSelectionMenuView, value: ReadableMap?) {

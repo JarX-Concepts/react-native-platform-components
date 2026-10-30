@@ -1,6 +1,6 @@
 ---
-title: "ContextMenu"
-description: "Native context menu for React Native: UIContextMenuInteraction on iOS, PopupMenu on Android, with sections, submenus and icons."
+title: 'ContextMenu'
+description: 'Native context menu for React Native: UIContextMenuInteraction on iOS, PopupMenu on Android, with sections, submenus and icons.'
 ---
 
 <table>
@@ -18,35 +18,36 @@ Native context menu that wraps content and opens on a **long-press** or a **tap*
 
 ### Props
 
-| Prop             | Type                              | Description                                                                 |
-| ---------------- | --------------------------------- | --------------------------------------------------------------------------- |
-| `title`          | `string`                          | Menu title (shown as header on iOS)                                         |
-| `actions`        | `ContextMenuAction[]`             | Array of menu actions                                                       |
-| `disabled`       | `boolean`                         | Disables the menu                                                           |
-| `trigger`        | `'longPress' \| 'tap' \| 'none'`  | How the menu opens (default: `'longPress'`). See [Trigger modes](#trigger-modes) |
-| `visible`        | `boolean`                         | Opens the menu from JS (controlled). See [Opening from JS](#opening-from-js) |
+| Prop             | Type                                                                                           | Description                                                                                                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`          | `string`                                                                                       | Menu title (shown as header on iOS)                                                                                                                                                                   |
+| `actions`        | `ContextMenuAction[]`                                                                          | Array of menu actions                                                                                                                                                                                 |
+| `disabled`       | `boolean`                                                                                      | Disables the menu                                                                                                                                                                                     |
+| `trigger`        | `'longPress' \| 'tap' \| 'none'`                                                               | How the menu opens (default: `'longPress'`). See [Trigger modes](#trigger-modes)                                                                                                                      |
+| `visible`        | `boolean`                                                                                      | Opens the menu from JS (controlled). See [Opening from JS](#opening-from-js)                                                                                                                          |
 | `haptics`        | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user presses an action; an action's own `haptics` wins. The long-press open haptic stays; `'none'` also turns it off on Android. See [Haptics](/guides/haptics). Default: none |
-| `onPressAction`  | `(actionId, actionTitle) => void` | Called when user selects an action                                          |
-| `onMenuOpen`     | `() => void`                      | Called when menu opens                                                      |
-| `onMenuClose`    | `() => void`                      | Called when menu closes                                                     |
-| `onPreviewPress` | `() => void`                      | iOS: the user tapped the preview. See [Preview](#preview-ios)               |
-| `children`       | `ReactNode`                       | Content to wrap (required)                                                  |
+| `onPressAction`  | `(actionId, actionTitle) => void`                                                              | Called when user selects an action                                                                                                                                                                    |
+| `onMenuOpen`     | `() => void`                                                                                   | Called when menu opens                                                                                                                                                                                |
+| `onMenuClose`    | `() => void`                                                                                   | Called when menu closes                                                                                                                                                                               |
+| `onPreviewPress` | `() => void`                                                                                   | iOS: the user tapped the preview. See [Preview](#preview-ios)                                                                                                                                         |
+| `children`       | `ReactNode`                                                                                    | Content to wrap (required)                                                                                                                                                                            |
 
 ### ContextMenuAction
 
-| Property        | Type                                                        | Description                                                                          |
-| --------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `id`            | `string`                                                    | Unique identifier returned in callbacks                                              |
-| `title`         | `string`                                                    | Display text. For an inline section, its header (iOS; may be empty)                  |
-| `subtitle`      | `string`                                                    | Secondary text (iOS only)                                                            |
-| `image`         | `string \| PlatformIcon`                                    | Icon. See [Icons](#icons)                                                            |
-| `imageColor`    | `string`                                                    | Tint color for the icon (hex string)                                                 |
-| `attributes`    | `{ destructive?, disabled?, hidden?, keepsMenuPresented? }` | Action attributes (see [Destructive actions](#destructive-actions) and [Keeping the menu open](#keeping-the-menu-open)) |
-| `state`         | `'off' \| 'on' \| 'mixed'`                                  | Checkmark state                                                                      |
-| `haptics`       | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when this action is picked, in place of the component's `haptics`. See [Haptics](/guides/haptics) |
-| `subactions`    | `ContextMenuAction[]`                                       | Nested actions: a submenu, or an inline section with `displayInline`                 |
-| `displayInline` | `boolean`                                                   | Shows `subactions` inline as a section instead of a submenu. See [Sections](#sections) |
-| `testID`        | `string`                                                    | Test ID of the action's menu row, for UI tests. See [Testing menu actions](#testing-menu-actions) |
+| Property               | Type                                                                                           | Description                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | `string`                                                                                       | Unique identifier returned in callbacks                                                                                 |
+| `title`                | `string`                                                                                       | Display text. For an inline section, its header (iOS; may be empty)                                                     |
+| `subtitle`             | `string`                                                                                       | Secondary text (iOS only)                                                                                               |
+| `image`                | `string \| PlatformIcon`                                                                       | Icon. See [Icons](#icons)                                                                                               |
+| `imageColor`           | `string`                                                                                       | Tint color for the icon (hex string)                                                                                    |
+| `attributes`           | `{ destructive?, disabled?, hidden?, keepsMenuPresented? }`                                    | Action attributes (see [Destructive actions](#destructive-actions) and [Keeping the menu open](#keeping-the-menu-open)) |
+| `state`                | `'off' \| 'on' \| 'mixed'`                                                                     | Checkmark state                                                                                                         |
+| `haptics`              | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when this action is picked, in place of the component's `haptics`. See [Haptics](/guides/haptics)         |
+| `subactions`           | `ContextMenuAction[]`                                                                          | Nested actions: a submenu, or an inline section with `displayInline`                                                    |
+| `displayInline`        | `boolean`                                                                                      | Shows `subactions` inline as a section instead of a submenu. See [Sections](#sections)                                  |
+| `preferredElementSize` | `'small' \| 'medium' \| 'large'`                                                               | Layout of a submenu's or section's actions (iOS 16+). See [Quick actions row](#quick-actions-row-ios)                   |
+| `testID`               | `string`                                                                                       | Test ID of the action's menu row, for UI tests. See [Testing menu actions](#testing-menu-actions)                       |
 
 Submenus and sections nest to any depth: a section can hold a submenu, and a submenu can hold sections.
 
@@ -58,10 +59,10 @@ Submenus and sections nest to any depth: a section can hold a submenu, and a sub
 
 ### Android Props (`android`)
 
-| Prop             | Type                | Description                                    |
-| ---------------- | ------------------- | ---------------------------------------------- |
+| Prop             | Type                | Description                                                                                                                 |
+| ---------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `anchorPosition` | `'left' \| 'right'` | Aligns the popup with the start (`'left'`, default) or end (`'right'`) edge of the wrapped content; mirrored in RTL layouts |
-| `visible`        | `boolean`           | Deprecated: use the top-level `visible`, which works on both platforms. The top-level prop wins when both are set |
+| `visible`        | `boolean`           | Deprecated: use the top-level `visible`, which works on both platforms. The top-level prop wins when both are set           |
 
 ### Trigger modes
 
@@ -79,10 +80,10 @@ Submenus and sections nest to any depth: a section can hold a submenu, and a sub
 </ContextMenu>
 ```
 
-| Platform | Long-press | Tap |
-| -------- | ---------- | --- |
-| iOS | A `UIContextMenuInteraction` on the view that holds the content, so the long press is recognized wherever it starts. The menu cancels React Native's touch when it opens | The tap reaches the content. A tap no inner button took opens the menu with `UIControl.performPrimaryAction()` on an invisible button, which stays VoiceOver's element for the menu. iOS 15 – 17.3 has no public API for that, so there the invisible button takes every tap on the content, and inner buttons get none: use `trigger="none"` there for content with buttons |
-| Android | Long-press detection on the view, which cancels the touch in React Native and in the content's views when the menu opens | The tap reaches the content; a tap no inner button took opens the `PopupMenu`. TalkBack opens the menu through the view's click action |
+| Platform | Long-press                                                                                                                                                               | Tap                                                                                                                                                                                                                                                                                                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| iOS      | A `UIContextMenuInteraction` on the view that holds the content, so the long press is recognized wherever it starts. The menu cancels React Native's touch when it opens | The tap reaches the content. A tap no inner button took opens the menu with `UIControl.performPrimaryAction()` on an invisible button, which stays VoiceOver's element for the menu. iOS 15 – 17.3 has no public API for that, so there the invisible button takes every tap on the content, and inner buttons get none: use `trigger="none"` there for content with buttons |
+| Android  | Long-press detection on the view, which cancels the touch in React Native and in the content's views when the menu opens                                                 | The tap reaches the content; a tap no inner button took opens the `PopupMenu`. TalkBack opens the menu through the view's click action                                                                                                                                                                                                                                       |
 
 `onMenuOpen` and `onMenuClose` fire in every mode on both platforms, whether the user or `visible` opened the menu.
 
@@ -101,9 +102,21 @@ const [sourcesOpen, setSourcesOpen] = useState(false);
   onMenuClose={() => setSourcesOpen(false)}
   title="Add From"
   actions={[
-    { id: 'photo', title: 'Photo Library', image: { ios: 'photo.on.rectangle', android: 'photo_library' } },
-    { id: 'document', title: 'Document', image: { ios: 'doc', android: 'description' } },
-    { id: 'camera', title: 'Camera', image: { ios: 'camera', android: 'photo_camera' } },
+    {
+      id: 'photo',
+      title: 'Photo Library',
+      image: { ios: 'photo.on.rectangle', android: 'photo_library' },
+    },
+    {
+      id: 'document',
+      title: 'Document',
+      image: { ios: 'doc', android: 'description' },
+    },
+    {
+      id: 'camera',
+      title: 'Camera',
+      image: { ios: 'camera', android: 'photo_camera' },
+    },
   ]}
   onPressAction={(id) => addFrom(id)}
 >
@@ -118,17 +131,17 @@ const [sourcesOpen, setSourcesOpen] = useState(false);
     />
     <Button label="Remove" onPress={removeFile} />
   </UploadBox>
-</ContextMenu>
+</ContextMenu>;
 ```
 
-| Platform | Opening from JS |
-| -------- | --------------- |
-| iOS 17.4+ | An invisible `UIButton` over the content presents the menu with `UIControl.performPrimaryAction()` (with `trigger="tap"`, the tap button does). The button takes no touches. Actions, submenus, haptics and the callbacks work as in a menu the user opened; there is no lifted preview |
-| iOS 15 – 17.3 | UIKit has no public API to open a menu without a touch, so `visible` does nothing. Keep a trigger the user can reach, or check `Platform.Version` and show your own UI |
-| Android | `PopupMenu.show()`, anchored to the content like a menu the user opened |
+| Platform      | Opening from JS                                                                                                                                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| iOS 17.4+     | An invisible `UIButton` over the content presents the menu with `UIControl.performPrimaryAction()` (with `trigger="tap"`, the tap button does). The button takes no touches. Actions, submenus, haptics and the callbacks work as in a menu the user opened; there is no lifted preview |
+| iOS 15 – 17.3 | UIKit has no public API to open a menu without a touch, so `visible` does nothing. Keep a trigger the user can reach, or check `Platform.Version` and show your own UI                                                                                                                  |
+| Android       | `PopupMenu.show()`, anchored to the content like a menu the user opened                                                                                                                                                                                                                 |
 
-| iOS 26 | Android |
-| --- | --- |
+| iOS 26                                                                                                                 | Android                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | ![The source menu opened from the upload card's Choose button on iOS 26](/img/components/contextmenu/visible-ios.webp) | ![The source menu opened from the upload card's Choose button on Android](/img/components/contextmenu/visible-android.webp) |
 
 `android.visible` still works but is deprecated: the top-level `visible` replaces it.
@@ -149,8 +162,16 @@ An action with `subactions` and `displayInline: true` is an inline group, set of
       title: '',
       displayInline: true,
       subactions: [
-        { id: 'copy', title: 'Copy', image: { ios: 'doc.on.doc', android: 'content_copy' } },
-        { id: 'duplicate', title: 'Duplicate', image: { ios: 'plus.square.on.square', android: 'crop_square' } },
+        {
+          id: 'copy',
+          title: 'Copy',
+          image: { ios: 'doc.on.doc', android: 'content_copy' },
+        },
+        {
+          id: 'duplicate',
+          title: 'Duplicate',
+          image: { ios: 'plus.square.on.square', android: 'crop_square' },
+        },
       ],
     },
     {
@@ -158,7 +179,11 @@ An action with `subactions` and `displayInline: true` is an inline group, set of
       title: 'Share',
       displayInline: true,
       subactions: [
-        { id: 'remind', title: 'Remind Me', image: { type: 'image', source: require('./bell.png') } },
+        {
+          id: 'remind',
+          title: 'Remind Me',
+          image: { type: 'image', source: require('./bell.png') },
+        },
         {
           id: 'send',
           title: 'Send To',
@@ -174,7 +199,14 @@ An action with `subactions` and `displayInline: true` is an inline group, set of
       id: 'danger',
       title: '',
       displayInline: true,
-      subactions: [{ id: 'delete', title: 'Delete', image: { ios: 'trash', android: 'delete' }, attributes: { destructive: true } }],
+      subactions: [
+        {
+          id: 'delete',
+          title: 'Delete',
+          image: { ios: 'trash', android: 'delete' },
+          attributes: { destructive: true },
+        },
+      ],
     },
   ]}
   onPressAction={(id) => handle(id)}
@@ -183,9 +215,50 @@ An action with `subactions` and `displayInline: true` is an inline group, set of
 </ContextMenu>
 ```
 
-| iOS 26 | Android |
-| --- | --- |
+| iOS 26                                                                                                          | Android                                                                                               |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | ![Sections with a header, an image icon and a submenu on iOS 26](/img/components/contextmenu/sections-ios.webp) | ![Sections separated by group dividers on Android](/img/components/contextmenu/sections-android.webp) |
+
+### Quick actions row (iOS)
+
+`preferredElementSize` sets how a submenu or an inline section lays out its actions (`UIMenu.preferredElementSize`, iOS 16+). `'medium'` puts up to four actions side by side, each an icon over its title: the row of quick actions at the top of a channel menu in Slack or of a file menu in Files. `'small'` shows them as icons only, as the Cut / Copy / Paste row of a text menu. `'large'`, the default, lists one action per row. Give the actions icons for the smaller sizes; the title still names the action for VoiceOver.
+
+The menu opens out of its anchor with the system animation (on iOS 26, the Liquid Glass morph), so a header pill with a `ContextMenu` and `trigger="tap"` grows into this panel of options. Values next to a row, such as a member count, go in its `subtitle`.
+
+```tsx
+<ContextMenu
+  trigger="tap"
+  onPressAction={handleAction}
+  actions={[
+    {
+      id: 'quick',
+      title: '',
+      displayInline: true,
+      preferredElementSize: 'medium',
+      subactions: [
+        { id: 'add', title: 'Add', image: 'person.badge.plus' },
+        { id: 'move', title: 'Move', image: 'folder' },
+        { id: 'search', title: 'Search', image: 'magnifyingglass' },
+      ],
+    },
+    {
+      id: 'settings',
+      title: '',
+      displayInline: true,
+      subactions: [
+        { id: 'members', title: 'Members', subtitle: '5', image: 'person.2' },
+        { id: 'tabs', title: 'Tabs', subtitle: '3', image: 'square.grid.2x2' },
+      ],
+    },
+  ]}
+>
+  <ChannelHeaderPill />
+</ContextMenu>
+```
+
+![A channel menu with a row of Add, Move and Search, the settings with their values, and a row of icon-only actions on iOS 26](/img/components/contextmenu/quick-actions-ios.webp)
+
+Android's Material menus have no such layout: the same actions are listed one per row, in their sections. Before iOS 16 the size is ignored.
 
 ### Keeping the menu open
 
@@ -205,19 +278,31 @@ const [quantity, setQuantity] = useState(1);
       title: `Quantity: ${quantity}`,
       displayInline: true,
       subactions: [
-        { id: 'decrease', title: 'Decrease', image: 'minus', attributes: { keepsMenuPresented: true } },
-        { id: 'increase', title: 'Increase', image: 'plus', attributes: { keepsMenuPresented: true } },
+        {
+          id: 'decrease',
+          title: 'Decrease',
+          image: 'minus',
+          attributes: { keepsMenuPresented: true },
+        },
+        {
+          id: 'increase',
+          title: 'Increase',
+          image: 'plus',
+          attributes: { keepsMenuPresented: true },
+        },
       ],
     },
   ]}
-  onPressAction={(id) => setQuantity((q) => (id === 'increase' ? q + 1 : Math.max(0, q - 1)))}
+  onPressAction={(id) =>
+    setQuantity((q) => (id === 'increase' ? q + 1 : Math.max(0, q - 1)))
+  }
 >
   <QuantityBadge value={quantity} />
-</ContextMenu>
+</ContextMenu>;
 ```
 
-| iOS 26 |
-| --- |
+| iOS 26                                                                                                    |
+| --------------------------------------------------------------------------------------------------------- |
 | ![A stepper and a toggle that keep the menu open on iOS 26](/img/components/contextmenu/stepper-ios.webp) |
 
 ### Destructive actions
@@ -243,8 +328,8 @@ Tapping the preview dismisses the menu back to the content and then calls `onPre
 </ContextMenu>
 ```
 
-| iOS 26 |
-| --- |
+| iOS 26                                                                                       |
+| -------------------------------------------------------------------------------------------- |
 | ![The lifted preview above the menu on iOS 26](/img/components/contextmenu/preview-ios.webp) |
 
 ### Testing menu actions
@@ -276,7 +361,9 @@ An action's `testID` goes on its row in the open menu, so an end-to-end test tap
 ```ts
 // Detox
 await element(by.id('upload-box')).tap();
-await waitFor(element(by.id('source-camera'))).toBeVisible().withTimeout(6000);
+await waitFor(element(by.id('source-camera')))
+  .toBeVisible()
+  .withTimeout(6000);
 await element(by.id('source-files')).tap();
 await element(by.id('source-files-pdf')).tap();
 ```

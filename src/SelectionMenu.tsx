@@ -85,9 +85,33 @@ export interface SelectionMenuProps extends ViewProps {
   onRequestClose?: () => void;
 
   /**
-   * Pass-through platform props.
+   * Embedded only: smallest height of the field in points (dp), as on
+   * `TextField`. Default: 44pt for the borderless iOS button, UIKit's 34pt
+   * rounded rect with `ios.borderStyle: 'roundedRect'`, the Material field's
+   * 56dp (dense: 48dp) and the Spinner's own height on Android. The extra
+   * height goes above and below the text, which stays centered.
    */
-  ios?: {};
+  minFieldHeight?: number;
+
+  /**
+   * Embedded only: space in points (dp) between the field's sides and its
+   * text, as on `TextField`. Default: none for the borderless iOS button, 7pt
+   * in the rounded rect, Material's 16dp, and the Spinner's own padding at
+   * its start (the end keeps room for the arrow).
+   */
+  fieldPaddingHorizontal?: number;
+
+  /**
+   * iOS-specific configuration.
+   */
+  ios?: {
+    /**
+     * Embedded only: `'none'` (default), a borderless pop-up button with
+     * the tint color, or `'roundedRect'`, a field box drawn like
+     * `TextField`'s rounded rect, so a picker row lines up with text fields.
+     */
+    borderStyle?: 'none' | 'roundedRect';
+  };
 
   android?: {
     /** Material preference ('system' | 'm3'). */
@@ -101,6 +125,13 @@ export interface SelectionMenuProps extends ViewProps {
      * placeholder). Default `false`.
      */
     searchable?: boolean;
+    /**
+     * Embedded `m3` dropdown: the Material 3 exposed dropdown menu style,
+     * `'outlined'` (default) or `'filled'`, as `TextField`'s `variant`.
+     */
+    variant?: 'outlined' | 'filled';
+    /** Embedded `m3` dropdown: the dense style, a shorter field. */
+    dense?: boolean;
   };
 
   /** Test identifier */
@@ -149,6 +180,8 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     haptics,
     onSelect,
     onRequestClose,
+    minFieldHeight,
+    fieldPaddingHorizontal,
     ios,
     android,
     ...viewProps
@@ -190,14 +223,23 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     return {
       material: android.material,
       searchable: android.searchable ? 'true' : 'false',
+      variant: android.variant ?? 'outlined',
+      density: android.dense ? 'dense' : 'standard',
     };
   }, [android]);
+
+  const nativeIos = useMemo(
+    () => (ios ? { borderStyle: ios.borderStyle ?? 'none' } : undefined),
+    [ios]
+  );
 
   // On Android, force a fresh native view when structural props change so the
   // widget gets a clean measurement cycle (TextInputLayout caches aggressively).
   const remountKey =
     Platform.OS === 'android'
-      ? `${presentation}-${android?.material ?? 'system'}`
+      ? `${presentation}-${android?.material ?? 'system'}-${
+          android?.variant ?? 'outlined'
+        }-${android?.dense ? 'dense' : 'standard'}`
       : undefined;
 
   return (
@@ -211,9 +253,11 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       anchorMode={presentation === 'embedded' ? 'inline' : 'headless'}
       visible={nativeVisible}
       haptics={haptics ?? ''}
+      minFieldHeight={minFieldHeight ?? 0}
+      fieldPaddingHorizontal={fieldPaddingHorizontal ?? -1}
       onSelect={onSelect ? handleSelect : undefined}
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
-      ios={ios}
+      ios={nativeIos}
       android={nativeAndroid}
       {...viewProps}
     />
