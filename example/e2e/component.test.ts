@@ -534,6 +534,26 @@ const adbPath = () =>
     ? `${process.env.ANDROID_HOME}/platform-tools/adb`
     : 'adb';
 
+// Android: taps the view showing `text` in any window, through adb. A
+// dropdown is a window without focus, which Espresso can't search, and it
+// opens above or below its field depending on the room there; the dump of
+// every window (--windows) finds it either way.
+const tapTextThroughAdb = (text: string) => {
+  const adb = `"${adbPath()}" -s ${device.id}`;
+  execSync(`${adb} shell uiautomator dump --windows /sdcard/pc-window.xml`);
+  const dump = execSync(`${adb} shell cat /sdcard/pc-window.xml`).toString();
+  const node = dump.match(
+    new RegExp(
+      `text="${text}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"`
+    )
+  );
+  if (!node) throw new Error(`No "${text}" on screen`);
+  const [left, top, right, bottom] = node.slice(1).map(Number);
+  const x = Math.round((left + right) / 2);
+  const y = Math.round((top + bottom) / 2);
+  execSync(`${adb} shell input tap ${x} ${y}`);
+};
+
 // A fixed clock, full battery and signal, no notification icons: the status
 // bars of recordings made for the README (E2E_CLEAN_STATUS_BAR=1, set by
 // scripts/generate-readme-gifs.sh) then match across flows and platforms.
@@ -969,6 +989,60 @@ describe('Platform Components Example', () => {
       await field.tapReturnKey();
       await pause(1500);
       await waitFor(field).toHaveText('New York').withTimeout(6000);
+    }
+  });
+
+  // The embedded menu as a form field: the iOS rounded rect and the Material
+  // dropdown, as wide and as tall as the text field above it, and taller
+  // with minFieldHeight
+  it('should test Selection Menu form field', async () => {
+    await selectDemo('Selection Menu');
+    await scrollToId('form-tall-switch');
+    const city = await frameOf(by.id('form-city'));
+    const state = await frameOf(by.id('form-state'));
+    if (Math.round(state.width) !== Math.round(city.width)) {
+      throw new Error(`Field widths ${city.width} and ${state.width}`);
+    }
+    // Android: the text field's testID is on its edit text, the menu's on
+    // the whole layout, which adds Material's floating label band
+    if (!isAndroid() && Math.round(state.height) !== Math.round(city.height)) {
+      throw new Error(`Field heights ${city.height} and ${state.height}`);
+    }
+
+    // Pick the first option through the field
+    if (isAndroid()) {
+      const field = element(
+        by.type('android.widget.EditText').withAncestor(by.id('form-state'))
+      ).atIndex(0);
+      await field.tap();
+      // Let the dropdown finish opening: a tap during its animation is lost
+      await pause(1500);
+      tapTextThroughAdb('Alabama');
+      // Espresso's checks hold the main thread; let the pick land first
+      await pause(1500);
+      await waitFor(field).toHaveText('Alabama').withTimeout(6000);
+    } else {
+      await element(by.id('form-state')).tap();
+      const option = element(
+        by.text('Alabama').withAncestor(by.type('_UIContextMenuContainerView'))
+      ).atIndex(0);
+      await waitFor(option).toBeVisible().withTimeout(5000);
+      await option.tap();
+      await waitFor(
+        element(by.text('Alabama').withAncestor(by.id('form-state')))
+      )
+        .toBeVisible()
+        .withTimeout(5000);
+    }
+
+    await element(by.id('form-tall-switch')).tap();
+    await pause(800);
+    const tall = await frameOf(by.id('form-state'));
+    if (tall.height <= state.height) {
+      throw new Error(`minFieldHeight left the menu at ${tall.height}`);
+    }
+    if (!isAndroid() && Math.round(tall.height) !== 50) {
+      throw new Error(`The taller iOS field is ${tall.height}pt, not 50`);
     }
   });
 

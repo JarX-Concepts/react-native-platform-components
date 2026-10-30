@@ -1,8 +1,9 @@
 // SelectionMenuDemo.tsx
 import React, { useMemo, useState } from 'react';
-import { Platform, Switch } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 import {
   SelectionMenu,
+  TextField,
   type AndroidMaterialMode,
   type SelectionMenuOption,
 } from 'react-native-platform-components';
@@ -103,6 +104,16 @@ export function SelectionMenuDemo(): React.JSX.Element {
 
   const [notify, setNotify] = useState<string | null>('push');
   const [notifyOpen, setNotifyOpen] = useState(false);
+
+  // A picker in a form, the same size as the text field above it
+  const [city, setCity] = useState('');
+  const [formState, setFormState] = useState<string | null>(null);
+  const [tallFields, setTallFields] = useState(false);
+  const [denseFields, setDenseFields] = useState(false);
+  // Taller than each platform's field: 34pt on iOS, 56dp on Android
+  const fieldHeight = tallFields
+    ? Platform.select({ ios: 50, default: 64 })
+    : undefined;
 
   const selectedLabel = useMemo(() => selected ?? 'None', [selected]);
 
@@ -315,6 +326,60 @@ export function SelectionMenuDemo(): React.JSX.Element {
           )}
         </Row>
       </Section>
+
+      <Section title="Form Field">
+        {/* iOS: the rounded rect box. Android: the Material 3 field */}
+        <View style={styles.form}>
+          <TextField
+            testID="form-city"
+            // The Material dropdown's placeholder is a floating label, as a
+            // TextField's label is
+            label={Platform.OS === 'android' ? 'City' : undefined}
+            placeholder={Platform.OS === 'android' ? undefined : 'City'}
+            value={city}
+            onChangeText={setCity}
+            minFieldHeight={fieldHeight}
+            android={{ dense: denseFields }}
+          />
+          <SelectionMenu
+            testID="form-state"
+            options={STATE_OPTIONS}
+            selected={formState}
+            placeholder="State"
+            presentation="embedded"
+            minFieldHeight={fieldHeight}
+            ios={{ borderStyle: 'roundedRect' }}
+            android={{ material: 'm3', dense: denseFields }}
+            onSelect={(data) => setFormState(data)}
+          />
+        </View>
+        <Divider />
+        <Row label="Taller">
+          <Switch
+            style={ui.alignEnd}
+            testID="form-tall-switch"
+            value={tallFields}
+            onValueChange={setTallFields}
+          />
+        </Row>
+        {Platform.OS === 'android' && (
+          <>
+            <Divider />
+            <Row label="Dense">
+              <Switch
+                style={ui.alignEnd}
+                testID="form-dense-switch"
+                value={denseFields}
+                onValueChange={setDenseFields}
+              />
+            </Row>
+          </>
+        )}
+      </Section>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  form: { gap: 8, padding: 12 },
+});

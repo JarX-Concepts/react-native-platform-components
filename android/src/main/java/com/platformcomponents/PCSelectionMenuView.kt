@@ -9,6 +9,7 @@ import android.text.InputType
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -51,6 +52,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   }
 
   companion object {
+    /** The system Spinner's minimum height: Material's touch target. */
+    private const val SPINNER_MIN_HEIGHT_DP = 48f
     private const val TAG = "PCSelectionMenu"
     private const val HEADLESS_GROUP_ID = 0
   }
@@ -76,6 +79,19 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   // Embedded M3 only: the field accepts typing and filters the options.
   var androidSearchable: Boolean = false
+
+  // Embedded M3 only: the exposed dropdown style.
+  var androidVariant: String = "outlined" // "outlined" | "filled"
+  var androidDense: Boolean = false
+
+  // Embedded: the field size in dp, as on TextField; 0 / negative = the widget's.
+  var minFieldHeight: Float = 0f
+  var fieldPaddingHorizontal: Float = -1f
+
+  /** The field's padding as its style set it, which the field size adjusts. */
+  private var stylePadding = IntArray(4)
+  /** The Spinner's minimum height without minFieldHeight (at least 48dp). */
+  private var spinnerStyleMinHeight = 0
 
   /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
   var haptics: String = ""
@@ -135,15 +151,17 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val unconstrainedHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     super.onMeasure(widthMeasureSpec, unconstrainedHeightSpec)
 
-    // Get intrinsic height from children, enforce minimum (which varies by mode)
-    // minimumHeight is set in buildInline() based on the material mode
-    val intrinsicHeight = measuredHeight.coerceAtLeast(minimumHeight)
+    val intrinsicHeight = measuredHeight
 
-    // For inline mode, always use intrinsic height to prevent clipping.
-    // React Native's Yoga doesn't know our content size, so it may pass
-    // constraints that would clip the content. We prioritize showing the
-    // full control over strictly respecting layout constraints.
-    setMeasuredDimension(measuredWidth, intrinsicHeight)
+    // A taller height from Yoga (an app's style height) is kept, and the
+    // field sits centered in it. A shorter one would clip the field, so the
+    // field's own height wins over it.
+    val exact = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY
+    val height = if (exact) maxOf(MeasureSpec.getSize(heightMeasureSpec), intrinsicHeight) else intrinsicHeight
+    if (height != intrinsicHeight) {
+      super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+    }
+    setMeasuredDimension(measuredWidth, height)
   }
 
   // Override requestLayout to handle React Native's layout timing.
@@ -167,9 +185,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     )
-    // Force layout with measured height - this overrides Yoga's assigned bounds
-    // to ensure the component isn't clipped
-    layout(left, top, right, top + measuredHeight)
+    // Force layout with at least the measured height - this overrides a
+    // shorter height from Yoga to ensure the component isn't clipped
+    layout(left, top, right, top + maxOf(height, measuredHeight))
   }
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -235,6 +253,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     inlineWidget.measure(widthSpec, heightSpec)
     val intrinsicWidthPx = inlineWidget.measuredWidth
     val intrinsicHeightPx = inlineWidget.measuredHeight
+
+    // Measure the widget again at the size it is laid out at, or a later
+    // layout pass places it at its natural width (a full-width field's box
+    // shrank to its text)
+    if (inlineWidget.width > 0 && inlineWidget.height > 0) {
+      inlineWidget.measure(
+        MeasureSpec.makeMeasureSpec(inlineWidget.width, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(inlineWidget.height, MeasureSpec.EXACTLY)
+      )
+    }
 
     val widthDp = PixelUtil.toDIPFromPixel(intrinsicWidthPx.toFloat())
     val rawHeightDp = PixelUtil.toDIPFromPixel(intrinsicHeightPx.toFloat())
@@ -357,6 +385,49 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3) rebuildUI()
   }
 
+  fun applyAndroidStyle(variant: String?, dense: Boolean) {
+    val newVariant = if (variant == "filled") "filled" else "outlined"
+    if (androidVariant == newVariant && androidDense == dense) return
+    androidVariant = newVariant
+    androidDense = dense
+    if (anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3) rebuildUI()
+  }
+
+  fun applyFieldSize(minHeight: Float, paddingHorizontal: Float) {
+    if (minFieldHeight == minHeight && fieldPaddingHorizontal == paddingHorizontal) return
+    minFieldHeight = minHeight
+    fieldPaddingHorizontal = paddingHorizontal
+    applyFieldMetrics()
+  }
+
+  /**
+   * minFieldHeight and fieldPaddingHorizontal, as TextField applies them: as
+   * padding on the field's text, so a taller field keeps its text centered
+   * (and Material's resting label level with it). The end keeps the style's
+   * padding, which leaves room for the dropdown arrow.
+   */
+  private fun applyFieldMetrics() {
+    val (start, top, end, bottom) = stylePadding
+    val horizontal =
+      if (fieldPaddingHorizontal >= 0) PixelUtil.toPixelFromDIP(fieldPaddingHorizontal).toInt() else start
+    inlineText?.let { field ->
+      var extra = 0
+      if (minFieldHeight > 0) {
+        // The height of one line, as the text's layout gives it
+        val metrics = field.paint.fontMetricsInt
+        val line = if (field.includeFontPadding) metrics.bottom - metrics.top else metrics.descent - metrics.ascent
+        extra = maxOf(0, PixelUtil.toPixelFromDIP(minFieldHeight).toInt() - (top + bottom + line))
+      }
+      field.setPaddingRelative(horizontal, top + extra / 2, end, bottom + extra - extra / 2)
+    }
+    inlineSpinner?.let { spinner ->
+      spinner.setPaddingRelative(horizontal, top, end, bottom)
+      spinner.minimumHeight =
+        if (minFieldHeight > 0) PixelUtil.toPixelFromDIP(minFieldHeight).toInt() else spinnerStyleMinHeight
+    }
+    requestLayout()
+  }
+
   /** The embedded M3 field takes typing to filter the options. */
   private val isSearchable: Boolean
     get() = androidSearchable && anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3
@@ -406,27 +477,30 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private fun buildInline() {
     val mode = parseMaterial(androidMaterial)
 
-    // Set minimum height based on mode - M3 TextInputLayout needs more space for floating label
-    val minHeightDp = if (mode == MaterialMode.M3) {
-      PCConstants.MIN_M3_TEXT_INPUT_HEIGHT_DP
-    } else {
-      PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP
-    }
-    minimumHeight = (minHeightDp * resources.displayMetrics.density).toInt()
+    // The widget's own height decides (minFieldHeight can raise it)
+    minimumHeight = 0
 
     if (mode == MaterialMode.M3) {
-      // M3 exposed dropdown menu - the standard Material 3 way
-      // Must set box background mode BEFORE setting endIconMode to avoid IllegalStateException
+      // M3 exposed dropdown menu - the standard Material 3 way. The style
+      // (outlined or filled, dense or not) comes from the textInputStyle of a
+      // theme overlay, and sets the box mode the dropdown icon needs.
       // Material widgets need a Material theme; fall back to Material 3 defaults instead of crashing.
-      val til = TextInputLayout(PCThemeSupport.materialContext(context, "SelectionMenu")).apply {
+      val base = PCThemeSupport.materialContext(context, "SelectionMenu")
+      val styleOverlay = when {
+        androidVariant == "filled" && androidDense -> R.style.PCSelectionMenu_Filled_Dense
+        androidVariant == "filled" -> R.style.PCSelectionMenu_Filled
+        androidDense -> R.style.PCSelectionMenu_Outlined_Dense
+        else -> R.style.PCSelectionMenu_Outlined
+      }
+      val til = TextInputLayout(ContextThemeWrapper(base, styleOverlay)).apply {
+        // The field fills the width it gets (its content's, unless the app
+        // sets one) and sits centered in a taller row
         layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
           FrameLayout.LayoutParams.WRAP_CONTENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
+          Gravity.CENTER_VERTICAL
         )
-        // Set box background mode first - required for END_ICON_DROPDOWN_MENU
-        boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         hint = placeholder
-        // Now safe to set the dropdown icon
         endIconMode = TextInputLayout.END_ICON_DROPDOWN_MENU
       }
 
@@ -518,6 +592,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       }
       addView(til)
       inlineLayout = til
+      stylePadding = intArrayOf(actv.paddingStart, actv.paddingTop, actv.paddingEnd, actv.paddingBottom)
     } else {
       // SYSTEM mode: Use custom Spinner with dropdown mode to ensure callbacks fire
       val sp = object : Spinner(context, null, android.R.attr.spinnerStyle, Spinner.MODE_DROPDOWN) {
@@ -609,14 +684,21 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       sp.apply {
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.WRAP_CONTENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
+          FrameLayout.LayoutParams.WRAP_CONTENT,
+          Gravity.CENTER_VERTICAL
         )
         visibility = View.VISIBLE
       }
 
       addView(sp)
       inlineSpinner = sp
+      stylePadding = intArrayOf(sp.paddingStart, sp.paddingTop, sp.paddingEnd, sp.paddingBottom)
+      // At least Material's 48dp touch target: the Spinner itself is only as
+      // tall as its text
+      spinnerStyleMinHeight =
+        maxOf(sp.minimumHeight, (SPINNER_MIN_HEIGHT_DP * resources.displayMetrics.density).toInt())
     }
+    applyFieldMetrics()
   }
 
   private fun buildHeadless() {

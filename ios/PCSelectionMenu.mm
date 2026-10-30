@@ -196,6 +196,20 @@ static inline NSString *ToNSString(const std::string &value) {
     _view.haptics.kind = [NSString stringWithUTF8String:newProps.haptics.c_str()];
   }
 
+  if (!prevProps || newProps.minFieldHeight != prevProps->minFieldHeight) {
+    _view.minFieldHeight = newProps.minFieldHeight;
+  }
+
+  if (!prevProps || newProps.fieldPaddingHorizontal != prevProps->fieldPaddingHorizontal) {
+    _view.fieldPaddingHorizontal = newProps.fieldPaddingHorizontal;
+  }
+
+  const auto &newIos = newProps.ios;
+  const auto &oldIos = prevProps ? prevProps->ios : PCSelectionMenuIosStruct{};
+  if (!prevProps || newIos.borderStyle != oldIos.borderStyle) {
+    _view.borderStyle = newIos.borderStyle == "roundedRect" ? @"roundedRect" : @"none";
+  }
+
   // android.material (plumbed through; iOS can ignore)
   const auto &newAndroid = newProps.android;
   const auto &oldAndroid =
