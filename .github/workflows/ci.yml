@@ -76,6 +76,7 @@ jobs:
 
   test-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       TURBO_CACHE_DIR: .turbo/android
@@ -216,6 +217,7 @@ jobs:
 
   test-ios:
     runs-on: macos-latest
+    timeout-minutes: 120
 
     env:
       XCODE_VERSION: 26.6
@@ -263,7 +265,10 @@ jobs:
       # its first minutes on widgets, wallpaper extensions, media analysis and
       # indexing, which pushed the load average past 500 and stalled single
       # Detox actions for minutes. Booting it now (the simulator Detox picks)
-      # puts that work under the builds instead of the flows.
+      # puts that work under the builds instead of the flows. It is shut down
+      # again before the tests: the runner has no swap, and a simulator kept up
+      # through the builds ran memory out ~45 minutes in, when the kernel
+      # killed CoreSimulatorService and the simulator with it.
       - name: Boot the simulator
         run: |
           sudo mdutil -a -i off || true
@@ -289,7 +294,9 @@ jobs:
           yarn workspace react-native-platform-components-example detox build --configuration ios.sim.release
           # The build service holds on to its memory after the build
           killall -9 SWBBuildService XCBBuildService 2>/dev/null || true
+          # Detox boots it again, past its first-boot work
           xcrun simctl bootstatus "$SIM_UDID"
+          xcrun simctl shutdown "$SIM_UDID"
 
       - name: Run Detox e2e tests (iOS)
         run: |

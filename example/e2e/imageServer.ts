@@ -75,6 +75,10 @@ export async function startImageServer() {
     server.once('error', reject);
     server.listen(18763, resolve);
   });
+  // A test that times out never reaches its close(); an open server would then
+  // keep Jest from exiting after the run.
+  server.unref();
+  server.on('connection', (socket) => socket.unref());
   return {
     requests,
     menuRequests,
