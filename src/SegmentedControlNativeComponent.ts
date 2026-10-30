@@ -122,6 +122,12 @@ export interface SegmentedControlProps extends ViewProps {
   /** Largest font scale the labels may reach; 0 = no cap. */
   maxFontSizeMultiplier?: Double;
 
+  /**
+   * Smallest height of the segments in points (dp), as drawn; negative =
+   * the platform's.
+   */
+  controlMinHeight?: Double;
+
   /** Badge background (default: system red). */
   badgeBackgroundColor?: ColorValue;
 

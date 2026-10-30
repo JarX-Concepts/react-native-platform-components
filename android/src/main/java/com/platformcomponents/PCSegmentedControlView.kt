@@ -85,6 +85,8 @@ class PCSegmentedControlView(context: Context) :
   var badgeBackgroundColor: Int? = null
   var badgeTextColor: Int? = null
   var maxFontSizeMultiplier: Float = 0f
+  /** Smallest visible height of the buttons in dp; negative = Material's (40dp). */
+  var controlMinHeight: Float = -1f
 
   /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
   var haptics: String = ""
@@ -101,6 +103,15 @@ class PCSegmentedControlView(context: Context) :
   /** Bumped on every rebuild so late image loads can't touch stale buttons. */
   private var rebuildGeneration = 0
 
+  // A height below the buttons' own (see fitButtons). Declared above init,
+  // which rebuilds the buttons.
+  /** The buttons' own height in px, with all their insets and padding. */
+  private var naturalHeight = 0
+  /** Vertical px currently taken out of every button. */
+  private var squeezed = 0
+  /** Each button's insetTop, insetBottom, paddingTop, paddingBottom as built. */
+  private val buttonVerticalDefaults: MutableMap<Int, IntArray> = mutableMapOf()
+
   // --- Native theme ---
   // Widgets read theme colors when they are created, so they are rebuilt when the
   // native theme changes (brand color, light/dark switch).
@@ -111,7 +122,6 @@ class PCSegmentedControlView(context: Context) :
   }
 
   init {
-    minimumHeight = (PCConstants.MIN_TOUCH_TARGET_HEIGHT_DP * resources.displayMetrics.density).toInt()
     // Badges overhang the button corner
     clipChildren = false
     clipToPadding = false
@@ -200,6 +210,12 @@ class PCSegmentedControlView(context: Context) :
     rebuildUI()
   }
 
+  fun applyControlMinHeight(value: Float) {
+    if (controlMinHeight == value) return
+    controlMinHeight = value
+    rebuildUI()
+  }
+
   fun applyLabelStyle(fontFamily: String, fontSize: Float, fontWeight: String, fontStyle: String) {
     if (labelFontFamily == fontFamily && labelFontSize == fontSize &&
       labelFontWeight == fontWeight && labelFontStyle == fontStyle
@@ -236,6 +252,9 @@ class PCSegmentedControlView(context: Context) :
     builtThemeVersion = PCNativeTheme.version
     removeAllViews()
     buttonIdToSegment.clear()
+    buttonVerticalDefaults.clear()
+    naturalHeight = 0
+    squeezed = 0
     rebuildGeneration += 1
     val generation = rebuildGeneration
 
@@ -245,8 +264,10 @@ class PCSegmentedControlView(context: Context) :
     // corners, the selected segment a pill) in place of the classic segmented buttons.
     val themedContext =
       if (expressive) ContextThemeWrapper(materialContext, R.style.PCExpressiveOverlay) else materialContext
+    // The group and its buttons fill the height Yoga gives this view (the
+    // buttons' own height unless the app sets one)
     val group = MaterialButtonToggleGroup(themedContext).apply {
-      layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+      layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
       isSingleSelection = true
       isSelectionRequired = selectionRequired
       clipChildren = false
@@ -284,6 +305,13 @@ class PCSegmentedControlView(context: Context) :
         setPaddingRelative(horizontalPadding, paddingTop, horizontalPadding, paddingBottom)
         iconPadding = ((if (useCompactMode) 4 else 8) * density).toInt()
 
+        if (controlMinHeight >= 0) {
+          // The visible height; Material's touch target insets stay around it
+          val height = (controlMinHeight * density).toInt() + insetTop + insetBottom
+          minHeight = height
+          minimumHeight = height
+        }
+
         if (iconOnly) {
           // Centre the icon instead of leaving it at the start edge
           iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
@@ -295,9 +323,11 @@ class PCSegmentedControlView(context: Context) :
       }
 
       buttonIdToSegment[button.id] = segment
+      buttonVerticalDefaults[button.id] =
+        intArrayOf(button.insetTop, button.insetBottom, button.paddingTop, button.paddingBottom)
       // Share the width equally (like UISegmentedControl) so trailing segments
       // never overflow the control; long labels ellipsize instead.
-      group.addView(button, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+      group.addView(button, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
       attachBadge(button, segment)
     }
 
@@ -497,24 +527,48 @@ class PCSegmentedControlView(context: Context) :
   // ---- Measurement ----
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    // Measure children with UNSPECIFIED height to get intrinsic size
-    val unconstrainedHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    super.onMeasure(widthMeasureSpec, unconstrainedHeightSpec)
-
-    // Get the intrinsic height from children
-    val childHeight = if (toggleGroup != null) {
-      toggleGroup!!.measuredHeight
-    } else {
-      0
+    // The buttons' own height, measured while nothing is taken out of them
+    if (squeezed == 0 || naturalHeight == 0) {
+      fitButtons(0)
+      super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+      naturalHeight = toggleGroup?.measuredHeight ?: 0
     }
 
-    // Use the maximum of child height and minimum touch target
-    val intrinsicHeight = childHeight.coerceAtLeast(minimumHeight)
+    // Then the height Yoga gave us (an app's style height included); the
+    // buttons fill it. Fabric may measure with 0 before the state is
+    // applied; keep the buttons' height then.
+    val exact = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY
+    val givenHeight = MeasureSpec.getSize(heightMeasureSpec)
+    val height = if (exact && givenHeight > 0) givenHeight else naturalHeight
+    fitButtons(maxOf(0, naturalHeight - height))
+    super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+    setMeasuredDimension(measuredWidth, height)
+  }
 
-    // IMPORTANT: Always use intrinsic height regardless of Yoga constraints.
-    // Fabric may give us 0 height initially before state is updated.
-    // The state update from onLayout will trigger proper re-layout.
-    setMeasuredDimension(measuredWidth, intrinsicHeight)
+  /**
+   * Takes [amount] px out of every button's height, from Material's touch
+   * target insets first. Past those, the vertical padding goes as well and
+   * the button's center gravity places the label, so it stays whole and
+   * centered when the control is shorter than its buttons.
+   */
+  private fun fitButtons(amount: Int) {
+    if (amount == squeezed) return
+    squeezed = amount
+    val group = toggleGroup ?: return
+    for (i in 0 until group.childCount) {
+      val button = group.getChildAt(i) as? MaterialButton ?: continue
+      val (insetTop, insetBottom, padTop, padBottom) = buttonVerticalDefaults[button.id] ?: continue
+      val insetCut = minOf(amount, insetTop + insetBottom)
+      val padCut = if (amount > insetCut) padTop + padBottom else 0
+      button.insetTop = insetTop - insetCut / 2
+      button.insetBottom = insetBottom - (insetCut - insetCut / 2)
+      button.setPaddingRelative(
+        button.paddingStart,
+        padTop - padCut / 2,
+        button.paddingEnd,
+        padBottom - (padCut - padCut / 2)
+      )
+    }
   }
 
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -536,7 +590,17 @@ class PCSegmentedControlView(context: Context) :
     group.measure(widthSpec, heightSpec)
 
     val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
-    val heightDp = PixelUtil.toDIPFromPixel(group.measuredHeight.toFloat())
+    // The buttons' own height, even while they are squeezed into less
+    val heightPx = if (squeezed > 0 && naturalHeight > 0) naturalHeight else group.measuredHeight
+    val heightDp = PixelUtil.toDIPFromPixel(heightPx.toFloat())
+
+    // Measure the group again at the size it is laid out at
+    if (group.width > 0 && group.height > 0) {
+      group.measure(
+        MeasureSpec.makeMeasureSpec(group.width, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(group.height, MeasureSpec.EXACTLY)
+      )
+    }
 
     // Only update if changed
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {

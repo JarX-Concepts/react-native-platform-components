@@ -223,6 +223,10 @@ static UIFont *FontFromLabelStyle(
     _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
+  if (!prevProps || newProps.controlMinHeight != prevProps->controlMinHeight) {
+    _view.controlMinHeight = newProps.controlMinHeight;
+  }
+
   if (!prevProps || newProps.badgeBackgroundColor != prevProps->badgeBackgroundColor) {
     _view.badgeBackgroundColor = RCTUIColorFromSharedColor(newProps.badgeBackgroundColor);
   }
@@ -264,6 +268,18 @@ static UIFont *FontFromLabelStyle(
   PCSegmentedControlStateFrameSize next;
   next.frameSize = {(Float)size.width, (Float)size.height};
   _state->updateState(std::move(next));
+}
+
+#pragma mark - Touch target
+
+// The control can be shorter than 44pt (UIKit's own height), and
+// PCSegmentedControlView takes taps up to 44pt tall; let those through this
+// view's bounds as well. The parent still has to contain the point.
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+  if ([super pointInside:point withEvent:event]) {
+    return YES;
+  }
+  return [_view pointInside:[self convertPoint:point toView:_view] withEvent:event];
 }
 
 @end

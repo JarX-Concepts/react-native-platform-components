@@ -1,13 +1,6 @@
 // SegmentedControl.tsx
 import React, { useCallback, useMemo } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  type ColorValue,
-  type StyleProp,
-  type ViewProps,
-  type ViewStyle,
-} from 'react-native';
+import { Platform, type ColorValue, type ViewProps } from 'react-native';
 
 import NativeSegmentedControl, {
   type SegmentedControlSegment as NativeSegment,
@@ -22,11 +15,6 @@ import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import type { Haptics } from './haptics';
 import type { AndroidMaterialStyle } from './sharedTypes';
 import { warnSelectionIdentifiers } from './selectionIdentifiers';
-
-// Android: Minimum height to ensure visibility.
-// Fabric's shadow node measurement isn't being called on initial render,
-// so we apply a minHeight that matches Material design touch target guidelines.
-const ANDROID_MIN_HEIGHT = 48;
 
 /** A single icon source. Alias of {@link PlatformIconSource}. */
 export type SegmentedControlIconSource = PlatformIconSource;
@@ -157,6 +145,17 @@ export interface SegmentedControlProps extends ViewProps {
   badgeStyle?: SegmentedControlBadgeStyle;
 
   /**
+   * Smallest height of the segments in points (dp), as drawn. Default: the
+   * platform's own height (about 32 on iOS; 40 on Android, inside Material's
+   * 48dp touch target). A `style` height also sizes the control.
+   *
+   * iOS: the `UISegmentedControl` is at least this tall. Taps within 44pt
+   * reach a shorter control either way. Android: the buttons' height, with
+   * Material's touch target insets above and below.
+   */
+  minHeight?: number;
+
+  /**
    * iOS-specific configuration
    */
   ios?: {
@@ -228,6 +227,7 @@ export function SegmentedControl(
     labelStyle,
     maxFontSizeMultiplier,
     badgeStyle,
+    minHeight,
     haptics,
     onSelect,
     onDeselect,
@@ -303,17 +303,9 @@ export function SegmentedControl(
     };
   }, [android]);
 
-  // Merge user style with Android minHeight default
-  const mergedStyle = useMemo((): StyleProp<ViewStyle> => {
-    if (Platform.OS === 'android') {
-      return [styles.androidDefault, style];
-    }
-    return style;
-  }, [style]);
-
   return (
     <NativeSegmentedControl
-      style={mergedStyle}
+      style={style}
       segments={nativeSegments}
       selectedValue={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
@@ -325,6 +317,7 @@ export function SegmentedControl(
       androidStrokeColor={android?.strokeColor}
       labelStyle={nativeLabelStyle}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
+      controlMinHeight={minHeight ?? -1}
       badgeBackgroundColor={badgeStyle?.backgroundColor}
       badgeTextColor={badgeStyle?.color}
       haptics={haptics ?? ''}
@@ -335,9 +328,3 @@ export function SegmentedControl(
     />
   );
 }
-
-const styles = StyleSheet.create({
-  androidDefault: {
-    minHeight: ANDROID_MIN_HEIGHT,
-  },
-});

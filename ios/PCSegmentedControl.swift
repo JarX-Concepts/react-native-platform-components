@@ -104,6 +104,9 @@ public final class PCSegmentedControlView: UIControl {
     /// Badge text color; nil = white
     public var badgeTextColor: UIColor? { didSet { updateBadgeColors() } }
 
+    /// Smallest height of the control in points; negative = UIKit's own
+    public var controlMinHeight: CGFloat = -1
+
     /// The `haptics` prop; PCSegmentedControl.mm plays it on a user selection
     public let haptics = PCHaptics()
 
@@ -397,23 +400,45 @@ public final class PCSegmentedControlView: UIControl {
         control.setTitleTextAttributes(selected.isEmpty ? nil : selected, for: .selected)
     }
 
+    // MARK: - Touch target
+
+    /// The control is drawn at UIKit's height (about 32pt) unless the app asks
+    /// for more, so taps up to 44pt tall (Apple's minimum) still reach it: a
+    /// touch above or below a short control goes to the segment under it.
+    public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let slop = max(0, (PCConstants.minTouchTargetHeight - bounds.height) / 2)
+        return bounds.insetBy(dx: 0, dy: -slop).contains(point)
+    }
+
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hit = super.hitTest(point, with: event)
+        // A point in the slop above or below lands on this view: hit-test
+        // the control at the same x, just inside its edge
+        guard hit === self else { return hit }
+        let y = min(max(point.y, 1), max(1, bounds.height - 1))
+        return control.hitTest(convert(CGPoint(x: point.x, y: y), to: control), with: event) ?? hit
+    }
+
     // MARK: - Sizing
+
+    /// UIKit's height for the control, or `controlMinHeight` when taller. The
+    /// control fills this view, so a taller `style` height draws taller
+    /// segments too.
+    private func height(fitting fitted: CGSize) -> CGFloat {
+        max(ceil(fitted.height), controlMinHeight)
+    }
 
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
         let fitted = control.sizeThatFits(CGSize(width: size.width, height: .greatestFiniteMagnitude))
         return CGSize(
             width: size.width > 0 ? size.width : fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
+            height: height(fitting: fitted)
         )
     }
 
-    public override var intrinsicContentSize: CGSize {
-        let fitted = control.intrinsicContentSize
-        return CGSize(
-            width: fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
-        )
-    }
+    // No intrinsicContentSize: the control is pinned to this view, so an
+    // intrinsic height would become a constraint that holds the control at
+    // that height whatever size Yoga gives the view.
 
     /// Called by the measuring pipeline to get the size for Yoga layout.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
@@ -423,7 +448,7 @@ public final class PCSegmentedControlView: UIControl {
         )
         return CGSize(
             width: constrainedSize.width > 0 ? constrainedSize.width : fitted.width,
-            height: max(PCConstants.minTouchTargetHeight, fitted.height)
+            height: height(fitting: fitted)
         )
     }
 }

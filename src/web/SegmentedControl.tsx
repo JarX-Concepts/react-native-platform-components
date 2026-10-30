@@ -26,6 +26,7 @@ export function SegmentedControl(
     labelStyle,
     maxFontSizeMultiplier,
     badgeStyle,
+    minHeight,
     ios,
     android,
     style,
@@ -78,7 +79,8 @@ export function SegmentedControl(
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              minHeight: 28,
+              // Inside the control's 2px padding: 32 tall by default
+              minHeight: Math.max(28, (minHeight ?? 0) - 4),
               padding: '0 12px',
               border: 'none',
               borderRadius: 7,
