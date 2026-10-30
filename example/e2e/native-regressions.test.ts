@@ -1,6 +1,12 @@
 import { expect } from 'detox';
 import { expect as jestExpect } from '@jest/globals';
-import { isAndroid, pause, selectDemo, selectMenuOption } from './testHelpers';
+import {
+  isAndroid,
+  pause,
+  selectDemo,
+  selectMenuOption,
+  shardIt,
+} from './testHelpers';
 import { startImageServer } from './imageServer';
 import { expectImageColors } from './imageAssertions';
 
@@ -37,6 +43,8 @@ const expectSelected = async (
 };
 
 describe('Native regression cases', () => {
+  const it = shardIt(globalThis.it);
+
   beforeEach(async () => {
     // A fresh process also empties the native image cache so the accessory
     // test continues to exercise asynchronous loads on repeated runs.

@@ -2,6 +2,21 @@ import { expect } from 'detox';
 
 export const isAndroid = () => device.getPlatform() === 'android';
 
+/**
+ * CI splits the iOS flows across parallel jobs, each on a runner of its own:
+ * with E2E_SHARD="2/3" a test file runs every third test from the second on
+ * and skips the rest. Unset, every test runs.
+ */
+export const shardIt = (test: jest.It): jest.It => {
+  const [index, count] = (process.env.E2E_SHARD ?? '1/1')
+    .split('/')
+    .map(Number);
+  let next = 0;
+  const sharded = (...args: Parameters<jest.It>) =>
+    (next++ % count === index - 1 ? test : test.skip)(...args);
+  return Object.assign(sharded, test);
+};
+
 export const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 

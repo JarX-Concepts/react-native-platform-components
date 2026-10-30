@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { expect } from 'detox';
+import { shardIt } from './testHelpers';
 
 const isAndroid = () => device.getPlatform() === 'android';
 
@@ -591,6 +592,7 @@ const liftField = async (fieldId: string, anchorId = fieldId) => {
 };
 
 describe('Platform Components Example', () => {
+  const it = shardIt(globalThis.it);
   const itOnIOS = isAndroid() ? it.skip : it;
 
   beforeAll(async () => {
@@ -615,11 +617,27 @@ describe('Platform Components Example', () => {
   });
 
   beforeEach(async () => {
-    await device.reloadReactNative();
-    // Wait for app to fully load - look for a common element
-    await waitFor(element(by.text('BASICS')))
-      .toBeVisible()
-      .withTimeout(5000);
+    const appReady = () =>
+      // Wait for app to fully load - look for a common element
+      waitFor(element(by.text('BASICS')))
+        .toBeVisible()
+        .withTimeout(5000);
+    try {
+      await device.reloadReactNative();
+      await appReady();
+    } catch (error) {
+      // The app lost its Detox connection (a freshly booted CI emulator can
+      // restart adbd, dropping the adb reverse port) or a failed flow left it
+      // stuck. Without a new process every later flow fails too.
+      console.warn(`Relaunching the app after a failed reload: ${error}`);
+      if (!isAndroid()) {
+        // The CI runner has also shut the whole simulator down; boot it again
+        // (a no-op when it is still up) and wait until it accepts the launch
+        execSync(`xcrun simctl bootstatus ${device.id} -b`);
+      }
+      await device.launchApp({ newInstance: true });
+      await appReady();
+    }
   });
 
   // The first flow runs on a simulator that is still cold, and CI's iOS
@@ -1199,9 +1217,11 @@ describe('Platform Components Example', () => {
       ['unmount', 'unmounted by the app'],
     ] as const) {
       await element(by.id(`actionsheet-timer-${mode}`)).tap();
-      await openSheet();
-      await waitForSheetToClose();
+      // Not openSheet(): the app takes the sheet away 2 s after it opens, and
+      // on a loaded CI runner the tap alone has taken that long
+      await element(by.id('actionsheet-open')).tap();
       await expectText('actionsheet-last-event', event);
+      await waitForSheetToClose();
     }
     await element(by.id('actionsheet-timer-off')).tap();
     await openSheet();
