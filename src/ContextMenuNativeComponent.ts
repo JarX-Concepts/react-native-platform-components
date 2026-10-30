@@ -46,6 +46,8 @@ export type ContextMenuItem = Readonly<{
   haptics: string;
   /** Test identifier of the menu row; '' = none */
   testID: string;
+  /** Submenus and sections: '' | 'small' | 'medium' | 'large' (iOS 16+) */
+  elementSize: string;
 }>;
 
 /**

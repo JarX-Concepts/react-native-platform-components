@@ -29,6 +29,9 @@ export interface ContextMenuActionAttributes {
   keepsMenuPresented?: boolean;
 }
 
+/** Layout of a submenu's or section's actions. See `preferredElementSize`. */
+export type MenuElementSize = 'small' | 'medium' | 'large';
+
 /**
  * A single action in a menu. An action with `subactions` is a submenu, or an
  * inline section with `displayInline`.
@@ -69,6 +72,20 @@ export interface ContextMenuAction {
    * - Android: a menu group with group dividers; the title is not shown.
    */
   displayInline?: boolean;
+  /**
+   * How a submenu or inline section lays out its actions (iOS 16+,
+   * `UIMenu.preferredElementSize`):
+   *
+   * - `'large'` (default): one action per row, with its title.
+   * - `'medium'`: up to four actions side by side, each an icon over its
+   *   title, as a row of quick actions at the top of a menu.
+   * - `'small'`: up to four actions side by side as icons only, as the
+   *   Cut / Copy / Paste row of a text menu.
+   *
+   * Give the actions icons for `'medium'` and `'small'`. Ignored before
+   * iOS 16, and on Android, where Material menus list one action per row.
+   */
+  preferredElementSize?: MenuElementSize;
   /**
    * Test identifier of the action's menu row, so UI tests (Detox `by.id`)
    * find it without its title. A submenu's row takes one too; an inline
@@ -111,6 +128,8 @@ export type NativeMenuItem = {
   haptics: string;
   /** Test identifier of the menu row; '' = none */
   testID: string;
+  /** Submenus and sections: '' (the default) | 'small' | 'medium' | 'large' */
+  elementSize: string;
 };
 
 const flag = (value: boolean | undefined) => (value ? 'true' : 'false');
@@ -154,6 +173,8 @@ export function flattenMenuActions(
         state: action.state ?? '',
         haptics: action.haptics ?? '',
         testID: action.testID ?? '',
+        elementSize:
+          kind === 'action' ? '' : (action.preferredElementSize ?? ''),
       });
 
       if (kind !== 'action') visit(children, index);

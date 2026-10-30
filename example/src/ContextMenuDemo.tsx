@@ -156,6 +156,85 @@ const SECTION_ACTIONS: ContextMenuAction[] = [
   },
 ];
 
+// A channel header's menu, as in Slack: a row of quick actions side by side
+// (preferredElementSize 'medium', iOS 16+), the channel's settings with
+// their values, and a row of icon-only actions ('small')
+const CHANNEL_ACTIONS: ContextMenuAction[] = [
+  {
+    id: 'channel-quick',
+    title: '',
+    displayInline: true,
+    preferredElementSize: 'medium',
+    subactions: [
+      {
+        id: 'channel-add',
+        title: 'Add',
+        testID: 'menu-channel-add',
+        image: { ios: 'person.badge.plus', android: 'add' },
+      },
+      {
+        id: 'channel-move',
+        title: 'Move',
+        image: { ios: 'folder', android: 'archive' },
+      },
+      {
+        id: 'channel-search',
+        title: 'Search',
+        image: { ios: 'magnifyingglass', android: 'search' },
+      },
+    ],
+  },
+  {
+    id: 'channel-settings',
+    title: '',
+    displayInline: true,
+    subactions: [
+      {
+        id: 'channel-members',
+        title: 'Members',
+        subtitle: '5',
+        image: { ios: 'person.2', android: 'person' },
+      },
+      {
+        id: 'channel-notifications',
+        title: 'Notifications',
+        subtitle: 'All new messages',
+        image: { ios: 'bell', android: 'notifications' },
+      },
+      {
+        id: 'channel-tabs',
+        title: 'Tabs',
+        subtitle: '3',
+        image: { ios: 'square.grid.2x2', android: 'grid_view' },
+      },
+    ],
+  },
+  {
+    id: 'channel-more',
+    title: '',
+    displayInline: true,
+    preferredElementSize: 'small',
+    subactions: [
+      {
+        id: 'channel-copy-link',
+        title: 'Copy Link',
+        testID: 'menu-channel-copy-link',
+        image: { ios: 'link', android: 'content_copy' },
+      },
+      {
+        id: 'channel-share',
+        title: 'Share',
+        image: { ios: 'square.and.arrow.up', android: 'share' },
+      },
+      {
+        id: 'channel-star',
+        title: 'Star',
+        image: { ios: 'star', android: 'star' },
+      },
+    ],
+  },
+];
+
 // The upload card's sources, opened from its own Choose button
 const SOURCE_ACTIONS: ContextMenuAction[] = [
   {
@@ -524,6 +603,25 @@ export function ContextMenuDemo(): React.JSX.Element {
         </Row>
       </Section>
 
+      <Section title="Quick Actions Row">
+        <Row label="Channel">
+          <ContextMenu
+            testID="context-menu-channel"
+            actions={CHANNEL_ACTIONS}
+            disabled={disabled}
+            haptics={haptics}
+            trigger="tap"
+            onPressAction={handleAction}
+            style={styles.fullFlex}
+          >
+            <View style={styles.demoBox}>
+              <Text style={styles.channelTitle}># concept-plans</Text>
+              <Text style={styles.demoText}>5 members • 3 tabs</Text>
+            </View>
+          </ContextMenu>
+        </Row>
+      </Section>
+
       {/* The content's own buttons keep their taps in both modes */}
       <Section title="Buttons Inside">
         {/* A tap on Like goes to Like; a long press anywhere, on Like too,
@@ -656,4 +754,5 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fullFlex: { flex: 1 },
+  channelTitle: { fontSize: 15, fontWeight: '600', color: '#333' },
 });

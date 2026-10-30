@@ -23,6 +23,8 @@ struct PCMenuItem {
     let haptics: String
     /// Test identifier of the menu row; "" = none
     let testID: String
+    /// Submenus and sections: "" | "small" | "medium" | "large"
+    let elementSize: String
 
     init(
         index: Int,
@@ -38,7 +40,8 @@ struct PCMenuItem {
         keepsMenuPresented: Bool = false,
         state: String = "",
         haptics: String = "",
-        testID: String = ""
+        testID: String = "",
+        elementSize: String = ""
     ) {
         self.index = index
         self.id = id
@@ -54,6 +57,7 @@ struct PCMenuItem {
         self.state = state
         self.haptics = haptics
         self.testID = testID
+        self.elementSize = elementSize
     }
 
     /// Reads an item bridged from ObjC++ as a dictionary (see PCMenuItems.h).
@@ -73,7 +77,8 @@ struct PCMenuItem {
             keepsMenuPresented: string("keepsMenuPresented") == "true",
             state: string("state"),
             haptics: string("haptics"),
-            testID: string("testID")
+            testID: string("testID"),
+            elementSize: string("elementSize")
         )
     }
 }
@@ -172,6 +177,9 @@ enum PCMenuSupport {
                     )
                     if !item.subtitle.isEmpty { menu.subtitle = item.subtitle }
                     if !item.testID.isEmpty { menu.accessibilityIdentifier = item.testID }
+                    if #available(iOS 16.0, *), let size = elementSize(item.elementSize) {
+                        menu.preferredElementSize = size
+                    }
                     return menu
                 default:
                     return action(for: item, imageState: imageState, onImageLoaded: onImageLoaded, handler: handler)
@@ -180,6 +188,17 @@ enum PCMenuSupport {
         }
 
         return build(-1)
+    }
+
+    /// The `preferredElementSize` of a submenu or section; nil keeps UIKit's
+    @available(iOS 16.0, *)
+    static func elementSize(_ value: String) -> UIMenu.ElementSize? {
+        switch value {
+        case "small": return .small
+        case "medium": return .medium
+        case "large": return .large
+        default: return nil
+        }
     }
 
     static func action(

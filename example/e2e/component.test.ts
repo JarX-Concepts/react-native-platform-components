@@ -1248,6 +1248,30 @@ describe('Platform Components Example', () => {
     await expectText('tap-inner-count', 'Saved 1 · Pinned 1');
   });
 
+  // A section of side-by-side quick actions (preferredElementSize 'medium')
+  // and one of icon-only actions ('small'), picked by their test IDs. Android
+  // lists the same actions one per row.
+  it('should test Context Menu quick actions row', async () => {
+    await selectDemo('Context Menu');
+    await scrollToId('context-menu-channel');
+    await element(by.id('context-menu-channel')).tap();
+    await waitFor(element(by.id('menu-channel-add')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('menu-channel-add')).tap();
+    await expectFieldText('last-action-field', 'Add (channel-add)');
+    await waitForMenuClosed(() =>
+      expect(element(by.id('menu-channel-add'))).not.toBeVisible()
+    );
+
+    await element(by.id('context-menu-channel')).tap();
+    await waitFor(element(by.id('menu-channel-copy-link')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await element(by.id('menu-channel-copy-link')).tap();
+    await expectFieldText('last-action-field', 'Copy Link (channel-copy-link)');
+  });
+
   it('should test Action Sheet functionality', async () => {
     await selectDemo('Action Sheet');
     await expect(element(by.id('actionsheet-open'))).toBeVisible();

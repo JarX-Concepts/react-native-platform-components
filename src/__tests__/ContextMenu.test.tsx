@@ -111,6 +111,7 @@ describe('flattenMenuActions', () => {
       state: '',
       haptics: '',
       testID: '',
+      elementSize: '',
     });
     expect(count).toMatchObject({
       subtitle: 'By one',
@@ -127,6 +128,36 @@ describe('flattenMenuActions', () => {
       iconUri: 'https://x/trash.png',
       iconScale: 2,
     });
+  });
+
+  it('passes the element size of submenus and sections only', () => {
+    const items = flattenMenuActions([
+      {
+        id: 'quick',
+        title: '',
+        displayInline: true,
+        preferredElementSize: 'medium',
+        subactions: [
+          { id: 'add', title: 'Add', image: 'plus' },
+          { id: 'move', title: 'Move', image: 'folder' },
+        ],
+      },
+      {
+        id: 'more',
+        title: 'More',
+        preferredElementSize: 'small',
+        subactions: [{ id: 'x', title: 'X' }],
+      },
+      { id: 'plain', title: 'Plain' },
+    ]);
+    expect(items.map((i) => [i.id, i.elementSize])).toEqual([
+      ['quick', 'medium'],
+      ['add', ''],
+      ['move', ''],
+      ['more', 'small'],
+      ['x', ''],
+      ['plain', ''],
+    ]);
   });
 
   it('resolves string images to drawables on Android', () => {
