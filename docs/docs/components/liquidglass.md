@@ -139,12 +139,20 @@ Changes inside a container that's on screen animate, so the glass morphs instead
 - **A `LiquidGlass` appears:** its glass materializes (UIKit animates `effect` from `nil` to a `UIGlassEffect` in an animation block), and grows out of the neighbours it merges with.
 - **A `LiquidGlass` goes away:** React removes the view at once, so a copy of its glass stays in the container and dematerializes in its place. At the edge of the container, the copy shrinks into the neighbour it was merged with.
 - **A `LiquidGlass` changes frame** (it widens, or moves because a sibling came or went): the new frame is applied in a spring animation, which reshapes the merged glass. The container animates its own size the same way, since it clips the glass near its bounds.
+- **A `LiquidGlass` changes corners** (`cornerStyle` or `cornerRadius`): the new corners animate with the frame, so a capsule that grows into a card rounds into the card's corners. [GlassDisclosure](/components/glassdisclosure) is built on this.
 
 | iOS 26: a button appears, then the first one widens |
 | --- |
 | ![A third glass button materializing out of the group, then the first button widening into a Favorite label while the others slide over](/img/components/liquidglass/container-morph-ios.webp) |
 
-Glass that arrives with the container (the first render, or a screen that comes back) appears without an animation. Only the glass itself morphs: the React content inside a `LiquidGlass` takes its new layout at once. A new `spacing` applies without an animation.
+Glass that arrives with the container (the first render, or a screen that comes back) appears without an animation, unless it starts with `ios.effect: 'none'`: then it materializes when it gets an effect. Only the glass itself morphs: the React content inside a `LiquidGlass` takes its new layout at once. A new `spacing` applies without an animation.
+
+**Keep the container in place.** Glass that changes frame while it is detached from its container jumps to the new frame instead of morphing, and Fabric detaches views more often than the React tree suggests:
+
+- a view inserted ahead of the container (a backdrop rendered only while something is open) makes Fabric move the container;
+- a view whose children Fabric flattens into its parent stops being flattened when a prop such as `accessibilityViewIsModal`, `pointerEvents` (`'none'` or `'box-only'`), `opacity` or `importantForAccessibility` changes, and Fabric moves its children into the new native view.
+
+Keep such views mounted, and give the ones whose props change `collapsable={false}`, from the container up to the screen. Check the morph in a Release build: a Debug build's slower mounting can hide the jump.
 
 ### Fallback
 

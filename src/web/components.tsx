@@ -9,6 +9,7 @@ import { DatePicker as DefaultDatePicker } from './DatePicker';
 import { DateRangePicker as DefaultDateRangePicker } from './DateRangePicker';
 import { Dialog as DefaultDialog } from './Dialog';
 import { FloatingActionButton as DefaultFloatingActionButton } from './FloatingActionButton';
+import { GlassDisclosure as DefaultGlassDisclosure } from './GlassDisclosure';
 import { NavigationRail as DefaultNavigationRail } from './NavigationRail';
 import { SegmentedControl as DefaultSegmentedControl } from './SegmentedControl';
 import { SelectionMenu as DefaultSelectionMenu } from './SelectionMenu';
@@ -82,6 +83,8 @@ export const ContextMenu: WebComponents['ContextMenu'] = withWebComponent(
 );
 export const FloatingToolbar: WebComponents['FloatingToolbar'] =
   withWebComponent('FloatingToolbar', DefaultFloatingToolbar);
+export const GlassDisclosure: WebComponents['GlassDisclosure'] =
+  withWebComponent('GlassDisclosure', DefaultGlassDisclosure);
 export const LiquidGlass: WebComponents['LiquidGlass'] = withWebComponent(
   'LiquidGlass',
   DefaultLiquidGlass

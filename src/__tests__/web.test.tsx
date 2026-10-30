@@ -19,6 +19,7 @@ import {
   DateRangePicker,
   Dialog,
   FloatingActionButton,
+  GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
@@ -1002,5 +1003,60 @@ describe('icons (web)', () => {
     webIcon({ type: 'image', source: trashPng });
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+describe('GlassDisclosure (web)', () => {
+  type KeyListener = (event: { key: string }) => void;
+  const listeners = new Set<KeyListener>();
+  const fakeDocument = {
+    addEventListener: (_type: string, listener: KeyListener) =>
+      listeners.add(listener),
+    removeEventListener: (_type: string, listener: KeyListener) =>
+      listeners.delete(listener),
+  };
+  const globals = globalThis as { document?: unknown };
+  let previous: unknown;
+
+  beforeEach(() => {
+    previous = globals.document;
+    globals.document = fakeDocument;
+  });
+
+  afterEach(() => {
+    globals.document = previous;
+    listeners.clear();
+  });
+
+  it('opens a card from the pill, and Escape asks to close it', async () => {
+    const onExpandedChange = jest.fn();
+    const element = (expanded: boolean) => (
+      <GlassDisclosure
+        testID="card"
+        expanded={expanded}
+        onExpandedChange={onExpandedChange}
+        title="concept-plans"
+      />
+    );
+    const tree = render(element(false));
+    // The Reduce Motion setting arrives asynchronously
+    await act(async () => {});
+    const pill = tree.root.find(
+      (node) =>
+        node.props.testID === 'card-pill' &&
+        typeof node.props.onPress === 'function'
+    );
+    act(() => pill.props.onPress());
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+    expect(listeners.size).toBe(0);
+
+    act(() => tree.update(element(true)));
+    expect(listeners.size).toBe(1);
+    act(() => listeners.forEach((listener) => listener({ key: 'Escape' })));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+
+    act(() => tree.update(element(false)));
+    expect(listeners.size).toBe(0);
+    act(() => tree.unmount());
   });
 });

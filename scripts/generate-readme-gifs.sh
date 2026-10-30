@@ -60,7 +60,7 @@ newest_recording() {
     newest_flow "$1" "$2 functionality"
 }
 
-# Locate the 29 video files (LiquidGlass is iOS-only)
+# Locate the 31 video files (LiquidGlass is iOS-only)
 IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
 IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
 IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
@@ -74,6 +74,7 @@ IOS_NAVIGATIONRAIL=$(newest_recording ios.sim.release "Navigation Rail")
 IOS_BUTTON=$(newest_recording ios.sim.release "Button")
 IOS_FAB=$(newest_recording ios.sim.release "Floating Action Button")
 IOS_FLOATINGTOOLBAR=$(newest_recording ios.sim.release "Floating Toolbar")
+IOS_GLASSDISCLOSURE=$(newest_recording ios.sim.release "Glass Disclosure")
 IOS_LIQUIDGLASS=$(newest_recording ios.sim.release "Liquid Glass")
 IOS_THEME=$(newest_recording ios.sim.release "Theme")
 ANDROID_TEXTFIELD=$(newest_recording android.emu.release "Text Field")
@@ -89,17 +90,18 @@ ANDROID_NAVIGATIONRAIL=$(newest_recording android.emu.release "Navigation Rail")
 ANDROID_BUTTON=$(newest_recording android.emu.release "Button")
 ANDROID_FAB=$(newest_recording android.emu.release "Floating Action Button")
 ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar")
+ANDROID_GLASSDISCLOSURE=$(newest_recording android.emu.release "Glass Disclosure")
 ANDROID_THEME=$(newest_recording android.emu.release "Theme")
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_THEME"; do
+for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_GLASSDISCLOSURE" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_GLASSDISCLOSURE" "$ANDROID_THEME"; do
     if [ -z "$f" ] || [ ! -f "$f" ]; then
         echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 29 videos found!"
+echo "All 31 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -192,7 +194,7 @@ dialog_trim() {
     echo "${trim:-3}"
 }
 
-# Convert all 29 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 31 videos to GIFs (LiquidGlass is iOS-only)
 convert_to_gif "$IOS_TEXTFIELD" "$ASSETS_DIR/ios-textfield.gif" "$(navigation_trim "$IOS_TEXTFIELD")"
 convert_to_gif "$ANDROID_TEXTFIELD" "$ASSETS_DIR/android-textfield.gif" "$(navigation_trim "$ANDROID_TEXTFIELD" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
@@ -207,6 +209,7 @@ convert_to_gif "$IOS_NAVIGATIONRAIL" "$ASSETS_DIR/ios-navigationrail.gif" "$(nav
 convert_to_gif "$IOS_BUTTON" "$ASSETS_DIR/ios-button.gif" "$(navigation_trim "$IOS_BUTTON")"
 convert_to_gif "$IOS_FAB" "$ASSETS_DIR/ios-floatingactionbutton.gif" "$(navigation_trim "$IOS_FAB")"
 convert_to_gif "$IOS_FLOATINGTOOLBAR" "$ASSETS_DIR/ios-floatingtoolbar.gif" "$(navigation_trim "$IOS_FLOATINGTOOLBAR")"
+convert_to_gif "$IOS_GLASSDISCLOSURE" "$ASSETS_DIR/ios-glassdisclosure.gif" "$(navigation_trim "$IOS_GLASSDISCLOSURE")"
 convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")" 15
 convert_to_gif "$IOS_THEME" "$ASSETS_DIR/ios-theme.gif" "$(navigation_trim "$IOS_THEME")"
 # The Android flows start on the app reloading, a few seconds on a slow emulator
@@ -222,6 +225,7 @@ convert_to_gif "$ANDROID_NAVIGATIONRAIL" "$ASSETS_DIR/android-navigationrail.gif
 convert_to_gif "$ANDROID_BUTTON" "$ASSETS_DIR/android-button.gif" "$(navigation_trim "$ANDROID_BUTTON" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_FAB" "$ASSETS_DIR/android-floatingactionbutton.gif" "$(navigation_trim "$ANDROID_FAB" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.gif" "$(navigation_trim "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_GLASSDISCLOSURE" "$ASSETS_DIR/android-glassdisclosure.gif" "$(navigation_trim "$ANDROID_GLASSDISCLOSURE" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 
 echo ""

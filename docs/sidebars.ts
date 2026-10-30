@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
         'components/chip',
         'components/floatingactionbutton',
         'components/floatingtoolbar',
+        'components/glassdisclosure',
         'components/liquidglass',
       ],
     },

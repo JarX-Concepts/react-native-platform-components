@@ -59,12 +59,12 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     /// Corner radius for the glass effect
     public var glassCornerRadius: CGFloat = 0 {
-        didSet { applyCornerStyle() }
+        didSet { applyCorners(changed: glassCornerRadius != oldValue) }
     }
 
     /// Corner shape: "capsule", "concentric", or "" for glassCornerRadius
     public var cornerStyle: String = "" {
-        didSet { applyCornerStyle() }
+        didSet { applyCorners(changed: cornerStyle != oldValue) }
     }
 
     /// Enable touch interaction feedback
@@ -168,11 +168,13 @@ public final class PCLiquidGlassView: UIVisualEffectView {
             style = .regular
         }
 
-        // Handle "none" style
+        // Handle "none" style. Glass that starts out as none materializes
+        // when it gets an effect, rather than appearing at once
         guard let glassStyle = style.glassStyle else {
             UIView.animate(withDuration: duration) {
                 self.effect = nil
             }
+            isFirstMount = false
             return
         }
 
@@ -237,6 +239,16 @@ public final class PCLiquidGlassView: UIVisualEffectView {
         }
         #endif
         return false
+    }
+
+    /// New corners morph along with the frame in a container on screen, so
+    /// a capsule that grows into a panel rounds into the panel's corners.
+    private func applyCorners(changed: Bool) {
+        if changed && morphsLayoutChanges {
+            PCLiquidGlassView.morph { self.applyCornerStyle() }
+        } else {
+            applyCornerStyle()
+        }
     }
 
     private func applyCornerStyle() {

@@ -10,6 +10,7 @@ import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { DialogProps } from './Dialog';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
+import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
@@ -32,6 +33,7 @@ export interface WebComponentProps {
   Dialog: DialogProps;
   FloatingActionButton: FloatingActionButtonProps;
   FloatingToolbar: FloatingToolbarProps;
+  GlassDisclosure: GlassDisclosureProps;
   LiquidGlass: LiquidGlassProps;
   LiquidGlassContainer: LiquidGlassContainerProps;
   NavigationRail: NavigationRailProps;

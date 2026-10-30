@@ -1488,15 +1488,17 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('dialog-second-ok'))).not.toExist();
 
     // The app closes the open dialog (visible = false): only onDismiss.
-    // Then it unmounts it, which reports nothing
+    // Then it unmounts it, which reports nothing. Not openDialog(): the app
+    // takes the dialog away 2 s after it opens, and on a loaded CI runner it
+    // has come and gone before a wait for it saw it
     await element(by.id('dialog-timer-close')).tap();
-    await openDialog('confirm', 'dialog-cancel');
-    await waitForDialogToClose('dialog-cancel');
+    await element(by.id('dialog-open-confirm')).tap();
     await expectText('dialog-events', 'show, closed by the app, dismiss');
-    await element(by.id('dialog-timer-unmount')).tap();
-    await openDialog('confirm', 'dialog-cancel');
     await waitForDialogToClose('dialog-cancel');
+    await element(by.id('dialog-timer-unmount')).tap();
+    await element(by.id('dialog-open-confirm')).tap();
     await expectText('dialog-events', 'show, unmounted by the app');
+    await waitForDialogToClose('dialog-cancel');
     await element(by.id('dialog-timer-off')).tap();
 
     // And it opens again afterwards
@@ -2418,6 +2420,54 @@ describe('Platform Components Example', () => {
       .withTimeout(3000);
     await element(by.id('feed-toolbar-edit')).tap();
     await expectText('feed-last-action', 'edit');
+  });
+
+  it('should test Glass Disclosure functionality', async () => {
+    await selectDemo('Glass Disclosure');
+    const panelRow = element(by.id('disclosure-row-members'));
+    const open = async () => {
+      await element(by.id('disclosure-pill')).tap();
+      // The content fades in once the glass has grown
+      await waitFor(panelRow).toBeVisible().withTimeout(5000);
+      await expectText('disclosure-last-event', 'Expanded');
+    };
+    const expectClosed = async () => {
+      await expectText('disclosure-last-event', 'Collapsed');
+      await waitFor(element(by.id('disclosure-pill')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await expect(panelRow).not.toExist();
+    };
+
+    // The pill opens into a panel of React content
+    await open();
+    await panelRow.tap();
+    await expectText('disclosure-last-event', 'Members');
+    await element(by.id('disclosure-notifications')).tap();
+    await expectText('disclosure-last-event', 'Notifications off');
+
+    // The close button
+    await element(by.id('disclosure-close')).tap();
+    await expectClosed();
+
+    // A tap on the backdrop, below the panel
+    await open();
+    await element(by.id('disclosure-stage')).tap({ x: 40, y: 500 });
+    await expectClosed();
+
+    // Controlled: the app opens the panel too
+    await element(by.id('disclosure-open')).tap();
+    await waitFor(panelRow).toBeVisible().withTimeout(5000);
+    await expectText('disclosure-last-event', 'Expanded');
+    await element(by.id('disclosure-close')).tap();
+    await expectClosed();
+
+    // Android back
+    if (isAndroid()) {
+      await open();
+      await device.pressBack();
+      await expectClosed();
+    }
   });
 
   itOnIOS('should test Liquid Glass functionality', async () => {
