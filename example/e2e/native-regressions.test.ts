@@ -241,6 +241,10 @@ describe('Native regression cases', () => {
       await device.disableSynchronization();
       try {
         await element(by.id('regression-case-images')).tap();
+        // Unsynchronized, the tap returns before the case renders
+        await waitFor(element(by.id('regression-image-mode')))
+          .toBeVisible()
+          .withTimeout(10000);
         await element(by.id('regression-image-mode')).tap();
         const waitForAccount = async (authorization: string) => {
           const deadline = Date.now() + 5000;
