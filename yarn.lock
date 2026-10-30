@@ -11764,7 +11764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"detox@npm:^20.51.4":
+"detox@npm:20.51.4":
   version: 20.51.4
   resolution: "detox@npm:20.51.4"
   dependencies:
@@ -11813,6 +11813,58 @@ __metadata:
   bin:
     detox: local-cli/cli.js
   checksum: 10c0/4be674954c6ca60d8efb5d396848eefd5241018c78f64b503a462b0a66b9e7805d0af984318546ee8810063a95f9d92892d3e1e3d9b589ce703d2210da80fb16
+  languageName: node
+  linkType: hard
+
+"detox@patch:detox@npm%3A20.51.4#~/.yarn/patches/detox-npm-20.51.4-f0776917eb.patch":
+  version: 20.51.4
+  resolution: "detox@patch:detox@npm%3A20.51.4#~/.yarn/patches/detox-npm-20.51.4-f0776917eb.patch::version=20.51.4&hash=c56f03"
+  dependencies:
+    "@wix-pilot/core": "npm:^3.4.2"
+    "@wix-pilot/detox": "npm:^1.0.13"
+    ajv: "npm:^8.6.3"
+    bunyan: "npm:^1.8.12"
+    bunyan-debug-stream: "npm:^3.1.0"
+    caf: "npm:^15.0.1"
+    chalk: "npm:^4.0.0"
+    execa: "npm:^5.1.1"
+    find-up: "npm:^5.0.0"
+    fs-extra: "npm:^11.0.0"
+    funpermaproxy: "npm:^1.1.0"
+    glob: "npm:^8.0.3"
+    ini: "npm:^1.3.4"
+    jest-environment-emit: "npm:^1.2.0"
+    json-cycle: "npm:^1.3.0"
+    lodash: "npm:^4.17.11"
+    multi-sort-stream: "npm:^1.0.3"
+    multipipe: "npm:^4.0.0"
+    node-ipc: "npm:9.2.1"
+    promisify-child-process: "npm:^4.1.2"
+    proper-lockfile: "npm:^3.0.2"
+    resolve-from: "npm:^5.0.0"
+    sanitize-filename: "npm:^1.6.1"
+    semver: "npm:^7.0.0"
+    serialize-error: "npm:^8.0.1"
+    shell-quote: "npm:^1.7.2"
+    signal-exit: "npm:^3.0.3"
+    stream-json: "npm:^1.7.4"
+    strip-ansi: "npm:^6.0.1"
+    telnet-client: "npm:1.2.8"
+    tmp: "npm:^0.2.1"
+    trace-event-lib: "npm:^1.3.1"
+    which: "npm:^1.3.1"
+    ws: "npm:^7.0.0"
+    yargs: "npm:^17.0.0"
+    yargs-parser: "npm:^21.0.0"
+    yargs-unparser: "npm:^2.0.0"
+  peerDependencies:
+    jest: 30.x.x || 29.x.x || 28.x.x || ^27.2.5
+  peerDependenciesMeta:
+    jest:
+      optional: true
+  bin:
+    detox: local-cli/cli.js
+  checksum: 10c0/5d7e03ee10e93d43ac7205b703089faf2031302ff4db5740ee07e5560a870c945b46ea4352877e0e0df5ffe95c12f75b22858fb66814e114eee91bc129985269
   languageName: node
   linkType: hard
 
@@ -21427,7 +21479,7 @@ __metadata:
     "@react-native/typescript-config": "npm:0.86.3"
     "@types/pngjs": "npm:^6.0.5"
     "@types/react": "npm:~19.2.18"
-    detox: "npm:^20.51.4"
+    detox: "patch:detox@npm%3A20.51.4#~/.yarn/patches/detox-npm-20.51.4-f0776917eb.patch"
     jest: "npm:^30.5.1"
     pngjs: "npm:^7.0.0"
     react: "npm:19.2.3"

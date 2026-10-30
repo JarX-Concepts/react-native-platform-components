@@ -1,0 +1,18 @@
+diff --git a/src/devices/runtime/drivers/android/AndroidDriver.js b/src/devices/runtime/drivers/android/AndroidDriver.js
+index d862ecc68a06ece58cef7fb23d4814454eb0d70c..221e6d1fdfc07b6568fbda133a15c8e23bfe5ad0 100644
+--- a/src/devices/runtime/drivers/android/AndroidDriver.js
++++ b/src/devices/runtime/drivers/android/AndroidDriver.js
+@@ -343,7 +343,12 @@ class AndroidDriver extends DeviceDriverBase {
+     const serverPort = await this._reverseServerPort(adbName);
+     this.instrumentation.setTerminationFn(async () => {
+       await this._terminateInstrumentation();
+-      await this.adb.reverseRemove(adbName, serverPort);
++      // Runs from the instrumentation process's 'close' event, where a
++      // rejection is unhandled and fails every test in the file. When adbd
++      // restarts, the reverse port it removes is already gone.
++      await this.adb.reverseRemove(adbName, serverPort).catch((error) => {
++        log.warn({ event: 'REVERSE_REMOVE' }, `${error}`);
++      });
+     });
+     await this.instrumentation.launch(adbName, bundleId, userLaunchArgs);
+   }

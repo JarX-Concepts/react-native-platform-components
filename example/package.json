@@ -30,7 +30,7 @@
     "@react-native/typescript-config": "0.86.3",
     "@types/pngjs": "^6.0.5",
     "@types/react": "~19.2.18",
-    "detox": "^20.51.4",
+    "detox": "patch:detox@npm%3A20.51.4#~/.yarn/patches/detox-npm-20.51.4-f0776917eb.patch",
     "jest": "^30.5.1",
     "pngjs": "^7.0.0",
     "react-native-builder-bob": "^0.43.1",
