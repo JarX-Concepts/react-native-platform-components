@@ -20,6 +20,7 @@ export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
 export type * from './FloatingToolbar';
+export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
 export type * from './TextField';
@@ -49,6 +50,7 @@ export {
   Dialog,
   FloatingActionButton,
   FloatingToolbar,
+  GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,

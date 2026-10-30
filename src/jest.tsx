@@ -38,6 +38,7 @@ import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
+import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
@@ -67,6 +68,7 @@ export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
 export type * from './FloatingToolbar';
+export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
 export type * from './TextField';
@@ -1251,6 +1253,62 @@ export function FloatingToolbar(
     ...viewProps
   } = props;
   return <View {...viewProps}>{children}</View>;
+}
+
+/**
+ * The pill (a button with the title and subtitle), or, while `expanded`, the
+ * panel: a close button, `headerRight` and the children. No animation, and
+ * no backdrop: tests press the close button (`-close`) to dismiss it.
+ */
+export function GlassDisclosure(
+  props: GlassDisclosureProps
+): React.ReactElement {
+  const {
+    expanded,
+    onExpandedChange,
+    title,
+    subtitle,
+    headerRight,
+    children,
+    style,
+    panelStyle,
+    backdropColor,
+    closeAccessibilityLabel,
+    ios,
+    fallbackColor,
+    testID,
+    ...viewProps
+  } = props;
+  const partID = (part: string) => (testID ? `${testID}-${part}` : undefined);
+
+  return (
+    <View testID={testID} {...viewProps}>
+      {expanded ? (
+        <View testID={partID('panel')}>
+          <Pressable
+            testID={partID('close')}
+            accessibilityRole="button"
+            accessibilityLabel={closeAccessibilityLabel ?? 'Close'}
+            onPress={() => onExpandedChange(false)}
+          />
+          <Text accessibilityRole="header">{title}</Text>
+          {subtitle ? <Text>{subtitle}</Text> : null}
+          {headerRight}
+          {children}
+        </View>
+      ) : (
+        <Pressable
+          testID={partID('pill')}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: false }}
+          onPress={() => onExpandedChange(true)}
+        >
+          <Text>{title}</Text>
+          {subtitle ? <Text>{subtitle}</Text> : null}
+        </Pressable>
+      )}
+    </View>
+  );
 }
 
 /** A view with its children; a `Pressable` when `onPress` is set. */

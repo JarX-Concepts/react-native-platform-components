@@ -20,6 +20,7 @@ import { DatePickerDemo } from './DatePickerDemo';
 import { DialogDemo } from './DialogDemo';
 import { FloatingActionButtonDemo } from './FloatingActionButtonDemo';
 import { FloatingToolbarDemo } from './FloatingToolbarDemo';
+import { GlassDisclosureDemo } from './GlassDisclosureDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
 import { NativeRegressionDemo } from './NativeRegressionDemo';
@@ -48,6 +49,7 @@ type DemoKey =
   | 'chip'
   | 'floatingActionButton'
   | 'floatingToolbar'
+  | 'glassDisclosure'
   | 'textField'
   | 'liquidGlass'
   | 'nativeRegressions'
@@ -67,6 +69,7 @@ const COMPONENT_DEMOS = [
   { label: 'Chip', data: 'chip' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
+  { label: 'Glass Disclosure', data: 'glassDisclosure' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
@@ -155,6 +158,7 @@ export default function App(): React.ReactElement {
       {demo === 'chip' && <ChipDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
+      {demo === 'glassDisclosure' && <GlassDisclosureDemo />}
       {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
       {demo === 'nativeRegressions' && <NativeRegressionDemo />}

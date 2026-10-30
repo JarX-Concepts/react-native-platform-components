@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass."
 ---
 
 ### TextField
@@ -660,6 +660,41 @@ export function Example() {
         />
         <Button label="Send" variant="tonal" onPress={() => console.log('send')} />
       </FloatingToolbar>
+    </View>
+  );
+}
+```
+
+---
+
+### GlassDisclosure
+
+```tsx
+import { GlassDisclosure } from 'react-native-platform-components';
+import { Switch, Text, View } from 'react-native';
+import { useState } from 'react';
+
+export function Example() {
+  const [open, setOpen] = useState(false);
+  const [notify, setNotify] = useState(true);
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* The screen's content */}
+
+      {/* Last, so it covers the screen */}
+      <GlassDisclosure
+        style={{ paddingTop: 60, paddingHorizontal: 12 }}
+        expanded={open}
+        onExpandedChange={setOpen}
+        title="concept-plans"
+        subtitle="5 members • 3 tabs"
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 8 }}>
+          <Text style={{ flex: 1 }}>Notifications</Text>
+          <Switch value={notify} onValueChange={setNotify} />
+        </View>
+      </GlassDisclosure>
     </View>
   );
 }

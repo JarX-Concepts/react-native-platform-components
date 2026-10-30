@@ -18,6 +18,7 @@ import {
   DatePicker,
   Dialog,
   FloatingActionButton,
+  GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
@@ -722,5 +723,37 @@ describe('menus, pickers and containers (mock)', () => {
     const date = new Date(2026, 8, 23);
     fire(byTestID(tree, 'date'), 'confirm', date, true);
     expect(onConfirm).toHaveBeenCalledWith(date, true);
+  });
+});
+
+describe('GlassDisclosure mock', () => {
+  it('shows the pill, or the panel while expanded, and asks to change', () => {
+    const onExpandedChange = jest.fn();
+    const element = (expanded: boolean) => (
+      <GlassDisclosure
+        testID="card"
+        expanded={expanded}
+        onExpandedChange={onExpandedChange}
+        title="concept-plans"
+        subtitle="5 members"
+        headerRight={<Text>More</Text>}
+      >
+        <Text>Members</Text>
+      </GlassDisclosure>
+    );
+    const tree = render(element(false));
+    expect(texts(tree)).toEqual(['concept-plans', '5 members']);
+    press(byTestID(tree, 'card-pill'));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+
+    act(() => tree.update(element(true)));
+    expect(texts(tree)).toEqual([
+      'concept-plans',
+      '5 members',
+      'More',
+      'Members',
+    ]);
+    press(byTestID(tree, 'card-close'));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
   });
 });

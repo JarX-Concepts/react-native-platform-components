@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **FloatingActionButton**, **FloatingToolbar** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -57,6 +57,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**Chip**](/components/chip) | Capsule `UIButton`s (iOS has no chip): Liquid Glass on iOS 26, prominent glass with the tint color while selected; a wrapping flow layout or a scrolling row | Material 3 `Chip` (assist, filter, input, suggestion) in a `ChipGroup`: single or multiple selection, wrapping or single line, close icons | Pills drawn by hand with `Pressable` (no native press feedback, haptics or selection traits) |
 | [**FloatingActionButton**](/components/floatingactionbutton) | A round prominent `UIButton`, Liquid Glass on iOS 26 (iOS has no FAB) | Material `FloatingActionButton` / `ExtendedFloatingActionButton`: four sizes, shrink on scroll | `react-native-paper` FAB (drawn in JavaScript) |
 | [**FloatingToolbar**](/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
+| [**GlassDisclosure**](/components/glassdisclosure) | One Liquid Glass shape that morphs from a pill into a panel of React content on iOS 26; a card before | A card in Material 3 surface colors that fades and scales in | A hand-built overlay and animation |
 | [**LiquidGlass**](/components/liquidglass) | `UIGlassEffect` on iOS 26+; `LiquidGlassContainer` merges and morphs it (`UIGlassContainerEffect`) | A fallback `View` | `@callstack/liquid-glass`, `expo-glass-effect` |
 
 One package and one API shape: platform-only props go under `ios={{ }}` and `android={{ }}`, with Fabric + Codegen typed bindings, an Expo config plugin and TypeScript, instead of four or five packages with their own conventions, install steps and upgrade cadences.
