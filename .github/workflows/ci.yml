@@ -215,9 +215,14 @@ jobs:
           path: example/artifacts
           if-no-files-found: ignore
 
-  test-ios:
+  # The iOS flows run on three runners at once. One runner (3 cores, 7 GB, no
+  # swap) running all of them with an iOS 26 simulator starved: single Detox
+  # actions stalled for minutes, Detox itself crashed on a stale lock, and a
+  # simulator kept up for ~45 minutes was killed with CoreSimulatorService
+  # when memory ran out. The app is built once here and shared.
+  build-ios-e2e:
     runs-on: macos-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
 
     env:
       XCODE_VERSION: 26.6
@@ -255,27 +260,6 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Install applesimutils
-        run: |
-          brew tap wix/brew
-          brew trust --tap wix/brew
-          brew install applesimutils
-
-      # The runner has 3 cores and 7 GB. A newly booted iOS 26 simulator spends
-      # its first minutes on widgets, wallpaper extensions, media analysis and
-      # indexing, which pushed the load average past 500 and stalled single
-      # Detox actions for minutes. Booting it now (the simulator Detox picks)
-      # puts that work under the builds instead of the flows. It is shut down
-      # again before the tests: the runner has no swap, and a simulator kept up
-      # through the builds ran memory out ~45 minutes in, when the kernel
-      # killed CoreSimulatorService and the simulator with it.
-      - name: Boot the simulator
-        run: |
-          sudo mdutil -a -i off || true
-          UDID=$(applesimutils --list --byType "iPhone 17 Pro Max" --maxResults 1 | node -p 'JSON.parse(require("fs").readFileSync(0))[0].udid')
-          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
-          xcrun simctl boot "$UDID"
-
       - name: Install cocoapods
         run: |
           cd example
@@ -292,10 +276,88 @@ jobs:
           yarn workspace react-native-platform-components-example detox clean-framework-cache
           yarn workspace react-native-platform-components-example detox build-framework-cache
           yarn workspace react-native-platform-components-example detox build --configuration ios.sim.release
-          # The build service holds on to its memory after the build
-          killall -9 SWBBuildService XCBBuildService 2>/dev/null || true
-          # Detox boots it again, past its first-boot work
+
+      # tar keeps the executable bits an artifact upload drops
+      - name: Pack the app and Detox's framework cache
+        run: |
+          mkdir -p "$RUNNER_TEMP/ios-e2e"
+          tar -czf "$RUNNER_TEMP/ios-e2e/app.tar.gz" -C example/ios/build/Build/Products Release-iphonesimulator/PlatformComponentsExample.app
+          tar -czf "$RUNNER_TEMP/ios-e2e/detox.tar.gz" -C "$HOME/Library" Detox
+
+      - name: Upload the app
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ios-e2e-app
+          path: ${{ runner.temp }}/ios-e2e
+          retention-days: 1
+
+  test-ios:
+    name: test-ios (${{ matrix.shard }})
+    needs: build-ios-e2e
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+
+    env:
+      XCODE_VERSION: 26.6
+      E2E_SHARD: ${{ matrix.shard }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Use appropriate Xcode version
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Install applesimutils
+        run: |
+          brew tap wix/brew
+          brew trust --tap wix/brew
+          brew install applesimutils
+
+      # A newly booted iOS 26 simulator spends its first minutes on widgets,
+      # wallpaper extensions, media analysis and indexing, at load averages
+      # past 500, which stalled single Detox actions for minutes. Boot the
+      # simulator Detox picks now, so that work runs before the flows.
+      - name: Boot the simulator
+        run: |
+          sudo mdutil -a -i off || true
+          UDID=$(applesimutils --list --byType "iPhone 17 Pro Max" --maxResults 1 | node -p 'JSON.parse(require("fs").readFileSync(0))[0].udid')
+          echo "SIM_UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Download the app
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ios-e2e-app
+          path: ${{ runner.temp }}/ios-e2e
+
+      - name: Unpack the app and Detox's framework cache
+        run: |
+          mkdir -p example/ios/build/Build/Products
+          tar -xzf "$RUNNER_TEMP/ios-e2e/app.tar.gz" -C example/ios/build/Build/Products
+          tar -xzf "$RUNNER_TEMP/ios-e2e/detox.tar.gz" -C "$HOME/Library"
+
+      # Detox boots it again, past its first-boot work. Shutting it down also
+      # frees what that work left in memory.
+      - name: Wait for the simulator to settle
+        run: |
           xcrun simctl bootstatus "$SIM_UDID"
+          for i in $(seq 1 32); do
+            load=$(sysctl -n vm.loadavg | awk '{print $2}')
+            echo "load average: $load"
+            [ "${load%.*}" -lt 10 ] && break
+            sleep 15
+          done
           xcrun simctl shutdown "$SIM_UDID"
 
       - name: Run Detox e2e tests (iOS)
@@ -308,7 +370,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: detox-ios-logs
+          name: detox-ios-logs-${{ strategy.job-index }}
           path: |
             example/artifacts/**/*.log
             example/artifacts/**/*.json

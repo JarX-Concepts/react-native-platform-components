@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { expect } from 'detox';
+import { shardIt } from './testHelpers';
 
 const isAndroid = () => device.getPlatform() === 'android';
 
@@ -591,6 +592,7 @@ const liftField = async (fieldId: string, anchorId = fieldId) => {
 };
 
 describe('Platform Components Example', () => {
+  const it = shardIt(globalThis.it);
   const itOnIOS = isAndroid() ? it.skip : it;
 
   beforeAll(async () => {
