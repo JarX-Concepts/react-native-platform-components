@@ -21,6 +21,7 @@ import android.widget.Filterable
 import android.widget.NumberPicker
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.facebook.react.bridge.ReadableNativeMap
@@ -112,18 +113,20 @@ class NativeRegressionTest {
   @Test
   fun systemPickerClosesWhenVisibleBecomesFalse() {
     val picker = openPicker("system")
-    onView(withText(TITLE)).check(matches(isDisplayed()))
+    val first = systemDialog(picker)
+    assertTrue(first.isShowing)
     onMain { picker.applyVisible("closed") }
     settle()
-    onView(withText(TITLE)).check(doesNotExist())
+    assertFalse(first.isShowing)
     assertEquals(1, closed)
 
     onMain { picker.applyVisible("open") }
     settle()
-    onView(withText(TITLE)).check(matches(isDisplayed()))
+    val second = systemDialog(picker)
+    assertTrue(second.isShowing)
     onMain { picker.applyVisible("closed") }
     settle()
-    onView(withText(TITLE)).check(doesNotExist())
+    assertFalse(second.isShowing)
     assertEquals(2, closed)
   }
 
@@ -857,6 +860,17 @@ class NativeRegressionTest {
     }
     settle()
     return picker
+  }
+
+  // The open dialog itself, not Espresso's view of it: Espresso first waits
+  // for the dialog's window to take focus, which a CI emulator has withheld
+  // for longer than Espresso's 10 s
+  private fun systemDialog(picker: PCDatePickerView): AlertDialog {
+    val dialog = PCDatePickerView::class.java.getDeclaredField("systemDialog")
+      .apply { isAccessible = true }
+      .get(picker) as AlertDialog
+    assertTrue(descendants(dialog.window!!.decorView).any { it is TextView && it.text == TITLE })
+    return dialog
   }
 
   private fun materialDatePicker(tag: String = "PCDatePicker_M3_DATE"): MaterialDatePicker<*> =
