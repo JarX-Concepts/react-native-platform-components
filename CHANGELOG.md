@@ -1,5 +1,27 @@
 # Changelog
 
+# [1.9.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.8.0...v1.9.0) (2026-10-31)
+
+### Bug Fixes
+
+* **android:** lay out the TextField label again once Material makes room for an icon ([84732d8](https://github.com/JarX-Concepts/react-native-platform-components/commit/84732d881e73ca8a778346dcee99179fa02e725a))
+* **dialog:** apply content changes to a presented Dialog and ActionSheet ([4a5849d](https://github.com/JarX-Concepts/react-native-platform-components/commit/4a5849defd3575d7902a9bf2a701dc14129cab96))
+* **dialog:** dismiss a replaced Android dialog even if its successor never draws ([78be51d](https://github.com/JarX-Concepts/react-native-platform-components/commit/78be51dde671c4b5e7e086b714a5c5275164c269))
+* **dialog:** let go of a closed alert's actions on iOS ([7fd0882](https://github.com/JarX-Concepts/react-native-platform-components/commit/7fd0882f533c89cbc496821cc821d536cd2ce54a))
+* **ios:** draw the compact DatePicker pill at its own height ([93631f2](https://github.com/JarX-Concepts/react-native-platform-components/commit/93631f2a400359c93a6d923ef6adf3732147c539)), closes [#130](https://github.com/JarX-Concepts/react-native-platform-components/issues/130) [#134](https://github.com/JarX-Concepts/react-native-platform-components/issues/134)
+* **ios:** stop ContextMenu crashing debug builds on a long press ([8a0b581](https://github.com/JarX-Concepts/react-native-platform-components/commit/8a0b581e7e8b640aafbb2b59add03ec1057ac5dc))
+* **ios:** stop doubling the drawn TextField box's placeholder padding ([c6e9d73](https://github.com/JarX-Concepts/react-native-platform-components/commit/c6e9d7346fc8be10ce863c83cc7c00986605d70f))
+
+### Features
+
+* add GlassDisclosure, a Liquid Glass pill that expands into a panel ([d278044](https://github.com/JarX-Concepts/react-native-platform-components/commit/d27804407ce3d97158ddbeac7b8fb1e3c78b4df9)), closes [#140](https://github.com/JarX-Concepts/react-native-platform-components/issues/140)
+* **chip:** minHeight and paddingHorizontal ([6abf9d0](https://github.com/JarX-Concepts/react-native-platform-components/commit/6abf9d0eebec515d9aee82884841561c42400ca7)), closes [#131](https://github.com/JarX-Concepts/react-native-platform-components/issues/131)
+* **icons:** add a web image to PlatformIcon and warn when the web can't draw an icon ([274e456](https://github.com/JarX-Concepts/react-native-platform-components/commit/274e4566499b60dde4df437ae802002e9066aee6))
+* **menus:** preferredElementSize for a row of quick actions ([2245a56](https://github.com/JarX-Concepts/react-native-platform-components/commit/2245a56494f6d7604701c9a405f3d0cec6e2a057)), closes [#132](https://github.com/JarX-Concepts/react-native-platform-components/issues/132)
+* **segmented-control:** native default height and minHeight ([0d1e10f](https://github.com/JarX-Concepts/react-native-platform-components/commit/0d1e10fd44f044a4ac47d83511671ca00d742309)), closes [#129](https://github.com/JarX-Concepts/react-native-platform-components/issues/129)
+* **selection-menu:** size the embedded menu as a form field ([f192523](https://github.com/JarX-Concepts/react-native-platform-components/commit/f1925230502956f253fa28c836d09e4679c82ae5)), closes [#128](https://github.com/JarX-Concepts/react-native-platform-components/issues/128)
+* **text-field:** minFieldHeight and fieldPaddingHorizontal ([928b7f0](https://github.com/JarX-Concepts/react-native-platform-components/commit/928b7f06788d4b9d01d97c6a9d2553145291ac77)), closes [#126](https://github.com/JarX-Concepts/react-native-platform-components/issues/126)
+
 # [1.8.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.7.0...v1.8.0) (2026-10-20)
 
 ### Bug Fixes
