@@ -62,6 +62,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `haptics`           | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played on every press (an overflow-menu pick included), in every selection mode. See [Haptics](/guides/haptics). Default: none |
 | `onPress`           | `(value: string, index: number) => void`                 | Called when a button is pressed (or picked from the overflow menu), in every selection mode                 |
 | `onSelectionChange` | `(values: string[]) => void`                             | Called when the selection changes, with the selected values in button order                                  |
+| `testID`            | `string`                                                 | Test ID of the group. Each button gets `${testID}-${value}` unless it sets its own                           |
 
 ### ButtonGroupButton
 
@@ -72,6 +73,7 @@ import { ButtonGroup } from 'react-native-platform-components';
 | `disabled`           | `boolean`      | Disables this specific button                                        |
 | `icon`               | `PlatformIcon` | Optional icon. See [Button icons](/components/button#icons)          |
 | `accessibilityLabel` | `string`       | Screen-reader label. Defaults to `label`; give icon-only buttons one |
+| `testID`             | `string`       | Test ID of the native button, which has the label and takes the touches. Default: `${testID}-${value}`. A button folded into the overflow menu is found by its label. See [Test IDs in end-to-end tests](/guides/testing#test-ids-in-end-to-end-tests) |
 
 ### Android Props (`android`)
 
@@ -212,5 +214,6 @@ It is a separate component rather than a ButtonGroup option because a split butt
 | `onMenuOpen`             | `() => void`                                             | Called when the menu opens                                                                   |
 | `onMenuClose`            | `() => void`                                             | Called when the menu closes                                                                  |
 | `android`                | `{ rippleColor?, strokeColor?, material? }`              | As on [Button](/components/button#android-props-android)                                     |
+| `testID`                 | `string`                                                 | Test ID of the main button; the trailing button gets `${testID}-menu`. Each has its own label and takes its own touches |
 
 SplitButton has no `shape` prop: Material's split button is always round on the outside, and on iOS the buttons keep UIKit's corner style. On the web only the main button renders.
