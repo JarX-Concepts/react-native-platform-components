@@ -75,6 +75,32 @@ describe('ButtonGroup', () => {
     act(() => tree.unmount());
   });
 
+  it('gives each button its testID, by default ${testID}-${value}', () => {
+    const tree = render(
+      <ButtonGroup
+        testID="edit"
+        buttons={[
+          { label: 'Copy', value: 'copy' },
+          { label: 'Paste', value: 'paste', testID: 'paste-button' },
+        ]}
+      />
+    );
+
+    const props = lastNativeProps();
+    expect(props.testID).toBe('edit');
+    expect(props.buttons.map((b: { testID: string }) => b.testID)).toEqual([
+      'edit-copy',
+      'paste-button',
+    ]);
+    act(() => tree.unmount());
+
+    const untagged = render(<ButtonGroup buttons={BUTTONS} />);
+    expect(
+      lastNativeProps().buttons.map((b: { testID: string }) => b.testID)
+    ).toEqual(['', '', '']);
+    act(() => untagged.unmount());
+  });
+
   it('single selection is connected, required, and keeps one value', () => {
     const tree = render(
       <ButtonGroup

@@ -77,6 +77,24 @@ describe('SplitButton', () => {
     act(() => tree.unmount());
   });
 
+  it('puts testID on the main button and ${testID}-menu on the menu button', () => {
+    const tree = render(
+      <SplitButton testID="reply" label="Reply" menu={MENU} />
+    );
+
+    const props = lastNativeProps();
+    expect(props.buttons[0].testID).toBe('reply');
+    expect(props.menuTestID).toBe('reply-menu');
+    // Not on the host as well: one id, one view
+    expect(props.testID).toBeUndefined();
+    act(() => tree.unmount());
+
+    const untagged = render(<SplitButton label="Reply" menu={MENU} />);
+    expect(lastNativeProps().buttons[0].testID).toBe('');
+    expect(lastNativeProps().menuTestID).toBe('');
+    act(() => untagged.unmount());
+  });
+
   it('passes variant, size, colors and the menu label through', () => {
     const tree = render(
       <SplitButton

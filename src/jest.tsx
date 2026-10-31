@@ -452,7 +452,7 @@ export function FloatingActionButton(
 }
 
 /**
- * A view of `Pressable`s, one per button, with the test ID
+ * A view of `Pressable`s, one per button, with the button's `testID`, else
  * `${testID}-${value}`. Selection follows the native rules.
  */
 export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
@@ -506,7 +506,10 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
         return (
           <Pressable
             key={button.value}
-            testID={testID ? `${testID}-${button.value}` : undefined}
+            testID={
+              button.testID ??
+              (testID ? `${testID}-${button.value}` : undefined)
+            }
             accessibilityRole={selection === 'none' ? 'button' : 'togglebutton'}
             accessibilityLabel={button.accessibilityLabel ?? button.label}
             accessibilityState={{

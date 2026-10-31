@@ -74,7 +74,7 @@ class PCButtonGroupViewManager :
   }
 
   // buttons: array of {label, value, disabled, iconType, iconName, iconUri,
-  //                    iconScale, iconTinted, accessibilityLabel}
+  //                    iconScale, iconTinted, accessibilityLabel, testID}
   override fun setButtons(view: PCButtonGroupView, value: ReadableArray?) {
     val out = ArrayList<PCButtonGroupView.Item>()
     if (value != null) {
@@ -86,7 +86,8 @@ class PCButtonGroupViewManager :
             value = m.stringOr("value", ""),
             disabled = m.stringOr("disabled", "enabled") == "disabled",
             icon = PCButtonSupport.parseIcon(m),
-            accessibilityLabel = m.stringOr("accessibilityLabel", "")
+            accessibilityLabel = m.stringOr("accessibilityLabel", ""),
+            testID = m.stringOr("testID", "")
           )
         )
       }
@@ -182,6 +183,10 @@ class PCButtonGroupViewManager :
 
   override fun setMenuAccessibilityLabel(view: PCButtonGroupView, value: String?) {
     view.applyMenuAccessibilityLabel(value ?: "")
+  }
+
+  override fun setMenuTestID(view: PCButtonGroupView, value: String?) {
+    view.applyMenuTestID(value ?: "")
   }
 
   // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
