@@ -5,6 +5,10 @@ import { Button as DefaultButton } from './Button';
 import { ButtonGroup as DefaultButtonGroup } from './ButtonGroup';
 import { SplitButton as DefaultSplitButton } from './SplitButton';
 import { Chip as DefaultChip, ChipGroup as DefaultChipGroup } from './Chip';
+import {
+  Checkbox as DefaultCheckbox,
+  RadioGroup as DefaultRadioGroup,
+} from './Checkbox';
 import { DatePicker as DefaultDatePicker } from './DatePicker';
 import { DateRangePicker as DefaultDateRangePicker } from './DateRangePicker';
 import { Dialog as DefaultDialog } from './Dialog';
@@ -46,6 +50,14 @@ export const Chip: WebComponents['Chip'] = withWebComponent(
 export const ChipGroup: WebComponents['ChipGroup'] = withWebComponent(
   'ChipGroup',
   DefaultChipGroup
+);
+export const Checkbox: WebComponents['Checkbox'] = withWebComponent(
+  'Checkbox',
+  DefaultCheckbox
+);
+export const RadioGroup: WebComponents['RadioGroup'] = withWebComponent(
+  'RadioGroup',
+  DefaultRadioGroup
 );
 export const DatePicker: WebComponents['DatePicker'] = withWebComponent(
   'DatePicker',

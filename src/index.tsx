@@ -12,6 +12,8 @@ export * from './ButtonGroup';
 export * from './SplitButton';
 export * from './Chip';
 export * from './ChipGroup';
+export * from './Checkbox';
+export * from './RadioGroup';
 export * from './FloatingToolbar';
 export * from './GlassDisclosure';
 export * from './LiquidGlass';

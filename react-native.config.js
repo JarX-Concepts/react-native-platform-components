@@ -14,6 +14,8 @@ module.exports = {
           'MeasuringPCFloatingActionButtonComponentDescriptor',
           'MeasuringPCChipComponentDescriptor',
           'MeasuringPCChipGroupComponentDescriptor',
+          'MeasuringPCCheckboxComponentDescriptor',
+          'MeasuringPCRadioGroupComponentDescriptor',
         ],
         cmakeListsPath: 'src/main/jni/CMakeLists.txt',
       },

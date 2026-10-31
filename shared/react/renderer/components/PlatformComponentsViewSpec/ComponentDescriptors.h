@@ -16,3 +16,5 @@
 #include "PCFloatingActionButtonComponentDescriptors-custom.h"
 #include "PCChipComponentDescriptors-custom.h"
 #include "PCChipGroupComponentDescriptors-custom.h"
+#include "PCCheckboxComponentDescriptors-custom.h"
+#include "PCRadioGroupComponentDescriptors-custom.h"

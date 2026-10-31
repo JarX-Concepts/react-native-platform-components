@@ -22,6 +22,8 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCButtonGroupViewManager(),
           PCChipViewManager(),
           PCChipGroupViewManager(),
+          PCCheckboxViewManager(),
+          PCRadioGroupViewManager(),
           PCFloatingToolbarViewManager(),
           PCLiquidGlassViewManager(),
           PCLiquidGlassContainerViewManager(),
