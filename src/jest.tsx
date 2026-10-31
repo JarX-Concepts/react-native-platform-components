@@ -46,6 +46,7 @@ import type { NativeTheme } from './NativeTheme';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
 import type { SplitButtonProps } from './SplitButton';
+import type { SwitchProps } from './Switch';
 import type { TabBarProps } from './TabBar';
 import type {
   TextFieldChangeEvent,
@@ -67,6 +68,7 @@ export type * from './ButtonGroup';
 export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
+export type * from './Switch';
 export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
@@ -928,6 +930,49 @@ export function SegmentedControl(
         );
       })}
     </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Switch
+
+/**
+ * A `Pressable` with the switch role, `testID`, the label as `Text` and
+ * `accessibilityState.checked`. Pressing it calls `onValueChange` with the
+ * other value, and `fireEvent(element, 'valueChange', true)` works as with
+ * React Native's `Switch`. The value stays controlled: the mock shows
+ * `value` only.
+ */
+export function Switch(props: SwitchProps): React.ReactElement {
+  const {
+    value = false,
+    onValueChange,
+    disabled,
+    label,
+    color,
+    trackColor,
+    thumbColor,
+    haptics,
+    maxFontSizeMultiplier,
+    accessibilityLabel,
+    testID,
+    android,
+    ...viewProps
+  } = props;
+
+  return (
+    <Pressable
+      {...viewProps}
+      testID={testID}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+      disabled={disabled}
+      onPress={() => onValueChange?.(!value)}
+      {...handlers({ onValueChange })}
+    >
+      {label ? <Text>{label}</Text> : null}
+    </Pressable>
   );
 }
 

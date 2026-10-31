@@ -26,6 +26,7 @@ import { NavigationRailDemo } from './NavigationRailDemo';
 import { NativeRegressionDemo } from './NativeRegressionDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
+import { SwitchDemo } from './SwitchDemo';
 import { TabBarDemo } from './TabBarDemo';
 import { TextFieldDemo } from './TextFieldDemo';
 import { Screen, useDemoColors } from './DemoUI';
@@ -47,6 +48,7 @@ type DemoKey =
   | 'navigationRail'
   | 'button'
   | 'chip'
+  | 'switch'
   | 'floatingActionButton'
   | 'floatingToolbar'
   | 'glassDisclosure'
@@ -67,6 +69,7 @@ const COMPONENT_DEMOS = [
   { label: 'Navigation Rail', data: 'navigationRail' },
   { label: 'Button', data: 'button' },
   { label: 'Chip', data: 'chip' },
+  { label: 'Switch', data: 'switch' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
   { label: 'Glass Disclosure', data: 'glassDisclosure' },
@@ -156,6 +159,7 @@ export default function App(): React.ReactElement {
       {demo === 'navigationRail' && <NavigationRailDemo />}
       {demo === 'button' && <ButtonDemo />}
       {demo === 'chip' && <ChipDemo />}
+      {demo === 'switch' && <SwitchDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'glassDisclosure' && <GlassDisclosureDemo />}

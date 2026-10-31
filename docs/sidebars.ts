@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'components/button',
         'components/buttongroup',
         'components/chip',
+        'components/switch',
         'components/floatingactionbutton',
         'components/floatingtoolbar',
         'components/glassdisclosure',

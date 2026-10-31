@@ -12,6 +12,7 @@ export * from './ButtonGroup';
 export * from './SplitButton';
 export * from './Chip';
 export * from './ChipGroup';
+export * from './Switch';
 export * from './FloatingToolbar';
 export * from './GlassDisclosure';
 export * from './LiquidGlass';

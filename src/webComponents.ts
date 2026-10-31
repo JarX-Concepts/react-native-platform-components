@@ -16,6 +16,7 @@ import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
+import type { SwitchProps } from './Switch';
 import type { TabBarProps } from './TabBar';
 import type { TextFieldProps, TextFieldRef } from './TextField';
 
@@ -39,6 +40,7 @@ export interface WebComponentProps {
   NavigationRail: NavigationRailProps;
   SegmentedControl: SegmentedControlProps;
   SelectionMenu: SelectionMenuProps;
+  Switch: SwitchProps;
   TabBar: TabBarProps;
   TextField: TextFieldProps & RefAttributes<TextFieldRef>;
 }
