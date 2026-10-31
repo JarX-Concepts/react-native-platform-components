@@ -41,6 +41,8 @@ class PCChipView(context: Context) :
   var closeTestID: String = ""
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var spokenLabel: String = ""
+  /** The `testID`, on the Material chip (see the manager's setTestId) */
+  var chipTestID: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
   var sizing = PCChipSupport.Sizing()
 
@@ -148,6 +150,12 @@ class PCChipView(context: Context) :
     chip?.contentDescription = value.ifEmpty { null }
   }
 
+  fun applyChipTestID(value: String) {
+    if (chipTestID == value) return
+    chipTestID = value
+    chip?.tag = value.ifEmpty { null }
+  }
+
   fun applyMaxFontSizeMultiplier(value: Float) {
     if (maxFontSizeMultiplier == value) return
     maxFontSizeMultiplier = value
@@ -202,7 +210,7 @@ class PCChipView(context: Context) :
       disabled = !enabled,
       icon = icon,
       closeIcon = closeIcon,
-      testID = "",
+      testID = chipTestID,
       closeTestID = closeTestID,
       accessibilityLabel = spokenLabel,
       closeAccessibilityLabel = closeAccessibilityLabel

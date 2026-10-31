@@ -251,6 +251,12 @@ public final class PCChipView: UIView {
         didSet { if oldValue != closeTestID { apply() } }
     }
 
+    /// The `testID`, on the chip's button: it carries the label and takes the
+    /// touches (PCChip.mm keeps it off the host)
+    public var chipTestID: String = "" {
+        didSet { if oldValue != chipTestID { apply() } }
+    }
+
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
         didSet { if oldValue != interactivity { apply() } }
@@ -347,7 +353,7 @@ public final class PCChipView: UIView {
                 disabled: interactivity == "disabled",
                 accessibilityLabel: spokenLabel,
                 closeAccessibilityLabel: closeAccessibilityLabel,
-                testID: "",
+                testID: chipTestID,
                 closeTestID: closeTestID,
                 minHeight: chipMinHeight,
                 paddingHorizontal: chipPaddingHorizontal
