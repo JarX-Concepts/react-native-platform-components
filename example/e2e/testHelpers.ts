@@ -32,16 +32,15 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  if (!isAndroid()) {
-    try {
-      await waitFor(element(by.text(label)).atIndex(0))
-        .toBeVisible()
-        .withTimeout(1000);
-    } catch {
-      // Later demos are below the system menu's initial viewport.
-      await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
-      await pause(500);
-    }
+  try {
+    await waitFor(element(by.text(label)).atIndex(0))
+      .toBeVisible()
+      .withTimeout(1000);
+  } catch {
+    // Later demos are below the menu's initial viewport: the iOS system menu,
+    // and on Android a PopupMenu taller than the emulator's screen
+    await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+    await pause(500);
   }
   await element(by.text(label)).atIndex(0).tap();
   // Let the demo mount and settle; the README GIFs are trimmed to start here
