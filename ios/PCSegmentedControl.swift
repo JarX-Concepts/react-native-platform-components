@@ -278,7 +278,8 @@ public final class PCSegmentedControlView: UIControl {
         return control.effectiveUserInterfaceLayoutDirection == .rightToLeft ? views.reversed() : views
     }
 
-    /// Puts each segment's testID on the segment's title label or image view.
+    /// Puts each segment's testID, and its label, on the segment's title
+    /// label or image view.
     /// A UISegment hands its hit-tests to the control, so E2E drivers (Detox)
     /// reject a tap on the segment itself as not hittable; its content view
     /// passes. The views exist once laid out, and are replaced when a
@@ -293,6 +294,11 @@ public final class PCSegmentedControlView: UIControl {
                 ($0 is UILabel || $0 is UIImageView) && !$0.isHidden
             } ?? view
             content.accessibilityIdentifier = segment.testID.isEmpty ? nil : segment.testID
+            // The view with the id also carries the segment's label (a title
+            // label otherwise reads its text, without the badge or a custom
+            // accessibilityLabel). The UISegment is the accessibility
+            // element, so VoiceOver doesn't announce its content views.
+            content.accessibilityLabel = segment.testID.isEmpty ? nil : segment.spokenLabel
         }
     }
 
