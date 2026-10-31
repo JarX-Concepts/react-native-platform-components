@@ -23,6 +23,7 @@ import {
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
+  ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
   TabBar,
@@ -313,6 +314,64 @@ describe('FloatingActionButton (web)', () => {
     expect(tree.root.findByType('button').props.children).not.toContain(
       'Compose'
     );
+  });
+});
+
+describe('ProgressIndicator (web)', () => {
+  const progressViews = (tree: ReactTestRenderer) =>
+    tree.root.findAll((node) => node.type === 'progress');
+
+  it('renders <progress> on a labeled progressbar view', () => {
+    const tree = render(
+      <ProgressIndicator
+        testID="upload"
+        progress={0.25}
+        accessibilityLabel="Uploading"
+      />
+    );
+    const host = tree.root.find(
+      (node) =>
+        node.props.testID === 'upload' &&
+        node.props.accessibilityRole !== undefined
+    );
+    expect(host.props.accessibilityRole).toBe('progressbar');
+    expect(host.props.accessibilityLabel).toBe('Uploading');
+    expect(host.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 25,
+    });
+    const bars = progressViews(tree);
+    expect(bars).toHaveLength(1);
+    expect(bars[0]!.props.value).toBe(0.25);
+    expect(bars[0]!.props.max).toBe(1);
+
+    // Indeterminate: a <progress> without a value
+    act(() => tree.update(<ProgressIndicator />));
+    expect(progressViews(tree)[0]!.props.value).toBeUndefined();
+  });
+
+  it('fills one <progress> per segment', () => {
+    const tree = render(<ProgressIndicator progress={0.5} segments={4} />);
+    expect(progressViews(tree).map((bar) => bar.props.value)).toEqual([
+      1, 1, 0, 0,
+    ]);
+  });
+
+  it('draws a ring for the circular and loading variants', () => {
+    const tree = render(
+      <ProgressIndicator variant="circular" progress={0.5} color="#ff0000" />
+    );
+    expect(progressViews(tree)).toHaveLength(0);
+    const ring = tree.root.find(
+      (node) => node.type === 'div' && node.props['aria-hidden']
+    );
+    expect(ring.props.style.background).toContain('#ff0000 180deg');
+    act(() => tree.update(<ProgressIndicator variant="loading" />));
+    expect(
+      tree.root.find((node) => node.type === 'div' && node.props['aria-hidden'])
+        .props.style.background
+    ).toContain('270deg');
   });
 });
 

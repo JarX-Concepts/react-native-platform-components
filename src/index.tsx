@@ -16,6 +16,7 @@ export * from './FloatingToolbar';
 export * from './GlassDisclosure';
 export * from './LiquidGlass';
 export * from './LiquidGlassContainer';
+export * from './ProgressIndicator';
 export * from './TextField';
 export * from './icons';
 export * from './labelStyle';
