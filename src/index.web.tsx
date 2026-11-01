@@ -19,10 +19,14 @@ export type * from './ButtonGroup';
 export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
+export type * from './Switch';
+export type * from './Checkbox';
+export type * from './RadioGroup';
 export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
+export type * from './ProgressIndicator';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
@@ -44,6 +48,8 @@ export {
   SplitButton,
   Chip,
   ChipGroup,
+  Checkbox,
+  RadioGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,
@@ -54,8 +60,10 @@ export {
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
+  ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
 } from './web/components';

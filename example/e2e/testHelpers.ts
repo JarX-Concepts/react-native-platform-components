@@ -32,14 +32,25 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  if (!isAndroid()) {
+  // Later demos are below the menu's initial viewport (the iOS system menu,
+  // and on Android a PopupMenu taller than the emulator's screen); swipe the
+  // menu until the item is shown, since Espresso taps need the row 75% shown
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       await waitFor(element(by.text(label)).atIndex(0))
         .toBeVisible()
         .withTimeout(1000);
+      break;
     } catch {
-      // Later demos are below the system menu's initial viewport.
-      await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      if (isAndroid()) {
+        await element(by.type('android.widget.ListView')).swipe(
+          'up',
+          'slow',
+          0.4
+        );
+      } else {
+        await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      }
       await pause(500);
     }
   }

@@ -206,14 +206,25 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  // The iOS menu scrolls once it outgrows the screen; bring the item up
-  if (!isAndroid()) {
+  // Later demos are below the menu's initial viewport (the iOS system menu,
+  // and on Android a PopupMenu taller than the emulator's screen); swipe the
+  // menu until the item is shown, since Espresso taps need the row 75% shown
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       await waitFor(element(by.text(label)).atIndex(0))
         .toBeVisible()
         .withTimeout(1000);
+      break;
     } catch {
-      await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      if (isAndroid()) {
+        await element(by.type('android.widget.ListView')).swipe(
+          'up',
+          'slow',
+          0.4
+        );
+      } else {
+        await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      }
       await pause(500);
     }
   }
@@ -316,6 +327,42 @@ const expectLabel = async (
   await waitFor(el).toHaveLabel(label).withTimeout(6000);
 };
 
+// Checkbox / RadioGroup state, read from the element that carries the
+// testID, the label and the touches. Android: the MaterialCheckBox's /
+// MaterialRadioButton's checked state. iOS has no checkbox or radio trait,
+// so the row's accessibility value says it, as React Native's
+// accessibilityRole="checkbox" / "radio" does.
+const expectCheckbox = async (
+  testID: string,
+  state: boolean | 'mixed',
+  error = ''
+) => {
+  if (isAndroid()) {
+    // Indeterminate isn't checked
+    await expectToggle(testID, state === true);
+    return;
+  }
+  const word = state === 'mixed' ? 'mixed' : state ? 'checked' : 'unchecked';
+  await waitFor(element(by.id(testID)))
+    .toHaveValue(['checkbox', word, error].filter(Boolean).join(', '))
+    .withTimeout(8000);
+};
+
+const expectRadio = async (
+  testID: string,
+  chosen: boolean,
+  description = ''
+) => {
+  if (isAndroid()) {
+    await expectToggle(testID, chosen);
+    return;
+  }
+  const word = chosen ? 'checked' : 'unchecked';
+  await waitFor(element(by.id(testID)))
+    .toHaveValue([description, 'radio button', word].filter(Boolean).join(', '))
+    .withTimeout(8000);
+};
+
 // A view's width (points on iOS, pixels on Android)
 const widthOf = async (testID: string): Promise<number> => {
   const attributes = (await element(by.id(testID)).getAttributes()) as {
@@ -339,6 +386,36 @@ const waitForWidth = async (
     }
     await pause(250);
     width = await widthOf(testID);
+  }
+};
+
+// A view's height (points on iOS, pixels on Android)
+const heightOf = async (testID: string): Promise<number> => {
+  const attributes = (await element(by.id(testID)).getAttributes()) as {
+    height?: number;
+    frame?: { height: number };
+  };
+  return attributes.frame?.height ?? attributes.height ?? 0;
+};
+
+// Polls a Switch's on / off state (Detox's waitFor has no toggle check).
+// Android: the element is Checkable. iOS: a settings row isn't a UISwitch,
+// which toHaveToggleValue requires, so read its accessibility value, "1" or
+// "0" as UISwitch reports it (and as a bare Switch, a UISwitch, does).
+const expectToggle = async (testID: string, on: boolean, timeout = 8000) => {
+  const start = Date.now();
+  for (;;) {
+    try {
+      if (isAndroid()) {
+        await expect(element(by.id(testID))).toHaveToggleValue(on);
+      } else {
+        await expect(element(by.id(testID))).toHaveValue(on ? '1' : '0');
+      }
+      return;
+    } catch (error) {
+      if (Date.now() - start > timeout) throw error;
+      await pause(250);
+    }
   }
 };
 
@@ -2317,6 +2394,202 @@ describe('Platform Components Example', () => {
     await expectText('chip-last-event', 'close: Grace');
   });
 
+  // The element found by ID is the one with the label, the switch state and
+  // the touches: the whole row with a label, the switch without one
+  it('should test Switch functionality', async () => {
+    await selectDemo('Switch');
+    await expect(element(by.id('switch-wifi'))).toBeVisible();
+    await expect(element(by.id('switch-wifi'))).toHaveLabel('Wi-Fi');
+    await expectToggle('switch-wifi', true);
+
+    // A tap on the row toggles it
+    await element(by.id('switch-wifi')).tap();
+    await expectText('switch-last-event', 'wifi: false');
+    await expectToggle('switch-wifi', false);
+
+    // So does a tap on its label, at the row's leading end
+    await element(by.id('switch-wifi')).tap({ x: 30, y: 20 });
+    await expectText('switch-last-event', 'wifi: true');
+    await expectToggle('switch-wifi', true);
+
+    // A long label wraps, and the row grows to fit it
+    const rowHeight = await heightOf('switch-wifi');
+    const wrappedHeight = await heightOf('switch-cellular');
+    if (wrappedHeight <= rowHeight) {
+      throw new Error(
+        `The wrapped row is ${wrappedHeight} tall, the one-line row ${rowHeight}`
+      );
+    }
+    await element(by.id('switch-cellular')).tap();
+    await expectText('switch-last-event', 'cellular: true');
+    await expectToggle('switch-cellular', true);
+
+    // A disabled row does nothing
+    await element(by.id('switch-bluetooth')).tap();
+    await pause(500);
+    await expectText('switch-last-event', 'cellular: true');
+    await expectToggle('switch-bluetooth', true);
+
+    // A switch without a label, labeled by accessibilityLabel
+    await scrollToId('switch-plain-disabled');
+    await expect(element(by.id('switch-notifications'))).toHaveLabel(
+      'Notifications'
+    );
+    await expectToggle('switch-notifications', false);
+    await element(by.id('switch-notifications')).tap();
+    await expectText('switch-notifications-value', 'On');
+    await expectToggle('switch-notifications', true);
+
+    await element(by.id('switch-plain-disabled')).tap();
+    await pause(500);
+    await expectText('switch-last-event', 'notifications: true');
+    await expectToggle('switch-plain-disabled', false);
+
+    // Controlled: the parent keeps this one off, so a toggle goes back
+    await scrollToId('switch-last-event');
+    await element(by.id('switch-locked')).tap();
+    await expectText('switch-last-event', 'locked: true');
+    await pause(500);
+    await expectToggle('switch-locked', false);
+  });
+
+  it('should test Checkbox functionality', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    // The testID, the label and the state are on one element (#149)
+    await expect(element(by.id('checkbox-terms'))).toBeVisible();
+    await expect(element(by.id('checkbox-terms'))).toHaveLabel(
+      'I have read and agree to the Terms of Service and the Privacy ' +
+        'Policy, and I agree to receive account notices by email.'
+    );
+    await expectCheckbox('checkbox-terms', false);
+
+    // Submitting unchecked shows the error message under the label
+    await element(by.id('checkbox-submit')).tap();
+    const termsError = 'Accept the terms to create your account';
+    await waitFor(element(by.text(termsError)))
+      .toBeVisible()
+      .withTimeout(8000);
+    await expectCheckbox('checkbox-terms', false, termsError);
+    await expectText('checkbox-terms-value', 'Not accepted · Not submitted');
+
+    // A tap on the row (box or label) checks it and clears the error
+    await element(by.id('checkbox-terms')).tap();
+    await expectCheckbox('checkbox-terms', true);
+    await expect(element(by.text(termsError))).not.toBeVisible();
+    await element(by.id('checkbox-submit')).tap();
+    await expectText('checkbox-terms-value', 'Accepted · Submitted');
+
+    // Indeterminate parent: Email alone is checked
+    await scrollToId('checkbox-channels-value');
+    await expect(element(by.id('checkbox-all'))).toHaveLabel(
+      'All notifications'
+    );
+    await expectCheckbox('checkbox-all', 'mixed');
+    // From indeterminate a tap checks every child
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'email, push, sms');
+    await expectCheckbox('checkbox-all', true);
+    await expectCheckbox('checkbox-push', true);
+    // Unchecking a child makes the parent indeterminate again
+    await element(by.id('checkbox-push')).tap();
+    await expectText('checkbox-channels-value', 'email, sms');
+    await expectCheckbox('checkbox-push', false);
+    await expectCheckbox('checkbox-all', 'mixed');
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'email, push, sms');
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'None');
+    await expectCheckbox('checkbox-email', false);
+  });
+
+  it('should test Checkbox disabled and controlled states', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    await scrollToId('checkbox-locked-value');
+
+    // Controlled: the parent ignores the change, so the box goes back
+    await element(by.id('checkbox-locked')).tap();
+    await expectText('checkbox-locked-value', '1');
+    await expectCheckbox('checkbox-locked', false);
+    await element(by.id('checkbox-locked')).tap();
+    await expectText('checkbox-locked-value', '2');
+    await expectCheckbox('checkbox-locked', false);
+
+    // Disabled checkboxes don't toggle
+    await element(by.id('checkbox-disabled')).tap();
+    await pause(500);
+    await expectCheckbox('checkbox-disabled', false);
+    await expect(element(by.id('checkbox-disabled-checked'))).toHaveLabel(
+      'Disabled and checked'
+    );
+    await expectCheckbox('checkbox-disabled-checked', true);
+
+    // error={true}: the error look, no message
+    await expectCheckbox('checkbox-error', false);
+  });
+
+  it('should test Radio Group selection', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    await scrollToId('radio-submit');
+    await expect(element(by.id('radio-delivery-standard'))).toHaveLabel(
+      'Standard'
+    );
+    await expectRadio(
+      'radio-delivery-standard',
+      false,
+      '3–5 business days · Free'
+    );
+    await expectText('radio-delivery-value', 'None');
+
+    // Continuing with no choice shows the validation message
+    await element(by.id('radio-submit')).tap();
+    const deliveryError = 'Choose a delivery method';
+    await waitFor(element(by.text(deliveryError)))
+      .toBeVisible()
+      .withTimeout(8000);
+
+    // A pick moves the choice and clears the message
+    await element(by.id('radio-delivery-express')).tap();
+    await expectText('radio-delivery-value', 'Express');
+    await expectRadio(
+      'radio-delivery-express',
+      true,
+      'Next business day · $9.99'
+    );
+    await expectRadio(
+      'radio-delivery-standard',
+      false,
+      '3–5 business days · Free'
+    );
+    await expect(element(by.text(deliveryError))).not.toBeVisible();
+
+    // A disabled option can't be picked
+    await element(by.id('radio-delivery-sameDay')).tap();
+    await pause(500);
+    await expectText('radio-delivery-value', 'Express');
+
+    await scrollToId('radio-delivery-value');
+    await element(by.id('radio-delivery-pickup')).tap();
+    await expectText('radio-delivery-value', 'Pick up in store');
+    await expectRadio('radio-delivery-pickup', true, 'Ready in 2 hours');
+    await expectRadio(
+      'radio-delivery-express',
+      false,
+      'Next business day · $9.99'
+    );
+
+    await element(by.id('radio-clear')).tap();
+    await expectText('radio-delivery-value', 'None');
+    await expectRadio('radio-delivery-pickup', false, 'Ready in 2 hours');
+
+    // A disabled group doesn't change
+    await scrollToId('checkbox-last-event');
+    await element(by.id('radio-account-business')).tap();
+    await pause(500);
+    await expectRadio('radio-account-personal', true);
+    await expectRadio('radio-account-business', false);
+    await expectText('checkbox-last-event', 'delivery: pickup');
+  });
+
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
     await expect(element(by.id('fab-regular'))).toBeVisible();
@@ -2527,6 +2800,93 @@ describe('Platform Components Example', () => {
       await device.pressBack();
       await expectClosed();
     }
+  });
+
+  it('should test Progress Indicator functionality', async () => {
+    await selectDemo('Progress Indicator');
+
+    // The view with the testID is the one with the label and the value
+    const expectProgress = async (testID: string, value: string) => {
+      await waitFor(element(by.id(testID)))
+        .toHaveValue(value)
+        .withTimeout(8000);
+    };
+    // iOS reads the value out as a percentage ("busy" while
+    // indeterminate); Android as a range, which Detox doesn't report, so
+    // the demo's own value text stands in there
+    const expectPercent = async (percent: string) => {
+      await expectText('progress-value', percent);
+      if (!isAndroid()) {
+        await expectProgress(
+          'progress-linear',
+          percent === 'indeterminate' ? 'busy' : percent
+        );
+      }
+    };
+
+    const bar = element(by.id('progress-linear'));
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveLabel('Upload');
+    await expectPercent('40%');
+
+    // Value changes, and back to indeterminate
+    await element(by.id('progress-set-100')).tap();
+    await expectPercent('100%');
+    await element(by.id('progress-set-0')).tap();
+    await expectPercent('0%');
+    await element(by.id('progress-set-indeterminate')).tap();
+    await expectPercent('indeterminate');
+    await expect(bar).toBeVisible();
+
+    // A simulated upload animates from 0 to 100%
+    await element(by.id('progress-simulate')).tap();
+    await waitFor(element(by.id('progress-value')))
+      .toHaveText('100%')
+      .withTimeout(15000);
+    await expectPercent('100%');
+
+    await expect(element(by.id('progress-indeterminate'))).toHaveLabel(
+      'Loading feed'
+    );
+
+    // Step progress: a segmented bar
+    await scrollToId('progress-step-next');
+    const steps = element(by.id('progress-steps'));
+    await expect(steps).toBeVisible();
+    // The demo reads the step out instead of the percentage. React Native
+    // writes a text value into the content description on Android
+    const expectStep = async (step: number) => {
+      await expectText('progress-step-value', `${step} of 5`);
+      if (isAndroid()) {
+        await waitFor(steps)
+          .toHaveLabel(`Checkout, Step ${step} of 5`)
+          .withTimeout(8000);
+      } else {
+        await expect(steps).toHaveLabel('Checkout');
+        await expectProgress('progress-steps', `Step ${step} of 5`);
+      }
+    };
+    await expectStep(2);
+    await element(by.id('progress-step-next')).tap();
+    await expectStep(3);
+    await element(by.id('progress-step-back')).tap();
+    await element(by.id('progress-step-back')).tap();
+    await expectStep(1);
+
+    // Circular, loading and colored indicators render with their labels
+    for (const [testID, label] of [
+      ['progress-circular-small', 'Small spinner'],
+      ['progress-circular-large', 'Large spinner'],
+      ['progress-circular', 'Download'],
+      ['progress-circular-wavy', 'Wavy download'],
+      ['progress-loading', 'Loading'],
+      ['progress-loading-contained', 'Loading (contained)'],
+      ['progress-colors-circular', 'Custom colors ring'],
+    ] as const) {
+      await scrollToId(testID);
+      await expect(element(by.id(testID))).toHaveLabel(label);
+    }
+    if (!isAndroid()) await expectProgress('progress-circular', '100%');
   });
 
   itOnIOS('should test Liquid Glass functionality', async () => {

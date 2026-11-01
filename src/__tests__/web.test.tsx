@@ -14,6 +14,8 @@ import {
   ButtonGroup,
   Chip,
   ChipGroup,
+  Checkbox,
+  RadioGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,
@@ -23,8 +25,10 @@ import {
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
+  ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
   setNativeTheme,
@@ -237,6 +241,53 @@ describe('ButtonGroup (web)', () => {
   });
 });
 
+describe('Switch (web)', () => {
+  it('is a checkbox with the switch role, controlled by value', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <Switch
+        testID="sync"
+        value={false}
+        accessibilityLabel="Sync"
+        onValueChange={onValueChange}
+      />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.type).toBe('checkbox');
+    expect(input.props.role).toBe('switch');
+    expect(input.props.switch).toBe('');
+    expect(input.props['data-testid']).toBe('sync');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-checked']).toBe(false);
+    expect(input.props['aria-label']).toBe('Sync');
+    expect(tree.root.findAllByType('label')).toHaveLength(0);
+
+    act(() => input.props.onChange({ target: { checked: true } }));
+    expect(onValueChange).toHaveBeenCalledWith(true);
+  });
+
+  it('a label makes a <label> row around the text and the box', () => {
+    const tree = render(<Switch testID="wifi" label="Wi-Fi" value disabled />);
+    const label = tree.root.findByType('label');
+    expect(label.findByType('span').props.children).toBe('Wi-Fi');
+    const input = label.findByType('input');
+    expect(input.props['data-testid']).toBe('wifi');
+    expect(input.props.checked).toBe(true);
+    expect(input.props.disabled).toBe(true);
+  });
+
+  it('tints the box with color, else the brand color', () => {
+    const tree = render(<Switch color="#2E7D32" />);
+    expect(tree.root.findByType('input').props.style.accentColor).toBe(
+      '#2E7D32'
+    );
+    act(() => tree.update(<Switch />));
+    expect(tree.root.findByType('input').props.style.accentColor).toEqual(
+      expect.any(String)
+    );
+  });
+});
+
 describe('Chip and ChipGroup (web)', () => {
   it('Chip is a toggle <button> with a close <button> beside it', () => {
     const onPress = jest.fn();
@@ -310,6 +361,89 @@ describe('Chip and ChipGroup (web)', () => {
   });
 });
 
+describe('Checkbox and RadioGroup (web)', () => {
+  const change = (node: ReactTestInstance) => act(() => node.props.onChange());
+
+  it('Checkbox is an <input type="checkbox"> inside its <label>', () => {
+    const onCheckedChange = jest.fn();
+    const tree = render(
+      <Checkbox
+        testID="terms"
+        label="I agree"
+        checked={false}
+        error="You must agree"
+        onCheckedChange={onCheckedChange}
+      />
+    );
+    const label = tree.root.findByType('label');
+    const input = label.findByType('input');
+    expect(input.props.type).toBe('checkbox');
+    expect(input.props['data-testid']).toBe('terms');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-invalid']).toBe(true);
+    const description = tree.root.find(
+      (n) => n.props.id === input.props['aria-describedby']
+    );
+    expect(description.props.children).toBe('You must agree');
+
+    change(input);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('an indeterminate checkbox checks on change', () => {
+    const onCheckedChange = jest.fn();
+    const tree = render(
+      <Checkbox checked="indeterminate" onCheckedChange={onCheckedChange} />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-invalid']).toBeUndefined();
+    change(input);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('RadioGroup is a radiogroup of <input type="radio">s sharing a name', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <RadioGroup
+        testID="delivery"
+        accessibilityLabel="Delivery"
+        options={[
+          { value: 'standard', label: 'Standard', description: '3–5 days' },
+          { value: 'express', label: 'Express' },
+          { value: 'pickup', label: 'Pickup', disabled: true },
+        ]}
+        value="standard"
+        error="Pick one"
+        onValueChange={onValueChange}
+      />
+    );
+    const group = tree.root.find((n) => n.props.role === 'radiogroup');
+    expect(group.props['aria-label']).toBe('Delivery');
+    const inputs = group.findAllByType('input');
+    expect(inputs.map((i) => i.props.type)).toEqual([
+      'radio',
+      'radio',
+      'radio',
+    ]);
+    expect(new Set(inputs.map((i) => i.props.name)).size).toBe(1);
+    expect(inputs.map((i) => i.props['data-testid'])).toEqual([
+      'delivery-standard',
+      'delivery-express',
+      'delivery-pickup',
+    ]);
+    expect(inputs.map((i) => i.props.checked)).toEqual([true, false, false]);
+    expect(inputs[2]!.props.disabled).toBe(true);
+    const message = tree.root.find(
+      (n) => n.props.id === group.props['aria-describedby']
+    );
+    expect(message.props.children).toBe('Pick one');
+
+    change(inputs[1]!);
+    expect(onValueChange).toHaveBeenCalledWith('express', 1);
+  });
+});
+
 describe('FloatingActionButton (web)', () => {
   it('renders a <button> with the label while extended', () => {
     const onPress = jest.fn();
@@ -336,6 +470,64 @@ describe('FloatingActionButton (web)', () => {
     expect(tree.root.findByType('button').props.children).not.toContain(
       'Compose'
     );
+  });
+});
+
+describe('ProgressIndicator (web)', () => {
+  const progressViews = (tree: ReactTestRenderer) =>
+    tree.root.findAll((node) => node.type === 'progress');
+
+  it('renders <progress> on a labeled progressbar view', () => {
+    const tree = render(
+      <ProgressIndicator
+        testID="upload"
+        progress={0.25}
+        accessibilityLabel="Uploading"
+      />
+    );
+    const host = tree.root.find(
+      (node) =>
+        node.props.testID === 'upload' &&
+        node.props.accessibilityRole !== undefined
+    );
+    expect(host.props.accessibilityRole).toBe('progressbar');
+    expect(host.props.accessibilityLabel).toBe('Uploading');
+    expect(host.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 25,
+    });
+    const bars = progressViews(tree);
+    expect(bars).toHaveLength(1);
+    expect(bars[0]!.props.value).toBe(0.25);
+    expect(bars[0]!.props.max).toBe(1);
+
+    // Indeterminate: a <progress> without a value
+    act(() => tree.update(<ProgressIndicator />));
+    expect(progressViews(tree)[0]!.props.value).toBeUndefined();
+  });
+
+  it('fills one <progress> per segment', () => {
+    const tree = render(<ProgressIndicator progress={0.5} segments={4} />);
+    expect(progressViews(tree).map((bar) => bar.props.value)).toEqual([
+      1, 1, 0, 0,
+    ]);
+  });
+
+  it('draws a ring for the circular and loading variants', () => {
+    const tree = render(
+      <ProgressIndicator variant="circular" progress={0.5} color="#ff0000" />
+    );
+    expect(progressViews(tree)).toHaveLength(0);
+    const ring = tree.root.find(
+      (node) => node.type === 'div' && node.props['aria-hidden']
+    );
+    expect(ring.props.style.background).toContain('#ff0000 180deg');
+    act(() => tree.update(<ProgressIndicator variant="loading" />));
+    expect(
+      tree.root.find((node) => node.type === 'div' && node.props['aria-hidden'])
+        .props.style.background
+    ).toContain('270deg');
   });
 });
 

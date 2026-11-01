@@ -5,6 +5,8 @@ import type { ButtonGroupProps } from './ButtonGroup';
 import type { SplitButtonProps } from './SplitButton';
 import type { ChipProps } from './Chip';
 import type { ChipGroupProps } from './ChipGroup';
+import type { CheckboxProps } from './Checkbox';
+import type { RadioGroupProps } from './RadioGroup';
 import type { ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { DialogProps } from './Dialog';
@@ -14,8 +16,10 @@ import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
+import type { ProgressIndicatorProps } from './ProgressIndicator';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
+import type { SwitchProps } from './Switch';
 import type { TabBarProps } from './TabBar';
 import type { TextFieldProps, TextFieldRef } from './TextField';
 
@@ -27,6 +31,8 @@ export interface WebComponentProps {
   SplitButton: SplitButtonProps;
   Chip: ChipProps;
   ChipGroup: ChipGroupProps;
+  Checkbox: CheckboxProps;
+  RadioGroup: RadioGroupProps;
   ContextMenu: ContextMenuProps;
   DatePicker: DatePickerProps;
   DateRangePicker: DateRangePickerProps;
@@ -37,8 +43,10 @@ export interface WebComponentProps {
   LiquidGlass: LiquidGlassProps;
   LiquidGlassContainer: LiquidGlassContainerProps;
   NavigationRail: NavigationRailProps;
+  ProgressIndicator: ProgressIndicatorProps;
   SegmentedControl: SegmentedControlProps;
   SelectionMenu: SelectionMenuProps;
+  Switch: SwitchProps;
   TabBar: TabBarProps;
   TextField: TextFieldProps & RefAttributes<TextFieldRef>;
 }
