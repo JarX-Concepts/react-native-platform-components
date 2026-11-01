@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import { expect } from 'detox';
-import { shardIt } from './testHelpers';
+import { expectDisabled, shardIt } from './testHelpers';
 
 const isAndroid = () => device.getPlatform() === 'android';
 
@@ -1019,14 +1019,15 @@ describe('Platform Components Example', () => {
       await expect(element(by.id('notify-menu-embedded'))).toHaveValue('Email');
     }
 
-    // Test disabled state
+    // Disabled: the field says so (VoiceOver "dimmed", TalkBack
+    // "disabled"), and again once re-enabled
     await element(by.id('disabled-switch')).tap();
-
-    // The menu should be disabled now
-    // (Can't easily verify disabled state in Detox, but we can ensure it doesn't crash)
+    await expectDisabled('state-menu-embedded');
+    await expectDisabled('notify-menu-embedded');
 
     // Re-enable
     await element(by.id('disabled-switch')).tap();
+    await expectDisabled('state-menu-embedded', false);
 
     // Toggle back to modal mode
     await element(by.id('embedded-switch')).tap();
@@ -1391,6 +1392,7 @@ describe('Platform Components Example', () => {
     // it; on Android the page behind the dialog isn't readable meanwhile)
     await element(by.id('actionsheet-camera-switch')).tap();
     await openSheet();
+    await expectDisabled('source-camera');
     await sheetAction('source-camera').tap();
     await pause(800);
     await expect(sheetAction('source-library')).toBeVisible();
@@ -1496,6 +1498,7 @@ describe('Platform Components Example', () => {
     // A disabled action can't be picked: the dialog stays up (a pick closes
     // it; on Android the page behind the dialog isn't readable meanwhile)
     await openDialog('save', 'dialog-save');
+    await expectDisabled('dialog-save');
     await dialogAction('dialog-save').tap();
     await pause(800);
     await expect(dialogAction('dialog-discard')).toBeVisible();
@@ -1697,6 +1700,13 @@ describe('Platform Components Example', () => {
     await scrollToId('disabled-switch', 'down', SEGMENTED_PAGE_START_X);
     await element(by.id('disabled-switch')).tap();
     await pause(600);
+    // A disabled segment. On iOS the segment's accessibility element is
+    // the UISegment around the view with the testID (its title label)
+    await expectDisabled(
+      isAndroid()
+        ? by.id('segment-disabled')
+        : by.type('UISegment').withDescendant(by.id('segment-disabled'))
+    );
 
     await element(by.id('disabled-switch')).tap();
     await pause(400);
@@ -2286,7 +2296,10 @@ describe('Platform Components Example', () => {
     await scrollToId('disabled-switch');
     await element(by.id('disabled-switch')).tap();
     await pause(600);
+    await expectDisabled('button-group-single-day');
+    await expectDisabled('split-button-menu');
     await bringBrandIntoReach();
+    await expectDisabled('button-styled');
     await element(by.id('button-styled')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
@@ -2325,6 +2338,7 @@ describe('Platform Components Example', () => {
     await expectText('chip-filters-value', 'Vegan, Gluten free');
 
     // A disabled chip in the group does nothing
+    await expectDisabled('chip-filters-nuts');
     await element(by.id('chip-filters-nuts')).tap();
     await pause(500);
     await expectText('chip-filters-value', 'Vegan, Gluten free');
@@ -2352,6 +2366,7 @@ describe('Platform Components Example', () => {
 
     // Standalone chips: a disabled one does nothing
     await scrollToId('chip-last-event');
+    await expectDisabled('chip-directions');
     await element(by.id('chip-directions')).tap();
     await pause(500);
     await expectText('chip-last-event', 'reset');
@@ -2425,6 +2440,7 @@ describe('Platform Components Example', () => {
     await expectToggle('switch-cellular', true);
 
     // A disabled row does nothing
+    await expectDisabled('switch-bluetooth');
     await element(by.id('switch-bluetooth')).tap();
     await pause(500);
     await expectText('switch-last-event', 'cellular: true');
@@ -2515,6 +2531,7 @@ describe('Platform Components Example', () => {
     await expectCheckbox('checkbox-locked', false);
 
     // Disabled checkboxes don't toggle
+    await expectDisabled('checkbox-disabled');
     await element(by.id('checkbox-disabled')).tap();
     await pause(500);
     await expectCheckbox('checkbox-disabled', false);
@@ -2563,6 +2580,7 @@ describe('Platform Components Example', () => {
     await expect(element(by.text(deliveryError))).not.toBeVisible();
 
     // A disabled option can't be picked
+    await expectDisabled('radio-delivery-sameDay');
     await element(by.id('radio-delivery-sameDay')).tap();
     await pause(500);
     await expectText('radio-delivery-value', 'Express');
