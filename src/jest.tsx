@@ -20,6 +20,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -45,9 +46,11 @@ import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
 import type { NativeTheme } from './NativeTheme';
+import type { ProgressIndicatorProps } from './ProgressIndicator';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
 import type { SplitButtonProps } from './SplitButton';
+import type { SwitchProps } from './Switch';
 import type { TabBarProps } from './TabBar';
 import type {
   TextFieldChangeEvent,
@@ -56,6 +59,10 @@ import type {
   TextFieldRef,
 } from './TextField';
 import { resolveIcon } from './icons';
+import {
+  normalizeProgress,
+  progressAccessibility,
+} from './progressIndicatorSupport';
 import { resolveSubmitBehavior } from './submitBehavior';
 import { nextSelection } from './web/ButtonGroup';
 
@@ -69,6 +76,7 @@ export type * from './ButtonGroup';
 export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
+export type * from './Switch';
 export type * from './Checkbox';
 export type * from './RadioGroup';
 export type * from './FloatingToolbar';
@@ -79,6 +87,7 @@ export type * from './TextField';
 export type * from './TabBar';
 export type * from './FloatingActionButton';
 export type * from './NavigationRail';
+export type * from './ProgressIndicator';
 export type * from './sharedTypes';
 export type * from './haptics';
 export type * from './NativeTheme';
@@ -456,7 +465,7 @@ export function FloatingActionButton(
 }
 
 /**
- * A view of `Pressable`s, one per button, with the test ID
+ * A view of `Pressable`s, one per button, with the button's `testID`, else
  * `${testID}-${value}`. Selection follows the native rules.
  */
 export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
@@ -510,7 +519,10 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
         return (
           <Pressable
             key={button.value}
-            testID={testID ? `${testID}-${button.value}` : undefined}
+            testID={
+              button.testID ??
+              (testID ? `${testID}-${button.value}` : undefined)
+            }
             accessibilityRole={selection === 'none' ? 'button' : 'togglebutton'}
             accessibilityLabel={button.accessibilityLabel ?? button.label}
             accessibilityState={{
@@ -1035,6 +1047,49 @@ export function SegmentedControl(
 }
 
 // ---------------------------------------------------------------------------
+// Switch
+
+/**
+ * A `Pressable` with the switch role, `testID`, the label as `Text` and
+ * `accessibilityState.checked`. Pressing it calls `onValueChange` with the
+ * other value, and `fireEvent(element, 'valueChange', true)` works as with
+ * React Native's `Switch`. The value stays controlled: the mock shows
+ * `value` only.
+ */
+export function Switch(props: SwitchProps): React.ReactElement {
+  const {
+    value = false,
+    onValueChange,
+    disabled,
+    label,
+    color,
+    trackColor,
+    thumbColor,
+    haptics,
+    maxFontSizeMultiplier,
+    accessibilityLabel,
+    testID,
+    android,
+    ...viewProps
+  } = props;
+
+  return (
+    <Pressable
+      {...viewProps}
+      testID={testID}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+      disabled={disabled}
+      onPress={() => onValueChange?.(!value)}
+      {...handlers({ onValueChange })}
+    >
+      {label ? <Text>{label}</Text> : null}
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Pickers and menus
 
 /**
@@ -1458,6 +1513,43 @@ export function LiquidGlassContainer(
 
 /** Always `false` under Jest. */
 export const isLiquidGlassSupported: boolean = false;
+
+// ---------------------------------------------------------------------------
+// ProgressIndicator
+
+/**
+ * A `View` with the `progressbar` role, labeled by `accessibilityLabel`,
+ * with the progress as its `accessibilityValue` (0–100) or busy while
+ * indeterminate.
+ */
+export function ProgressIndicator(
+  props: ProgressIndicatorProps
+): React.ReactElement {
+  const {
+    variant = 'linear',
+    progress,
+    color: _color,
+    trackColor: _trackColor,
+    size: _size,
+    segments: _segments,
+    android: _android,
+    ...viewProps
+  } = props;
+  const value = variant === 'loading' ? undefined : normalizeProgress(progress);
+  const { accessibilityValue, accessibilityState } = progressAccessibility(
+    value,
+    Platform.OS
+  );
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={accessibilityValue}
+      accessibilityState={accessibilityState}
+      {...viewProps}
+    />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Theme

@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Switch**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -55,11 +55,13 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**Button**](/components/button) | `UIButton` configurations, Liquid Glass variants on iOS 26 | Material 3 Expressive `MaterialButton`: five sizes, shape morph | `react-native-paper` (Material 3, not Expressive, in JavaScript) |
 | [**ButtonGroup**](/components/buttongroup) | A row of `UIButton`s with a "…" overflow menu; SplitButton: a button and a chevron `UIMenu` button | Material 3 Expressive button groups, single or multiple selection, overflow menu; `MaterialSplitButton` | `react-native-paper` segmented buttons (JavaScript) |
 | [**Chip**](/components/chip) | Capsule `UIButton`s (iOS has no chip): Liquid Glass on iOS 26, prominent glass with the tint color while selected; a wrapping flow layout or a scrolling row | Material 3 `Chip` (assist, filter, input, suggestion) in a `ChipGroup`: single or multiple selection, wrapping or single line, close icons | Pills drawn by hand with `Pressable` (no native press feedback, haptics or selection traits) |
+| [**Switch**](/components/switch) | `UISwitch` (Liquid Glass on iOS 26); with a `label`, a settings row that toggles as a whole | Material 3 `MaterialSwitch`: the wider track, thumb icons, Material motion; the same settings row | React Native's `Switch` (the pre-Material 3 `SwitchCompat` on Android) |
 | [**Checkbox**](/components/checkbox) | A row with a leading `circle` / `checkmark.circle.fill` SF Symbol in the tint color (iOS has no checkbox), as in Reminders | Material 3 `MaterialCheckBox`: indeterminate and error states, wrapping label | Icons swapped by hand in a `Pressable` (no Material state layers, accessibility role wired by hand) |
 | [**RadioGroup**](/components/radiogroup) | List rows with a trailing `checkmark` on the chosen one, as in Settings (iOS has no radio button) | Material 3 `MaterialRadioButton`s in a `RadioGroup`, with descriptions and a validation message | The same hand-drawn rows |
 | [**FloatingActionButton**](/components/floatingactionbutton) | A round prominent `UIButton`, Liquid Glass on iOS 26 (iOS has no FAB) | Material `FloatingActionButton` / `ExtendedFloatingActionButton`: four sizes, shrink on scroll | `react-native-paper` FAB (drawn in JavaScript) |
 | [**FloatingToolbar**](/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
 | [**GlassDisclosure**](/components/glassdisclosure) | One Liquid Glass shape that morphs from a pill into a panel of React content on iOS 26; a card before | A card in Material 3 surface colors that fades and scales in | A hand-built overlay and animation |
+| [**ProgressIndicator**](/components/progressindicator) | `UIProgressView` and `UIActivityIndicatorView`; a ring for determinate circular progress | Material 3 linear and circular indicators, the Expressive wavy shape and `LoadingIndicator`; segmented step bars | `ActivityIndicator` (the old Android spinner) and bars drawn with `Animated` |
 | [**LiquidGlass**](/components/liquidglass) | `UIGlassEffect` on iOS 26+; `LiquidGlassContainer` merges and morphs it (`UIGlassContainerEffect`) | A fallback `View` | `@callstack/liquid-glass`, `expo-glass-effect` |
 
 One package and one API shape: platform-only props go under `ios={{ }}` and `android={{ }}`, with Fabric + Codegen typed bindings, an Expo config plugin and TypeScript, instead of four or five packages with their own conventions, install steps and upgrade cadences.

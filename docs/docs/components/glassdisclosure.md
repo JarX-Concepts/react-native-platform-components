@@ -58,9 +58,13 @@ function ChannelScreen() {
 
 ### Placement
 
-The component fills its parent (`StyleSheet.absoluteFill`) and is transparent to touches while the pill is closed: only the pill takes them. The pill sits at the top, centered, and the panel opens down from there across the full width. Pad the component through `style` to place them: the safe area at the top, the screen's margins at the sides.
+The component fills its parent (`StyleSheet.absoluteFill`) and is transparent to touches while the pill is closed: only the pill takes them. Nothing it draws reaches past the closed pill, so views beside the pill, such as a screen header's buttons, stay tappable and visible to UI tests (Detox `toBeVisible()`). The pill sits at the top, centered, and the panel opens down from there across the full width. Pad the component through `style` to place them: the safe area at the top, the screen's margins at the sides.
 
 Render it last in a screen-sized parent. The backdrop behind the open panel covers that parent, and a React Native view can't take touches outside its parent, so a GlassDisclosure inside a small view can only dim and dismiss from that view.
+
+| In a screen header: the pill between the header's buttons, then open over them. iOS 26 (top) and Android (bottom), light and dark |
+| --- |
+| ![Four iOS shots and four Android shots: the closed pill between a menu button and a search button above a chat, the open panel over the dimmed chat, then the same two in dark mode](/img/components/glassdisclosure/header-light-dark.webp) |
 
 ### Props
 
@@ -99,7 +103,7 @@ Render it last in a screen-sized parent. The backdrop behind the open panel cove
 
 | iOS 26: the capsule grows into the panel, and the content fades in once the glass has grown |
 | --- |
-| ![The glass pill over a chat, then a wider glass shape growing out of it, then the full panel with a close button, the title and rows of members, tabs, files and notifications](/img/components/glassdisclosure/morph-ios.webp) |
+| ![The glass pill between a menu button and a search button over a chat, then a wider glass shape growing out of it, then the full panel with a close button, the title and rows of members, tabs, files and notifications](/img/components/glassdisclosure/morph-ios.webp) |
 
 | iOS 18 (closed, open) | Android (closed, open) |
 | --- | --- |

@@ -14,6 +14,7 @@ module.exports = {
           'MeasuringPCFloatingActionButtonComponentDescriptor',
           'MeasuringPCChipComponentDescriptor',
           'MeasuringPCChipGroupComponentDescriptor',
+          'MeasuringPCSwitchComponentDescriptor',
           'MeasuringPCCheckboxComponentDescriptor',
           'MeasuringPCRadioGroupComponentDescriptor',
         ],

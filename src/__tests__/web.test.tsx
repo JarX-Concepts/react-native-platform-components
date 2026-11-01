@@ -25,8 +25,10 @@ import {
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
+  ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
   setNativeTheme,
@@ -71,6 +73,8 @@ describe('Button (web)', () => {
     expect(button.props.type).toBe('button');
     expect(button.props['aria-label']).toBe('Save');
     expect(button.props.children).toContain('Save');
+    // The testID is on the element with the label and the clicks
+    expect(button.props['data-testid']).toBe('b');
 
     click(button);
     expect(onPress).toHaveBeenCalledTimes(1);
@@ -219,6 +223,68 @@ describe('ButtonGroup (web)', () => {
     click(buttons[0]!);
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+
+  it('gives each <button> its testID, by default ${testID}-${value}', () => {
+    const tree = render(
+      <ButtonGroup
+        testID="g"
+        buttons={[
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B', testID: 'own' },
+        ]}
+      />
+    );
+    expect(
+      tree.root.findAllByType('button').map((b) => b.props['data-testid'])
+    ).toEqual(['g-a', 'own']);
+  });
+});
+
+describe('Switch (web)', () => {
+  it('is a checkbox with the switch role, controlled by value', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <Switch
+        testID="sync"
+        value={false}
+        accessibilityLabel="Sync"
+        onValueChange={onValueChange}
+      />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.type).toBe('checkbox');
+    expect(input.props.role).toBe('switch');
+    expect(input.props.switch).toBe('');
+    expect(input.props['data-testid']).toBe('sync');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-checked']).toBe(false);
+    expect(input.props['aria-label']).toBe('Sync');
+    expect(tree.root.findAllByType('label')).toHaveLength(0);
+
+    act(() => input.props.onChange({ target: { checked: true } }));
+    expect(onValueChange).toHaveBeenCalledWith(true);
+  });
+
+  it('a label makes a <label> row around the text and the box', () => {
+    const tree = render(<Switch testID="wifi" label="Wi-Fi" value disabled />);
+    const label = tree.root.findByType('label');
+    expect(label.findByType('span').props.children).toBe('Wi-Fi');
+    const input = label.findByType('input');
+    expect(input.props['data-testid']).toBe('wifi');
+    expect(input.props.checked).toBe(true);
+    expect(input.props.disabled).toBe(true);
+  });
+
+  it('tints the box with color, else the brand color', () => {
+    const tree = render(<Switch color="#2E7D32" />);
+    expect(tree.root.findByType('input').props.style.accentColor).toBe(
+      '#2E7D32'
+    );
+    act(() => tree.update(<Switch />));
+    expect(tree.root.findByType('input').props.style.accentColor).toEqual(
+      expect.any(String)
+    );
   });
 });
 
@@ -382,10 +448,16 @@ describe('FloatingActionButton (web)', () => {
   it('renders a <button> with the label while extended', () => {
     const onPress = jest.fn();
     const tree = render(
-      <FloatingActionButton icon="pencil" label="Compose" onPress={onPress} />
+      <FloatingActionButton
+        icon="pencil"
+        label="Compose"
+        onPress={onPress}
+        testID="fab"
+      />
     );
     const button = tree.root.findByType('button');
     expect(button.props['aria-label']).toBe('Compose');
+    expect(button.props['data-testid']).toBe('fab');
     expect(button.props.children).toContain('Compose');
     click(button);
     expect(onPress).toHaveBeenCalledTimes(1);
@@ -398,6 +470,64 @@ describe('FloatingActionButton (web)', () => {
     expect(tree.root.findByType('button').props.children).not.toContain(
       'Compose'
     );
+  });
+});
+
+describe('ProgressIndicator (web)', () => {
+  const progressViews = (tree: ReactTestRenderer) =>
+    tree.root.findAll((node) => node.type === 'progress');
+
+  it('renders <progress> on a labeled progressbar view', () => {
+    const tree = render(
+      <ProgressIndicator
+        testID="upload"
+        progress={0.25}
+        accessibilityLabel="Uploading"
+      />
+    );
+    const host = tree.root.find(
+      (node) =>
+        node.props.testID === 'upload' &&
+        node.props.accessibilityRole !== undefined
+    );
+    expect(host.props.accessibilityRole).toBe('progressbar');
+    expect(host.props.accessibilityLabel).toBe('Uploading');
+    expect(host.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 25,
+    });
+    const bars = progressViews(tree);
+    expect(bars).toHaveLength(1);
+    expect(bars[0]!.props.value).toBe(0.25);
+    expect(bars[0]!.props.max).toBe(1);
+
+    // Indeterminate: a <progress> without a value
+    act(() => tree.update(<ProgressIndicator />));
+    expect(progressViews(tree)[0]!.props.value).toBeUndefined();
+  });
+
+  it('fills one <progress> per segment', () => {
+    const tree = render(<ProgressIndicator progress={0.5} segments={4} />);
+    expect(progressViews(tree).map((bar) => bar.props.value)).toEqual([
+      1, 1, 0, 0,
+    ]);
+  });
+
+  it('draws a ring for the circular and loading variants', () => {
+    const tree = render(
+      <ProgressIndicator variant="circular" progress={0.5} color="#ff0000" />
+    );
+    expect(progressViews(tree)).toHaveLength(0);
+    const ring = tree.root.find(
+      (node) => node.type === 'div' && node.props['aria-hidden']
+    );
+    expect(ring.props.style.background).toContain('#ff0000 180deg');
+    act(() => tree.update(<ProgressIndicator variant="loading" />));
+    expect(
+      tree.root.find((node) => node.type === 'div' && node.props['aria-hidden'])
+        .props.style.background
+    ).toContain('270deg');
   });
 });
 

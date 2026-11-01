@@ -20,12 +20,14 @@ import {
   DatePicker,
   Dialog,
   FloatingActionButton,
+  ProgressIndicator,
   GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
   isLiquidGlassSupported,
@@ -267,6 +269,31 @@ describe('Button (mock)', () => {
   });
 });
 
+describe('ProgressIndicator (mock)', () => {
+  it('is a progressbar with the label and value on the testID view', () => {
+    const tree = render(
+      <ProgressIndicator
+        testID="upload"
+        progress={0.5}
+        accessibilityLabel="Uploading"
+      />
+    );
+    const view = byTestID(tree, 'upload');
+    expect(view.props.accessibilityRole).toBe('progressbar');
+    expect(view.props.accessibilityLabel).toBe('Uploading');
+    expect(view.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 50,
+    });
+
+    act(() => tree.update(<ProgressIndicator testID="upload" />));
+    expect(byTestID(tree, 'upload').props.accessibilityState).toEqual({
+      busy: true,
+    });
+  });
+});
+
 describe('FloatingActionButton (mock)', () => {
   it('is a pressable labeled by its label', () => {
     const onPress = jest.fn();
@@ -435,6 +462,49 @@ describe('ButtonGroup (mock)', () => {
     press(byTestID(tree, 'group-a'));
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('Switch (mock)', () => {
+  it('is a switch-role Pressable that reports the other value', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <Switch
+        testID="wifi"
+        label="Wi-Fi"
+        value={false}
+        onValueChange={onValueChange}
+      />
+    );
+    const row = byTestID(tree, 'wifi');
+    expect(row.props.accessibilityRole).toBe('switch');
+    expect(row.props.accessibilityLabel).toBe('Wi-Fi');
+    expect(row.props.accessibilityState).toEqual({
+      checked: false,
+      disabled: false,
+    });
+    expect(texts(tree)).toEqual(['Wi-Fi']);
+
+    press(row);
+    expect(onValueChange).toHaveBeenCalledWith(true);
+    // Controlled: the mock shows `value` only
+    expect(byTestID(tree, 'wifi').props.accessibilityState.checked).toBe(false);
+
+    // As with React Native's Switch
+    fire(byTestID(tree, 'wifi'), 'valueChange', false);
+    expect(onValueChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('uses accessibilityLabel and reports the disabled state', () => {
+    const tree = render(
+      <Switch testID="s" value accessibilityLabel="Sync" disabled />
+    );
+    const node = byTestID(tree, 's');
+    expect(node.props.accessibilityLabel).toBe('Sync');
+    expect(node.props.accessibilityState).toEqual({
+      checked: true,
+      disabled: true,
+    });
   });
 });
 

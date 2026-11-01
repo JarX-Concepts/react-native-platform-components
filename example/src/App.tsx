@@ -25,8 +25,10 @@ import { GlassDisclosureDemo } from './GlassDisclosureDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
 import { NativeRegressionDemo } from './NativeRegressionDemo';
+import { ProgressIndicatorDemo } from './ProgressIndicatorDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
+import { SwitchDemo } from './SwitchDemo';
 import { TabBarDemo } from './TabBarDemo';
 import { TextFieldDemo } from './TextFieldDemo';
 import { Screen, useDemoColors } from './DemoUI';
@@ -48,10 +50,12 @@ type DemoKey =
   | 'navigationRail'
   | 'button'
   | 'chip'
+  | 'switch'
   | 'checkbox'
   | 'floatingActionButton'
   | 'floatingToolbar'
   | 'glassDisclosure'
+  | 'progressIndicator'
   | 'textField'
   | 'liquidGlass'
   | 'nativeRegressions'
@@ -69,10 +73,12 @@ const COMPONENT_DEMOS = [
   { label: 'Navigation Rail', data: 'navigationRail' },
   { label: 'Button', data: 'button' },
   { label: 'Chip', data: 'chip' },
+  { label: 'Switch', data: 'switch' },
   { label: 'Checkbox & Radio Group', data: 'checkbox' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
   { label: 'Glass Disclosure', data: 'glassDisclosure' },
+  { label: 'Progress Indicator', data: 'progressIndicator' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
@@ -159,10 +165,12 @@ export default function App(): React.ReactElement {
       {demo === 'navigationRail' && <NavigationRailDemo />}
       {demo === 'button' && <ButtonDemo />}
       {demo === 'chip' && <ChipDemo />}
+      {demo === 'switch' && <SwitchDemo />}
       {demo === 'checkbox' && <CheckboxDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'glassDisclosure' && <GlassDisclosureDemo />}
+      {demo === 'progressIndicator' && <ProgressIndicatorDemo />}
       {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
       {demo === 'nativeRegressions' && <NativeRegressionDemo />}

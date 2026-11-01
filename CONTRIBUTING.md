@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are welcome. This library provides native UI components for React Native (TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, ChipGroup, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, LiquidGlass, LiquidGlassContainer) built on Fabric and Codegen, with the real platform widget on both iOS and Android.
+Contributions are welcome. This library provides native UI components for React Native (TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, ChipGroup, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator, LiquidGlass, LiquidGlassContainer) built on Fabric and Codegen, with the real platform widget on both iOS and Android.
 
 Before contributing, please read the [code of conduct](./CODE_OF_CONDUCT.md).
 

@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
 ---
 
 ### TextField
@@ -603,6 +603,38 @@ export function Example() {
 }
 ```
 
+### Switch
+
+```tsx
+import { useState } from 'react';
+import { Switch } from 'react-native-platform-components';
+
+export function Example() {
+  const [wifi, setWifi] = useState(true);
+  const [notifications, setNotifications] = useState(false);
+
+  return (
+    <>
+      {/* A settings row: the whole row toggles */}
+      <Switch
+        style={{ paddingHorizontal: 16, minHeight: 48 }}
+        label="Wi-Fi"
+        value={wifi}
+        onValueChange={setWifi}
+      />
+
+      {/* A switch on its own, with a check icon on Android */}
+      <Switch
+        accessibilityLabel="Notifications"
+        value={notifications}
+        onValueChange={setNotifications}
+        android={{ thumbIcon: 'check' }}
+      />
+    </>
+  );
+}
+```
+
 ### Checkbox and RadioGroup
 
 ```tsx
@@ -728,6 +760,36 @@ export function Example() {
           <Switch value={notify} onValueChange={setNotify} />
         </View>
       </GlassDisclosure>
+    </View>
+  );
+}
+```
+
+---
+
+### ProgressIndicator
+
+```tsx
+import { ProgressIndicator } from 'react-native-platform-components';
+import { View } from 'react-native';
+
+export function Example({ uploaded, total, step }: { uploaded: number; total: number; step: number }) {
+  return (
+    <View style={{ gap: 24, padding: 16 }}>
+      {/* Determinate: animates as the value changes */}
+      <ProgressIndicator progress={uploaded / total} accessibilityLabel="Uploading" />
+
+      {/* Step progress: one native bar per step */}
+      <ProgressIndicator progress={step / 4} segments={4} accessibilityLabel="Setup" />
+
+      {/* Indeterminate spinner, and Material 3 Expressive's loading indicator */}
+      <View style={{ flexDirection: 'row', gap: 24 }}>
+        <ProgressIndicator variant="circular" accessibilityLabel="Loading" />
+        <ProgressIndicator variant="loading" accessibilityLabel="Loading" />
+      </View>
+
+      {/* Android: the Expressive wavy bar */}
+      <ProgressIndicator progress={0.6} android={{ wavy: true }} />
     </View>
   );
 }

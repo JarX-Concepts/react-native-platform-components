@@ -22,6 +22,7 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCButtonGroupViewManager(),
           PCChipViewManager(),
           PCChipGroupViewManager(),
+          PCSwitchViewManager(),
           PCCheckboxViewManager(),
           PCRadioGroupViewManager(),
           PCFloatingToolbarViewManager(),
@@ -31,6 +32,7 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCTabBarViewManager(),
           PCNavigationRailViewManager(),
           PCFloatingActionButtonViewManager(),
+          PCProgressIndicatorViewManager(),
       )
   }
 

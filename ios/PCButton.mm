@@ -272,7 +272,17 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
 
   // androidRippleColor / androidStrokeColor: Android only
 
+  const bool testIdChanged = !prevProps || newProps.testId != prevProps->testId;
+
   [super updateProps:props oldProps:oldProps];
+
+  // testID belongs on the inner UIButton, which carries the label (the title
+  // or spokenLabel) and takes the touches; two views with one id would be
+  // ambiguous
+  if (testIdChanged) {
+    _view.buttonTestID = NSStringFromStd(newProps.testId, @"");
+    self.accessibilityIdentifier = nil;
+  }
 
   // Update measurements when props change that affect layout
   [self updateMeasurements];

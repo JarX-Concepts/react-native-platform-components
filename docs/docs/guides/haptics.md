@@ -1,6 +1,6 @@
 ---
 title: "Haptics"
-description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, Chip, ChipGroup, Checkbox, RadioGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog."
+description: "The shared haptics prop: UIKit feedback generators on iOS and View.performHapticFeedback on Android for Button, ButtonGroup, SplitButton, Chip, ChipGroup, Switch, Checkbox, RadioGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog."
 ---
 
 The interactive components take a `haptics` prop that plays the platform's own haptic feedback when the user acts on the control: a press, a selection change or a menu pick. There is no separate haptics library to wire up per control, and the haptic plays in native code at the moment the control reports the action, before the event reaches JavaScript.
@@ -11,7 +11,7 @@ The interactive components take a `haptics` prop that plays the platform's own h
 <Button label="Pay" haptics="success" onPress={pay} />
 ```
 
-It is on Button, ButtonGroup, SplitButton, Chip, ChipGroup, Checkbox, RadioGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
+It is on Button, ButtonGroup, SplitButton, Chip, ChipGroup, Switch, Checkbox, RadioGroup, FloatingActionButton, SegmentedControl, TabBar, NavigationRail, SelectionMenu, ContextMenu, ActionSheet and Dialog, and on each menu action (see [Menu items](#menu-items)). Unset, a component plays nothing beyond what the native control does on its own (see [Defaults](#defaults)). Both platforms follow the system setting: with system haptics (iOS) or touch feedback (Android) turned off, nothing plays.
 
 ## Values
 
@@ -50,6 +50,7 @@ On the web the prop is accepted and ignored.
 | [SplitButton](/components/buttongroup#splitbutton)     | The main button is pressed; a menu item is picked                                       | When the trailing button opens the menu                             |
 | [Chip](/components/chip)                               | The chip or its close icon is pressed, a selectable chip included (once per press, whatever the parent does with `selected`) | While disabled                                                      |
 | [ChipGroup](/components/chip)                          | A chip or a close icon is pressed, in every selection mode, once per press             | For disabled chips                                                  |
+| [Switch](/components/switch)                           | The user toggles the switch: a tap or drag on it, a tap on its row, or VoiceOver / TalkBack (once per toggle, whatever the parent does with `value`) | When `value` changes from JavaScript, a toggle the parent didn't take going back included; while disabled |
 | [Checkbox](/components/checkbox)                       | The user toggles the checkbox (once per tap, whatever the parent does with `checked`)  | While disabled                                                      |
 | [RadioGroup](/components/radiogroup)                   | The user picks an option other than the chosen one                                     | When `value` changes from JavaScript; for disabled options          |
 | [FloatingActionButton](/components/floatingactionbutton) | The button is pressed                                                                 | While disabled                                                      |
@@ -90,6 +91,7 @@ Unset `haptics` adds nothing, so each component keeps the behavior of the native
 | ButtonGroup      | `UIButton`s: no haptic                                                                         | `MaterialButtonGroup` / `MaterialButtonToggleGroup`, and the overflow menu: no haptic            |
 | SplitButton      | `UIButton`s and their `UIMenu`: no haptic for the press or the pick                            | `MaterialSplitButton` and its `PopupMenu`: no haptic                                              |
 | Chip, ChipGroup  | `UIButton`s: no haptic                                                                         | Material `Chip` / `ChipGroup`: no haptic                                                          |
+| Switch           | `UISwitch`: no haptic                                                                          | `MaterialSwitch`: no haptic                                                                       |
 | Checkbox, RadioGroup | Rows drawn by the library: no haptic                                                     | `MaterialCheckBox` / `MaterialRadioButton`: no haptic                                             |
 | FloatingActionButton | `UIButton`: no haptic                                                                      | `FloatingActionButton` / `ExtendedFloatingActionButton`: no haptic                               |
 | SegmentedControl | `UISegmentedControl`: no haptic on iPhone                                                      | `MaterialButtonToggleGroup`: no haptic                                                            |

@@ -37,7 +37,8 @@ class PCButtonGroupView(context: Context) :
     val value: String,
     val disabled: Boolean,
     val icon: PCButtonSupport.Icon,
-    val accessibilityLabel: String
+    val accessibilityLabel: String,
+    val testID: String = ""
   ) {
     /** What TalkBack announces for the button. */
     val spokenLabel: String get() = accessibilityLabel.ifEmpty { label }
@@ -73,6 +74,7 @@ class PCButtonGroupView(context: Context) :
   /** The split button's flattened menu items (see PCMenuSupport) */
   var menuItems: List<PCMenuSupport.Item> = emptyList()
   var menuAccessibilityLabel: String = ""
+  var menuTestID: String = ""
 
   // --- Styling (null / empty = Material theme default) ---
   var containerColor: Int? = null
@@ -213,6 +215,12 @@ class PCButtonGroupView(context: Context) :
     splitMenuButton()?.contentDescription = value.ifEmpty { null }
   }
 
+  fun applyMenuTestID(value: String) {
+    if (menuTestID == value) return
+    menuTestID = value
+    splitMenuButton()?.tag = value.ifEmpty { null }
+  }
+
   fun applyMaterial(value: String?) {
     val parsed = PCExpressive.parseExpressive(value)
     if (expressive == parsed) return
@@ -330,6 +338,9 @@ class PCButtonGroupView(context: Context) :
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         contentDescription = item.spokenLabel.ifEmpty { null }
+        // Detox's by.id matches the view tag: the button carries the label
+        // and takes the touches, so all three are found under one id
+        tag = item.testID.ifEmpty { null }
         isEnabled = !item.disabled && interactivity == "enabled"
         if (iconOnly) {
           // Centre the icon instead of leaving it at the start edge
@@ -401,6 +412,7 @@ class PCButtonGroupView(context: Context) :
       minWidth = dp(SPLIT_MIN_WIDTH_DP)
       minimumWidth = dp(SPLIT_MIN_WIDTH_DP)
       contentDescription = menuAccessibilityLabel.ifEmpty { null }
+      tag = menuTestID.ifEmpty { null }
       isEnabled = interactivity == "enabled"
     }
     leading.setPaddingRelative(dp(metrics.leadingStart), leading.paddingTop, dp(metrics.leadingEnd), leading.paddingBottom)

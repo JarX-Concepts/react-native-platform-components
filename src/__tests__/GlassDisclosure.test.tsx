@@ -2,6 +2,7 @@ import {
   AccessibilityInfo,
   BackHandler,
   Pressable,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -198,6 +199,24 @@ describe('GlassDisclosure', () => {
     rerender(tree, { expanded: false });
     settle();
     expect(overlayChildren(tree)).toEqual(before);
+  });
+
+  it('sizes the glass container to the pill while closed', () => {
+    // A container across the overlay would cover the views beside the pill
+    // (iOS visibility checks count it, though it passes touches through)
+    const alignSelf = (tree: renderer.ReactTestRenderer) =>
+      StyleSheet.flatten(containers(tree)[0]!.props.style).alignSelf;
+    const tree = render({});
+    expect(alignSelf(tree)).toBe('center');
+
+    rerender(tree, { expanded: true });
+    expect(alignSelf(tree)).toBe('stretch');
+
+    // It shrinks with the glass, once the panel's content has faded
+    rerender(tree, { expanded: false });
+    expect(alignSelf(tree)).toBe('stretch');
+    settle();
+    expect(alignSelf(tree)).toBe('center');
   });
 
   it('keeps the panel until its content has faded, then shrinks to the pill', () => {

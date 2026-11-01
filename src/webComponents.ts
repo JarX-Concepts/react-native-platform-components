@@ -16,8 +16,10 @@ import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
+import type { ProgressIndicatorProps } from './ProgressIndicator';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
+import type { SwitchProps } from './Switch';
 import type { TabBarProps } from './TabBar';
 import type { TextFieldProps, TextFieldRef } from './TextField';
 
@@ -41,8 +43,10 @@ export interface WebComponentProps {
   LiquidGlass: LiquidGlassProps;
   LiquidGlassContainer: LiquidGlassContainerProps;
   NavigationRail: NavigationRailProps;
+  ProgressIndicator: ProgressIndicatorProps;
   SegmentedControl: SegmentedControlProps;
   SelectionMenu: SelectionMenuProps;
+  Switch: SwitchProps;
   TabBar: TabBarProps;
   TextField: TextFieldProps & RefAttributes<TextFieldRef>;
 }
