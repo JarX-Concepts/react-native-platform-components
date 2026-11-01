@@ -19,6 +19,7 @@ export type * from './ButtonGroup';
 export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
+export type * from './Switch';
 export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
@@ -58,6 +59,7 @@ export {
   ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
 } from './web/components';

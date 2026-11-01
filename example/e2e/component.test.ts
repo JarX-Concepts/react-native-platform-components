@@ -206,23 +206,27 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  // The menu scrolls once it outgrows the screen; bring the item up
-  try {
-    await waitFor(element(by.text(label)).atIndex(0))
-      .toBeVisible()
-      .withTimeout(1000);
-  } catch {
-    if (isAndroid()) {
-      // The popup menu's list; Espresso taps need the row 75% shown
-      await element(by.type('android.widget.ListView')).swipe(
-        'up',
-        'slow',
-        0.4
-      );
-    } else {
-      await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+  // Later demos are below the menu's initial viewport (the iOS system menu,
+  // and on Android a PopupMenu taller than the emulator's screen); swipe the
+  // menu until the item is shown, since Espresso taps need the row 75% shown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await waitFor(element(by.text(label)).atIndex(0))
+        .toBeVisible()
+        .withTimeout(1000);
+      break;
+    } catch {
+      if (isAndroid()) {
+        await element(by.type('android.widget.ListView')).swipe(
+          'up',
+          'slow',
+          0.4
+        );
+      } else {
+        await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      }
+      await pause(500);
     }
-    await pause(500);
   }
   await element(by.text(label)).atIndex(0).tap();
   // Let the demo mount and settle; the README GIFs are trimmed to start here
@@ -348,6 +352,36 @@ const waitForWidth = async (
     }
     await pause(250);
     width = await widthOf(testID);
+  }
+};
+
+// A view's height (points on iOS, pixels on Android)
+const heightOf = async (testID: string): Promise<number> => {
+  const attributes = (await element(by.id(testID)).getAttributes()) as {
+    height?: number;
+    frame?: { height: number };
+  };
+  return attributes.frame?.height ?? attributes.height ?? 0;
+};
+
+// Polls a Switch's on / off state (Detox's waitFor has no toggle check).
+// Android: the element is Checkable. iOS: a settings row isn't a UISwitch,
+// which toHaveToggleValue requires, so read its accessibility value, "1" or
+// "0" as UISwitch reports it (and as a bare Switch, a UISwitch, does).
+const expectToggle = async (testID: string, on: boolean, timeout = 8000) => {
+  const start = Date.now();
+  for (;;) {
+    try {
+      if (isAndroid()) {
+        await expect(element(by.id(testID))).toHaveToggleValue(on);
+      } else {
+        await expect(element(by.id(testID))).toHaveValue(on ? '1' : '0');
+      }
+      return;
+    } catch (error) {
+      if (Date.now() - start > timeout) throw error;
+      await pause(250);
+    }
   }
 };
 
@@ -2329,6 +2363,65 @@ describe('Platform Components Example', () => {
     await scrollToId('chip-sized-person-close');
     await element(by.id('chip-sized-person-close')).tap();
     await expectText('chip-last-event', 'close: Grace');
+  });
+
+  // The element found by ID is the one with the label, the switch state and
+  // the touches: the whole row with a label, the switch without one
+  it('should test Switch functionality', async () => {
+    await selectDemo('Switch');
+    await expect(element(by.id('switch-wifi'))).toBeVisible();
+    await expect(element(by.id('switch-wifi'))).toHaveLabel('Wi-Fi');
+    await expectToggle('switch-wifi', true);
+
+    // A tap on the row toggles it
+    await element(by.id('switch-wifi')).tap();
+    await expectText('switch-last-event', 'wifi: false');
+    await expectToggle('switch-wifi', false);
+
+    // So does a tap on its label, at the row's leading end
+    await element(by.id('switch-wifi')).tap({ x: 30, y: 20 });
+    await expectText('switch-last-event', 'wifi: true');
+    await expectToggle('switch-wifi', true);
+
+    // A long label wraps, and the row grows to fit it
+    const rowHeight = await heightOf('switch-wifi');
+    const wrappedHeight = await heightOf('switch-cellular');
+    if (wrappedHeight <= rowHeight) {
+      throw new Error(
+        `The wrapped row is ${wrappedHeight} tall, the one-line row ${rowHeight}`
+      );
+    }
+    await element(by.id('switch-cellular')).tap();
+    await expectText('switch-last-event', 'cellular: true');
+    await expectToggle('switch-cellular', true);
+
+    // A disabled row does nothing
+    await element(by.id('switch-bluetooth')).tap();
+    await pause(500);
+    await expectText('switch-last-event', 'cellular: true');
+    await expectToggle('switch-bluetooth', true);
+
+    // A switch without a label, labeled by accessibilityLabel
+    await scrollToId('switch-plain-disabled');
+    await expect(element(by.id('switch-notifications'))).toHaveLabel(
+      'Notifications'
+    );
+    await expectToggle('switch-notifications', false);
+    await element(by.id('switch-notifications')).tap();
+    await expectText('switch-notifications-value', 'On');
+    await expectToggle('switch-notifications', true);
+
+    await element(by.id('switch-plain-disabled')).tap();
+    await pause(500);
+    await expectText('switch-last-event', 'notifications: true');
+    await expectToggle('switch-plain-disabled', false);
+
+    // Controlled: the parent keeps this one off, so a toggle goes back
+    await scrollToId('switch-last-event');
+    await element(by.id('switch-locked')).tap();
+    await expectText('switch-last-event', 'locked: true');
+    await pause(500);
+    await expectToggle('switch-locked', false);
   });
 
   it('should test Floating Action Button functionality', async () => {

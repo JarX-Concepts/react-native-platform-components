@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
 ---
 
 ### TextField
@@ -597,6 +597,38 @@ export function Example() {
         label="Add to calendar"
         icon={{ ios: 'calendar', android: 'calendar' }}
         onPress={() => console.log('calendar')}
+      />
+    </>
+  );
+}
+```
+
+### Switch
+
+```tsx
+import { useState } from 'react';
+import { Switch } from 'react-native-platform-components';
+
+export function Example() {
+  const [wifi, setWifi] = useState(true);
+  const [notifications, setNotifications] = useState(false);
+
+  return (
+    <>
+      {/* A settings row: the whole row toggles */}
+      <Switch
+        style={{ paddingHorizontal: 16, minHeight: 48 }}
+        label="Wi-Fi"
+        value={wifi}
+        onValueChange={setWifi}
+      />
+
+      {/* A switch on its own, with a check icon on Android */}
+      <Switch
+        accessibilityLabel="Notifications"
+        value={notifications}
+        onValueChange={setNotifications}
+        android={{ thumbIcon: 'check' }}
       />
     </>
   );

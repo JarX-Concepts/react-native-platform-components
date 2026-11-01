@@ -14,6 +14,7 @@ import { NavigationRail as DefaultNavigationRail } from './NavigationRail';
 import { ProgressIndicator as DefaultProgressIndicator } from './ProgressIndicator';
 import { SegmentedControl as DefaultSegmentedControl } from './SegmentedControl';
 import { SelectionMenu as DefaultSelectionMenu } from './SelectionMenu';
+import { Switch as DefaultSwitch } from './Switch';
 import { TabBar as DefaultTabBar } from './TabBar';
 import { TextField as DefaultTextField } from './TextField';
 import {
@@ -71,6 +72,10 @@ export const SegmentedControl: WebComponents['SegmentedControl'] =
 export const SelectionMenu: WebComponents['SelectionMenu'] = withWebComponent(
   'SelectionMenu',
   DefaultSelectionMenu
+);
+export const Switch: WebComponents['Switch'] = withWebComponent(
+  'Switch',
+  DefaultSwitch
 );
 export const TabBar: WebComponents['TabBar'] = withWebComponent(
   'TabBar',

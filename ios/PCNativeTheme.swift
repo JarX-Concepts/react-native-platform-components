@@ -17,6 +17,10 @@ public final class PCNativeTheme: NSObject {
     private var windowObserver: NSObjectProtocol?
     private let tintedWindows = NSHashTable<UIWindow>.weakObjects()
 
+    /// Whether a brand color is set. Views that UIKit doesn't tint by default
+    /// (UISwitch's on color) follow the tint color only then.
+    @objc public var hasPrimaryColor: Bool { primaryColor != nil }
+
     /// Main thread only.
     @objc public func setPrimaryColor(_ color: UIColor?) {
         primaryColor = color

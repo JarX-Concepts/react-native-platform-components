@@ -25,6 +25,7 @@ import {
   NavigationRail,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
   isLiquidGlassSupported,
@@ -459,6 +460,49 @@ describe('ButtonGroup (mock)', () => {
     press(byTestID(tree, 'group-a'));
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
+  });
+});
+
+describe('Switch (mock)', () => {
+  it('is a switch-role Pressable that reports the other value', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <Switch
+        testID="wifi"
+        label="Wi-Fi"
+        value={false}
+        onValueChange={onValueChange}
+      />
+    );
+    const row = byTestID(tree, 'wifi');
+    expect(row.props.accessibilityRole).toBe('switch');
+    expect(row.props.accessibilityLabel).toBe('Wi-Fi');
+    expect(row.props.accessibilityState).toEqual({
+      checked: false,
+      disabled: false,
+    });
+    expect(texts(tree)).toEqual(['Wi-Fi']);
+
+    press(row);
+    expect(onValueChange).toHaveBeenCalledWith(true);
+    // Controlled: the mock shows `value` only
+    expect(byTestID(tree, 'wifi').props.accessibilityState.checked).toBe(false);
+
+    // As with React Native's Switch
+    fire(byTestID(tree, 'wifi'), 'valueChange', false);
+    expect(onValueChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('uses accessibilityLabel and reports the disabled state', () => {
+    const tree = render(
+      <Switch testID="s" value accessibilityLabel="Sync" disabled />
+    );
+    const node = byTestID(tree, 's');
+    expect(node.props.accessibilityLabel).toBe('Sync');
+    expect(node.props.accessibilityState).toEqual({
+      checked: true,
+      disabled: true,
+    });
   });
 });
 

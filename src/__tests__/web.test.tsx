@@ -26,6 +26,7 @@ import {
   ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
+  Switch,
   TabBar,
   TextField,
   setNativeTheme,
@@ -235,6 +236,53 @@ describe('ButtonGroup (web)', () => {
     expect(
       tree.root.findAllByType('button').map((b) => b.props['data-testid'])
     ).toEqual(['g-a', 'own']);
+  });
+});
+
+describe('Switch (web)', () => {
+  it('is a checkbox with the switch role, controlled by value', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <Switch
+        testID="sync"
+        value={false}
+        accessibilityLabel="Sync"
+        onValueChange={onValueChange}
+      />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.type).toBe('checkbox');
+    expect(input.props.role).toBe('switch');
+    expect(input.props.switch).toBe('');
+    expect(input.props['data-testid']).toBe('sync');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-checked']).toBe(false);
+    expect(input.props['aria-label']).toBe('Sync');
+    expect(tree.root.findAllByType('label')).toHaveLength(0);
+
+    act(() => input.props.onChange({ target: { checked: true } }));
+    expect(onValueChange).toHaveBeenCalledWith(true);
+  });
+
+  it('a label makes a <label> row around the text and the box', () => {
+    const tree = render(<Switch testID="wifi" label="Wi-Fi" value disabled />);
+    const label = tree.root.findByType('label');
+    expect(label.findByType('span').props.children).toBe('Wi-Fi');
+    const input = label.findByType('input');
+    expect(input.props['data-testid']).toBe('wifi');
+    expect(input.props.checked).toBe(true);
+    expect(input.props.disabled).toBe(true);
+  });
+
+  it('tints the box with color, else the brand color', () => {
+    const tree = render(<Switch color="#2E7D32" />);
+    expect(tree.root.findByType('input').props.style.accentColor).toBe(
+      '#2E7D32'
+    );
+    act(() => tree.update(<Switch />));
+    expect(tree.root.findByType('input').props.style.accentColor).toEqual(
+      expect.any(String)
+    );
   });
 });
 
