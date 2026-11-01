@@ -123,6 +123,12 @@ export interface SelectionMenuProps extends ViewProps {
   fieldPaddingHorizontal?: Double;
 
   /**
+   * Embedded only: the `accessibilityLabel`, on the field (the view that
+   * carries the `testID` and takes the touches); '' = the field's own label.
+   */
+  spokenLabel?: string;
+
+  /**
    * Fired when the user selects an option.
    */
   onSelect?: BubblingEventHandler<SelectionMenuSelectEvent>;

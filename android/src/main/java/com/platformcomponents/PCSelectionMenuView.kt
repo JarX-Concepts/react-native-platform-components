@@ -27,6 +27,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.ViewCompat
 import androidx.core.widget.TextViewCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
@@ -95,6 +96,16 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
   /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
   var haptics: String = ""
+
+  /**
+   * The `testID` (see the manager's setTestId). Embedded, it is the view tag
+   * of the field (the dropdown's text field or the Spinner), which carries
+   * the label and takes the touches; headless, of this view.
+   */
+  var menuTestID: String = ""
+
+  /** Embedded: the `accessibilityLabel`, on the field; "" = the field's own. */
+  var spokenLabel: String = ""
 
   // --- Events ---
   var onSelect: ((index: Int, label: String, data: String) -> Unit)? = null
@@ -393,6 +404,51 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     if (anchorMode == "inline" && parseMaterial(androidMaterial) == MaterialMode.M3) rebuildUI()
   }
 
+  fun applyTestID(value: String) {
+    if (menuTestID == value) return
+    menuTestID = value
+    applyFieldAccessibility()
+  }
+
+  fun applySpokenLabel(value: String) {
+    if (spokenLabel == value) return
+    spokenLabel = value
+    applyFieldAccessibility()
+  }
+
+  /**
+   * The embedded field is the one view with the testID (Detox matches the
+   * view tag) and the label, so finding it by ID, reading its label and
+   * tapping it reach one element, and TalkBack announces it once.
+   * - The dropdown's text field: TalkBack reads its text (the selected
+   *   option) with Material's floating label (the placeholder); `spokenLabel`
+   *   is its content description, as on TextField, which is also what
+   *   Detox's toHaveLabel reads on an EditText.
+   * - The Spinner: its content description is `spokenLabel`, else the shown
+   *   option or placeholder (what TalkBack read from its row before).
+   * With `spokenLabel`, the shown option is the field's state description.
+   */
+  private fun applyFieldAccessibility() {
+    val field: View? = inlineText ?: inlineSpinner
+    val id = menuTestID.ifEmpty { null }
+    if (anchorMode == "inline" && field != null) {
+      tag = null
+      field.tag = id
+    } else {
+      tag = id
+    }
+    val shown = options.firstOrNull { it.data == selectedData }?.label
+    inlineText?.let { actv ->
+      actv.contentDescription = spokenLabel.ifEmpty { null }
+      ViewCompat.setStateDescription(actv, if (spokenLabel.isEmpty()) null else shown)
+    }
+    inlineSpinner?.let { sp ->
+      val text = shown ?: placeholder.orEmpty()
+      sp.contentDescription = spokenLabel.ifEmpty { text }.ifEmpty { null }
+      ViewCompat.setStateDescription(sp, if (spokenLabel.isEmpty()) null else text.ifEmpty { null })
+    }
+  }
+
   fun applyFieldSize(minHeight: Float, paddingHorizontal: Float) {
     if (minFieldHeight == minHeight && fieldPaddingHorizontal == paddingHorizontal) return
     minFieldHeight = minHeight
@@ -471,6 +527,7 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     refreshAdapters()
     refreshSelections()
     updateEnabledState()
+    applyFieldAccessibility()
     requestLayout()
   }
 
@@ -817,6 +874,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
 
     // Update headless menu checked state
     refreshHeadlessMenu()
+
+    // The field's label follows the shown option
+    applyFieldAccessibility()
 
     // Re-measure after selection change so Fabric state reflects new text width
     if (anchorMode == "inline") {

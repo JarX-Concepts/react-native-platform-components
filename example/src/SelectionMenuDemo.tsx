@@ -287,6 +287,8 @@ export function SelectionMenuDemo(): React.JSX.Element {
           {embedded ? (
             <SelectionMenu
               testID="notify-menu-embedded"
+              // Read with the shown option as its value
+              accessibilityLabel="Notify"
               style={ui.alignEnd}
               options={NOTIFY_OPTIONS}
               selected={notify}

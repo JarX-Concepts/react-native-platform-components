@@ -233,13 +233,11 @@ export const selectDemo = async (label: string) => {
   await pause(1000);
 };
 
+// An embedded SelectionMenu's testID is on its field (the iOS menu button,
+// the Android Spinner or Material text field), which a tap opens
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
   if (isAndroid()) {
-    // Android: tap the selected-item TextView inside the Spinner to open the dropdown
-    const spinnerText = element(
-      by.type('android.widget.TextView').withAncestor(by.id(menuId))
-    );
-    await spinnerText.tap();
+    await element(by.id(menuId)).tap();
     // The selected label remains in the activity behind the popup. Scope the
     // choice to the dropdown so picking the current option cannot reopen it.
     const option = element(
@@ -1000,19 +998,10 @@ describe('Platform Components Example', () => {
       .toExist()
       .withTimeout(6000);
 
-    // Select a state in embedded mode - tap the menu to open it
-    if (isAndroid()) {
-      // Android: tap the selected-item TextView inside the menu
-      const embeddedMenuText = element(
-        by
-          .type('android.widget.TextView')
-          .withAncestor(by.id('state-menu-embedded'))
-      );
-      await embeddedMenuText.tap();
-    } else {
-      // iOS: simple tap on the menu
-      await element(by.id('state-menu-embedded')).tap();
-    }
+    // The testID is on the field: labeled by what it shows (the placeholder
+    // until a state is picked), and a tap on it opens the menu
+    await expectLabel('state-menu-embedded', 'Select a state');
+    await element(by.id('state-menu-embedded')).tap();
 
     // Wait for the menu to appear and select Arizona (near top of list)
     await waitFor(element(by.text('Arizona')))
@@ -1020,8 +1009,15 @@ describe('Platform Components Example', () => {
       .withTimeout(6000);
     await element(by.text('Arizona')).atIndex(0).tap();
 
-    // Verify selection (use toExist since the menu might be partially visible)
-    await expect(element(by.id('state-menu-embedded'))).toExist();
+    // The field's label follows the selection
+    await expectLabel('state-menu-embedded', 'Arizona');
+
+    // With an accessibilityLabel, the field is labeled by it, and the shown
+    // option (Email, picked above) is its value
+    await expectLabel('notify-menu-embedded', 'Notify');
+    if (!isAndroid()) {
+      await expect(element(by.id('notify-menu-embedded'))).toHaveValue('Email');
+    }
 
     // Test disabled state
     await element(by.id('disabled-switch')).tap();
@@ -1053,12 +1049,14 @@ describe('Platform Components Example', () => {
       await selectMenuOption('android-material-menu', 'M3');
       await element(by.id('embedded-switch')).tap();
       await element(by.id('searchable-switch')).tap();
-      const field = element(
-        by
-          .type('android.widget.EditText')
-          .withAncestor(by.id('state-menu-embedded'))
-      ).atIndex(0);
+      // The testID is on the dropdown's text field. Detox's toHaveLabel
+      // reads an EditText's content description (accessibilityLabel), not
+      // its text, so the value is checked with toHaveText
+      const field = element(by.id('state-menu-embedded'));
       await waitFor(field).toBeVisible().withTimeout(6000);
+      await waitFor(field).toHaveText('Arkansas').withTimeout(6000);
+      await expectLabel('notify-menu-embedded', 'Notify');
+      await expect(element(by.id('notify-menu-embedded'))).toHaveText('Email');
       await field.tap();
       // The keyboard comes up and the window resizes; let the list settle
       await pause(1000);
@@ -1099,17 +1097,15 @@ describe('Platform Components Example', () => {
     if (Math.round(state.width) !== Math.round(city.width)) {
       throw new Error(`Field widths ${city.width} and ${state.width}`);
     }
-    // Android: the text field's testID is on its edit text, the menu's on
-    // the whole layout, which adds Material's floating label band
-    if (!isAndroid() && Math.round(state.height) !== Math.round(city.height)) {
+    // Both testIDs are on the field the user taps: the text input, the menu
+    // button or the Material dropdown's text field
+    if (Math.round(state.height) !== Math.round(city.height)) {
       throw new Error(`Field heights ${city.height} and ${state.height}`);
     }
 
     // Pick the first option through the field
     if (isAndroid()) {
-      const field = element(
-        by.type('android.widget.EditText').withAncestor(by.id('form-state'))
-      ).atIndex(0);
+      const field = element(by.id('form-state'));
       await field.tap();
       // Let the dropdown finish opening: a tap during its animation is lost
       await pause(1500);
@@ -1118,17 +1114,14 @@ describe('Platform Components Example', () => {
       await pause(1500);
       await waitFor(field).toHaveText('Alabama').withTimeout(6000);
     } else {
+      await expectLabel('form-state', 'State');
       await element(by.id('form-state')).tap();
       const option = element(
         by.text('Alabama').withAncestor(by.type('_UIContextMenuContainerView'))
       ).atIndex(0);
       await waitFor(option).toBeVisible().withTimeout(5000);
       await option.tap();
-      await waitFor(
-        element(by.text('Alabama').withAncestor(by.id('form-state')))
-      )
-        .toBeVisible()
-        .withTimeout(5000);
+      await expectLabel('form-state', 'Alabama');
     }
 
     await element(by.id('form-tall-switch')).tap();

@@ -1130,11 +1130,15 @@ export function DateRangePicker(
 export const isDateRangePickerSupported: boolean = true;
 
 /**
- * A view carrying `testID` that shows the selected option's label (or the
- * placeholder). While the menu is open (embedded, or modal with `visible`),
- * each option is a `Pressable` with the test ID `${testID}-${data}` that calls
- * `onSelect` and shows its label and subtitle. `fireEvent(menu, 'select',
- * data, label, index)` and `fireEvent(menu, 'requestClose')` also work.
+ * Embedded: a view holding the field, an accessible view with the `button`
+ * role carrying `testID` that shows the selected option's label (or the
+ * placeholder) and is labeled by it, or by `accessibilityLabel` with the
+ * shown text as its value, as on a device. Modal: a view carrying `testID`
+ * that shows the same text. While the menu is open (embedded, or modal with
+ * `visible`), each option is a `Pressable` with the test ID
+ * `${testID}-${data}` that calls `onSelect` and shows its label and subtitle.
+ * `fireEvent(menu, 'select', data, label, index)` and
+ * `fireEvent(menu, 'requestClose')` also work.
  */
 export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const {
@@ -1148,6 +1152,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     onSelect,
     onRequestClose,
     testID,
+    accessibilityLabel,
     minFieldHeight,
     fieldPaddingHorizontal,
     ios,
@@ -1156,18 +1161,37 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   } = props;
 
   const current = options.find((option) => option.data === selected);
-  const open = presentation === 'embedded' || !!visible;
+  const embedded = presentation === 'embedded';
+  const open = embedded || !!visible;
+  const shown = current ? current.label : placeholder;
+  const text = shown ? <Text>{shown}</Text> : null;
 
   return (
     <View
       {...viewProps}
-      testID={testID}
-      accessibilityState={{ disabled: !!disabled, expanded: open }}
+      testID={embedded ? undefined : testID}
+      accessibilityLabel={embedded ? undefined : accessibilityLabel}
+      accessibilityState={
+        embedded ? undefined : { disabled: !!disabled, expanded: open }
+      }
       {...handlers({ onSelect, onRequestClose })}
     >
-      {current || placeholder ? (
-        <Text>{current ? current.label : placeholder}</Text>
-      ) : null}
+      {embedded ? (
+        <View
+          testID={testID}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? shown}
+          accessibilityValue={
+            accessibilityLabel && shown ? { text: shown } : undefined
+          }
+          accessibilityState={{ disabled: !!disabled, expanded: open }}
+        >
+          {text}
+        </View>
+      ) : (
+        text
+      )}
       {open && !disabled
         ? options.map((option, index) => (
             <Pressable
