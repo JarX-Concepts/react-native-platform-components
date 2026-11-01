@@ -13,6 +13,7 @@ public final class PCButtonGroupView: UIView {
         let disabled: Bool
         let icon: PCButtonSupport.Icon
         let accessibilityLabel: String
+        let testID: String
 
         /// What VoiceOver announces for the button.
         var spokenLabel: String { accessibilityLabel.isEmpty ? label : accessibilityLabel }
@@ -110,6 +111,11 @@ public final class PCButtonGroupView: UIView {
         didSet { chevronButton?.accessibilityLabel = menuAccessibilityLabel.isEmpty ? nil : menuAccessibilityLabel }
     }
 
+    /// The split button chevron's accessibilityIdentifier
+    public var menuTestID: String = "" {
+        didSet { chevronButton?.accessibilityIdentifier = menuTestID.isEmpty ? nil : menuTestID }
+    }
+
     /// The `haptics` prop: PCButtonGroup.mm plays it on a press (an overflow
     /// pick included), the split menu handler on a pick
     public let haptics = PCHaptics()
@@ -188,7 +194,8 @@ public final class PCButtonGroupView: UIView {
                 value: (dict["value"] as? String) ?? "",
                 disabled: (dict["disabled"] as? String) == "disabled",
                 icon: PCButtonSupport.Icon(dictionary: dict),
-                accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? ""
+                accessibilityLabel: (dict["accessibilityLabel"] as? String) ?? "",
+                testID: (dict["testID"] as? String) ?? ""
             )
         }
 
@@ -210,6 +217,9 @@ public final class PCButtonGroupView: UIView {
         for (index, item) in items.enumerated() {
             let button = UIButton(type: .system)
             button.tag = index
+            // The button carries the label and takes the touches, so E2E
+            // drivers find all three under one id
+            button.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
             button.addTarget(self, action: #selector(tapped(_:)), for: .touchUpInside)
             button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
             // Before the overflow button, which stays last
@@ -227,6 +237,7 @@ public final class PCButtonGroupView: UIView {
         if split {
             let chevron = PCMenuButton(type: .system)
             chevron.accessibilityLabel = menuAccessibilityLabel.isEmpty ? nil : menuAccessibilityLabel
+            chevron.accessibilityIdentifier = menuTestID.isEmpty ? nil : menuTestID
             chevron.onMenuOpen = { [weak self] in self?.onMenuOpen?() }
             chevron.onMenuClose = { [weak self] in self?.onMenuClose?() }
             stack.insertArrangedSubview(chevron, at: items.count)

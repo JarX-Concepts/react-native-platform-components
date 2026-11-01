@@ -18,6 +18,7 @@ import {
   DatePicker,
   Dialog,
   FloatingActionButton,
+  ProgressIndicator,
   GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
@@ -263,6 +264,31 @@ describe('Button (mock)', () => {
 
     fire(button, 'menuSelect', 'name', 'Name');
     expect(onMenuSelect).toHaveBeenCalledWith('name', 'Name');
+  });
+});
+
+describe('ProgressIndicator (mock)', () => {
+  it('is a progressbar with the label and value on the testID view', () => {
+    const tree = render(
+      <ProgressIndicator
+        testID="upload"
+        progress={0.5}
+        accessibilityLabel="Uploading"
+      />
+    );
+    const view = byTestID(tree, 'upload');
+    expect(view.props.accessibilityRole).toBe('progressbar');
+    expect(view.props.accessibilityLabel).toBe('Uploading');
+    expect(view.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 50,
+    });
+
+    act(() => tree.update(<ProgressIndicator testID="upload" />));
+    expect(byTestID(tree, 'upload').props.accessibilityState).toEqual({
+      busy: true,
+    });
   });
 });
 

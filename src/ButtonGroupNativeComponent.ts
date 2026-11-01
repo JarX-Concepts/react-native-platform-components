@@ -18,6 +18,7 @@ export type ButtonGroupButton = Readonly<{
   iconScale: Double; // Resolved image scale when iconType === 'image'
   iconTinted: string; // 'true' | 'false' — draw the image as a tinted template
   accessibilityLabel: string; // Screen-reader label, empty = use label
+  testID: string; // Test identifier of the button, empty = none
 }>;
 
 /**
@@ -161,6 +162,9 @@ export interface ButtonGroupNativeProps extends ViewProps {
 
   /** Screen-reader label of the split button's menu button. */
   menuAccessibilityLabel?: string;
+
+  /** Test identifier of the split button's menu button; '' = none. */
+  menuTestID?: string;
 
   /**
    * Haptic played when a button is pressed: '' (none added) | 'none' | 'selection' |

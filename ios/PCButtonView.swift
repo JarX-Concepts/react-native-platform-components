@@ -94,6 +94,13 @@ public final class PCButtonView: UIView {
         didSet { updateAccessibilityLabel() }
     }
 
+    /// The `testID`, on the inner button: it carries the label and takes the
+    /// touches, so E2E drivers find, read and tap one element (PCButton.mm
+    /// keeps it off the host)
+    public var buttonTestID: String = "" {
+        didSet { button.accessibilityIdentifier = buttonTestID.isEmpty ? nil : buttonTestID }
+    }
+
     /// ObjC++ sets this as an array of dictionaries: the flattened menu items
     public var menuItems: [Any] = [] {
         didSet {

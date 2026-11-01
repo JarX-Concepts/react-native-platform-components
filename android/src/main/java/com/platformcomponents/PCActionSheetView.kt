@@ -330,6 +330,9 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
       text = action.title
     }
     row.addView(label, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+    // The row carries the testID and takes the touches, so it carries the
+    // label too. TalkBack reads the same title it would gather from the text.
+    row.contentDescription = action.title
 
     row.setOnClickListener {
       if (dialog !== sheet) return@setOnClickListener

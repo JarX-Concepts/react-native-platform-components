@@ -24,6 +24,7 @@ export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
+export type * from './ProgressIndicator';
 export type * from './TextField';
 export type * from './icons';
 export type * from './sharedTypes';
@@ -55,6 +56,7 @@ export {
   LiquidGlass,
   LiquidGlassContainer,
   NavigationRail,
+  ProgressIndicator,
   SegmentedControl,
   SelectionMenu,
   Switch,

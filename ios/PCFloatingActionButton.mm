@@ -140,7 +140,16 @@ static inline bool IconEqual(
     _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
+  const bool testIdChanged = !prevProps || newProps.testId != prevProps->testId;
+
   [super updateProps:props oldProps:oldProps];
+
+  // testID belongs on the inner UIButton, which carries the label and takes
+  // the touches; two views with one id would be ambiguous
+  if (testIdChanged) {
+    _view.buttonTestID = NSStringFromStd(newProps.testId, @"");
+    self.accessibilityIdentifier = nil;
+  }
 
   [self updateMeasurements];
 }

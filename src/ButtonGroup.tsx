@@ -47,6 +47,14 @@ export interface ButtonGroupButtonProps {
 
   /** Screen-reader label. Defaults to `label`. */
   accessibilityLabel?: string;
+
+  /**
+   * Test identifier of the button. Default: `${testID}-${value}` when the
+   * group has a `testID`. It is on the native button that carries the label
+   * and takes the touches. A button folded into the overflow menu is found
+   * by its label instead.
+   */
+  testID?: string;
 }
 
 export interface ButtonGroupProps extends ViewProps {
@@ -170,6 +178,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     onPress,
     onSelectionChange,
     android,
+    testID,
     ...viewProps
   } = props;
 
@@ -181,9 +190,10 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
       value: button.value,
       disabled: button.disabled ? 'disabled' : 'enabled',
       accessibilityLabel: button.accessibilityLabel ?? '',
+      testID: button.testID ?? (testID ? `${testID}-${button.value}` : ''),
       ...resolveIcon(button.icon),
     }));
-  }, [buttons]);
+  }, [buttons, testID]);
 
   const nativeSelectedValues = useMemo((): string[] => {
     if (selectionMode === 'none' || !selectedValues) return [];
@@ -245,6 +255,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
         onSelectionChange ? handleSelectionChange : undefined
       }
       android={nativeAndroid}
+      testID={testID}
       {...viewProps}
     />
   );

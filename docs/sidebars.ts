@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
         'components/floatingactionbutton',
         'components/floatingtoolbar',
         'components/glassdisclosure',
+        'components/progressindicator',
         'components/liquidglass',
       ],
     },

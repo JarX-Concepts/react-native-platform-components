@@ -52,6 +52,8 @@ class PCFloatingActionButtonView(context: Context) :
   var foregroundColor: Int? = null
   var interactivity: String = "enabled"
   var spokenLabel: String = ""
+  /** The `testID`, on the Material button (see the manager's setTestId) */
+  var buttonTestID: String = ""
   var scrollViewNativeID: String = ""
 
   /** The `haptics` prop; the manager plays it with the user's action (see PCHaptics). */
@@ -154,6 +156,13 @@ class PCFloatingActionButtonView(context: Context) :
     spokenLabel = value
     fab?.contentDescription = spokenLabel.ifEmpty { null }
     extendedFab?.contentDescription = spokenLabel.ifEmpty { null }
+  }
+
+  fun applyButtonTestID(value: String) {
+    if (buttonTestID == value) return
+    buttonTestID = value
+    fab?.tag = value.ifEmpty { null }
+    extendedFab?.tag = value.ifEmpty { null }
   }
 
   // ---- Shrink and extend ----
@@ -302,6 +311,9 @@ class PCFloatingActionButtonView(context: Context) :
   private fun buildFab(base: Context, generation: Int) {
     val f = FloatingActionButton(base, null, fabStyleAttr()).apply {
       contentDescription = spokenLabel.ifEmpty { null }
+      // Detox's by.id matches the view tag; the button carries the label and
+      // takes the touches
+      tag = buttonTestID.ifEmpty { null }
       isEnabled = interactivity == "enabled"
       setOnClickListener { onPress?.invoke() }
     }
@@ -325,6 +337,7 @@ class PCFloatingActionButtonView(context: Context) :
       isAllCaps = false
       maxLines = 1
       contentDescription = spokenLabel.ifEmpty { null }
+      tag = buttonTestID.ifEmpty { null }
       isEnabled = interactivity == "enabled"
       setOnClickListener { onPress?.invoke() }
     }

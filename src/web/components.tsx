@@ -11,6 +11,7 @@ import { Dialog as DefaultDialog } from './Dialog';
 import { FloatingActionButton as DefaultFloatingActionButton } from './FloatingActionButton';
 import { GlassDisclosure as DefaultGlassDisclosure } from './GlassDisclosure';
 import { NavigationRail as DefaultNavigationRail } from './NavigationRail';
+import { ProgressIndicator as DefaultProgressIndicator } from './ProgressIndicator';
 import { SegmentedControl as DefaultSegmentedControl } from './SegmentedControl';
 import { SelectionMenu as DefaultSelectionMenu } from './SelectionMenu';
 import { Switch as DefaultSwitch } from './Switch';
@@ -64,6 +65,8 @@ export const NavigationRail: WebComponents['NavigationRail'] = withWebComponent(
   'NavigationRail',
   DefaultNavigationRail
 );
+export const ProgressIndicator: WebComponents['ProgressIndicator'] =
+  withWebComponent('ProgressIndicator', DefaultProgressIndicator);
 export const SegmentedControl: WebComponents['SegmentedControl'] =
   withWebComponent('SegmentedControl', DefaultSegmentedControl);
 export const SelectionMenu: WebComponents['SelectionMenu'] = withWebComponent(

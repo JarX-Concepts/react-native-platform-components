@@ -206,15 +206,27 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  // The menu scrolls once it outgrows the screen (the iOS system menu, and
-  // the Android PopupMenu on the emulator); bring the item up
-  try {
-    await waitFor(element(by.text(label)).atIndex(0))
-      .toBeVisible()
-      .withTimeout(1000);
-  } catch {
-    await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
-    await pause(500);
+  // Later demos are below the menu's initial viewport (the iOS system menu,
+  // and on Android a PopupMenu taller than the emulator's screen); swipe the
+  // menu until the item is shown, since Espresso taps need the row 75% shown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await waitFor(element(by.text(label)).atIndex(0))
+        .toBeVisible()
+        .withTimeout(1000);
+      break;
+    } catch {
+      if (isAndroid()) {
+        await element(by.type('android.widget.ListView')).swipe(
+          'up',
+          'slow',
+          0.4
+        );
+      } else {
+        await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+      }
+      await pause(500);
+    }
   }
   await element(by.text(label)).atIndex(0).tap();
   // Let the demo mount and settle; the README GIFs are trimmed to start here
@@ -303,6 +315,18 @@ const expectText = async (testID: string, text: string) => {
   await waitFor(element(by.id(testID)))
     .toHaveText(text)
     .withTimeout(8000);
+};
+
+// The view that carries a testID also carries the label (the title, or the
+// accessibilityLabel when there is one) and takes the touches, so finding it
+// by id, reading its label and tapping it all reach one element. Waits, so a
+// label that changes at runtime can be checked as it lands.
+const expectLabel = async (
+  target: string | Detox.NativeElement,
+  label: string
+) => {
+  const el = typeof target === 'string' ? element(by.id(target)) : target;
+  await waitFor(el).toHaveLabel(label).withTimeout(6000);
 };
 
 // A view's width (points on iOS, pixels on Android)
@@ -1184,6 +1208,7 @@ describe('Platform Components Example', () => {
     await waitFor(element(by.id('source-document')))
       .toBeVisible()
       .withTimeout(6000);
+    await expectLabel('source-document', 'Document');
     await element(by.id('source-document')).tap();
     await expectText('upload-file', 'Report.pdf');
     await element(by.id('upload-remove')).tap();
@@ -1312,8 +1337,9 @@ describe('Platform Components Example', () => {
     await selectDemo('Action Sheet');
     await expect(element(by.id('actionsheet-open'))).toBeVisible();
 
-    // Pick a source
+    // Pick a source, found by its testID with its label
     await openSheet();
+    await expectLabel(sheetAction('source-document'), 'Document');
     await sheetAction('source-document').tap();
     await expectText('actionsheet-last-event', 'select: document');
     await expectText('actionsheet-file', 'Contract.pdf');
@@ -1412,6 +1438,7 @@ describe('Platform Components Example', () => {
     // Delete (destructive, preferred), then the next dialog opens from
     // onDismiss; every event in order
     await openDialog('confirm', 'dialog-delete');
+    await expectLabel(dialogAction('dialog-delete'), 'Delete');
     await dialogAction('dialog-delete').tap();
     await waitFor(dialogAction('dialog-ok')).toBeVisible().withTimeout(6000);
     await dialogAction('dialog-ok').tap();
@@ -1544,6 +1571,7 @@ describe('Platform Components Example', () => {
 
     // Verify we're on the SegmentedControl demo
     await expect(element(by.id('segment-basic'))).toBeVisible();
+    await expectLabel('segment-week', 'Week');
 
     // Cycle through the basic segments
     // Cycle 1: Day -> Week -> Month -> Year
@@ -1741,6 +1769,7 @@ describe('Platform Components Example', () => {
     await selectDemo('Tab Bar');
     await expect(element(by.id('tab-bar'))).toBeVisible();
     await pause(600);
+    await expectLabel('tab-home', 'Home');
 
     // Tabs by their testID; the Inbox badge clears once it is opened. Search
     // is the search tab (iOS 26: its own circle at the end of the bar)
@@ -1917,6 +1946,8 @@ describe('Platform Components Example', () => {
   it('should test Navigation Rail functionality', async () => {
     await selectDemo('Navigation Rail');
     await expect(element(by.id('rail'))).toBeVisible();
+    await expectLabel('rail-home', 'Home');
+    await expectLabel('rail-header-button', 'Compose');
 
     // The rail's width, in points on iOS and pixels on Android
     const railWidth = async () => {
@@ -2019,12 +2050,25 @@ describe('Platform Components Example', () => {
       await expect(element(by.id('button-last-pressed'))).toHaveText(variant);
     }
 
+    // The view with the testID has the label: the title, then an
+    // accessibilityLabel that comes and goes with the title
+    await expectLabel('button-filled', 'Filled');
+    await scrollToId('button-statement');
+    await expectLabel('button-statement', 'Upload');
+    await element(by.id('button-statement')).tap();
+    await expectLabel('button-statement', 'Parse Statement');
+    await expectText('button-last-pressed', 'upload');
+    await element(by.id('button-statement')).tap();
+    await expectLabel('button-statement', 'Upload');
+    await expectText('button-last-pressed', 'parse');
+
     // Icon + label, and an icon-only button announced by its label
     await scrollToId('button-icon-label');
     await element(by.id('button-icon-label')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('edit');
 
+    await expectLabel('icon-button-tonal', 'Share, tonal');
     await element(by.id('icon-button-tonal')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText(
@@ -2032,15 +2076,18 @@ describe('Platform Components Example', () => {
     );
 
     // Button groups: actions, single selection, multiple selection
+    // Each button has `${testID}-${value}`, with its label
     await scrollToId('button-group-actions');
-    await element(by.text('Copy')).atIndex(0).tap();
+    await expectLabel('button-group-actions-copy', 'Copy');
+    await element(by.id('button-group-actions-copy')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('copy');
 
     // The next group can still be partly below the fold (on a phone where the
     // system bars take their own space, such as Android before 15)
     await scrollToId('button-group-single');
-    await element(by.text('Month')).atIndex(0).tap();
+    await expectLabel('button-group-single-month', 'Month');
+    await element(by.id('button-group-single-month')).tap();
     await pause(500);
     await expect(element(by.id('button-group-value'))).toHaveText(
       'month · bold'
@@ -2081,6 +2128,8 @@ describe('Platform Components Example', () => {
     await waitFor(element(by.id('sort-date')))
       .toBeVisible()
       .withTimeout(6000);
+    // A menu row's testID is on the view with its title
+    await expectLabel('sort-date', 'Date');
     if (!isAndroid()) {
       // On Android the popup window has the focus, and Espresso can't read
       // the page under it while it is open
@@ -2128,9 +2177,12 @@ describe('Platform Components Example', () => {
       .toBeVisible()
       .whileElement(by.id('demo-scroll'))
       .scroll(200, 'down', isAndroid() ? undefined : 0.05);
-    await element(by.text('Reply')).atIndex(0).tap();
+    // The testID is on the main button, `${testID}-menu` on the menu button
+    await expectLabel('split-button', 'Reply');
+    await element(by.id('split-button')).tap();
     await expectText('split-value', 'reply');
-    await element(by.label('Reply options')).atIndex(0).tap();
+    await expectLabel('split-button-menu', 'Reply options');
+    await element(by.id('split-button-menu')).tap();
     await waitFor(element(by.id('reply-forward')))
       .toBeVisible()
       .withTimeout(6000);
@@ -2216,7 +2268,9 @@ describe('Platform Components Example', () => {
     await expect(element(by.id('chip-timeframe'))).toBeVisible();
     await expectText('chip-timeframe-value', 'Last month');
 
-    // Single selection: a press selects the chip
+    // Single selection: a press selects the chip, found by its testID with
+    // its label
+    await expectLabel('chip-timeframe-year', 'Last year');
     await element(by.id('chip-timeframe-year')).tap();
     await expectText('chip-timeframe-value', 'Last year');
 
@@ -2273,6 +2327,7 @@ describe('Platform Components Example', () => {
     await pause(500);
     await expectText('chip-last-event', 'reset');
 
+    await expectLabel('chip-calendar', 'Add to calendar');
     await element(by.id('chip-calendar')).tap();
     await expectText('chip-last-event', 'press: calendar');
 
@@ -2281,6 +2336,7 @@ describe('Platform Components Example', () => {
     await expectText('chip-last-event', 'press: favorite');
 
     // A standalone input chip's close icon, by its default closeTestID
+    await expectLabel('chip-person-close', 'Remove Ada Lovelace');
     await element(by.id('chip-person-close')).tap();
     await expectText('chip-last-event', 'close: person');
   });
@@ -2371,6 +2427,7 @@ describe('Platform Components Example', () => {
   it('should test Floating Action Button functionality', async () => {
     await selectDemo('Floating Action Button');
     await expect(element(by.id('fab-regular'))).toBeVisible();
+    await expectLabel('fab-regular', 'Add (regular)');
 
     // Every size is a native button that reports presses
     for (const size of ['small', 'regular', 'medium', 'large']) {
@@ -2382,6 +2439,7 @@ describe('Platform Components Example', () => {
     // The extended button shrinks to its icon and extends again; the view
     // follows the button's width
     await scrollToId('fab-extended-switch');
+    await expectLabel('fab-extended', 'Compose');
     const extendedWidth = await widthOf('fab-extended');
     await element(by.id('fab-extended-switch')).tap();
     await waitForWidth('fab-extended', (w) => w < extendedWidth * 0.7);
@@ -2519,22 +2577,42 @@ describe('Platform Components Example', () => {
       await waitFor(panelRow).toBeVisible().withTimeout(5000);
       await expectText('disclosure-last-event', 'Expanded');
     };
+    // The header buttons on either side of the closed pill: nothing of the
+    // disclosure covers them (#148)
+    const headerButtons = [
+      element(by.id('disclosure-header-channels')),
+      element(by.id('disclosure-header-search')),
+    ];
+    const expectHeaderVisible = async () => {
+      for (const button of headerButtons) {
+        await waitFor(button).toBeVisible().withTimeout(5000);
+      }
+    };
     const expectClosed = async () => {
       await expectText('disclosure-last-event', 'Collapsed');
       await waitFor(element(by.id('disclosure-pill')))
         .toBeVisible()
         .withTimeout(5000);
       await expect(panelRow).not.toExist();
+      await expectHeaderVisible();
     };
 
+    await expectHeaderVisible();
+    await headerButtons[0]!.tap();
+    await expectText('disclosure-last-event', 'Channels');
+    await headerButtons[1]!.tap();
+    await expectText('disclosure-last-event', 'Search');
+
     // The pill opens into a panel of React content
+    await expectLabel('disclosure-pill', 'concept-plans, 5 members • 3 tabs');
     await open();
     await panelRow.tap();
     await expectText('disclosure-last-event', 'Members');
     await element(by.id('disclosure-notifications')).tap();
     await expectText('disclosure-last-event', 'Notifications off');
 
-    // The close button
+    // The close button (a Button, labeled by closeAccessibilityLabel)
+    await expectLabel('disclosure-close', 'Close');
     await element(by.id('disclosure-close')).tap();
     await expectClosed();
 
@@ -2556,6 +2634,93 @@ describe('Platform Components Example', () => {
       await device.pressBack();
       await expectClosed();
     }
+  });
+
+  it('should test Progress Indicator functionality', async () => {
+    await selectDemo('Progress Indicator');
+
+    // The view with the testID is the one with the label and the value
+    const expectProgress = async (testID: string, value: string) => {
+      await waitFor(element(by.id(testID)))
+        .toHaveValue(value)
+        .withTimeout(8000);
+    };
+    // iOS reads the value out as a percentage ("busy" while
+    // indeterminate); Android as a range, which Detox doesn't report, so
+    // the demo's own value text stands in there
+    const expectPercent = async (percent: string) => {
+      await expectText('progress-value', percent);
+      if (!isAndroid()) {
+        await expectProgress(
+          'progress-linear',
+          percent === 'indeterminate' ? 'busy' : percent
+        );
+      }
+    };
+
+    const bar = element(by.id('progress-linear'));
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveLabel('Upload');
+    await expectPercent('40%');
+
+    // Value changes, and back to indeterminate
+    await element(by.id('progress-set-100')).tap();
+    await expectPercent('100%');
+    await element(by.id('progress-set-0')).tap();
+    await expectPercent('0%');
+    await element(by.id('progress-set-indeterminate')).tap();
+    await expectPercent('indeterminate');
+    await expect(bar).toBeVisible();
+
+    // A simulated upload animates from 0 to 100%
+    await element(by.id('progress-simulate')).tap();
+    await waitFor(element(by.id('progress-value')))
+      .toHaveText('100%')
+      .withTimeout(15000);
+    await expectPercent('100%');
+
+    await expect(element(by.id('progress-indeterminate'))).toHaveLabel(
+      'Loading feed'
+    );
+
+    // Step progress: a segmented bar
+    await scrollToId('progress-step-next');
+    const steps = element(by.id('progress-steps'));
+    await expect(steps).toBeVisible();
+    // The demo reads the step out instead of the percentage. React Native
+    // writes a text value into the content description on Android
+    const expectStep = async (step: number) => {
+      await expectText('progress-step-value', `${step} of 5`);
+      if (isAndroid()) {
+        await waitFor(steps)
+          .toHaveLabel(`Checkout, Step ${step} of 5`)
+          .withTimeout(8000);
+      } else {
+        await expect(steps).toHaveLabel('Checkout');
+        await expectProgress('progress-steps', `Step ${step} of 5`);
+      }
+    };
+    await expectStep(2);
+    await element(by.id('progress-step-next')).tap();
+    await expectStep(3);
+    await element(by.id('progress-step-back')).tap();
+    await element(by.id('progress-step-back')).tap();
+    await expectStep(1);
+
+    // Circular, loading and colored indicators render with their labels
+    for (const [testID, label] of [
+      ['progress-circular-small', 'Small spinner'],
+      ['progress-circular-large', 'Large spinner'],
+      ['progress-circular', 'Download'],
+      ['progress-circular-wavy', 'Wavy download'],
+      ['progress-loading', 'Loading'],
+      ['progress-loading-contained', 'Loading (contained)'],
+      ['progress-colors-circular', 'Custom colors ring'],
+    ] as const) {
+      await scrollToId(testID);
+      await expect(element(by.id(testID))).toHaveLabel(label);
+    }
+    if (!isAndroid()) await expectProgress('progress-circular', '100%');
   });
 
   itOnIOS('should test Liquid Glass functionality', async () => {

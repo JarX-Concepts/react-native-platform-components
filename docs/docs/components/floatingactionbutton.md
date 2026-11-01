@@ -50,7 +50,7 @@ The button doesn't position itself on either platform: place it in your layout, 
 | `haptics`            | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the button is pressed. See [Haptics](/guides/haptics). Default: none |
 | `onPress`            | `() => void`                                    | Called when the button is pressed                                                                    |
 | `scrollViewNativeID` | `string`                                        | The `nativeID` of a ScrollView or FlatList whose scrolling shrinks and extends the button. See [Shrink on scroll](#shrink-on-scroll) |
-| `testID`             | `string`                                        | Test identifier                                                                                      |
+| `testID`             | `string`                                        | Test ID of the native button, which also has the label and takes the touches                         |
 
 ### Sizes
 
@@ -148,7 +148,7 @@ On iOS, Apple's apps put the primary action in the navigation bar or toolbar rat
 
 ### Testing
 
-`testID` is on the button's view: tap it with `element(by.id(...))`. The [Jest mock](/guides/testing) renders a `Pressable` with the `button` role, labeled by `accessibilityLabel` or `label`.
+`testID` is on the native button, the view that also has the label (`accessibilityLabel`, else `label`) and takes the touches: find it with `element(by.id(...))`, then `tap()` it or check `toHaveLabel`. See [Test IDs in end-to-end tests](/guides/testing#test-ids-in-end-to-end-tests). The [Jest mock](/guides/testing) renders a `Pressable` with the `button` role, labeled by `accessibilityLabel` or `label`.
 
 ### Android theme
 
