@@ -177,6 +177,10 @@ public final class PCSwitchView: UIView, UIGestureRecognizerDelegate {
         switchView.isEnabled = isEnabled
         labelView.isEnabled = isEnabled
         rowTap.isEnabled = hasLabel && isEnabled
+        // A labeled row is the element (a plain view): with no touches it
+        // reads as disabled to E2E drivers too, as the UISwitch does, while
+        // VoiceOver hears notEnabled from accessibilityTraits
+        isUserInteractionEnabled = isEnabled
     }
 
     private func applyOnColor() {

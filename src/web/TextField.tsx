@@ -249,6 +249,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             multiline={multiline}
             numberOfLines={multiline ? minLines : undefined}
             editable={editable}
+            // A read-only field is disabled, as on iOS and Android (its
+            // button stand-in stays enabled)
+            aria-disabled={!editable && !actsAsButton ? true : undefined}
             pointerEvents={actsAsButton ? 'none' : undefined}
             tabIndex={actsAsButton ? -1 : undefined}
             autoFocus={autoFocus}

@@ -228,7 +228,11 @@ public final class PCNavigationRailView: UIView {
             let item = railItems[index]
             button.isEnabled = !item.disabled
             let isSelected = item.value == selectedValue
-            button.accessibilityTraits = isSelected ? [.button, .selected] : .button
+            // Set outright, so it also carries what isEnabled would have
+            // told VoiceOver ("dimmed")
+            var traits: UIAccessibilityTraits = isSelected ? [.button, .selected] : .button
+            if item.disabled { traits.insert(.notEnabled) }
+            button.accessibilityTraits = traits
             let spoken = item.accessibilityLabel.isEmpty ? item.label : item.accessibilityLabel
             button.accessibilityLabel = item.badge.isEmpty || item.badge == " " ? spoken : "\(spoken), \(item.badge)"
         }

@@ -285,6 +285,16 @@ public final class PCSelectionMenuView: UIControl {
             button.accessibilityLabel = spokenLabel
             button.accessibilityValue = displayTitle
         }
+        // Disabled, the host dims the field and takes no touches, but it is
+        // not an accessibility element: the button says so itself (VoiceOver
+        // "dimmed"). Not isEnabled, which would dim the title a second time.
+        let disabled = interactivity == "disabled"
+        button.isUserInteractionEnabled = !disabled
+        if disabled {
+            button.accessibilityTraits.insert(.notEnabled)
+        } else {
+            button.accessibilityTraits.remove(.notEnabled)
+        }
     }
 
     private func uninstallInlineIfNeeded() {

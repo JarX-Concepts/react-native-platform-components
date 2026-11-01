@@ -914,6 +914,13 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
                 input.accessibilityTraits.remove(.button)
             }
         }
+        // A disabled UITextField says it is dimmed; a text view that can't
+        // be edited reads as plain text, so it is told
+        if interactivity == "disabled" && !actsAsButton {
+            textView.accessibilityTraits.insert(.notEnabled)
+        } else {
+            textView.accessibilityTraits.remove(.notEnabled)
+        }
     }
 
     private func applyAlignment() {

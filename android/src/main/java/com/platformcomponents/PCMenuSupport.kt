@@ -183,9 +183,10 @@ object PCMenuSupport {
    * earlier versions leave the rows untagged). Call it after the popup shows,
    * and after a submenu header is picked: the submenu opens in a new popup.
    *
-   * The tag goes on the row's title, which carries the label (its text); a
-   * tap on it lands on the row. A label on the row itself would replace what
-   * TalkBack gathers from it, such as a checked item's state.
+   * The tag goes on the row's title, which carries the label (its text) and
+   * the item's enabled state; a tap on it lands on the row. A label on the
+   * row itself would replace what TalkBack gathers from it, such as a checked
+   * item's state.
    */
   fun tagPopupRows(menu: Menu, items: List<Item>) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
@@ -224,6 +225,9 @@ object PCMenuSupport {
         val title = row.findViewById<View>(AppCompatR.id.title) ?: row.findViewById(android.R.id.title)
         row.tag = if (title == null) testID.ifEmpty { null } else null
         title?.tag = testID.ifEmpty { null }
+        // The row owns the disabled flag (its title only mirrors the row's
+        // drawable state), so the tagged title reports it too
+        if (title != null && menuItem != null) title.isEnabled = menuItem.isEnabled
       }
     }
     list.setTag(R.id.pc_menu_rows_tagged, true)
