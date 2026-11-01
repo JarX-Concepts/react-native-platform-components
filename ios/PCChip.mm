@@ -163,7 +163,16 @@ static inline bool IconEqual(const PCChipIconStruct &a, const PCChipIconStruct &
     _view.haptics.kind = NSStringFromStd(newProps.haptics, @"");
   }
 
+  const bool testIdChanged = !prevProps || newProps.testId != prevProps->testId;
+
   [super updateProps:props oldProps:oldProps];
+
+  // testID belongs on the chip's button, which carries the label and takes
+  // the touches; two views with one id would be ambiguous
+  if (testIdChanged) {
+    _view.chipTestID = NSStringFromStd(newProps.testId, @"");
+    self.accessibilityIdentifier = nil;
+  }
 
   // Update measurements when props change that affect layout
   [self updateMeasurements];

@@ -336,7 +336,14 @@ export function GlassDisclosureCore(
       outputRange: [0.96, 1],
     });
     disclosure = (
-      <LiquidGlassContainer style={styles.anchor} pointerEvents="box-none">
+      // The container is the glass's own size: the pill's while closed, so
+      // no native view covers what lies beside the pill, and the panel's
+      // while open. Its frame changes with the glass's in the same morph,
+      // and the glass stays at its origin, so the glass never leaves it.
+      <LiquidGlassContainer
+        style={open ? styles.anchor : styles.pill}
+        pointerEvents="box-none"
+      >
         <LiquidGlass
           style={[open ? [styles.panel, panelStyle] : styles.pill, styles.clip]}
           cornerStyle={open ? 'concentric' : 'capsule'}

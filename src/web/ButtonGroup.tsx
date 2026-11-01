@@ -59,6 +59,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
     onSelectionChange,
     android,
     style,
+    testID,
     ...viewProps
   } = props;
 
@@ -94,6 +95,7 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
   return (
     <View
       {...viewProps}
+      testID={testID}
       role={selection === 'single' ? 'radiogroup' : 'group'}
       style={[
         {
@@ -122,6 +124,10 @@ export function ButtonGroup(props: ButtonGroupProps): React.ReactElement {
           <button
             key={button.value}
             type="button"
+            data-testid={
+              button.testID ??
+              (testID ? `${testID}-${button.value}` : undefined)
+            }
             disabled={isDisabled}
             role={selection === 'single' ? 'radio' : undefined}
             aria-checked={selection === 'single' ? isSelected : undefined}

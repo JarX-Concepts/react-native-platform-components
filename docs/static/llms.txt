@@ -34,7 +34,7 @@ Platform-only props live under `ios={{ ... }}` and `android={{ ... }}` on every 
 - [Android Theme Configuration](https://jarx-concepts.github.io/react-native-platform-components/guides/android-theme): Material 3 setup, Expo plugin option, fallback behavior
 - [Haptics](https://jarx-concepts.github.io/react-native-platform-components/guides/haptics): the shared `haptics` prop, platform mapping, defaults and `'none'`
 - [Icons](https://jarx-concepts.github.io/react-native-platform-components/guides/icons): SF Symbols, Android drawables, image sources; `{ ios, android, web }` per-platform icons (the web draws images only and warns in development when an icon has none)
-- [Testing](https://jarx-concepts.github.io/react-native-platform-components/guides/testing): the Jest mock (`react-native-platform-components/jest`), and menu action `testID`s for end-to-end tests
+- [Testing](https://jarx-concepts.github.io/react-native-platform-components/guides/testing): the Jest mock (`react-native-platform-components/jest`), the end-to-end `testID` rule (the native view with the `testID` also has the label and takes the touches, so Detox `by.id` + `toHaveLabel` / `tap` reach one view; SplitButton's menu button is `${testID}-menu`, ButtonGroup buttons `${testID}-${value}`), and menu action `testID`s
 - [Theming and Colors](https://jarx-concepts.github.io/react-native-platform-components/guides/theming): design philosophy, theming, accepted color formats
 - [Troubleshooting](https://jarx-concepts.github.io/react-native-platform-components/guides/troubleshooting): an Android native control that gets no touches (it lies outside its parent's bounds), Detox waits for native dialogs, harmless "Could not find generated setter" logcat warnings
 

@@ -94,7 +94,10 @@ export interface SplitButtonProps extends ViewProps {
     material?: AndroidMaterialStyle;
   };
 
-  /** Test identifier */
+  /**
+   * Test identifier of the main button, the native button that carries its
+   * label and takes its touches. The menu button gets `${testID}-menu`.
+   */
   testID?: string;
 }
 
@@ -125,6 +128,7 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
     onMenuOpen,
     onMenuClose,
     android,
+    testID,
     ...viewProps
   } = props;
 
@@ -135,10 +139,11 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
         value: 'primary',
         disabled: 'enabled',
         accessibilityLabel: accessibilityLabel ?? '',
+        testID: testID ?? '',
         ...resolveIcon(icon),
       },
     ],
-    [label, icon, accessibilityLabel]
+    [label, icon, accessibilityLabel, testID]
   );
 
   const nativeMenu = useMemo(() => flattenMenuActions(menu), [menu]);
@@ -171,6 +176,7 @@ export function SplitButton(props: SplitButtonProps): React.ReactElement {
       split="true"
       menu={nativeMenu}
       menuAccessibilityLabel={menuAccessibilityLabel ?? 'More options'}
+      menuTestID={testID ? `${testID}-menu` : ''}
       variant={variant ?? 'filled'}
       size={size ?? 'small'}
       shape=""

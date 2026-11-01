@@ -14,6 +14,16 @@ const MORE_ICON: PlatformIcon = {
   android: { type: 'drawable', name: 'more_vert' },
 };
 
+const CHANNELS_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'line.3.horizontal' },
+  android: { type: 'drawable', name: 'list_bullet' },
+};
+
+const SEARCH_ICON: PlatformIcon = {
+  ios: { type: 'sfSymbol', name: 'magnifyingglass' },
+  android: { type: 'drawable', name: 'search' },
+};
+
 const MORE_MENU = [
   { id: 'copy', title: 'Copy link' },
   { id: 'star', title: 'Star channel' },
@@ -60,6 +70,8 @@ export function GlassDisclosureDemo(): React.ReactElement {
     setLastEvent(open ? 'Expanded' : 'Collapsed');
   };
 
+  const headerVariant = isLiquidGlassSupported ? 'glass' : 'text';
+
   return (
     <View>
       <Section title="Channel card">
@@ -83,6 +95,27 @@ export function GlassDisclosureDemo(): React.ReactElement {
                 </View>
               </View>
             ))}
+          </View>
+
+          {/* A screen header: buttons on either side of the closed pill,
+              which must stay visible and tappable beside it */}
+          <View style={styles.header}>
+            <Button
+              testID="disclosure-header-channels"
+              icon={CHANNELS_ICON}
+              accessibilityLabel="Channels"
+              variant={headerVariant}
+              shape="round"
+              onPress={() => setLastEvent('Channels')}
+            />
+            <Button
+              testID="disclosure-header-search"
+              icon={SEARCH_ICON}
+              accessibilityLabel="Search"
+              variant={headerVariant}
+              shape="round"
+              onPress={() => setLastEvent('Search')}
+            />
           </View>
 
           <GlassDisclosure
@@ -180,6 +213,17 @@ const styles = StyleSheet.create({
   avatar: { width: 32, height: 32, borderRadius: 8 },
   from: { fontSize: 14, fontWeight: '700' },
   text: { fontSize: 14 },
+  // The pill's row: the overlay's padding, and the pill's 44 pt height
+  header: {
+    position: 'absolute',
+    top: 12,
+    left: 10,
+    right: 10,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   overlay: { paddingTop: 12, paddingHorizontal: 10 },
   row: {
     flexDirection: 'row',

@@ -48,6 +48,8 @@ class PCButtonView(context: Context) :
   var interactivity: String = "enabled" // "enabled" | "disabled"
   var loading: Boolean = false
   var spokenLabel: String = ""
+  /** The `testID`, on the MaterialButton (see the manager's setTestId) */
+  var buttonTestID: String = ""
   var expressive: Boolean = true // android.material: "expressive" | "m3"
   var toggle: Boolean = false // a checkable button, controlled by `selected`
   var controlledSelected: Boolean = false // the `selected` prop
@@ -214,6 +216,12 @@ class PCButtonView(context: Context) :
     button?.contentDescription = spokenLabel.ifEmpty { null }
   }
 
+  fun applyButtonTestID(value: String) {
+    if (buttonTestID == value) return
+    buttonTestID = value
+    button?.tag = value.ifEmpty { null }
+  }
+
   fun applyColors(container: Int?, foreground: Int?, ripple: Int?, stroke: Int?) {
     if (containerColor == container && foregroundColor == foreground &&
       rippleColor == ripple && strokeColor == stroke
@@ -311,6 +319,9 @@ class PCButtonView(context: Context) :
       ellipsize = TextUtils.TruncateAt.END
       maxLines = 1
       contentDescription = spokenLabel.ifEmpty { null }
+      // Detox's by.id matches the view tag. The button carries the label
+      // (its text or contentDescription) and takes the touches.
+      tag = buttonTestID.ifEmpty { null }
       isEnabled = interactivity == "enabled"
       if (iconOnly) {
         // Centre the icon instead of leaving it at the start edge

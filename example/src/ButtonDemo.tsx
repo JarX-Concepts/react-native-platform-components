@@ -233,6 +233,7 @@ export function ButtonDemo(): React.JSX.Element {
   const [wiggles, setWiggles] = useState(0);
   const [splitAction, setSplitAction] = useState<string | null>(null);
   const [overflowPressed, setOverflowPressed] = useState<string | null>(null);
+  const [statementPicked, setStatementPicked] = useState(false);
 
   const menu = useMemo(() => sortMenu(sortBy), [sortBy]);
   const toggled = [
@@ -273,6 +274,21 @@ export function ButtonDemo(): React.JSX.Element {
           <Text testID="button-last-pressed" style={ui.valueText}>
             {lastPressed ?? '(none)'}
           </Text>
+        </Row>
+        <Divider />
+        {/* A label that changes: "Upload" until a file is picked. Tests find
+            the button by its testID and read the label from the same view. */}
+        <Row label="Statement">
+          <Button
+            testID="button-statement"
+            label={statementPicked ? 'Parse Statement' : 'Upload'}
+            accessibilityLabel={statementPicked ? 'Parse Statement' : undefined}
+            variant="tonal"
+            onPress={() => {
+              setLastPressed(statementPicked ? 'parse' : 'upload');
+              setStatementPicked(!statementPicked);
+            }}
+          />
         </Row>
       </Section>
 

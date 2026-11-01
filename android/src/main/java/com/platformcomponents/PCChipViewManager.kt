@@ -98,6 +98,16 @@ class PCChipViewManager :
     view.applyCloseIcon(view.closeIcon, view.closeAccessibilityLabel, value ?: "")
   }
 
+  /**
+   * testID goes on the Material chip, which carries the label and takes the
+   * touches (Detox matches the view tag); the host keeps only React Native's
+   * own test-id key, so one id never matches two views.
+   */
+  override fun setTestId(view: PCChipView, testId: String?) {
+    view.setTag(com.facebook.react.R.id.react_test_id, testId)
+    view.applyChipTestID(testId ?: "")
+  }
+
   override fun setInteractivity(view: PCChipView, value: String?) {
     view.applyInteractivity(value)
   }

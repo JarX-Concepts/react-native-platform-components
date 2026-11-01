@@ -86,6 +86,16 @@ class PCFloatingActionButtonViewManager :
     view.applySpokenLabel(value ?: "")
   }
 
+  /**
+   * testID goes on the Material button, which carries the label and takes the
+   * touches (Detox matches the view tag); the host keeps only React Native's
+   * own test-id key, so one id never matches two views.
+   */
+  override fun setTestId(view: PCFloatingActionButtonView, testId: String?) {
+    view.setTag(com.facebook.react.R.id.react_test_id, testId)
+    view.applyButtonTestID(testId ?: "")
+  }
+
   // "" (none added) | "none" | "selection" | "light" | "medium" | "heavy" | "success" | "warning" | "error"
   override fun setHaptics(view: PCFloatingActionButtonView, value: String?) {
     view.haptics = PCHaptics.configure(view, value)
