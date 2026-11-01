@@ -14,10 +14,11 @@
 // the captions and panel frames. Run the flows first (see
 // scripts/generate-readme-gifs.sh), then:
 //   node scripts/visuals/showreel.mjs
-// CLIP_SECONDS (default 3.5) is the length of a component's clip; the Theme
-// and Chip clips set their own. GIF_WIDTH (default 880) sets the
-// GIF's width: wider than the README shows it, so it stays sharp on a retina
-// display, and narrow enough to keep 15 components under 8 MB.
+// CLIP_SECONDS (default 3.5) is the length of a component's clip; some
+// components set their own. GIF_WIDTH (default 720) sets the GIF's width:
+// wider than the README shows it (640), and narrow enough to keep 20
+// components under 8 MB. GIF_FPS (default 15) trades smoothness for size the
+// other way: 800 px at 12 fps comes out about the same size.
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -37,7 +38,7 @@ import { COMPONENTS, flowOf } from './shots.mjs';
 const W = 1160;
 const H = 760;
 const FPS = 30;
-const GIF_FPS = 15;
+const GIF_FPS = parseInt(process.env.GIF_FPS || '15', 10);
 const CLIP_SECONDS = parseFloat(process.env.CLIP_SECONDS || '3.5');
 const XFADE = 0.45;
 const BG = '#f6f8fa';
@@ -275,7 +276,7 @@ const cuts = path.join(work, 'cuts.mp4');
   fs.writeFileSync(list, clips.map((c) => `file '${c.file}'`).join('\n') + '\n');
   ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', cuts]);
 }
-const gifWidth = parseInt(process.env.GIF_WIDTH || '880', 10);
+const gifWidth = parseInt(process.env.GIF_WIDTH || '720', 10);
 const gif = path.join(ASSETS_DIR, 'showreel.gif');
 const palette = path.join(work, 'palette.png');
 const pre = `fps=${GIF_FPS},scale=${gifWidth}:-2:flags=lanczos`;

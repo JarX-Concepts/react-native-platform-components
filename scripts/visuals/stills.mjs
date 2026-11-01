@@ -114,12 +114,35 @@ const ROWS = [
     ],
   },
   {
-    // What opens over the page: the two menus and the Material action sheet
+    height: 380,
+    tiles: [
+      { key: 'switch', platform: 'ios', span: 3 },
+      { key: 'switch', platform: 'android', span: 3 },
+      { key: 'checkbox', platform: 'ios', span: 3 },
+      { key: 'checkbox', platform: 'android', span: 3 },
+    ],
+  },
+  {
+    // The radio groups sit at the bottom of their demo, so their tiles fit
+    // the group whole on the page's color
+    height: 380,
+    tiles: [
+      { key: 'radiogroup', platform: 'ios', span: 3, fit: 'contain', position: 'center' },
+      { key: 'radiogroup', platform: 'android', span: 3, fit: 'contain', position: 'center' },
+      { key: 'progressindicator', platform: 'ios', span: 3 },
+      { key: 'progressindicator', platform: 'android', span: 3 },
+    ],
+  },
+  {
+    // What opens over the page: the two menus, the Material action sheet and
+    // the GlassDisclosure panel (iOS only here: its Android card is a plain
+    // Material surface, while iOS 26 morphs one glass shape)
     height: 430,
     tiles: [
-      { key: 'contextmenu', platform: 'ios', span: 4, position: 'center' },
-      { key: 'contextmenu', platform: 'android', span: 4, position: 'center' },
-      { key: 'actionsheet', platform: 'android', span: 4, position: 'bottom center' },
+      { key: 'contextmenu', platform: 'ios', span: 3, position: 'center' },
+      { key: 'contextmenu', platform: 'android', span: 3, position: 'center' },
+      { key: 'actionsheet', platform: 'android', span: 3, position: 'bottom left' },
+      { key: 'glassdisclosure', platform: 'ios', span: 3 },
     ],
   },
   {
@@ -257,7 +280,7 @@ function socialHtml() {
 <body>
   <div class="copy">
     <h1><small>react-native-platform-components</small><span class="ios">Liquid Glass</span> on iOS.<br><span class="android">Material 3 Expressive</span> on Android.</h1>
-    <p>TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, FloatingActionButton, FloatingToolbar and LiquidGlass. The real native widgets behind one typed API.</p>
+    <p>TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass. The real native widgets behind one typed API.</p>
     <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>
