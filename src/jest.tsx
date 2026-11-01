@@ -35,6 +35,8 @@ import type { ButtonProps } from './Button';
 import type { ButtonGroupProps } from './ButtonGroup';
 import type { ChipProps } from './Chip';
 import type { ChipGroupProps } from './ChipGroup';
+import type { CheckboxProps } from './Checkbox';
+import type { RadioGroupProps } from './RadioGroup';
 import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
@@ -75,6 +77,8 @@ export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
 export type * from './Switch';
+export type * from './Checkbox';
+export type * from './RadioGroup';
 export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
@@ -702,6 +706,105 @@ export function ChipGroup(props: ChipGroupProps): React.ReactElement {
           onClose={() => onClose?.(chip.value, index)}
         />
       ))}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Checkbox, RadioGroup
+
+/**
+ * A `Pressable` with the checkbox role, `testID`, the label as `Text` and
+ * `accessibilityState.checked` (`'mixed'` when indeterminate), plus the
+ * error message as `Text`. Pressing it calls `onCheckedChange` with the
+ * state asked for; `checked` stays controlled.
+ */
+export function Checkbox(props: CheckboxProps): React.ReactElement {
+  const {
+    checked,
+    onCheckedChange,
+    label,
+    disabled,
+    error,
+    haptics,
+    maxFontSizeMultiplier,
+    accessibilityLabel,
+    testID,
+    ...viewProps
+  } = props;
+
+  return (
+    <View {...viewProps}>
+      <Pressable
+        testID={testID}
+        accessibilityRole="checkbox"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{
+          disabled: !!disabled,
+          checked: checked === 'indeterminate' ? 'mixed' : checked,
+        }}
+        disabled={disabled}
+        onPress={() => onCheckedChange?.(checked !== true)}
+      >
+        {label ? <Text>{label}</Text> : null}
+        {typeof error === 'string' && error ? <Text>{error}</Text> : null}
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * A view with the radiogroup role and `testID`, holding a `Pressable` per
+ * option with the radio role, its `testID` (else `${testID}-${value}`), the
+ * label and description as `Text` and `accessibilityState.checked`, and the
+ * validation message as `Text`. Pressing an option calls `onValueChange`
+ * unless it is the chosen one; `value` stays controlled.
+ */
+export function RadioGroup(props: RadioGroupProps): React.ReactElement {
+  const {
+    options,
+    value,
+    onValueChange,
+    error,
+    disabled,
+    haptics,
+    maxFontSizeMultiplier,
+    accessibilityLabel,
+    testID,
+    ...viewProps
+  } = props;
+
+  return (
+    <View
+      {...viewProps}
+      testID={testID}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={accessibilityLabel}
+    >
+      {options.map((option, index) => {
+        const optionDisabled = !!(disabled || option.disabled);
+        const chosen = value === option.value;
+        return (
+          <Pressable
+            key={option.value}
+            testID={
+              option.testID ??
+              (testID ? `${testID}-${option.value}` : undefined)
+            }
+            accessibilityRole="radio"
+            accessibilityLabel={option.accessibilityLabel ?? option.label}
+            accessibilityState={{ disabled: optionDisabled, checked: chosen }}
+            disabled={optionDisabled}
+            onPress={() => {
+              if (!chosen) onValueChange?.(option.value, index);
+            }}
+          >
+            <Text>{option.label}</Text>
+            {option.description ? <Text>{option.description}</Text> : null}
+          </Pressable>
+        );
+      })}
+      {typeof error === 'string' && error ? <Text>{error}</Text> : null}
     </View>
   );
 }

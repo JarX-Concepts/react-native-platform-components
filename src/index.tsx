@@ -13,6 +13,8 @@ export * from './SplitButton';
 export * from './Chip';
 export * from './ChipGroup';
 export * from './Switch';
+export * from './Checkbox';
+export * from './RadioGroup';
 export * from './FloatingToolbar';
 export * from './GlassDisclosure';
 export * from './LiquidGlass';

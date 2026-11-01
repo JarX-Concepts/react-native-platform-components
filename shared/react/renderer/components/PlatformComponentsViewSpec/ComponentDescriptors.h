@@ -17,3 +17,5 @@
 #include "PCChipComponentDescriptors-custom.h"
 #include "PCChipGroupComponentDescriptors-custom.h"
 #include "PCSwitchComponentDescriptors-custom.h"
+#include "PCCheckboxComponentDescriptors-custom.h"
+#include "PCRadioGroupComponentDescriptors-custom.h"

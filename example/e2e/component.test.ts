@@ -329,6 +329,42 @@ const expectLabel = async (
   await waitFor(el).toHaveLabel(label).withTimeout(6000);
 };
 
+// Checkbox / RadioGroup state, read from the element that carries the
+// testID, the label and the touches. Android: the MaterialCheckBox's /
+// MaterialRadioButton's checked state. iOS has no checkbox or radio trait,
+// so the row's accessibility value says it, as React Native's
+// accessibilityRole="checkbox" / "radio" does.
+const expectCheckbox = async (
+  testID: string,
+  state: boolean | 'mixed',
+  error = ''
+) => {
+  if (isAndroid()) {
+    // Indeterminate isn't checked
+    await expectToggle(testID, state === true);
+    return;
+  }
+  const word = state === 'mixed' ? 'mixed' : state ? 'checked' : 'unchecked';
+  await waitFor(element(by.id(testID)))
+    .toHaveValue(['checkbox', word, error].filter(Boolean).join(', '))
+    .withTimeout(8000);
+};
+
+const expectRadio = async (
+  testID: string,
+  chosen: boolean,
+  description = ''
+) => {
+  if (isAndroid()) {
+    await expectToggle(testID, chosen);
+    return;
+  }
+  const word = chosen ? 'checked' : 'unchecked';
+  await waitFor(element(by.id(testID)))
+    .toHaveValue([description, 'radio button', word].filter(Boolean).join(', '))
+    .withTimeout(8000);
+};
+
 // A view's width (points on iOS, pixels on Android)
 const widthOf = async (testID: string): Promise<number> => {
   const attributes = (await element(by.id(testID)).getAttributes()) as {
@@ -2422,6 +2458,143 @@ describe('Platform Components Example', () => {
     await expectText('switch-last-event', 'locked: true');
     await pause(500);
     await expectToggle('switch-locked', false);
+  });
+
+  it('should test Checkbox functionality', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    // The testID, the label and the state are on one element (#149)
+    await expect(element(by.id('checkbox-terms'))).toBeVisible();
+    await expect(element(by.id('checkbox-terms'))).toHaveLabel(
+      'I have read and agree to the Terms of Service and the Privacy ' +
+        'Policy, and I agree to receive account notices by email.'
+    );
+    await expectCheckbox('checkbox-terms', false);
+
+    // Submitting unchecked shows the error message under the label
+    await element(by.id('checkbox-submit')).tap();
+    const termsError = 'Accept the terms to create your account';
+    await waitFor(element(by.text(termsError)))
+      .toBeVisible()
+      .withTimeout(8000);
+    await expectCheckbox('checkbox-terms', false, termsError);
+    await expectText('checkbox-terms-value', 'Not accepted · Not submitted');
+
+    // A tap on the row (box or label) checks it and clears the error
+    await element(by.id('checkbox-terms')).tap();
+    await expectCheckbox('checkbox-terms', true);
+    await expect(element(by.text(termsError))).not.toBeVisible();
+    await element(by.id('checkbox-submit')).tap();
+    await expectText('checkbox-terms-value', 'Accepted · Submitted');
+
+    // Indeterminate parent: Email alone is checked
+    await scrollToId('checkbox-channels-value');
+    await expect(element(by.id('checkbox-all'))).toHaveLabel(
+      'All notifications'
+    );
+    await expectCheckbox('checkbox-all', 'mixed');
+    // From indeterminate a tap checks every child
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'email, push, sms');
+    await expectCheckbox('checkbox-all', true);
+    await expectCheckbox('checkbox-push', true);
+    // Unchecking a child makes the parent indeterminate again
+    await element(by.id('checkbox-push')).tap();
+    await expectText('checkbox-channels-value', 'email, sms');
+    await expectCheckbox('checkbox-push', false);
+    await expectCheckbox('checkbox-all', 'mixed');
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'email, push, sms');
+    await element(by.id('checkbox-all')).tap();
+    await expectText('checkbox-channels-value', 'None');
+    await expectCheckbox('checkbox-email', false);
+  });
+
+  it('should test Checkbox disabled and controlled states', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    await scrollToId('checkbox-locked-value');
+
+    // Controlled: the parent ignores the change, so the box goes back
+    await element(by.id('checkbox-locked')).tap();
+    await expectText('checkbox-locked-value', '1');
+    await expectCheckbox('checkbox-locked', false);
+    await element(by.id('checkbox-locked')).tap();
+    await expectText('checkbox-locked-value', '2');
+    await expectCheckbox('checkbox-locked', false);
+
+    // Disabled checkboxes don't toggle
+    await element(by.id('checkbox-disabled')).tap();
+    await pause(500);
+    await expectCheckbox('checkbox-disabled', false);
+    await expect(element(by.id('checkbox-disabled-checked'))).toHaveLabel(
+      'Disabled and checked'
+    );
+    await expectCheckbox('checkbox-disabled-checked', true);
+
+    // error={true}: the error look, no message
+    await expectCheckbox('checkbox-error', false);
+  });
+
+  it('should test Radio Group selection', async () => {
+    await selectDemo('Checkbox & Radio Group');
+    await scrollToId('radio-submit');
+    await expect(element(by.id('radio-delivery-standard'))).toHaveLabel(
+      'Standard'
+    );
+    await expectRadio(
+      'radio-delivery-standard',
+      false,
+      '3–5 business days · Free'
+    );
+    await expectText('radio-delivery-value', 'None');
+
+    // Continuing with no choice shows the validation message
+    await element(by.id('radio-submit')).tap();
+    const deliveryError = 'Choose a delivery method';
+    await waitFor(element(by.text(deliveryError)))
+      .toBeVisible()
+      .withTimeout(8000);
+
+    // A pick moves the choice and clears the message
+    await element(by.id('radio-delivery-express')).tap();
+    await expectText('radio-delivery-value', 'Express');
+    await expectRadio(
+      'radio-delivery-express',
+      true,
+      'Next business day · $9.99'
+    );
+    await expectRadio(
+      'radio-delivery-standard',
+      false,
+      '3–5 business days · Free'
+    );
+    await expect(element(by.text(deliveryError))).not.toBeVisible();
+
+    // A disabled option can't be picked
+    await element(by.id('radio-delivery-sameDay')).tap();
+    await pause(500);
+    await expectText('radio-delivery-value', 'Express');
+
+    await scrollToId('radio-delivery-value');
+    await element(by.id('radio-delivery-pickup')).tap();
+    await expectText('radio-delivery-value', 'Pick up in store');
+    await expectRadio('radio-delivery-pickup', true, 'Ready in 2 hours');
+    await expectRadio(
+      'radio-delivery-express',
+      false,
+      'Next business day · $9.99'
+    );
+
+    await element(by.id('radio-clear')).tap();
+    await expectText('radio-delivery-value', 'None');
+    await expectRadio('radio-delivery-pickup', false, 'Ready in 2 hours');
+
+    // A disabled group doesn't change
+    await scrollToId('checkbox-last-event');
+    await element(by.id('radio-account-business')).tap();
+    await pause(500);
+    await expectRadio('radio-account-personal', true);
+    await expectRadio('radio-account-business', false);
+    await expectText('checkbox-last-event', 'delivery: pickup');
   });
 
   it('should test Floating Action Button functionality', async () => {

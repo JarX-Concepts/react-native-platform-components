@@ -15,6 +15,8 @@ module.exports = {
           'MeasuringPCChipComponentDescriptor',
           'MeasuringPCChipGroupComponentDescriptor',
           'MeasuringPCSwitchComponentDescriptor',
+          'MeasuringPCCheckboxComponentDescriptor',
+          'MeasuringPCRadioGroupComponentDescriptor',
         ],
         cmakeListsPath: 'src/main/jni/CMakeLists.txt',
       },

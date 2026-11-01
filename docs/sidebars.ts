@@ -23,6 +23,8 @@ const sidebars: SidebarsConfig = {
         'components/buttongroup',
         'components/chip',
         'components/switch',
+        'components/checkbox',
+        'components/radiogroup',
         'components/floatingactionbutton',
         'components/floatingtoolbar',
         'components/glassdisclosure',

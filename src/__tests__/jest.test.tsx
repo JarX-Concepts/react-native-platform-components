@@ -14,6 +14,8 @@ import {
   ButtonGroup,
   Chip,
   ChipGroup,
+  Checkbox,
+  RadioGroup,
   ContextMenu,
   DatePicker,
   Dialog,
@@ -573,6 +575,73 @@ describe('Chip and ChipGroup (mock)', () => {
       ['vegan', 1],
       ['veg', 0],
     ]);
+  });
+});
+
+describe('Checkbox and RadioGroup (mock)', () => {
+  it('Checkbox reports the state asked for and stays controlled', () => {
+    const onCheckedChange = jest.fn();
+    const tree = render(
+      <Checkbox
+        testID="terms"
+        label="I agree"
+        checked="indeterminate"
+        error="Required"
+        onCheckedChange={onCheckedChange}
+      />
+    );
+    const box = byTestID(tree, 'terms');
+    expect(box.props.accessibilityRole).toBe('checkbox');
+    expect(box.props.accessibilityLabel).toBe('I agree');
+    expect(box.props.accessibilityState).toEqual({
+      disabled: false,
+      checked: 'mixed',
+    });
+    expect(tree.root.findAllByType(Text).map((t) => t.props.children)).toEqual([
+      'I agree',
+      'Required',
+    ]);
+
+    press(box);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+    expect(byTestID(tree, 'terms').props.accessibilityState.checked).toBe(
+      'mixed'
+    );
+  });
+
+  it('RadioGroup reports picks of other enabled options', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <RadioGroup
+        testID="delivery"
+        accessibilityLabel="Delivery"
+        options={[
+          { value: 'standard', label: 'Standard', description: '3–5 days' },
+          { value: 'express', label: 'Express' },
+          { value: 'pickup', label: 'Pickup', disabled: true },
+        ]}
+        value="standard"
+        error="Pick one"
+        onValueChange={onValueChange}
+      />
+    );
+    expect(byTestID(tree, 'delivery').props.accessibilityRole).toBe(
+      'radiogroup'
+    );
+    const standard = byTestID(tree, 'delivery-standard');
+    expect(standard.props.accessibilityRole).toBe('radio');
+    expect(standard.props.accessibilityState.checked).toBe(true);
+
+    press(standard);
+    expect(onValueChange).not.toHaveBeenCalled();
+    press(byTestID(tree, 'delivery-express'));
+    expect(onValueChange).toHaveBeenCalledWith('express', 1);
+    expect(
+      byTestID(tree, 'delivery-pickup').props.accessibilityState.disabled
+    ).toBe(true);
+    expect(
+      tree.root.findAllByType(Text).map((t) => t.props.children)
+    ).toContain('Pick one');
   });
 });
 

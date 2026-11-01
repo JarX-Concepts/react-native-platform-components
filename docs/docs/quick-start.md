@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
 ---
 
 ### TextField
@@ -629,6 +629,39 @@ export function Example() {
         value={notifications}
         onValueChange={setNotifications}
         android={{ thumbIcon: 'check' }}
+      />
+    </>
+  );
+}
+```
+
+### Checkbox and RadioGroup
+
+```tsx
+import { useState } from 'react';
+import { Checkbox, RadioGroup } from 'react-native-platform-components';
+
+export function Example() {
+  const [accepted, setAccepted] = useState(false);
+  const [delivery, setDelivery] = useState<string | null>(null);
+
+  return (
+    <>
+      <Checkbox
+        label="I have read and agree to the Terms of Service."
+        checked={accepted}
+        onCheckedChange={setAccepted}
+      />
+
+      <RadioGroup
+        accessibilityLabel="Delivery method"
+        options={[
+          { value: 'standard', label: 'Standard', description: '3–5 business days' },
+          { value: 'express', label: 'Express', description: 'Next business day' },
+        ]}
+        value={delivery}
+        onValueChange={setDelivery}
+        error={delivery ? undefined : 'Choose a delivery method'}
       />
     </>
   );

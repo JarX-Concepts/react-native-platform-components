@@ -14,6 +14,8 @@ import {
   ButtonGroup,
   Chip,
   ChipGroup,
+  Checkbox,
+  RadioGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,
@@ -356,6 +358,89 @@ describe('Chip and ChipGroup (web)', () => {
       .find((b) => b.props['data-testid'] === 'diet-b-close');
     click(close!);
     expect(onClose).toHaveBeenCalledWith('b', 1);
+  });
+});
+
+describe('Checkbox and RadioGroup (web)', () => {
+  const change = (node: ReactTestInstance) => act(() => node.props.onChange());
+
+  it('Checkbox is an <input type="checkbox"> inside its <label>', () => {
+    const onCheckedChange = jest.fn();
+    const tree = render(
+      <Checkbox
+        testID="terms"
+        label="I agree"
+        checked={false}
+        error="You must agree"
+        onCheckedChange={onCheckedChange}
+      />
+    );
+    const label = tree.root.findByType('label');
+    const input = label.findByType('input');
+    expect(input.props.type).toBe('checkbox');
+    expect(input.props['data-testid']).toBe('terms');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-invalid']).toBe(true);
+    const description = tree.root.find(
+      (n) => n.props.id === input.props['aria-describedby']
+    );
+    expect(description.props.children).toBe('You must agree');
+
+    change(input);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('an indeterminate checkbox checks on change', () => {
+    const onCheckedChange = jest.fn();
+    const tree = render(
+      <Checkbox checked="indeterminate" onCheckedChange={onCheckedChange} />
+    );
+    const input = tree.root.findByType('input');
+    expect(input.props.checked).toBe(false);
+    expect(input.props['aria-invalid']).toBeUndefined();
+    change(input);
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  it('RadioGroup is a radiogroup of <input type="radio">s sharing a name', () => {
+    const onValueChange = jest.fn();
+    const tree = render(
+      <RadioGroup
+        testID="delivery"
+        accessibilityLabel="Delivery"
+        options={[
+          { value: 'standard', label: 'Standard', description: '3–5 days' },
+          { value: 'express', label: 'Express' },
+          { value: 'pickup', label: 'Pickup', disabled: true },
+        ]}
+        value="standard"
+        error="Pick one"
+        onValueChange={onValueChange}
+      />
+    );
+    const group = tree.root.find((n) => n.props.role === 'radiogroup');
+    expect(group.props['aria-label']).toBe('Delivery');
+    const inputs = group.findAllByType('input');
+    expect(inputs.map((i) => i.props.type)).toEqual([
+      'radio',
+      'radio',
+      'radio',
+    ]);
+    expect(new Set(inputs.map((i) => i.props.name)).size).toBe(1);
+    expect(inputs.map((i) => i.props['data-testid'])).toEqual([
+      'delivery-standard',
+      'delivery-express',
+      'delivery-pickup',
+    ]);
+    expect(inputs.map((i) => i.props.checked)).toEqual([true, false, false]);
+    expect(inputs[2]!.props.disabled).toBe(true);
+    const message = tree.root.find(
+      (n) => n.props.id === group.props['aria-describedby']
+    );
+    expect(message.props.children).toBe('Pick one');
+
+    change(inputs[1]!);
+    expect(onValueChange).toHaveBeenCalledWith('express', 1);
   });
 });
 

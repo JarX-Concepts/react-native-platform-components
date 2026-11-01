@@ -15,6 +15,7 @@ import {
 import { ActionSheetDemo } from './ActionSheetDemo';
 import { ButtonDemo } from './ButtonDemo';
 import { ChipDemo } from './ChipDemo';
+import { CheckboxDemo } from './CheckboxDemo';
 import { ContextMenuDemo } from './ContextMenuDemo';
 import { DatePickerDemo } from './DatePickerDemo';
 import { DialogDemo } from './DialogDemo';
@@ -50,6 +51,7 @@ type DemoKey =
   | 'button'
   | 'chip'
   | 'switch'
+  | 'checkbox'
   | 'floatingActionButton'
   | 'floatingToolbar'
   | 'glassDisclosure'
@@ -72,6 +74,7 @@ const COMPONENT_DEMOS = [
   { label: 'Button', data: 'button' },
   { label: 'Chip', data: 'chip' },
   { label: 'Switch', data: 'switch' },
+  { label: 'Checkbox & Radio Group', data: 'checkbox' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
   { label: 'Glass Disclosure', data: 'glassDisclosure' },
@@ -163,6 +166,7 @@ export default function App(): React.ReactElement {
       {demo === 'button' && <ButtonDemo />}
       {demo === 'chip' && <ChipDemo />}
       {demo === 'switch' && <SwitchDemo />}
+      {demo === 'checkbox' && <CheckboxDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'glassDisclosure' && <GlassDisclosureDemo />}

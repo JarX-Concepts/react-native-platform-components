@@ -20,6 +20,8 @@ export type * from './SplitButton';
 export type * from './Chip';
 export type * from './ChipGroup';
 export type * from './Switch';
+export type * from './Checkbox';
+export type * from './RadioGroup';
 export type * from './FloatingToolbar';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
@@ -46,6 +48,8 @@ export {
   SplitButton,
   Chip,
   ChipGroup,
+  Checkbox,
+  RadioGroup,
   ContextMenu,
   DatePicker,
   DateRangePicker,
