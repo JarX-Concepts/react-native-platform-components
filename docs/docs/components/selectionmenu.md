@@ -18,24 +18,26 @@ Native selection menu with **modal** and **embedded** modes.
 
 ### Props
 
-| Prop                     | Type                                                                                           | Description                                                                                               |
-| ------------------------ | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `options`                | `SelectionMenuOption[]`                                                                        | Options to display. See [SelectionMenuOption](#selectionmenuoption)                                       |
-| `selected`               | `string \| null`                                                                               | Currently selected option's `data` value                                                                  |
-| `disabled`               | `boolean`                                                                                      | Disables the menu                                                                                         |
-| `placeholder`            | `string`                                                                                       | Placeholder text when no selection                                                                        |
-| `presentation`           | `'modal' \| 'embedded'`                                                                        | Presentation mode (default: `'modal'`)                                                                    |
-| `visible`                | `boolean`                                                                                      | Controls modal mode menu visibility                                                                       |
-| `haptics`                | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none                |
-| `onSelect`               | `(data, label, index) => void`                                                                 | Called when user selects an option                                                                        |
-| `onRequestClose`         | `() => void`                                                                                   | Called when menu is dismissed without selection                                                           |
-| `android.material`       | `'system' \| 'm3'`                                                                             | Material Design style preference                                                                          |
-| `android.searchable`     | `boolean`                                                                                      | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android)   |
-| `minFieldHeight`         | `number`                                                                                       | Embedded only: smallest height of the field in points (dp). See [Form field](#form-field)                 |
-| `fieldPaddingHorizontal` | `number`                                                                                       | Embedded only: space between the field's sides and its text in points (dp). See [Form field](#form-field) |
-| `ios.borderStyle`        | `'none' \| 'roundedRect'`                                                                      | Embedded only: a borderless pop-up button (default) or a field box. See [Form field](#form-field)         |
-| `android.variant`        | `'outlined' \| 'filled'`                                                                       | Embedded `m3` only: the Material exposed dropdown style (default: `'outlined'`)                           |
-| `android.dense`          | `boolean`                                                                                      | Embedded `m3` only: the dense, shorter field                                                              |
+| Prop                     | Type                                                                                           | Description                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `options`                | `SelectionMenuOption[]`                                                                        | Options to display. See [SelectionMenuOption](#selectionmenuoption)                                                                      |
+| `selected`               | `string \| null`                                                                               | Currently selected option's `data` value                                                                                                 |
+| `disabled`               | `boolean`                                                                                      | Disables the menu                                                                                                                        |
+| `placeholder`            | `string`                                                                                       | Placeholder text when no selection                                                                                                       |
+| `presentation`           | `'modal' \| 'embedded'`                                                                        | Presentation mode (default: `'modal'`)                                                                                                   |
+| `visible`                | `boolean`                                                                                      | Controls modal mode menu visibility                                                                                                      |
+| `haptics`                | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none                                               |
+| `onSelect`               | `(data, label, index) => void`                                                                 | Called when user selects an option                                                                                                       |
+| `onRequestClose`         | `() => void`                                                                                   | Called when menu is dismissed without selection                                                                                          |
+| `android.material`       | `'system' \| 'm3'`                                                                             | Material Design style preference                                                                                                         |
+| `android.searchable`     | `boolean`                                                                                      | Embedded `m3` only: typing filters the options. See [Searchable dropdown](#searchable-dropdown-android)                                  |
+| `minFieldHeight`         | `number`                                                                                       | Embedded only: smallest height of the field in points (dp). See [Form field](#form-field)                                                |
+| `fieldPaddingHorizontal` | `number`                                                                                       | Embedded only: space between the field's sides and its text in points (dp). See [Form field](#form-field)                                |
+| `ios.borderStyle`        | `'none' \| 'roundedRect'`                                                                      | Embedded only: a borderless pop-up button (default) or a field box. See [Form field](#form-field)                                        |
+| `android.variant`        | `'outlined' \| 'filled'`                                                                       | Embedded `m3` only: the Material exposed dropdown style (default: `'outlined'`)                                                          |
+| `android.dense`          | `boolean`                                                                                      | Embedded `m3` only: the dense, shorter field                                                                                             |
+| `testID`                 | `string`                                                                                       | Embedded: on the field, which also has the label and takes the touches. Modal: on the component's view. See [Testing](#testing)          |
+| `accessibilityLabel`     | `string`                                                                                       | Embedded: the field's label, with the shown option as its value. Default: the field is labeled by what it shows. See [Testing](#testing) |
 
 ### SelectionMenuOption
 
@@ -205,3 +207,31 @@ With `presentation="embedded"`, `android.material="m3"` and `android.searchable`
 | Android                                                                                                                      |
 | ---------------------------------------------------------------------------------------------------------------------------- |
 | ![The M3 exposed dropdown filtered to the states starting with "new"](/img/components/selectionmenu/searchable-android.webp) |
+
+### Testing
+
+In embedded mode, `testID` is on the field: the native view that shows the selected option (or the placeholder), has the accessibility label and opens the menu when tapped. An end-to-end test can find it by ID, read its label as the selection changes and tap it:
+
+```ts
+// Detox
+await waitFor(element(by.id('state-menu')))
+  .toHaveLabel('Select a state')
+  .withTimeout(6000);
+await element(by.id('state-menu')).tap();
+await element(by.text('Arizona')).atIndex(0).tap();
+await waitFor(element(by.id('state-menu')))
+  .toHaveLabel('Arizona')
+  .withTimeout(6000);
+```
+
+| Field                         | View with the `testID`                         | Label                                                                                                                                                                                                                                                                                |
+| ----------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| iOS (both `ios.borderStyle`s) | The menu `UIButton`, the size of the component | The shown option or placeholder; with `accessibilityLabel`, that label and the shown text as its value                                                                                                                                                                               |
+| Android `m3` exposed dropdown | The dropdown's text field (an `EditText`)      | With `accessibilityLabel`, that label (its content description) and the selected option as its state description. Without one, TalkBack reads the text with the placeholder (Material's floating label), and Detox's `toHaveLabel` finds no label: check the value with `toHaveText` |
+| Android `system` Spinner      | The `Spinner`                                  | The shown option or placeholder; with `accessibilityLabel`, that label and the shown option as its state description                                                                                                                                                                 |
+
+The host view React Native creates carries neither the ID nor the label, so VoiceOver and TalkBack announce the field once. In modal mode the component has no field of its own: `testID` and `accessibilityLabel` stay on its invisible view, and your trigger carries its own.
+
+Up to 1.9.0, the embedded `testID` was on the component's container. Tests that reached the field through it, such as `element(by.type('android.widget.EditText').withAncestor(by.id('state-menu')))`, find it with `element(by.id('state-menu'))` now.
+
+See [Test IDs in end-to-end tests](/guides/testing#test-ids-in-end-to-end-tests). The [Jest mock](/guides/testing) renders the embedded field as a view with the `button` role, carrying `testID` and the same label.

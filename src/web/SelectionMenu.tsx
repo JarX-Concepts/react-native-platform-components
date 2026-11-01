@@ -8,8 +8,8 @@ import { Icon } from './Icon';
 import { eventValue, usePrimaryColor } from './shared';
 
 /**
- * `embedded` renders a `<select>` (labels only). `modal` stays headless like on
- * native: while `visible`, it opens the options in a `<dialog>`, with their
+ * `embedded` renders a `<select>` (labels only) carrying the `testID`.
+ * `modal` stays headless like on native: while `visible`, it opens the options in a `<dialog>`, with their
  * image icons and subtitles; picking one calls `onSelect`, and Escape or a
  * click outside calls `onRequestClose`. `android.searchable` is ignored.
  */
@@ -28,6 +28,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     fieldPaddingHorizontal,
     ios,
     android,
+    testID,
     ...viewProps
   } = props;
 
@@ -43,7 +44,9 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   if (presentation === 'embedded') {
     return (
       <View {...viewProps}>
+        {/* The testID is on the <select>, which has the label and the clicks */}
         <select
+          data-testid={testID}
           aria-label={label}
           value={selected ?? ''}
           disabled={disabled}
@@ -87,7 +90,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   const dismiss = () => onRequestClose?.();
 
   return (
-    <View {...viewProps}>
+    <View {...viewProps} testID={testID}>
       {visible && !disabled ? (
         <ModalDialog label={label} onDismiss={dismiss}>
           <div

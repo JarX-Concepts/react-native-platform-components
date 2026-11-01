@@ -597,6 +597,32 @@ describe('SelectionMenu (web)', () => {
     expect(onSelect).toHaveBeenCalledWith('g', 'Green', 1);
   });
 
+  it('embedded: the testID is on the <select>, modal: on the view', () => {
+    // Host elements carrying the testID
+    const hostsWithTestID = (tree: ReactTestRenderer) =>
+      tree.root.findAll(
+        (node) => typeof node.type === 'string' && node.props.testID === 'color'
+      );
+    const embedded = render(
+      <SelectionMenu
+        testID="color"
+        presentation="embedded"
+        options={options}
+        selected="r"
+      />
+    );
+    expect(embedded.root.findByType('select').props['data-testid']).toBe(
+      'color'
+    );
+    expect(hostsWithTestID(embedded)).toHaveLength(0);
+
+    const modal = render(
+      <SelectionMenu testID="color" options={options} selected="r" />
+    );
+    expect(modal.root.findAllByType('select')).toHaveLength(0);
+    expect(hostsWithTestID(modal)).toHaveLength(1);
+  });
+
   it('modal: lists the options in a dialog while visible', () => {
     const onSelect = jest.fn();
     const onRequestClose = jest.fn();

@@ -208,4 +208,37 @@ describe('SelectionMenu', () => {
     expect(props.ios).toBeUndefined();
     act(() => tree.unmount());
   });
+  it('puts an embedded accessibilityLabel on the field, a modal one on the view', () => {
+    const tree = render(
+      <SelectionMenu
+        testID="state"
+        accessibilityLabel="US State"
+        selected={null}
+        options={[]}
+        presentation="embedded"
+      />
+    );
+    let props = lastNativeProps();
+    // The testID reaches native as a view prop, which puts it on the field
+    expect(props.testID).toBe('state');
+    expect(props.spokenLabel).toBe('US State');
+    expect(props.accessibilityLabel).toBeUndefined();
+
+    act(() =>
+      tree.update(
+        <SelectionMenu
+          testID="state"
+          accessibilityLabel="US State"
+          selected={null}
+          options={[]}
+          visible={false}
+        />
+      )
+    );
+    props = lastNativeProps();
+    expect(props.testID).toBe('state');
+    expect(props.spokenLabel).toBe('');
+    expect(props.accessibilityLabel).toBe('US State');
+    act(() => tree.unmount());
+  });
 });

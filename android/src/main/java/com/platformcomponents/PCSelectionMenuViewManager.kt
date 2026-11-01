@@ -122,6 +122,21 @@ class PCSelectionMenuViewManager :
     view.applyFieldSize(view.minFieldHeight, value.toFloat())
   }
 
+  override fun setSpokenLabel(view: PCSelectionMenuView, value: String?) {
+    view.applySpokenLabel(value ?: "")
+  }
+
+  /**
+   * Embedded, testID goes on the field, which carries the label and takes the
+   * touches (Detox matches the view tag); the host keeps only React Native's
+   * own test-id key, so one id never matches two views. The headless menu
+   * keeps it on its own view.
+   */
+  override fun setTestId(view: PCSelectionMenuView, testId: String?) {
+    view.setTag(com.facebook.react.R.id.react_test_id, testId)
+    view.applyTestID(testId ?: "")
+  }
+
   override fun setIos(view: PCSelectionMenuView, value: ReadableMap?) {
     // Android ignores iOS config
   }

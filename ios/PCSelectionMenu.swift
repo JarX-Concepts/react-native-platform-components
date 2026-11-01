@@ -76,6 +76,20 @@ public final class PCSelectionMenuView: UIControl {
         didSet { if oldValue != fieldPaddingHorizontal { applyInlineStyle() } }
     }
 
+    /// Embedded only: the `testID`, on the menu button. It carries the label
+    /// and takes the touches, so E2E drivers find, read and tap one element
+    /// (PCSelectionMenu.mm keeps it off the host)
+    public var fieldTestID: String = "" {
+        didSet { if oldValue != fieldTestID { applyFieldAccessibility() } }
+    }
+
+    /// Embedded only: the `accessibilityLabel`, on the menu button, whose
+    /// shown text then becomes its accessibility value; "" = labeled by the
+    /// shown text (the selected option or the placeholder)
+    public var spokenLabel: String = "" {
+        didSet { if oldValue != spokenLabel { applyFieldAccessibility() } }
+    }
+
     /// The `haptics` prop; PCSelectionMenu.mm plays it on a pick
     public let haptics = PCHaptics()
 
@@ -83,6 +97,9 @@ public final class PCSelectionMenuView: UIControl {
 
     public var onSelect: ((Int, String, String) -> Void)?  // (index,label,data)
     public var onRequestClose: (() -> Void)?
+    /// The embedded field's size changed outside a prop update (the text
+    /// size); PCSelectionMenu.mm measures it again for Yoga
+    public var onNeedsRemeasure: (() -> Void)?
 
     // MARK: - Internal (inline UIKit views)
 
@@ -247,11 +264,27 @@ public final class PCSelectionMenuView: UIControl {
             config.imagePadding = 8
             config.contentInsets = NSDirectionalEdgeInsets(
                 top: 10, leading: horizontalPadding, bottom: 10, trailing: horizontalPadding)
-            button.contentHorizontalAlignment = .center
+            button.contentHorizontalAlignment = .leading
         }
         button.configuration = config
+        applyFieldAccessibility()
         invalidateIntrinsicContentSize()
         setNeedsLayout()
+    }
+
+    /// The menu button is the field's one accessibility element, and the view
+    /// E2E tests find by testID: labeled by its title, or by spokenLabel with
+    /// the title as its value
+    private func applyFieldAccessibility() {
+        guard let button = menuButton else { return }
+        button.accessibilityIdentifier = fieldTestID.isEmpty ? nil : fieldTestID
+        if spokenLabel.isEmpty {
+            button.accessibilityLabel = nil
+            button.accessibilityValue = nil
+        } else {
+            button.accessibilityLabel = spokenLabel
+            button.accessibilityValue = displayTitle
+        }
     }
 
     private func uninstallInlineIfNeeded() {
@@ -313,10 +346,13 @@ public final class PCSelectionMenuView: UIControl {
     override public func layoutSubviews() {
         super.layoutSubviews()
         guard let button = menuButton else { return }
+        // The button takes the view's size (an app's style height or width
+        // included), so a tap anywhere on the field opens the menu and the
+        // view found by testID is the whole field. The borderless button's
+        // title and chevron stay at its leading edge, centered vertically.
+        button.frame = bounds
         if boxed {
-            // The box takes the view's size (an app's style height or width
-            // included), with the chevron at its trailing edge
-            button.frame = bounds
+            // The chevron at the box's trailing edge
             if let chevron = chevronView {
                 let size = chevron.intrinsicContentSize
                 let rtl = effectiveUserInterfaceLayoutDirection == .rightToLeft
@@ -327,15 +363,6 @@ public final class PCSelectionMenuView: UIControl {
                     height: size.height
                 )
             }
-        } else {
-            // The borderless button keeps its own size, centered in a taller row
-            let fitted = button.intrinsicContentSize
-            button.frame = CGRect(
-                x: 0,
-                y: (bounds.height - fitted.height) / 2,
-                width: fitted.width,
-                height: fitted.height
-            )
         }
     }
 
@@ -397,6 +424,23 @@ public final class PCSelectionMenuView: UIControl {
         if window != nil, visible == "open" { updatePresentation() }
         // The boxed field's hairline needs the screen's scale
         if window != nil, boxed { applyInlineStyle() }
+    }
+
+    // The button fills the view, so the view must follow the title's size
+    // when the text size changes while the app runs, or the title truncates
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard menuButton != nil,
+              previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
+        // The button gets the new traits after this view: measure it then
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.menuButton?.layoutIfNeeded()
+            self.invalidateIntrinsicContentSize()
+            self.setNeedsLayout()
+            self.onNeedsRemeasure?()
+        }
     }
 
     private func nearestViewController() -> UIViewController? {

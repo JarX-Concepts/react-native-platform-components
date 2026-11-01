@@ -101,6 +101,12 @@ static inline NSString *ToNSString(const std::string &value) {
       eventEmitter->onSelect(payload);
     };
 
+    _view.onNeedsRemeasure = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf) return;
+      [strongSelf updateMeasurements];
+    };
+
     _view.onRequestClose = ^{
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf) return;
@@ -223,7 +229,24 @@ static inline NSString *ToNSString(const std::string &value) {
     }
   }
 
+  if (!prevProps || newProps.spokenLabel != prevProps->spokenLabel) {
+    _view.spokenLabel = ToNSString(newProps.spokenLabel);
+  }
+
+  const bool testIdChanged = !prevProps || newProps.testId != prevProps->testId ||
+      newProps.anchorMode != prevProps->anchorMode;
+
   [super updateProps:props oldProps:oldProps];
+
+  // Embedded, the testID belongs on the menu button, which carries the label
+  // (the shown value or spokenLabel) and takes the touches; two views with one
+  // id would be ambiguous. The headless menu keeps it on this view.
+  if (testIdChanged) {
+    NSString *testId = ToNSString(newProps.testId);
+    const bool inlineMode = newProps.anchorMode == "inline";
+    _view.fieldTestID = inlineMode ? testId : @"";
+    self.accessibilityIdentifier = (inlineMode || testId.length == 0) ? nil : testId;
+  }
 
   // Update measurements when props change that affect layout
   [self updateMeasurements];

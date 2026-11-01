@@ -525,6 +525,54 @@ describe('menus, pickers and containers (mock)', () => {
     expect(onSelect).toHaveBeenCalledWith('g', 'Green', 1);
   });
 
+  it('SelectionMenu puts an embedded testID on the field, with its label', () => {
+    const onSelect = jest.fn();
+    const options = [
+      { label: 'Red', data: 'r' },
+      { label: 'Green', data: 'g' },
+    ];
+    const tree = render(
+      <SelectionMenu
+        testID="color"
+        presentation="embedded"
+        options={options}
+        selected="r"
+        onSelect={onSelect}
+      />
+    );
+    let field = byTestID(tree, 'color');
+    expect(field.props.accessibilityRole).toBe('button');
+    expect(field.props.accessibilityLabel).toBe('Red');
+    expect(field.props.accessibilityValue).toBeUndefined();
+    // fireEvent from the field still reaches the menu's handlers
+    fire(field, 'select', 'g', 'Green', 1);
+    expect(onSelect).toHaveBeenCalledWith('g', 'Green', 1);
+
+    act(() =>
+      tree.update(
+        <SelectionMenu
+          testID="color"
+          presentation="embedded"
+          accessibilityLabel="Color"
+          placeholder="Pick one"
+          options={options}
+          selected={null}
+        />
+      )
+    );
+    field = byTestID(tree, 'color');
+    expect(field.props.accessibilityLabel).toBe('Color');
+    expect(field.props.accessibilityValue).toEqual({ text: 'Pick one' });
+
+    // Modal: the testID stays on the menu's own view
+    act(() =>
+      tree.update(
+        <SelectionMenu testID="color" options={options} selected="r" />
+      )
+    );
+    expect(byTestID(tree, 'color').props.accessibilityRole).toBeUndefined();
+  });
+
   it('ActionSheet lists its actions while visible', () => {
     const onSelect = jest.fn();
     const onCancel = jest.fn();

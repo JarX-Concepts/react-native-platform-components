@@ -134,8 +134,22 @@ export interface SelectionMenuProps extends ViewProps {
     dense?: boolean;
   };
 
-  /** Test identifier */
+  /**
+   * Test identifier.
+   * - `embedded`: on the field, the native view that shows the value (or the
+   *   placeholder), carries the accessibility label and opens the menu when
+   *   tapped: the iOS menu button, the Material dropdown's text field or the
+   *   Android Spinner.
+   * - `modal`: on the component's own (invisible) view.
+   */
   testID?: string;
+
+  /**
+   * Label read by screen readers. Embedded, it goes on the field (with the
+   * `testID`), and the field's value becomes its accessibility value; by
+   * default the field is labeled by what it shows.
+   */
+  accessibilityLabel?: string;
 }
 
 /** Flattens options for native: icons resolved, every field set. */
@@ -184,8 +198,11 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
     fieldPaddingHorizontal,
     ios,
     android,
+    accessibilityLabel,
     ...viewProps
   } = props;
+
+  const embedded = presentation === 'embedded';
 
   const selectedData = useMemo(
     () => normalizeSelectedData(selected),
@@ -250,7 +267,7 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       selectedData={selectedData}
       interactivity={disabled ? 'disabled' : 'enabled'}
       placeholder={placeholder}
-      anchorMode={presentation === 'embedded' ? 'inline' : 'headless'}
+      anchorMode={embedded ? 'inline' : 'headless'}
       visible={nativeVisible}
       haptics={haptics ?? ''}
       minFieldHeight={minFieldHeight ?? 0}
@@ -259,6 +276,10 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
       onRequestClose={onRequestClose ? handleRequestClose : undefined}
       ios={nativeIos}
       android={nativeAndroid}
+      // Embedded, the label goes on the field, which also gets the testID
+      // natively; the host view carries neither
+      accessibilityLabel={embedded ? undefined : accessibilityLabel}
+      spokenLabel={embedded ? (accessibilityLabel ?? '') : ''}
       {...viewProps}
     />
   );
