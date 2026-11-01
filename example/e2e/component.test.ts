@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import { expect } from 'detox';
-import { selectDemo, shardIt } from './testHelpers';
+import { shardIt } from './testHelpers';
 
 const isAndroid = () => device.getPlatform() === 'android';
 
@@ -192,6 +192,33 @@ const tapSegment = async (label: string) => {
       .atIndex(0)
       .tap();
   }
+};
+
+// Pick a demo from the header menu (a headless SelectionMenu)
+export const selectDemo = async (label: string) => {
+  if (isAndroid()) {
+    // Scroll to top first so the header is visible (iOS tests start at the top,
+    // and scrolling an already-top ScrollView there stalls the app)
+    await element(
+      by.type('com.facebook.react.views.scroll.ReactScrollView')
+    ).scrollTo('top');
+    await pause(200);
+  }
+  await element(by.id('demo-picker')).tap();
+  await pause(500);
+  // The menu scrolls once it outgrows the screen (the iOS system menu, and
+  // the Android PopupMenu on the emulator); bring the item up
+  try {
+    await waitFor(element(by.text(label)).atIndex(0))
+      .toBeVisible()
+      .withTimeout(1000);
+  } catch {
+    await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
+    await pause(500);
+  }
+  await element(by.text(label)).atIndex(0).tap();
+  // Let the demo mount and settle; the README GIFs are trimmed to start here
+  await pause(1000);
 };
 
 export const selectMenuOption = async (menuId: string, optionLabel: string) => {
