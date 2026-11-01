@@ -3,6 +3,17 @@ title: 'Checkbox'
 description: 'A native checkbox for React Native: Material 3 MaterialCheckBox with its error and indeterminate states on Android, the iOS list idiom (a circle that fills into checkmark.circle.fill) on iOS, with a wrapping label, an error message, haptics and controlled state.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-checkbox.gif" height="480" alt="Checkbox on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-checkbox.gif" height="480" alt="Checkbox on Android" /></td>
+  </tr>
+</table>
+
 A checkbox with a label that wraps, for agreements ("I have read the …") and lists of options that can each be on or off. The box and the label are one touch target, and one element for screen readers and tests.
 
 - **Android**: Material 3 `MaterialCheckBox`, with the label as the widget's own text, in the app's Material theme. `checked: 'indeterminate'` is its indeterminate state, and `error` its error state (`isErrorShown`).

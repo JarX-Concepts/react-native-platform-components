@@ -2,15 +2,15 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Switch**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Switch**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure**, **ProgressIndicator** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-dark.webp" />
-    <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, TabBar, NavigationRail, FloatingActionButton, Chip, Dialog, ContextMenu, ActionSheet, FloatingToolbar, LiquidGlass and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
+    <img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/hero-light.webp" alt="DatePicker, TextField, SegmentedControl, Button, TabBar, NavigationRail, FloatingActionButton, Chip, Dialog, Switch, Checkbox, RadioGroup, ProgressIndicator, ContextMenu, ActionSheet, GlassDisclosure, FloatingToolbar, LiquidGlass and SelectionMenu on iOS and Android, and the dark mode from useNativeTheme" />
   </picture>
 </p>
 <p align="center"><sub>Every tile is the platform's own widget, captured from the example app. Each component page has full recordings on both platforms; <a href="/components/liquidglass">LiquidGlass</a> is iOS 26 only.</sub></p>

@@ -21,9 +21,14 @@ ANDROID_PAUSE_CAP="${ANDROID_PAUSE_CAP:-0.6}"
 # A slow emulator also reaches the demo later: the seconds between which to
 # look for the switch to it (see navigation_trim). On a fast emulator, which
 # shows the demo about 7 s in, use ANDROID_NAV_FROM=1.5 ANDROID_NAV_WINDOW=8:
-# a later window catches the flow's own menus instead
+# a later window catches the flow's own menus instead. Demos low in the demo
+# menu (which scrolls first) arrive a few seconds later; pass those trims by
+# hand (TRIM_<GIF NAME>, see convert_to_gif)
 ANDROID_NAV_FROM="${ANDROID_NAV_FROM:-8}"
 ANDROID_NAV_WINDOW="${ANDROID_NAV_WINDOW:-30}"
+
+# GIFS=ios-switch,android-switch converts only the GIFs named (and skips the
+# hero and showreel, which `yarn generate:visuals` builds)
 
 echo "=== README GIF Generator ==="
 echo ""
@@ -60,7 +65,7 @@ newest_recording() {
     newest_flow "$1" "$2 functionality"
 }
 
-# Locate the 31 video files (LiquidGlass is iOS-only)
+# Locate the 39 video files (LiquidGlass is iOS-only)
 IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
 IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
 IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
@@ -68,6 +73,9 @@ IOS_CONTEXTMENU=$(newest_recording ios.sim.release "Context Menu")
 IOS_ACTIONSHEET=$(newest_recording ios.sim.release "Action Sheet")
 IOS_DIALOG=$(newest_recording ios.sim.release "Dialog")
 IOS_CHIP=$(newest_flow ios.sim.release "Chip group selection")
+IOS_SWITCH=$(newest_recording ios.sim.release "Switch")
+IOS_CHECKBOX=$(newest_recording ios.sim.release "Checkbox")
+IOS_RADIOGROUP=$(newest_flow ios.sim.release "Radio Group selection")
 IOS_SEGMENTEDCONTROL=$(newest_recording ios.sim.release "Segmented Control")
 IOS_TABBAR=$(newest_recording ios.sim.release "Tab Bar")
 IOS_NAVIGATIONRAIL=$(newest_recording ios.sim.release "Navigation Rail")
@@ -75,6 +83,7 @@ IOS_BUTTON=$(newest_recording ios.sim.release "Button")
 IOS_FAB=$(newest_recording ios.sim.release "Floating Action Button")
 IOS_FLOATINGTOOLBAR=$(newest_recording ios.sim.release "Floating Toolbar")
 IOS_GLASSDISCLOSURE=$(newest_recording ios.sim.release "Glass Disclosure")
+IOS_PROGRESSINDICATOR=$(newest_recording ios.sim.release "Progress Indicator")
 IOS_LIQUIDGLASS=$(newest_recording ios.sim.release "Liquid Glass")
 IOS_THEME=$(newest_recording ios.sim.release "Theme")
 ANDROID_TEXTFIELD=$(newest_recording android.emu.release "Text Field")
@@ -84,6 +93,9 @@ ANDROID_CONTEXTMENU=$(newest_recording android.emu.release "Context Menu")
 ANDROID_ACTIONSHEET=$(newest_recording android.emu.release "Action Sheet")
 ANDROID_DIALOG=$(newest_recording android.emu.release "Dialog")
 ANDROID_CHIP=$(newest_flow android.emu.release "Chip group selection")
+ANDROID_SWITCH=$(newest_recording android.emu.release "Switch")
+ANDROID_CHECKBOX=$(newest_recording android.emu.release "Checkbox")
+ANDROID_RADIOGROUP=$(newest_flow android.emu.release "Radio Group selection")
 ANDROID_SEGMENTEDCONTROL=$(newest_recording android.emu.release "Segmented Control")
 ANDROID_TABBAR=$(newest_recording android.emu.release "Tab Bar")
 ANDROID_NAVIGATIONRAIL=$(newest_recording android.emu.release "Navigation Rail")
@@ -91,17 +103,18 @@ ANDROID_BUTTON=$(newest_recording android.emu.release "Button")
 ANDROID_FAB=$(newest_recording android.emu.release "Floating Action Button")
 ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar")
 ANDROID_GLASSDISCLOSURE=$(newest_recording android.emu.release "Glass Disclosure")
+ANDROID_PROGRESSINDICATOR=$(newest_recording android.emu.release "Progress Indicator")
 ANDROID_THEME=$(newest_recording android.emu.release "Theme")
 
 # Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_GLASSDISCLOSURE" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_GLASSDISCLOSURE" "$ANDROID_THEME"; do
+for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SWITCH" "$IOS_CHECKBOX" "$IOS_RADIOGROUP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_GLASSDISCLOSURE" "$IOS_PROGRESSINDICATOR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SWITCH" "$ANDROID_CHECKBOX" "$ANDROID_RADIOGROUP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_GLASSDISCLOSURE" "$ANDROID_PROGRESSINDICATOR" "$ANDROID_THEME"; do
     if [ -z "$f" ] || [ ! -f "$f" ]; then
         echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 31 videos found!"
+echo "All 39 videos found!"
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -117,6 +130,21 @@ convert_to_gif() {
     local trim_start="$3"
     local fps="${4:-$GIF_FPS}"
     local pause_cap="${5:-0}"
+
+    # GIFS=ios-switch,android-switch converts just those
+    if [ -n "$GIFS" ] && [[ ",$GIFS," != *",$(basename "$output" .gif),"* ]]; then
+        return
+    fi
+
+    # A trim set by hand wins over the detected one: TRIM_<GIF NAME>, e.g.
+    # TRIM_ANDROID_CHECKBOX=7.3 for android-checkbox.gif. The detection looks
+    # for the largest change on screen, and a demo that looks much like the
+    # Date Picker one (white cards on the same background) can score below
+    # the flow's own first steps
+    local override="TRIM_$(basename "$output" .gif | tr 'a-z-' 'A-Z_')"
+    if [ -n "${!override}" ]; then
+        trim_start="${!override}"
+    fi
 
     local trimmed_input="$input"
 
@@ -194,7 +222,7 @@ dialog_trim() {
     echo "${trim:-3}"
 }
 
-# Convert all 31 videos to GIFs (LiquidGlass is iOS-only)
+# Convert all 39 videos to GIFs (LiquidGlass is iOS-only)
 convert_to_gif "$IOS_TEXTFIELD" "$ASSETS_DIR/ios-textfield.gif" "$(navigation_trim "$IOS_TEXTFIELD")"
 convert_to_gif "$ANDROID_TEXTFIELD" "$ASSETS_DIR/android-textfield.gif" "$(navigation_trim "$ANDROID_TEXTFIELD" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$IOS_DATEPICKER" "$ASSETS_DIR/ios-datepicker.gif" ""
@@ -203,6 +231,9 @@ convert_to_gif "$IOS_CONTEXTMENU" "$ASSETS_DIR/ios-contextmenu.gif" "$(navigatio
 convert_to_gif "$IOS_ACTIONSHEET" "$ASSETS_DIR/ios-actionsheet.gif" "$(navigation_trim "$IOS_ACTIONSHEET")"
 convert_to_gif "$IOS_DIALOG" "$ASSETS_DIR/ios-dialog.gif" "$(navigation_trim "$IOS_DIALOG")"
 convert_to_gif "$IOS_CHIP" "$ASSETS_DIR/ios-chip.gif" "$(navigation_trim "$IOS_CHIP")"
+convert_to_gif "$IOS_SWITCH" "$ASSETS_DIR/ios-switch.gif" "$(navigation_trim "$IOS_SWITCH")"
+convert_to_gif "$IOS_CHECKBOX" "$ASSETS_DIR/ios-checkbox.gif" "$(navigation_trim "$IOS_CHECKBOX")"
+convert_to_gif "$IOS_RADIOGROUP" "$ASSETS_DIR/ios-radiogroup.gif" "$(navigation_trim "$IOS_RADIOGROUP")"
 convert_to_gif "$IOS_SEGMENTEDCONTROL" "$ASSETS_DIR/ios-segmentedcontrol.gif" "$(navigation_trim "$IOS_SEGMENTEDCONTROL")"
 convert_to_gif "$IOS_TABBAR" "$ASSETS_DIR/ios-tabbar.gif" "$(navigation_trim "$IOS_TABBAR")"
 convert_to_gif "$IOS_NAVIGATIONRAIL" "$ASSETS_DIR/ios-navigationrail.gif" "$(navigation_trim "$IOS_NAVIGATIONRAIL")"
@@ -210,6 +241,7 @@ convert_to_gif "$IOS_BUTTON" "$ASSETS_DIR/ios-button.gif" "$(navigation_trim "$I
 convert_to_gif "$IOS_FAB" "$ASSETS_DIR/ios-floatingactionbutton.gif" "$(navigation_trim "$IOS_FAB")"
 convert_to_gif "$IOS_FLOATINGTOOLBAR" "$ASSETS_DIR/ios-floatingtoolbar.gif" "$(navigation_trim "$IOS_FLOATINGTOOLBAR")"
 convert_to_gif "$IOS_GLASSDISCLOSURE" "$ASSETS_DIR/ios-glassdisclosure.gif" "$(navigation_trim "$IOS_GLASSDISCLOSURE")"
+convert_to_gif "$IOS_PROGRESSINDICATOR" "$ASSETS_DIR/ios-progressindicator.gif" "$(navigation_trim "$IOS_PROGRESSINDICATOR")"
 convert_to_gif "$IOS_LIQUIDGLASS" "$ASSETS_DIR/ios-liquidglass.gif" "$(navigation_trim "$IOS_LIQUIDGLASS")" 15
 convert_to_gif "$IOS_THEME" "$ASSETS_DIR/ios-theme.gif" "$(navigation_trim "$IOS_THEME")"
 # The Android flows start on the app reloading, a few seconds on a slow emulator
@@ -219,6 +251,9 @@ convert_to_gif "$ANDROID_CONTEXTMENU" "$ASSETS_DIR/android-contextmenu.gif" "$(n
 convert_to_gif "$ANDROID_ACTIONSHEET" "$ASSETS_DIR/android-actionsheet.gif" "$(dialog_trim "$ANDROID_ACTIONSHEET")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_DIALOG" "$ASSETS_DIR/android-dialog.gif" "$(dialog_trim "$ANDROID_DIALOG" 1.3 0.15)" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_CHIP" "$ASSETS_DIR/android-chip.gif" "$(navigation_trim "$ANDROID_CHIP" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_SWITCH" "$ASSETS_DIR/android-switch.gif" "$(navigation_trim "$ANDROID_SWITCH" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_CHECKBOX" "$ASSETS_DIR/android-checkbox.gif" "$(navigation_trim "$ANDROID_CHECKBOX" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_RADIOGROUP" "$ASSETS_DIR/android-radiogroup.gif" "$(navigation_trim "$ANDROID_RADIOGROUP" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_SEGMENTEDCONTROL" "$ASSETS_DIR/android-segmentedcontrol.gif" "$(navigation_trim "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_TABBAR" "$ASSETS_DIR/android-tabbar.gif" "$(navigation_trim "$ANDROID_TABBAR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_NAVIGATIONRAIL" "$ASSETS_DIR/android-navigationrail.gif" "$(navigation_trim "$ANDROID_NAVIGATIONRAIL" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
@@ -226,12 +261,17 @@ convert_to_gif "$ANDROID_BUTTON" "$ASSETS_DIR/android-button.gif" "$(navigation_
 convert_to_gif "$ANDROID_FAB" "$ASSETS_DIR/android-floatingactionbutton.gif" "$(navigation_trim "$ANDROID_FAB" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.gif" "$(navigation_trim "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_GLASSDISCLOSURE" "$ASSETS_DIR/android-glassdisclosure.gif" "$(navigation_trim "$ANDROID_GLASSDISCLOSURE" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+convert_to_gif "$ANDROID_PROGRESSINDICATOR" "$ASSETS_DIR/android-progressindicator.gif" "$(navigation_trim "$ANDROID_PROGRESSINDICATOR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 
 echo ""
-echo "Step 5: README hero, social card and showreel..."
-node "$SCRIPT_DIR/visuals/stills.mjs"
-node "$SCRIPT_DIR/visuals/showreel.mjs"
+if [ -n "$GIFS" ]; then
+    echo "Step 5: Skipped (GIFS is set; yarn generate:visuals builds them)"
+else
+    echo "Step 5: README hero, social card and showreel..."
+    node "$SCRIPT_DIR/visuals/stills.mjs"
+    node "$SCRIPT_DIR/visuals/showreel.mjs"
+fi
 
 echo ""
 echo "=== Complete! ==="

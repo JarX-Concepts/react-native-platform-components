@@ -19,7 +19,7 @@ export const COMPONENTS = [
     clip: {
       duration: 9.5,
       ios: { start: 12.0, crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.84 } },
-      android: { start: 9.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
+      android: { start: 12.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
     },
   },
   {
@@ -31,16 +31,16 @@ export const COMPONENTS = [
       // The embedded pickers, inside their cards: the iOS calendar fitted
       // whole on the card's own color. Android's embedded date picker is the
       // spinner, so its tile shows the embedded time picker's clock instead.
-      ios: { time: 14.5, crop: { x: 0.05, y: 0.655, w: 0.9, h: 0.33 }, bg: '#fdfdfd' },
-      android: { time: 13.6, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd' },
+      ios: { time: 10.5, crop: { x: 0.13, y: 0.553, w: 0.74, h: 0.392 }, bg: '#e3e7e9' },
+      android: { time: 10.2, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2' },
     },
     // The social card's tile is wider than tall: the clock fitted whole
     social: {
-      android: { time: 13.6, crop: { x: 0.1, y: 0.59, w: 0.8, h: 0.39 }, bg: '#fdfdfd', fit: 'contain' },
+      android: { time: 10.2, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2', fit: 'contain' },
     },
     clip: {
       ios: { start: 7.4, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
-      android: { start: 8.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
+      android: { start: 8.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
     },
   },
   {
@@ -82,7 +82,7 @@ export const COMPONENTS = [
     // the Material bar in a FloatingToolbar on Android.
     still: {
       ios: { time: 30.5, crop: { x: 0.03, y: 0.485, w: 0.94, h: 0.165 } },
-      android: { time: 26.0, crop: { x: 0.03, y: 0.645, w: 0.94, h: 0.175 } },
+      android: { time: 22.3, crop: { x: 0.03, y: 0.655, w: 0.94, h: 0.175 } },
     },
     // The social card's tile is squarer: the rows around the bar too
     social: {
@@ -90,7 +90,7 @@ export const COMPONENTS = [
     },
     clip: {
       ios: { start: 5.0, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.36 } },
-      android: { start: 7.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
+      android: { start: 8.2, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
     },
   },
   {
@@ -116,11 +116,11 @@ export const COMPONENTS = [
     native: { ios: 'UIButton', android: 'MaterialButton' },
     still: {
       ios: { time: 48.0, crop: { x: 0.03, y: 0.1, w: 0.94, h: 0.6 } },
-      android: { time: 64.0, crop: { x: 0.03, y: 0.235, w: 0.94, h: 0.56 } },
+      android: { time: 36.1, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.56 } },
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
-      android: { start: 7.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.46 } },
+      android: { start: 8.2, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.46 } },
     },
   },
   {
@@ -144,6 +144,58 @@ export const COMPONENTS = [
     },
   },
   {
+    key: 'switch',
+    name: 'Switch',
+    test: 'Switch',
+    native: { ios: 'UISwitch', android: 'MaterialSwitch' },
+    // The settings rows (one line, wrapping, disabled), the standalone
+    // switches and the custom colors. The clip turns Wi-Fi off and on again.
+    still: {
+      ios: { time: 11.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.47 } },
+      android: { time: 11.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.45 } },
+    },
+    clip: {
+      ios: { start: 4.5, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
+      android: { start: 7.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
+    },
+  },
+  {
+    key: 'checkbox',
+    name: 'Checkbox',
+    test: 'Checkbox',
+    native: { ios: 'circle SF Symbols in a list row', android: 'MaterialCheckBox' },
+    // The agreement in its error state above the indeterminate parent. The
+    // clip submits unchecked, checks the agreement, then checks every child
+    // from the indeterminate parent.
+    still: {
+      ios: { time: 9.75, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.47 } },
+      android: { time: 8.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.45 } },
+    },
+    clip: {
+      duration: 5.0,
+      ios: { start: 9.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.42 } },
+      android: { start: 7.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.42 } },
+    },
+  },
+  {
+    key: 'radiogroup',
+    name: 'RadioGroup',
+    test: 'Radio Group',
+    flow: 'Radio Group selection',
+    native: { ios: 'list rows with a checkmark', android: 'MaterialRadioButton' },
+    // The delivery options with Express chosen, fitted whole on the page's
+    // color; the flow scrolls the group to the bottom of the screen. The clip
+    // shows the validation message, then a choice.
+    still: {
+      ios: { time: 14.3, crop: { x: 0.03, y: 0.632, w: 0.94, h: 0.358 }, bg: '#ebf0f1' },
+      android: { time: 10.8, crop: { x: 0.03, y: 0.645, w: 0.94, h: 0.32 }, bg: '#ebf0ef' },
+    },
+    clip: {
+      ios: { start: 10.6, crop: { x: 0.03, y: 0.6, w: 0.94, h: 0.39 } },
+      android: { start: 9.3, crop: { x: 0.03, y: 0.62, w: 0.94, h: 0.36 } },
+    },
+  },
+  {
     key: 'floatingactionbutton',
     name: 'FloatingActionButton',
     test: 'Floating Action Button',
@@ -160,18 +212,39 @@ export const COMPONENTS = [
     },
   },
   {
+    key: 'progressindicator',
+    name: 'ProgressIndicator',
+    test: 'Progress Indicator',
+    native: { ios: 'UIProgressView', android: 'Material 3 progress indicators' },
+    // The clips run the demo's simulated upload from 0 to 100%
+    still: {
+      ios: { time: 19.7, crop: { x: 0.03, y: 0.475, w: 0.94, h: 0.47 } },
+      android: { time: 32.9, crop: { x: 0.03, y: 0.47, w: 0.94, h: 0.45 } },
+    },
+    clip: {
+      duration: 4.5,
+      ios: { start: 16.8, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.56 } },
+      android: { start: 29.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.6 } },
+    },
+  },
+  {
     key: 'contextmenu',
     name: 'ContextMenu',
     test: 'Context Menu',
     native: { ios: 'UIContextMenuInteraction', android: 'PopupMenu' },
     still: {
-      // Cut to the hero's four-column tiles, a little wider than tall
-      ios: { time: 51.5, crop: { x: 0.1, y: 0.47, w: 0.9, h: 0.4 } },
-      android: { time: 20.5, crop: { x: 0.2, y: 0.58, w: 0.78, h: 0.34 } },
+      // The submenu with its destructive row, cut to the hero's three-column
+      // tiles, a little taller than wide
+      ios: { time: 12.3, crop: { x: 0.28, y: 0.37, w: 0.7, h: 0.4 } },
+      android: { time: 10.6, crop: { x: 0.3, y: 0.31, w: 0.66, h: 0.36 } },
+    },
+    // The social card's tile is wider than tall: the whole row too
+    social: {
+      ios: { time: 12.3, crop: { x: 0.03, y: 0.4, w: 0.94, h: 0.32 } },
     },
     clip: {
-      ios: { start: 4.5, crop: { x: 0.03, y: 0.25, w: 0.94, h: 0.43 } },
-      android: { start: 8.0, crop: { x: 0.03, y: 0.28, w: 0.94, h: 0.34 } },
+      ios: { start: 6.2, crop: { x: 0.03, y: 0.22, w: 0.97, h: 0.48 } },
+      android: { start: 8.6, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.4 } },
     },
   },
   {
@@ -190,7 +263,7 @@ export const COMPONENTS = [
     clip: {
       ios: { start: 5.6, crop: { x: 0.03, y: 0.075, w: 0.94, h: 0.42 } },
       // The file row at the top, the sheet at the bottom
-      android: { start: 7.6, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
+      android: { start: 7.3, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
     },
   },
   {
@@ -202,11 +275,11 @@ export const COMPONENTS = [
     // next dialog opens from onDismiss.
     still: {
       ios: { time: 7.0, crop: { x: 0.05, y: 0.31, w: 0.9, h: 0.42 } },
-      android: { time: 8.7, crop: { x: 0.05, y: 0.3, w: 0.9, h: 0.44 } },
+      android: { time: 8.4, crop: { x: 0.05, y: 0.3, w: 0.9, h: 0.44 } },
     },
     clip: {
       ios: { start: 5.6, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.5 } },
-      android: { start: 7.6, crop: { x: 0.03, y: 0.17, w: 0.94, h: 0.5 } },
+      android: { start: 7.8, crop: { x: 0.03, y: 0.17, w: 0.94, h: 0.5 } },
     },
   },
   {
@@ -215,7 +288,7 @@ export const COMPONENTS = [
     test: 'Selection Menu',
     native: { ios: 'UIMenu', android: 'Material exposed dropdown' },
     still: {
-      ios: { time: 17.5, crop: { x: 0.25, y: 0.33, w: 0.72, h: 0.34 } },
+      ios: { time: 20.7, crop: { x: 0.22, y: 0.26, w: 0.75, h: 0.36 } },
       android: { time: 10.2, crop: { x: 0.2, y: 0.47, w: 0.75, h: 0.32 } },
     },
     clip: {
@@ -246,6 +319,24 @@ export const COMPONENTS = [
     },
   },
   {
+    key: 'glassdisclosure',
+    name: 'GlassDisclosure',
+    test: 'Glass Disclosure',
+    native: { ios: 'one morphing UIGlassEffect shape', android: 'Material 3 card' },
+    caption: 'A Liquid Glass pill that opens into a panel of React content (a Material card on Android)',
+    // The open panel over the dimmed chat. The clips tap the header buttons,
+    // then open the pill: one glass shape morphs into the panel on iOS 26.
+    still: {
+      ios: { time: 21.0, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.5 } },
+      android: { time: 10.5, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
+    },
+    clip: {
+      duration: 4.0,
+      ios: { start: 10.5, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
+      android: { start: 8.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
+    },
+  },
+  {
     key: 'liquidglass',
     name: 'LiquidGlass',
     test: 'Liquid Glass',
@@ -265,13 +356,13 @@ export const COMPONENTS = [
 /** The Theme demo in dark appearance, for the hero's dark-mode tiles. */
 export const THEME_DARK = {
   ios: { time: 22.5, crop: { x: 0.03, y: 0.41, w: 0.94, h: 0.52 } },
-  android: { time: 15.8, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
+  android: { time: 21.0, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
 };
 
 /** The Theme demo in light appearance with the same brand color (Teal). */
 export const THEME_LIGHT = {
   ios: { time: 8.5, crop: { x: 0.03, y: 0.41, w: 0.94, h: 0.52 } },
-  android: { time: 9.0, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
+  android: { time: 14.1, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
 };
 
 export const byKey = Object.fromEntries(COMPONENTS.map((c) => [c.key, c]));
