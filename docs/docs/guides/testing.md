@@ -147,6 +147,20 @@ await waitFor(element(by.id('statement-submit')))
 
 The label is the `accessibilityLabel` when there is one, else the visible title. The host view React Native creates for the component carries neither the ID nor the label, so a screen reader still announces the control once.
 
+The same view also reports a **disabled** state (`disabled`, a disabled item or action, or a `TextField` with `editable={false}`): VoiceOver reads it as dimmed (the `notEnabled` trait) and TalkBack as disabled (the view isn't enabled). On web the element with `data-testid` has `disabled` or `aria-disabled`.
+
+```ts
+// Detox, Android: the view's enabled state
+const attributes = await element(by.id('save')).getAttributes();
+expect('enabled' in attributes && attributes.enabled).toBe(false);
+
+// Detox, iOS: the trait VoiceOver reads. Detox's `enabled` there only
+// reflects touch handling, and stays true on UIKit's alert and menu rows
+await expect(element(by.id('save').and(by.traits(['notEnabled'])))).toExist();
+```
+
+Two iOS exceptions: a segment's accessibility element is the `UISegment` around the view with the `testID`, so match it with `by.type('UISegment').withDescendant(by.id(id))`; and iOS 26's tab bar button greys out a disabled tab and refuses its touches (`enabled: false`) but doesn't give it the `notEnabled` trait, which no public API can add.
+
 | Component | Where the `testID` goes |
 | --- | --- |
 | `Button`, `FloatingActionButton`, `Chip` | The native button (`UIButton`, `MaterialButton`, the Material FAB or `Chip`) |

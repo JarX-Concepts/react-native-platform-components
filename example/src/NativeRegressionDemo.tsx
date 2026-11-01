@@ -4,8 +4,10 @@ import {
   Button,
   ButtonGroup,
   DatePicker,
+  NavigationRail,
   SegmentedControl,
   SelectionMenu,
+  TabBar,
   TextField,
   type PlatformIcon,
   type TextFieldSelection,
@@ -18,6 +20,7 @@ const CASES = [
   { label: 'Text', value: 'text' },
   { label: 'Options', value: 'options' },
   { label: 'Images', value: 'images' },
+  { label: 'Disabled', value: 'disabled' },
 ] as const;
 
 const SEGMENTS = [
@@ -406,6 +409,91 @@ function TextLifecycleCase() {
   );
 }
 
+// Disabled items next to enabled ones, for components whose demos show no
+// disabled state. The element with the testID tells VoiceOver ("dimmed")
+// and TalkBack ("disabled").
+const DISABLED_TABS = [
+  {
+    label: 'Home',
+    value: 'home',
+    icon: { ios: 'house', android: 'home' },
+    testID: 'regression-tab-home',
+  },
+  {
+    label: 'Saved',
+    value: 'saved',
+    icon: { ios: 'star', android: 'star' },
+    disabled: true,
+    testID: 'regression-tab-saved',
+  },
+];
+const DISABLED_DESTINATIONS = [
+  {
+    label: 'Inbox',
+    value: 'inbox',
+    icon: { ios: 'tray', android: 'notifications' },
+    testID: 'regression-rail-inbox',
+  },
+  {
+    label: 'Archive',
+    value: 'archive',
+    icon: { ios: 'archivebox', android: 'archive' },
+    disabled: true,
+    testID: 'regression-rail-archive',
+  },
+];
+
+const DISABLED_ACTIONS = [
+  { id: 'copy', title: 'Copy', testID: 'regression-action-copy' },
+  {
+    id: 'delete',
+    title: 'Delete',
+    attributes: { disabled: true },
+    testID: 'regression-action-delete',
+  },
+];
+
+function DisabledStatesCase() {
+  return (
+    <Section title="Disabled states">
+      <View style={styles.content}>
+        <TextField
+          testID="regression-readonly-field"
+          label="Read only"
+          defaultValue="Can't edit"
+          editable={false}
+        />
+        <TextField
+          testID="regression-readonly-notes"
+          label="Read-only notes"
+          defaultValue="Can't edit these lines"
+          multiline
+          editable={false}
+        />
+        <Button
+          testID="regression-actions"
+          label="Actions"
+          menu={DISABLED_ACTIONS}
+        />
+        <TabBar
+          testID="regression-tabs"
+          items={DISABLED_TABS}
+          selectedValue="home"
+          onSelect={() => {}}
+        />
+        <View style={styles.rail}>
+          <NavigationRail
+            testID="regression-rail"
+            items={DISABLED_DESTINATIONS}
+            selectedValue="inbox"
+            onSelect={() => {}}
+          />
+        </View>
+      </View>
+    </Section>
+  );
+}
+
 /** Isolated edge cases for native regression tests and manual inspection. */
 export function NativeRegressionDemo() {
   const [activeCase, setActiveCase] =
@@ -423,6 +511,7 @@ export function NativeRegressionDemo() {
       {activeCase === 'text' && <TextLifecycleCase />}
       {activeCase === 'options' && <DisabledOptionsCase />}
       {activeCase === 'images' && <ImageCases />}
+      {activeCase === 'disabled' && <DisabledStatesCase />}
     </>
   );
 }
@@ -431,4 +520,5 @@ const styles = StyleSheet.create({
   content: { padding: 12, gap: 8 },
   status: { fontSize: 13 },
   actions: { flexDirection: 'row', gap: 8 },
+  rail: { height: 220, flexDirection: 'row' },
 });

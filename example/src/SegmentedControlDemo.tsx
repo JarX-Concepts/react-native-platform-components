@@ -68,7 +68,12 @@ const CUSTOM_STYLE = {
 
 const PARTIAL_DISABLED_SEGMENTS = [
   { label: 'Active', value: 'active' },
-  { label: 'Disabled', value: 'disabled', disabled: true },
+  {
+    label: 'Disabled',
+    value: 'disabled',
+    disabled: true,
+    testID: 'segment-disabled',
+  },
   { label: 'Also Active', value: 'also-active' },
 ];
 

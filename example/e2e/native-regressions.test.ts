@@ -1,6 +1,7 @@
 import { expect } from 'detox';
 import { expect as jestExpect } from '@jest/globals';
 import {
+  expectDisabled,
   isAndroid,
   pause,
   selectDemo,
@@ -333,4 +334,40 @@ describe('Native regression cases', () => {
       await expect(field).not.toBeFocused();
     }
   );
+
+  it('reports disabled states on the element with the testID', async () => {
+    await element(by.id('regression-case-disabled')).tap();
+    // TextField editable={false}: the UITextField / UITextView, the EditText
+    await expectDisabled('regression-readonly-field');
+    await expectDisabled('regression-readonly-notes');
+
+    // A disabled menu action, next to an enabled one
+    await element(by.id('regression-actions')).tap();
+    await waitFor(element(by.id('regression-action-copy')))
+      .toBeVisible()
+      .withTimeout(6000);
+    await expectDisabled('regression-action-delete');
+    await expectDisabled('regression-action-copy', false);
+    await element(by.id('regression-action-copy')).tap();
+    await waitFor(element(by.id('regression-action-copy')))
+      .not.toExist()
+      .withTimeout(6000);
+
+    await expectDisabled('regression-rail-archive');
+    await expectDisabled('regression-rail-inbox', false);
+    if (isAndroid()) {
+      await expectDisabled('regression-tab-saved');
+      await expectDisabled('regression-tab-home', false);
+    } else {
+      // iOS 26's tab button greys out but leaves notEnabled out of its
+      // traits, whatever the item or the view is given; it does refuse
+      // touches
+      const tab = async (id: string) => {
+        const attributes = await element(by.id(id)).getAttributes();
+        return 'enabled' in attributes && attributes.enabled;
+      };
+      jestExpect(await tab('regression-tab-saved')).toBe(false);
+      jestExpect(await tab('regression-tab-home')).toBe(true);
+    }
+  });
 });

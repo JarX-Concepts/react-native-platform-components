@@ -38,3 +38,29 @@ it('gives an action field a labeled button without adding a press target to edit
   expect(tree!.root.findAllByProps({ role: 'button' })).toHaveLength(0);
   act(() => tree.unmount());
 });
+
+it('marks a read-only input disabled, but not an action field', () => {
+  let tree: ReturnType<typeof renderer.create>;
+  act(() => {
+    tree = renderer.create(
+      <TextField testID="name" label="Name" editable={false} />
+    );
+  });
+  expect(tree!.root.findByType(TextInput).props['aria-disabled']).toBe(true);
+  expect(tree!.root.findByType(TextInput).props.testID).toBe('name');
+
+  act(() => tree.update(<TextField label="Name" />));
+  expect(
+    tree!.root.findByType(TextInput).props['aria-disabled']
+  ).toBeUndefined();
+
+  act(() =>
+    tree.update(
+      <TextField label="Birthday" editable={false} onPress={() => {}} />
+    )
+  );
+  expect(
+    tree!.root.findByType(TextInput).props['aria-disabled']
+  ).toBeUndefined();
+  act(() => tree.unmount());
+});

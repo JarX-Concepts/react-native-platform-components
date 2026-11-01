@@ -20,6 +20,42 @@ export const shardIt = (test: jest.It): jest.It => {
 export const pause = async (ms = 500) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * The element with the testID (or the matcher) tells the screen reader it is
+ * disabled, or that it isn't. Android: the view isn't enabled (TalkBack
+ * "disabled"; Detox's `enabled` attribute). iOS: the notEnabled trait
+ * (VoiceOver "dimmed"); Detox's `enabled` there only reflects touch handling
+ * and stays true on UIKit's own alert and menu rows. Waits, since the state
+ * can land after the step that changes it.
+ */
+export const expectDisabled = async (
+  target: string | Detox.NativeMatcher,
+  disabled = true
+) => {
+  const matcher = typeof target === 'string' ? by.id(target) : target;
+  if (isAndroid()) {
+    let enabled: boolean | undefined;
+    for (const deadline = Date.now() + 5000; ; await pause(250)) {
+      const attributes = await element(matcher).atIndex(0).getAttributes();
+      enabled = 'enabled' in attributes ? attributes.enabled : undefined;
+      if (enabled === !disabled || Date.now() > deadline) break;
+    }
+    if (enabled !== !disabled) {
+      const name = typeof target === 'string' ? target : 'the element';
+      throw new Error(
+        `Expected ${name} to be ${disabled ? 'disabled' : 'enabled'}`
+      );
+    }
+  } else {
+    const dimmed = element(matcher.and(by.traits(['notEnabled'])));
+    if (disabled) {
+      await waitFor(dimmed.atIndex(0)).toExist().withTimeout(5000);
+    } else {
+      await waitFor(dimmed).not.toExist().withTimeout(5000);
+    }
+  }
+};
+
 // Pick a demo from the header menu (a headless SelectionMenu)
 export const selectDemo = async (label: string) => {
   if (isAndroid()) {
