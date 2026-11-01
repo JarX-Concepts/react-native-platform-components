@@ -130,11 +130,31 @@ internal object PCNativeTheme {
     // Generates the scheme for the activity's current light/dark mode, overrides the
     // Material "personalized" color resources with it and applies them to the theme.
     // Material 1.13+ is needed to apply it more than once to the same activity.
+    val nightMode = nightMode(activity)
     DynamicColors.applyToActivityIfAvailable(
       activity,
       DynamicColorsOptions.Builder().setContentBasedSource(color).build()
     )
+    restoreNightMode(activity, nightMode)
     activity.theme.applyStyle(R.style.PCNativeThemeOverlay, true)
+  }
+
+  /**
+   * DynamicColors overrides the colors with a ResourcesLoader added to the activity's
+   * Resources, which resets their configuration to the system's light/dark mode and
+   * drops the one AppCompat set in place (`Appearance.setColorScheme`, which goes
+   * through `AppCompatDelegate` night modes). Left that way, an app made dark from JS
+   * gets light widgets, and a light scheme from the next brand color. Puts the mode
+   * back the way AppCompat sets it, and re-resolves the theme under it.
+   */
+  private fun restoreNightMode(activity: Activity, nightMode: Int) {
+    val resources = activity.resources
+    if (nightMode(activity) == nightMode) return
+    val config = Configuration(resources.configuration)
+    config.uiMode = nightMode or (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
+    @Suppress("DEPRECATION")
+    resources.updateConfiguration(config, resources.displayMetrics)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) activity.theme.rebase()
   }
 
   private fun observe(activity: Activity) {
