@@ -206,7 +206,8 @@ object PCChipSupport {
    * match) can't find. The view forwards every touch to the chip, so the
    * chip's own close icon handling (pressed state, ripple, click) runs as if
    * the chip had been touched there. It is hidden from accessibility
-   * services, which use the chip's virtual close icon node.
+   * services, which use the chip's virtual close icon node, but carries that
+   * node's label, so a test that finds it by id can read the label too.
    */
   @SuppressLint("ViewConstructor")
   class CloseTarget(context: Context, val chip: Chip) : View(context) {
@@ -217,6 +218,9 @@ object PCChipSupport {
       importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
       isFocusable = false
       layoutParams = FrameLayout.LayoutParams(0, 0)
+      // What Material's close icon node announces
+      contentDescription = chip.closeIconContentDescription?.takeIf { it.isNotEmpty() }
+        ?: context.getString(MaterialR.string.mtrl_chip_close_icon_content_description, chip.text ?: "").trim()
     }
 
     @SuppressLint("ClickableViewAccessibility")

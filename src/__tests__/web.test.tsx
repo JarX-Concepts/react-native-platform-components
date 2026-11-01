@@ -69,6 +69,8 @@ describe('Button (web)', () => {
     expect(button.props.type).toBe('button');
     expect(button.props['aria-label']).toBe('Save');
     expect(button.props.children).toContain('Save');
+    // The testID is on the element with the label and the clicks
+    expect(button.props['data-testid']).toBe('b');
 
     click(button);
     expect(onPress).toHaveBeenCalledTimes(1);
@@ -218,6 +220,21 @@ describe('ButtonGroup (web)', () => {
     expect(onPress).toHaveBeenCalledWith('a', 0);
     expect(onSelectionChange).toHaveBeenCalledWith(['a', 'c']);
   });
+
+  it('gives each <button> its testID, by default ${testID}-${value}', () => {
+    const tree = render(
+      <ButtonGroup
+        testID="g"
+        buttons={[
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B', testID: 'own' },
+        ]}
+      />
+    );
+    expect(
+      tree.root.findAllByType('button').map((b) => b.props['data-testid'])
+    ).toEqual(['g-a', 'own']);
+  });
 });
 
 describe('Chip and ChipGroup (web)', () => {
@@ -297,10 +314,16 @@ describe('FloatingActionButton (web)', () => {
   it('renders a <button> with the label while extended', () => {
     const onPress = jest.fn();
     const tree = render(
-      <FloatingActionButton icon="pencil" label="Compose" onPress={onPress} />
+      <FloatingActionButton
+        icon="pencil"
+        label="Compose"
+        onPress={onPress}
+        testID="fab"
+      />
     );
     const button = tree.root.findByType('button');
     expect(button.props['aria-label']).toBe('Compose');
+    expect(button.props['data-testid']).toBe('fab');
     expect(button.props.children).toContain('Compose');
     click(button);
     expect(onPress).toHaveBeenCalledTimes(1);

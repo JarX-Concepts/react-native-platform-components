@@ -57,6 +57,7 @@ export function Button(props: ButtonProps): React.ReactElement {
     ios: _ios,
     android,
     style,
+    testID,
     ...viewProps
   } = props;
 
@@ -132,8 +133,10 @@ export function Button(props: ButtonProps): React.ReactElement {
 
   return (
     <View {...viewProps} style={[{ alignSelf: 'flex-start' }, style]}>
+      {/* The testID is on the <button>, which has the label and the clicks */}
       <button
         type="button"
+        data-testid={testID}
         disabled={disabled}
         aria-label={accessibilityLabel ?? label}
         aria-busy={loading || undefined}

@@ -41,6 +41,7 @@ static inline bool ButtonsEqual(
     if (a[i].iconScale != b[i].iconScale) return false;
     if (a[i].iconTinted != b[i].iconTinted) return false;
     if (a[i].accessibilityLabel != b[i].accessibilityLabel) return false;
+    if (a[i].testID != b[i].testID) return false;
   }
   return true;
 }
@@ -194,7 +195,7 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
   }
 
   // buttons: [{label, value, disabled, iconType, iconName, iconUri, iconScale,
-  //            iconTinted, accessibilityLabel}]
+  //            iconTinted, accessibilityLabel, testID}]
   if (!prevProps || !ButtonsEqual(newProps.buttons, prevProps->buttons)) {
     NSMutableArray *arr = [NSMutableArray new];
     for (const auto &button : newProps.buttons) {
@@ -209,6 +210,7 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
         @"iconScale": @(button.iconScale),
         @"iconTinted": NSStringFromStd(button.iconTinted, @"true"),
         @"accessibilityLabel": NSStringFromStd(button.accessibilityLabel, @""),
+        @"testID": NSStringFromStd(button.testID, @""),
       }];
     }
     _view.buttons = arr;
@@ -276,6 +278,10 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
 
   if (!prevProps || newProps.menuAccessibilityLabel != prevProps->menuAccessibilityLabel) {
     _view.menuAccessibilityLabel = NSStringFromStd(newProps.menuAccessibilityLabel, @"");
+  }
+
+  if (!prevProps || newProps.menuTestID != prevProps->menuTestID) {
+    _view.menuTestID = NSStringFromStd(newProps.menuTestID, @"");
   }
 
   if (!prevProps || newProps.haptics != prevProps->haptics) {

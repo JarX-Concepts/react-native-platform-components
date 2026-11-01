@@ -52,6 +52,7 @@ import { Button } from 'react-native-platform-components';
 | `onMenuSelect`       | `(id: string, title: string) => void`                    | Called when a menu item is picked                                                       |
 | `onMenuOpen`         | `() => void`                                             | Called when the menu opens                                                              |
 | `onMenuClose`        | `() => void`                                             | Called when the menu closes                                                             |
+| `testID`             | `string`                                                 | Test ID of the native button, which also has the label and takes the touches. See [Testing](#testing) |
 
 ### iOS Props (`ios`)
 
@@ -325,6 +326,20 @@ Buttons placed in a [FloatingToolbar](/components/floatingtoolbar) pick up the t
 ### Material style
 
 `android.material` picks the Android design generation: `'expressive'` (default) gives the Material 3 Expressive styles with their five sizes, two shapes and press morph; `'m3'` gives the classic Material 3 button, which has one size and shape, so `size` and `shape` are ignored. Use `'m3'` on screens that keep the older Material 3 look. Buttons inside a [FloatingToolbar](/components/floatingtoolbar) always take the toolbar's Expressive styles. [SegmentedControl](/components/segmentedcontrol#material-style) and [ButtonGroup](/components/buttongroup) take the same prop.
+
+### Testing
+
+`testID` is on the native button (`UIButton`, `MaterialButton`), the view that also has the label (`accessibilityLabel`, else `label`) and takes the touches. An end-to-end test can find the button by ID, read its label, even as it changes, and tap it:
+
+```ts
+// Detox
+await waitFor(element(by.id('statement-submit')))
+  .toHaveLabel('Parse Statement')
+  .withTimeout(10000);
+await element(by.id('statement-submit')).tap();
+```
+
+See [Test IDs in end-to-end tests](/guides/testing#test-ids-in-end-to-end-tests). The [Jest mock](/guides/testing) renders a `Pressable` with the `button` role.
 
 ### Android theme
 

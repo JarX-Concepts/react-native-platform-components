@@ -59,6 +59,12 @@ public final class PCFloatingActionButtonView: UIView {
         didSet { updateAccessibilityLabel() }
     }
 
+    /// The `testID`, on the inner button: it carries the label and takes the
+    /// touches (PCFloatingActionButton.mm keeps it off the host)
+    public var buttonTestID: String = "" {
+        didSet { button.accessibilityIdentifier = buttonTestID.isEmpty ? nil : buttonTestID }
+    }
+
     /// nativeID of the ScrollView whose scrolling shrinks and extends the button
     public var scrollViewNativeID: String = "" {
         didSet {
