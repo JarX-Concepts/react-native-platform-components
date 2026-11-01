@@ -2431,13 +2431,31 @@ describe('Platform Components Example', () => {
       await waitFor(panelRow).toBeVisible().withTimeout(5000);
       await expectText('disclosure-last-event', 'Expanded');
     };
+    // The header buttons on either side of the closed pill: nothing of the
+    // disclosure covers them (#148)
+    const headerButtons = [
+      element(by.id('disclosure-header-channels')),
+      element(by.id('disclosure-header-search')),
+    ];
+    const expectHeaderVisible = async () => {
+      for (const button of headerButtons) {
+        await waitFor(button).toBeVisible().withTimeout(5000);
+      }
+    };
     const expectClosed = async () => {
       await expectText('disclosure-last-event', 'Collapsed');
       await waitFor(element(by.id('disclosure-pill')))
         .toBeVisible()
         .withTimeout(5000);
       await expect(panelRow).not.toExist();
+      await expectHeaderVisible();
     };
+
+    await expectHeaderVisible();
+    await headerButtons[0]!.tap();
+    await expectText('disclosure-last-event', 'Channels');
+    await headerButtons[1]!.tap();
+    await expectText('disclosure-last-event', 'Search');
 
     // The pill opens into a panel of React content
     await open();
