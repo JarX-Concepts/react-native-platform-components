@@ -132,6 +132,13 @@ DETOX_CONFIGURATION=android.emu.release yarn jest:e2e -t "Segmented Control"
 
 Use `ios.sim.release` for iOS. Recordings land in `example/artifacts/<configuration>.<timestamp>/`.
 
+To turn those recordings into just that component's GIFs, name them:
+`SKIP_E2E=1 GIFS=ios-segmentedcontrol,android-segmentedcontrol ./scripts/generate-readme-gifs.sh`
+(`TRIM_<GIF NAME>=<s>` sets where a GIF starts). Each GIF is capped at 45 s
+on iOS and 30 s on Android (`MAX_<GIF NAME>=<s>` overrides one) and at 5 MiB,
+past which it is re-encoded at a lower frame rate. The script header lists
+these settings.
+
 `example/e2e/native-regressions.test.ts` covers controlled selections, date
 dialog lifecycle, disabled menu options and TextField accessory/focus behavior.
 Image cases start a local HTTP server on port 18763, verify the native requests
