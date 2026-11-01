@@ -29,6 +29,7 @@ class PlatformComponentsViewPackage : BaseReactPackage() {
           PCTabBarViewManager(),
           PCNavigationRailViewManager(),
           PCFloatingActionButtonViewManager(),
+          PCProgressIndicatorViewManager(),
       )
   }
 

@@ -14,9 +14,11 @@ import {
   ContextMenu,
   FloatingActionButton,
   NavigationRail,
+  ProgressIndicator,
 } from 'react-native-platform-components';
 
-type Tab = 'datePicker' | 'selectionMenu' | 'contextMenu' | 'fab' | 'rail';
+type Tab =
+  'datePicker' | 'selectionMenu' | 'contextMenu' | 'fab' | 'rail' | 'progress';
 
 const TAB_LABELS: Record<Tab, string> = {
   datePicker: 'DatePicker',
@@ -24,6 +26,7 @@ const TAB_LABELS: Record<Tab, string> = {
   contextMenu: 'ContextMenu',
   fab: 'FAB',
   rail: 'NavigationRail',
+  progress: 'Progress',
 };
 
 export default function App() {
@@ -37,7 +40,14 @@ export default function App() {
 
       <View style={styles.tabs}>
         {(
-          ['datePicker', 'selectionMenu', 'contextMenu', 'fab', 'rail'] as const
+          [
+            'datePicker',
+            'selectionMenu',
+            'contextMenu',
+            'fab',
+            'rail',
+            'progress',
+          ] as const
         ).map((t) => (
           <Pressable
             key={t}
@@ -56,6 +66,7 @@ export default function App() {
       {tab === 'contextMenu' && <ContextMenuDemo />}
       {tab === 'fab' && <FloatingActionButtonDemo />}
       {tab === 'rail' && <NavigationRailDemo />}
+      {tab === 'progress' && <ProgressIndicatorDemo />}
 
       <Text style={styles.footer}>react-native-platform-components</Text>
     </ScrollView>
@@ -248,6 +259,41 @@ function FloatingActionButtonDemo() {
   );
 }
 
+function ProgressIndicatorDemo() {
+  const [progress, setProgress] = useState(0.3);
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Progress Indicator</Text>
+      <View style={styles.card}>
+        <ProgressIndicator progress={progress} accessibilityLabel="Upload" />
+        <ProgressIndicator
+          style={styles.progressGap}
+          progress={progress}
+          segments={4}
+          android={{ wavy: true }}
+          accessibilityLabel="Steps"
+        />
+        <View style={styles.progressRow}>
+          <ProgressIndicator variant="circular" accessibilityLabel="Loading" />
+          <ProgressIndicator
+            variant="circular"
+            progress={progress}
+            accessibilityLabel="Download"
+          />
+          <ProgressIndicator variant="loading" accessibilityLabel="Waiting" />
+        </View>
+        <Pressable
+          style={styles.button}
+          onPress={() => setProgress((value) => (value >= 1 ? 0 : value + 0.1))}
+        >
+          <Text style={styles.buttonText}>Advance</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 function NavigationRailDemo() {
   const [selected, setSelected] = useState('home');
 
@@ -284,6 +330,13 @@ function NavigationRailDemo() {
 }
 
 const styles = StyleSheet.create({
+  progressGap: { marginTop: 16 },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginVertical: 16,
+  },
   container: {
     flex: 1,
     paddingTop: 60,

@@ -24,6 +24,7 @@ import { GlassDisclosureDemo } from './GlassDisclosureDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
 import { NativeRegressionDemo } from './NativeRegressionDemo';
+import { ProgressIndicatorDemo } from './ProgressIndicatorDemo';
 import { SelectionMenuDemo } from './SelectionMenuDemo';
 import { SegmentedControlDemo } from './SegmentedControlDemo';
 import { TabBarDemo } from './TabBarDemo';
@@ -50,6 +51,7 @@ type DemoKey =
   | 'floatingActionButton'
   | 'floatingToolbar'
   | 'glassDisclosure'
+  | 'progressIndicator'
   | 'textField'
   | 'liquidGlass'
   | 'nativeRegressions'
@@ -70,6 +72,7 @@ const COMPONENT_DEMOS = [
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
   { label: 'Glass Disclosure', data: 'glassDisclosure' },
+  { label: 'Progress Indicator', data: 'progressIndicator' },
 ];
 
 // LiquidGlass is iOS 26+ only, so hide the demo on Android
@@ -159,6 +162,7 @@ export default function App(): React.ReactElement {
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
       {demo === 'glassDisclosure' && <GlassDisclosureDemo />}
+      {demo === 'progressIndicator' && <ProgressIndicatorDemo />}
       {demo === 'textField' && <TextFieldDemo />}
       {demo === 'liquidGlass' && <LiquidGlassDemo />}
       {demo === 'nativeRegressions' && <NativeRegressionDemo />}

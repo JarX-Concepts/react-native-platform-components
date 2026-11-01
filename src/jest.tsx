@@ -20,6 +20,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -43,6 +44,7 @@ import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
 import type { NativeTheme } from './NativeTheme';
+import type { ProgressIndicatorProps } from './ProgressIndicator';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
 import type { SplitButtonProps } from './SplitButton';
@@ -54,6 +56,10 @@ import type {
   TextFieldRef,
 } from './TextField';
 import { resolveIcon } from './icons';
+import {
+  normalizeProgress,
+  progressAccessibility,
+} from './progressIndicatorSupport';
 import { resolveSubmitBehavior } from './submitBehavior';
 import { nextSelection } from './web/ButtonGroup';
 
@@ -75,6 +81,7 @@ export type * from './TextField';
 export type * from './TabBar';
 export type * from './FloatingActionButton';
 export type * from './NavigationRail';
+export type * from './ProgressIndicator';
 export type * from './sharedTypes';
 export type * from './haptics';
 export type * from './NativeTheme';
@@ -1358,6 +1365,43 @@ export function LiquidGlassContainer(
 
 /** Always `false` under Jest. */
 export const isLiquidGlassSupported: boolean = false;
+
+// ---------------------------------------------------------------------------
+// ProgressIndicator
+
+/**
+ * A `View` with the `progressbar` role, labeled by `accessibilityLabel`,
+ * with the progress as its `accessibilityValue` (0–100) or busy while
+ * indeterminate.
+ */
+export function ProgressIndicator(
+  props: ProgressIndicatorProps
+): React.ReactElement {
+  const {
+    variant = 'linear',
+    progress,
+    color: _color,
+    trackColor: _trackColor,
+    size: _size,
+    segments: _segments,
+    android: _android,
+    ...viewProps
+  } = props;
+  const value = variant === 'loading' ? undefined : normalizeProgress(progress);
+  const { accessibilityValue, accessibilityState } = progressAccessibility(
+    value,
+    Platform.OS
+  );
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={accessibilityValue}
+      accessibilityState={accessibilityState}
+      {...viewProps}
+    />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Theme

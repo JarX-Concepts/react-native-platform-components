@@ -206,16 +206,23 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  // The iOS menu scrolls once it outgrows the screen; bring the item up
-  if (!isAndroid()) {
-    try {
-      await waitFor(element(by.text(label)).atIndex(0))
-        .toBeVisible()
-        .withTimeout(1000);
-    } catch {
+  // The menu scrolls once it outgrows the screen; bring the item up
+  try {
+    await waitFor(element(by.text(label)).atIndex(0))
+      .toBeVisible()
+      .withTimeout(1000);
+  } catch {
+    if (isAndroid()) {
+      // The popup menu's list; Espresso taps need the row 75% shown
+      await element(by.type('android.widget.ListView')).swipe(
+        'up',
+        'slow',
+        0.4
+      );
+    } else {
       await element(by.text('Tab Bar')).atIndex(0).swipe('up', 'slow', 0.5);
-      await pause(500);
     }
+    await pause(500);
   }
   await element(by.text(label)).atIndex(0).tap();
   // Let the demo mount and settle; the README GIFs are trimmed to start here
@@ -2534,6 +2541,93 @@ describe('Platform Components Example', () => {
       await device.pressBack();
       await expectClosed();
     }
+  });
+
+  it('should test Progress Indicator functionality', async () => {
+    await selectDemo('Progress Indicator');
+
+    // The view with the testID is the one with the label and the value
+    const expectProgress = async (testID: string, value: string) => {
+      await waitFor(element(by.id(testID)))
+        .toHaveValue(value)
+        .withTimeout(8000);
+    };
+    // iOS reads the value out as a percentage ("busy" while
+    // indeterminate); Android as a range, which Detox doesn't report, so
+    // the demo's own value text stands in there
+    const expectPercent = async (percent: string) => {
+      await expectText('progress-value', percent);
+      if (!isAndroid()) {
+        await expectProgress(
+          'progress-linear',
+          percent === 'indeterminate' ? 'busy' : percent
+        );
+      }
+    };
+
+    const bar = element(by.id('progress-linear'));
+    await expect(bar).toBeVisible();
+    await expect(bar).toHaveLabel('Upload');
+    await expectPercent('40%');
+
+    // Value changes, and back to indeterminate
+    await element(by.id('progress-set-100')).tap();
+    await expectPercent('100%');
+    await element(by.id('progress-set-0')).tap();
+    await expectPercent('0%');
+    await element(by.id('progress-set-indeterminate')).tap();
+    await expectPercent('indeterminate');
+    await expect(bar).toBeVisible();
+
+    // A simulated upload animates from 0 to 100%
+    await element(by.id('progress-simulate')).tap();
+    await waitFor(element(by.id('progress-value')))
+      .toHaveText('100%')
+      .withTimeout(15000);
+    await expectPercent('100%');
+
+    await expect(element(by.id('progress-indeterminate'))).toHaveLabel(
+      'Loading feed'
+    );
+
+    // Step progress: a segmented bar
+    await scrollToId('progress-step-next');
+    const steps = element(by.id('progress-steps'));
+    await expect(steps).toBeVisible();
+    // The demo reads the step out instead of the percentage. React Native
+    // writes a text value into the content description on Android
+    const expectStep = async (step: number) => {
+      await expectText('progress-step-value', `${step} of 5`);
+      if (isAndroid()) {
+        await waitFor(steps)
+          .toHaveLabel(`Checkout, Step ${step} of 5`)
+          .withTimeout(8000);
+      } else {
+        await expect(steps).toHaveLabel('Checkout');
+        await expectProgress('progress-steps', `Step ${step} of 5`);
+      }
+    };
+    await expectStep(2);
+    await element(by.id('progress-step-next')).tap();
+    await expectStep(3);
+    await element(by.id('progress-step-back')).tap();
+    await element(by.id('progress-step-back')).tap();
+    await expectStep(1);
+
+    // Circular, loading and colored indicators render with their labels
+    for (const [testID, label] of [
+      ['progress-circular-small', 'Small spinner'],
+      ['progress-circular-large', 'Large spinner'],
+      ['progress-circular', 'Download'],
+      ['progress-circular-wavy', 'Wavy download'],
+      ['progress-loading', 'Loading'],
+      ['progress-loading-contained', 'Loading (contained)'],
+      ['progress-colors-circular', 'Custom colors ring'],
+    ] as const) {
+      await scrollToId(testID);
+      await expect(element(by.id(testID))).toHaveLabel(label);
+    }
+    if (!isAndroid()) await expectProgress('progress-circular', '100%');
   });
 
   itOnIOS('should test Liquid Glass functionality', async () => {

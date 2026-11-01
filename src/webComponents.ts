@@ -14,6 +14,7 @@ import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
 import type { NavigationRailProps } from './NavigationRail';
+import type { ProgressIndicatorProps } from './ProgressIndicator';
 import type { SegmentedControlProps } from './SegmentedControl';
 import type { SelectionMenuProps } from './SelectionMenu';
 import type { TabBarProps } from './TabBar';
@@ -37,6 +38,7 @@ export interface WebComponentProps {
   LiquidGlass: LiquidGlassProps;
   LiquidGlassContainer: LiquidGlassContainerProps;
   NavigationRail: NavigationRailProps;
+  ProgressIndicator: ProgressIndicatorProps;
   SegmentedControl: SegmentedControlProps;
   SelectionMenu: SelectionMenuProps;
   TabBar: TabBarProps;
