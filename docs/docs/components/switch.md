@@ -3,6 +3,17 @@ title: 'Switch'
 description: 'A native switch for React Native: Material 3 MaterialSwitch on Android (with thumb icons) and UISwitch on iOS, controlled like React Native''s Switch, with an optional settings-row label where the whole row toggles and is one accessible, testable element.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-switch.gif" height="480" alt="Switch on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-switch.gif" height="480" alt="Switch on Android" /></td>
+  </tr>
+</table>
+
 An on / off control. With a `label`, it is a settings row: the label at the leading edge, the switch at the trailing edge, and a tap anywhere on the row toggles it.
 
 - **Android**: Material 3 `MaterialSwitch` in the app's Material theme: the wider track, the thumb that grows when on, Material motion and optional thumb icons. React Native's own `Switch` is still the pre-Material 3 `SwitchCompat` on Android.

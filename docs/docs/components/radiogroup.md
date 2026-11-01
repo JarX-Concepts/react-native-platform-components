@@ -3,6 +3,17 @@ title: 'RadioGroup'
 description: 'A native single choice for React Native: Material 3 MaterialRadioButtons in an Android RadioGroup, and the iOS list idiom (rows with a trailing checkmark on the chosen one) on iOS, with descriptions, disabled options, a validation message and controlled value.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-radiogroup.gif" height="480" alt="RadioGroup on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-radiogroup.gif" height="480" alt="RadioGroup on Android" /></td>
+  </tr>
+</table>
+
 A single choice from a short list, such as an account type or a delivery method, with an optional description under each option and a validation message under the group.
 
 - **Android**: Material 3 `MaterialRadioButton`s in an Android `RadioGroup`, in the app's Material theme. Each option is one radio button whose text is the label and, under it, the description.

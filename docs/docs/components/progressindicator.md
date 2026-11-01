@@ -3,6 +3,17 @@ title: 'ProgressIndicator'
 description: 'Native progress indicators for React Native: Material 3 LinearProgressIndicator, CircularProgressIndicator and the Expressive LoadingIndicator and wavy indicators on Android; UIProgressView and UIActivityIndicatorView on iOS. Determinate and indeterminate, animated values, step progress, colors and a screen-reader value.'
 ---
 
+<table>
+  <tr>
+    <td align="center"><strong>iOS</strong></td>
+    <td align="center"><strong>Android</strong></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/ios-progressindicator.gif" height="480" alt="ProgressIndicator on iOS" /></td>
+    <td><img src="https://raw.githubusercontent.com/JarX-Concepts/react-native-platform-components/main/assets/android-progressindicator.gif" height="480" alt="ProgressIndicator on Android" /></td>
+  </tr>
+</table>
+
 Shows how far along a task is, or that something is in progress. One component covers the bar, the spinner and Material 3 Expressive's loading indicator:
 
 - **Android**: Material 3 `LinearProgressIndicator` and `CircularProgressIndicator`, with the Material 3 Expressive wavy shape (`android.wavy`), and the Expressive `LoadingIndicator` (the morphing shape) for `variant="loading"`.
