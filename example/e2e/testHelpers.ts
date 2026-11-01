@@ -53,12 +53,15 @@ export const selectMenuOption = async (
   optionLabel: string,
   currentLabel?: string
 ) => {
+  // An embedded SelectionMenu's testID is on its field (the iOS menu button,
+  // the Android Spinner or Material text field), labeled by what it shows
+  if (currentLabel) {
+    await waitFor(element(by.id(menuId)))
+      .toHaveLabel(currentLabel)
+      .withTimeout(5000);
+  }
+  await element(by.id(menuId)).tap();
   if (isAndroid()) {
-    // The system Spinner's selected item is a platform TextView.
-    const spinnerText = element(
-      by.type('android.widget.TextView').withAncestor(by.id(menuId))
-    );
-    await spinnerText.tap();
     const option = element(
       by
         .text(optionLabel)
@@ -68,12 +71,6 @@ export const selectMenuOption = async (
     await option.tap();
     await waitFor(option).not.toExist().withTimeout(5000);
   } else {
-    // An embedded host can stretch wider than its intrinsic UIButton. Aim
-    // at the button title when supplied, so the tap reaches the control.
-    const anchor = currentLabel
-      ? element(by.text(currentLabel).withAncestor(by.id(menuId)))
-      : element(by.id(menuId));
-    await anchor.tap();
     const option = element(
       by.text(optionLabel).withAncestor(by.type('_UIContextMenuContainerView'))
     ).atIndex(0);
