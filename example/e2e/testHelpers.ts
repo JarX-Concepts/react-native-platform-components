@@ -32,7 +32,24 @@ export const selectDemo = async (label: string) => {
   }
   await element(by.id('demo-picker')).tap();
   await pause(500);
-  if (!isAndroid()) {
+  if (isAndroid()) {
+    // On a shorter screen (the CI emulator's) the later demos are below the
+    // popup menu's viewport, and its list hasn't created their rows yet
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await expect(element(by.text(label)).atIndex(0)).toBeVisible();
+        break;
+      } catch (error) {
+        if (attempt === 4) throw error;
+        await element(
+          by.type(
+            'androidx.appcompat.widget.MenuPopupWindow$MenuDropDownListView'
+          )
+        ).swipe('up', 'slow', 0.5);
+        await pause(300);
+      }
+    }
+  } else {
     try {
       await waitFor(element(by.text(label)).atIndex(0))
         .toBeVisible()
