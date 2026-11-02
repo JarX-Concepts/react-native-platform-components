@@ -102,7 +102,7 @@ The same fields as a [ContextMenu action](/components/contextmenu#contextmenuact
 | `imageColor` | `string`                               | Android: tint color for the icon (hex string)                                                                                                 |
 | `attributes` | `{ destructive?, disabled?, hidden? }` | `destructive` draws the action in red, `disabled` dims it so it can't be picked, `hidden` leaves it out                                       |
 | `haptics`    | `'selection' \| ... \| 'none'`         | Haptic played when this action is picked, in place of the component's `haptics`                                                               |
-| `testID`     | `string`                               | Test identifier of the action: the `UIAlertAction`'s `accessibilityIdentifier` on iOS, the row's view tag on Android. See [Testing](#testing) |
+| `testID`     | `string`                               | Test identifier of the action: the `UIAlertAction`'s `accessibilityIdentifier` on iOS, the row's view tag and `resource-id` on Android. See [Testing](#testing) |
 
 ### Anchor
 

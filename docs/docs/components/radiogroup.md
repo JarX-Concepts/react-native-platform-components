@@ -109,7 +109,7 @@ The labels follow Dynamic Type and the font scale (capped by `maxFontSizeMultipl
 Each option's `testID` (by default `` `${testID}-${value}` ``) is what Detox's `by.id` matches:
 
 - **iOS**: the row's `accessibilityIdentifier`. The group's `testID` is on the host view.
-- **Android**: the `MaterialRadioButton`'s view tag.
+- **Android**: the `MaterialRadioButton`'s view tag, and its `resource-id` for Maestro and Appium.
 
 ```ts
 await expect(element(by.id('delivery-express'))).toHaveLabel('Express');

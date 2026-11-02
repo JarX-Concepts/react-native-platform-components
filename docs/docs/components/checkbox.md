@@ -112,7 +112,7 @@ For a single on/off setting that applies at once, such as "Notifications", iOS u
 `testID` is what Detox's `by.id` matches, and that element has the label and takes the taps:
 
 - **iOS**: the row's `accessibilityIdentifier`; the host view carries none.
-- **Android**: the `MaterialCheckBox`'s view tag.
+- **Android**: the `MaterialCheckBox`'s view tag, and its `resource-id` for Maestro and Appium.
 
 ```ts
 await expect(element(by.id('terms'))).toHaveLabel(

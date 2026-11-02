@@ -219,7 +219,7 @@ class PCButtonView(context: Context) :
   fun applyButtonTestID(value: String) {
     if (buttonTestID == value) return
     buttonTestID = value
-    button?.tag = value.ifEmpty { null }
+    PCTestID.apply(button, value)
   }
 
   fun applyColors(container: Int?, foreground: Int?, ripple: Int?, stroke: Int?) {
@@ -321,7 +321,7 @@ class PCButtonView(context: Context) :
       contentDescription = spokenLabel.ifEmpty { null }
       // Detox's by.id matches the view tag. The button carries the label
       // (its text or contentDescription) and takes the touches.
-      tag = buttonTestID.ifEmpty { null }
+      PCTestID.apply(this, buttonTestID)
       isEnabled = interactivity == "enabled"
       if (iconOnly) {
         // Centre the icon instead of leaving it at the start edge

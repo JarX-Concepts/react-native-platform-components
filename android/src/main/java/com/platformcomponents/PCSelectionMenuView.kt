@@ -417,8 +417,8 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   }
 
   /**
-   * The embedded field is the one view with the testID (Detox matches the
-   * view tag) and the label, so finding it by ID, reading its label and
+   * The embedded field is the one view with the testID (its view tag and
+   * resource-id, see PCTestID) and the label, so finding it by ID, reading its label and
    * tapping it reach one element, and TalkBack announces it once.
    * - The dropdown's text field: TalkBack reads its text (the selected
    *   option) with Material's floating label (the placeholder); `spokenLabel`
@@ -431,11 +431,14 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
   private fun applyFieldAccessibility() {
     val field: View? = inlineText ?: inlineSpinner
     val id = menuTestID.ifEmpty { null }
+    // React Native's test-id key gives the host view its resource-id
     if (anchorMode == "inline" && field != null) {
       tag = null
-      field.tag = id
+      setTag(com.facebook.react.R.id.react_test_id, null)
+      PCTestID.apply(field, id)
     } else {
       tag = id
+      setTag(com.facebook.react.R.id.react_test_id, id)
     }
     val shown = options.firstOrNull { it.data == selectedData }?.label
     inlineText?.let { actv ->

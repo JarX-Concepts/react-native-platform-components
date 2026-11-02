@@ -128,12 +128,10 @@ class PCSelectionMenuViewManager :
 
   /**
    * Embedded, testID goes on the field, which carries the label and takes the
-   * touches (Detox matches the view tag); the host keeps only React Native's
-   * own test-id key, so one id never matches two views. The headless menu
-   * keeps it on its own view.
+   * touches, as its view tag and resource-id; the headless menu keeps it on
+   * its own view (see PCSelectionMenuView.applyFieldAccessibility).
    */
   override fun setTestId(view: PCSelectionMenuView, testId: String?) {
-    view.setTag(com.facebook.react.R.id.react_test_id, testId)
     view.applyTestID(testId ?: "")
   }
 

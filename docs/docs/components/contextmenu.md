@@ -337,7 +337,7 @@ Tapping the preview dismisses the menu back to the content and then calls `onPre
 An action's `testID` goes on its row in the open menu, so an end-to-end test taps it by ID rather than by its title, which changes with the language. Submenus take one too, for the row that opens them. An inline section has no row of its own; give its actions the IDs.
 
 - **iOS**: the `accessibilityIdentifier` of the `UIAction` (or of the submenu's `UIMenu`). UIKit puts it on the menu row.
-- **Android 10+**: the tag of the popup's row view, which is what Detox and Espresso match `by.id` against. It is not a `resource-id`, so UiAutomator-based tools (Appium, Maestro) don't see it. AppCompat keeps the popup's list private, so the rows are found through `WindowInspector`, which Android 9 and earlier don't have: there the rows carry no ID.
+- **Android 10+**: the tag of the popup row's title, which is what Detox and Espresso match `by.id` against, and its `resource-id`, which UI Automator tools (Maestro `id:`, Appium) match. AppCompat keeps the popup's list private, so the rows are found through `WindowInspector`, which Android 9 and earlier don't have: there the rows carry no ID.
 
 ```tsx
 <ContextMenu

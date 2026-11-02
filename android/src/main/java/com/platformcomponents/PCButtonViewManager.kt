@@ -161,11 +161,11 @@ class PCButtonViewManager :
 
   /**
    * testID goes on the MaterialButton, which carries the label and takes the
-   * touches (Detox matches the view tag); the host keeps only React Native's
-   * own test-id key, so one id never matches two views.
+   * touches, as its view tag and resource-id (see PCTestID). The host keeps
+   * neither, not even React Native's test-id key (its resource-id), so one
+   * id never matches two views.
    */
   override fun setTestId(view: PCButtonView, testId: String?) {
-    view.setTag(com.facebook.react.R.id.react_test_id, testId)
     view.applyButtonTestID(testId ?: "")
   }
 

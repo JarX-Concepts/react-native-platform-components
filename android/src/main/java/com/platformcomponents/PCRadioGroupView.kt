@@ -154,7 +154,7 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
       val radio = OptionButton(base).apply {
         id = View.generateViewId()
         isEnabled = groupEnabled && !option.disabled
-        tag = option.testID.ifEmpty { null }
+        PCTestID.apply(this, option.testID)
         PCThemeSupport.capTextSize(this, maxFontSizeMultiplier)
         text = optionText(this, option)
         description = option.description

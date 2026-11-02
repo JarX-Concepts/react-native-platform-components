@@ -123,7 +123,7 @@ await waitFor(element(by.id('sort-date'))).toBeVisible().withTimeout(6000);
 await element(by.id('sort-date')).tap();
 ```
 
-On iOS the ID is the menu row's accessibility identifier; on Android 10+ it is the view tag of the popup row's title, which Detox and Espresso match. See [Testing menu actions](/components/contextmenu#testing-menu-actions).
+On iOS the ID is the menu row's accessibility identifier; on Android 10+ it is the view tag of the popup row's title, which Detox and Espresso match, and its `resource-id`, which Maestro and Appium match. See [Testing menu actions](/components/contextmenu#testing-menu-actions).
 
 ## Test IDs in end-to-end tests
 
@@ -158,6 +158,24 @@ expect('enabled' in attributes && attributes.enabled).toBe(false);
 // reflects touch handling, and stays true on UIKit's alert and menu rows
 await expect(element(by.id('save').and(by.traits(['notEnabled'])))).toExist();
 ```
+
+### Maestro, Appium and other UI Automator tools
+
+The rule holds for UI Automator's `resource-id` on Android too, which is what Maestro's `id:` and Appium's `id` / `resource-id` locators match. The node whose `resource-id` is the `testID` is the one with the label (its `content-desc` or `text`), the touches and the `enabled` state, the same view Detox finds by `by.id`, and it is the only node with that `resource-id`: the host view doesn't report it.
+
+```yaml
+# Maestro
+- tapOn:
+    id: statement-submit
+- assertVisible:
+    id: statement-submit
+    text: Parse Statement
+- assertVisible:
+    id: save
+    enabled: false
+```
+
+This covers the IDs the components set on views inside them: buttons, chips and their close icons, `ButtonGroup` buttons, segments, tabs and destinations, checkbox and radio rows, `TextField` inputs and icons, embedded `SelectionMenu` fields, and the rows and buttons of open menus, action sheets and dialogs. A popup menu row's ID is on its title, which reports `clickable="false"`: tapping it (by its bounds, as Maestro and Appium do) lands on the row. Components whose `testID` stays on their own view get the `resource-id` from React Native, as any view does.
 
 Two iOS exceptions: a segment's accessibility element is the `UISegment` around the view with the `testID`, so match it with `by.type('UISegment').withDescendant(by.id(id))`; and iOS 26's tab bar button greys out a disabled tab and refuses its touches (`enabled: false`) but doesn't give it the `notEnabled` trait, which no public API can add.
 

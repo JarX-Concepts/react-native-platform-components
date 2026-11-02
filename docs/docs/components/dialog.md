@@ -85,7 +85,7 @@ The dialog is controlled: `visible` presents it, and the app sets it back to `fa
 | `disabled`  | `boolean`                                | Dims the button; it can't be picked                                                                                                              |
 | `hidden`    | `boolean`                                | Leaves the action out                                                                                                                            |
 | `haptics`   | `'selection' \| ... \| 'none'`           | Haptic played when this action is picked, in place of the component's `haptics`. The cancel action plays only its own                            |
-| `testID`    | `string`                                 | Test identifier of the button: the `UIAlertAction`'s `accessibilityIdentifier` on iOS, the button's view tag on Android. See [Testing](#testing) |
+| `testID`    | `string`                                 | Test identifier of the button: the `UIAlertAction`'s `accessibilityIdentifier` on iOS, the button's view tag and `resource-id` on Android. See [Testing](#testing) |
 
 A dialog takes **one cancel action**: UIKit throws an exception on a second `.cancel` action, so the component warns in development and shows any extra as a default action. A second `preferred` action is ignored the same way. Disabled and cancel actions never reach `onSelect`, and hidden ones aren't shown.
 

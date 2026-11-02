@@ -215,7 +215,7 @@ Material 3 has one chip size, and iOS has no system chip, so the chips take numb
 Each chip's `testID` and each close icon's `closeTestID` is what Detox's `by.id` matches, on a standalone `Chip` as in a `ChipGroup`. The view with the ID also has the label, so `toHaveLabel` reads the chip's label (or `accessibilityLabel`) and the close icon's "Remove {label}" (or `closeAccessibilityLabel`):
 
 - **iOS**: the chip button's and the close button's `accessibilityIdentifier`.
-- **Android**: the chip's view tag. Material draws the close icon as part of the chip and exposes it only as a virtual accessibility node, which `by.id` can't find, so the library lays a transparent view over the close icon carrying `closeTestID` and the close icon's label. It forwards its touches to the chip, so a Detox tap on it runs the chip's own close icon handling. TalkBack doesn't see it and uses the chip's close icon node as usual.
+- **Android**: the chip's view tag, and its `resource-id` for Maestro and Appium. Material draws the close icon as part of the chip and exposes it only as a virtual accessibility node, which `by.id` can't find, so the library lays a transparent view over the close icon carrying `closeTestID` (as its view tag and `resource-id`) and the close icon's label. It forwards its touches to the chip, so a Detox tap on it runs the chip's own close icon handling. TalkBack doesn't see it and uses the chip's close icon node as usual.
 
 ```ts
 // Single selection
