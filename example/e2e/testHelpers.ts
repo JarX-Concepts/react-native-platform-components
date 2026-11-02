@@ -1,4 +1,6 @@
 import { execFileSync } from 'child_process';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { expect } from 'detox';
 
 export const isAndroid = () => device.getPlatform() === 'android';
@@ -80,10 +82,17 @@ const decodeXml = (value: string) =>
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/&amp;/g, '&');
 
+/** The SDK's adb, as Detox finds it (CI doesn't put adb on the PATH). */
+const adbPath = () => {
+  const sdk = process.env.ANDROID_SDK_ROOT ?? process.env.ANDROID_HOME;
+  const adb = sdk ? join(sdk, 'platform-tools', 'adb') : '';
+  return adb && existsSync(adb) ? adb : 'adb';
+};
+
 /** Every node of every window on screen, as UI Automator reports it. */
 const dumpAccessibilityNodes = (): AccessibilityNode[] => {
   const xml = execFileSync(
-    'adb',
+    adbPath(),
     [
       '-s',
       device.id,
