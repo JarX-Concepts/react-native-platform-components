@@ -167,6 +167,8 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     errorView = error
 
     syncChecked()
+    // The new box shows its state as it is, without animating the check in
+    box.jumpDrawablesToCurrentState()
     applyErrorState()
     applyAccessibility()
     requestLayout()

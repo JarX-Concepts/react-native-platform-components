@@ -186,6 +186,8 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
     errorView = error
 
     syncValue()
+    // The new buttons show the selection as it is, without animating it in
+    g.jumpDrawablesToCurrentState()
     applyErrorState()
     requestLayout()
   }

@@ -184,11 +184,18 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     // after React Native's initial layout pass
     if (!hasRequestedLayoutUpdate && anchorMode == "inline") {
       hasRequestedLayoutUpdate = true
-      post(measureAndLayout)
+      measureAndLayoutPending = true
+      // Before the next frame draws, or that frame shows the rebuilt field blank
+      PCManualLayout.beforeNextDraw(this) {
+        if (measureAndLayoutPending) measureAndLayout.run()
+      }
     }
   }
 
+  private var measureAndLayoutPending = false
+
   private val measureAndLayout = Runnable {
+    measureAndLayoutPending = false
     if (!isAttachedToWindow || anchorMode != "inline") return@Runnable
 
     // Re-measure to get correct intrinsic height
