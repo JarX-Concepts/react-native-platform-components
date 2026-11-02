@@ -88,7 +88,10 @@ module.exports = {
       device: {
         avdName: 'Pixel_9_API_35',
       },
-      bootArgs: '-no-audio',
+      // A 2 GB data partition instead of the AVD's 6 GB default: some CI
+      // runners have only ~6 GB free once the app is built, and the emulator
+      // refuses to start when the partition doesn't fit
+      bootArgs: '-no-audio -partition-size 2048',
     },
   },
   configurations: {
