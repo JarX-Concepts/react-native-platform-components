@@ -131,6 +131,9 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/share/swift
           df -h
 
       # Gradle downloads these on demand, in one attempt, and a dropped
@@ -178,7 +181,6 @@ jobs:
           config="$HOME/.config/.android/avd/Pixel_9_API_35.avd/config.ini"
           grep -q "^hw.keyboard=yes" "$config" || echo "hw.keyboard=yes" >> "$config"
           echo "ANDROID_AVD_HOME=$HOME/.config/.android/avd" >> $GITHUB_ENV
-          echo "ANDROID_EMULATOR_EXTRA_ARGS=-no-window -no-snapshot -partition-size 2048 -gpu swiftshader_indirect" >> $GITHUB_ENV
 
       - name: Enable KVM group perms
         run: |
