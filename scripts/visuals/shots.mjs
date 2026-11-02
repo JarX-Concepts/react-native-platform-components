@@ -15,11 +15,18 @@ export const COMPONENTS = [
     test: 'Theme',
     native: { ios: 'useNativeTheme()', android: 'brand color and appearance, app-wide' },
     caption: 'Brand color and dark mode from JavaScript, applied to every component',
-    // Teal, then orange, then dark
+    // The brand color moving through the Buttons, Switch, Checkbox,
+    // RadioGroup, ProgressIndicator and Chips at the top of the demo: Default,
+    // Teal, Indigo, then Orange on iOS; Teal, Indigo, Orange, a Switch toggle
+    // and a segment on Android. Dark mode comes later in the flows (10 s
+    // later on iOS), and Android blanks the components for a frame as the
+    // appearance changes, so the clips stop before it; the hero's dark tiles
+    // show it instead. The iOS start sits before a still stretch of the
+    // recording: a start inside one skips ahead to the next change.
     clip: {
       duration: 9.5,
-      ios: { start: 12.0, crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.84 } },
-      android: { start: 12.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
+      ios: { start: 8.4, crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.84 } },
+      android: { start: 27.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
     },
   },
   {
@@ -39,7 +46,7 @@ export const COMPONENTS = [
       android: { time: 10.2, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2', fit: 'contain' },
     },
     clip: {
-      ios: { start: 7.4, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
+      ios: { start: 7.7, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
       android: { start: 8.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
     },
   },
@@ -89,7 +96,7 @@ export const COMPONENTS = [
       ios: { time: 30.5, crop: { x: 0.03, y: 0.41, w: 0.94, h: 0.32 } },
     },
     clip: {
-      ios: { start: 5.0, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.36 } },
+      ios: { start: 6.0, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.36 } },
       android: { start: 8.2, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
     },
   },
@@ -106,7 +113,7 @@ export const COMPONENTS = [
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.15, w: 0.94, h: 0.5 } },
-      android: { start: 7.0, crop: { x: 0.02, y: 0.19, w: 0.96, h: 0.51 } },
+      android: { start: 7.8, crop: { x: 0.02, y: 0.19, w: 0.96, h: 0.51 } },
     },
   },
   {
@@ -139,8 +146,8 @@ export const COMPONENTS = [
     },
     clip: {
       duration: 6.0,
-      ios: { start: 5.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
-      android: { start: 7.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
+      ios: { start: 6.1, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
+      android: { start: 8.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.5 } },
     },
   },
   {
@@ -155,7 +162,7 @@ export const COMPONENTS = [
       android: { time: 11.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.45 } },
     },
     clip: {
-      ios: { start: 4.5, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
+      ios: { start: 4.8, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
       android: { start: 7.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
     },
   },
@@ -173,7 +180,7 @@ export const COMPONENTS = [
     },
     clip: {
       duration: 5.0,
-      ios: { start: 9.3, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.42 } },
+      ios: { start: 9.8, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.42 } },
       android: { start: 7.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.42 } },
     },
   },
@@ -191,7 +198,7 @@ export const COMPONENTS = [
       android: { time: 10.8, crop: { x: 0.03, y: 0.645, w: 0.94, h: 0.32 }, bg: '#ebf0ef' },
     },
     clip: {
-      ios: { start: 10.6, crop: { x: 0.03, y: 0.6, w: 0.94, h: 0.39 } },
+      ios: { start: 11.2, crop: { x: 0.03, y: 0.6, w: 0.94, h: 0.39 } },
       android: { start: 9.3, crop: { x: 0.03, y: 0.62, w: 0.94, h: 0.36 } },
     },
   },
@@ -207,7 +214,7 @@ export const COMPONENTS = [
       android: { time: 10.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.455 } },
     },
     clip: {
-      ios: { start: 10.9, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.485 } },
+      ios: { start: 14.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.485 } },
       android: { start: 10.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.5 } },
     },
   },
@@ -223,8 +230,8 @@ export const COMPONENTS = [
     },
     clip: {
       duration: 4.5,
-      ios: { start: 16.8, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.56 } },
-      android: { start: 29.6, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.6 } },
+      ios: { start: 17.05, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.56 } },
+      android: { start: 14.5, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.6 } },
     },
   },
   {
@@ -261,9 +268,9 @@ export const COMPONENTS = [
       android: { time: 17.0, crop: { x: 0, y: 0.612, w: 1, h: 0.388 } },
     },
     clip: {
-      ios: { start: 5.6, crop: { x: 0.03, y: 0.075, w: 0.94, h: 0.42 } },
+      ios: { start: 6.0, crop: { x: 0.03, y: 0.075, w: 0.94, h: 0.42 } },
       // The file row at the top, the sheet at the bottom
-      android: { start: 7.3, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
+      android: { start: 7.7, crop: { x: 0, y: 0.12, w: 1, h: 0.88 } },
     },
   },
   {
@@ -278,8 +285,8 @@ export const COMPONENTS = [
       android: { time: 8.4, crop: { x: 0.05, y: 0.3, w: 0.9, h: 0.44 } },
     },
     clip: {
-      ios: { start: 5.6, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.5 } },
-      android: { start: 7.8, crop: { x: 0.03, y: 0.17, w: 0.94, h: 0.5 } },
+      ios: { start: 5.2, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.5 } },
+      android: { start: 7.5, crop: { x: 0.03, y: 0.17, w: 0.94, h: 0.5 } },
     },
   },
   {
@@ -293,7 +300,7 @@ export const COMPONENTS = [
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.24, w: 0.94, h: 0.48 } },
-      android: { start: 7.2, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.66 } },
+      android: { start: 8.2, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.66 } },
     },
   },
   {
@@ -332,7 +339,7 @@ export const COMPONENTS = [
     },
     clip: {
       duration: 4.0,
-      ios: { start: 10.5, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
+      ios: { start: 10.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
       android: { start: 8.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
     },
   },
