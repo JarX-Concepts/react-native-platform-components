@@ -311,10 +311,10 @@ class NativeRegressionTest {
     settle()
 
     // A prop change that rebuilds the button
-    expectLaidOutOnNextDraw(views) { button.applyLabel("Share") }
+    expectLaidOutOnNextDraw(views, rebuilt = listOf(button)) { button.applyLabel("Share") }
     // A light/dark switch rebuilds every library view, then back
-    expectLaidOutOnNextDraw(views) { dispatchNightMode(dark = !isNight()) }
-    expectLaidOutOnNextDraw(views) { dispatchNightMode(dark = !isNight()) }
+    expectLaidOutOnNextDraw(views, rebuilt = views) { dispatchNightMode(dark = !isNight()) }
+    expectLaidOutOnNextDraw(views, rebuilt = views) { dispatchNightMode(dark = !isNight()) }
   }
 
   private var dispatchedNight: Boolean? = null
@@ -335,13 +335,23 @@ class NativeRegressionTest {
     activity.onConfigurationChanged(config)
   }
 
-  /** Runs [change], then checks that the next frame draws every view laid out. */
-  private fun expectLaidOutOnNextDraw(views: List<ViewGroup>, change: () -> Unit) {
+  /**
+   * Runs [change], which replaces the widgets of the [rebuilt] views, then checks
+   * that the next frame draws every view laid out.
+   */
+  private fun expectLaidOutOnNextDraw(
+    views: List<ViewGroup>,
+    rebuilt: List<ViewGroup>,
+    change: () -> Unit
+  ) {
     val drawn = CountDownLatch(1)
     val unlaid = mutableListOf<String>()
     onMain {
-      assertTrue(views.all { it.childCount > 0 })
+      val before = rebuilt.map { it.getChildAt(0) }
       change()
+      rebuilt.zip(before).forEach { (view, old) ->
+        assertFalse("${view.javaClass.simpleName} wasn't rebuilt", view.getChildAt(0) === old)
+      }
       val observer = host.viewTreeObserver
       observer.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
         override fun onDraw() {
