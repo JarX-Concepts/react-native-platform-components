@@ -3218,6 +3218,9 @@ describe('Platform Components Example', () => {
   it('should test Theme functionality', async () => {
     await selectDemo('Theme');
     await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
+    // The components that carry the brand color sit under the controls
+    await expect(element(by.id('theme-button-filled'))).toBeVisible();
+    await expect(element(by.id('theme-switch'))).toBeVisible();
     await pause(800);
 
     // Brand colors recolor the native components in place
@@ -3226,8 +3229,19 @@ describe('Platform Components Example', () => {
       await pause(1200);
     }
 
+    // Toggles keep the brand color across a change
+    await element(by.id('theme-switch')).tap();
+    await expectToggle('theme-switch', false);
+    await pause(500);
+    await element(by.id('theme-switch')).tap();
+    await expectToggle('theme-switch', true);
+    await pause(500);
+
+    await scrollIntoView('theme-segmented-control');
     await tapSegment('Month');
     await pause(800);
+    await element(by.id('demo-scroll')).scrollTo('top');
+    await pause(500);
 
     // Dark mode, then a brand color change while dark
     await element(by.id('native-theme-appearance-dark')).tap();
