@@ -2,6 +2,7 @@ import { expect } from 'detox';
 import { expect as jestExpect } from '@jest/globals';
 import {
   expectDisabled,
+  expectResourceIds,
   isAndroid,
   pause,
   selectDemo,
@@ -15,6 +16,19 @@ const expectText = async (testID: string, text: string) => {
   await waitFor(element(by.id(testID)))
     .toHaveText(text)
     .withTimeout(5000);
+};
+
+// Pick a case from the row of tabs; the last ones show once it is scrolled
+// to its end (and has stopped, or the tap only stops the scroll)
+const selectCase = async (value: string) => {
+  const tab = element(by.id(`regression-case-${value}`));
+  try {
+    await expect(tab).toBeVisible();
+  } catch {
+    await element(by.id('regression-cases')).scrollTo('right');
+    await pause(500);
+  }
+  await tab.tap();
 };
 
 // Inspect the native widget's selection, independently of the React event
@@ -80,7 +94,7 @@ describe('Native regression cases', () => {
   });
 
   it('presents with initial options and dismisses when its host unmounts', async () => {
-    await element(by.id('regression-case-date')).tap();
+    await selectCase('date');
     await element(by.id('regression-mount-date')).tap();
 
     const picker = isAndroid()
@@ -103,7 +117,7 @@ describe('Native regression cases', () => {
   });
 
   it('renders both independently loaded text field image accessories', async () => {
-    await element(by.id('regression-case-text')).tap();
+    await selectCase('text');
     await waitFor(element(by.id('regression-leading-image')))
       .toBeVisible()
       .withTimeout(5000);
@@ -121,7 +135,7 @@ describe('Native regression cases', () => {
   });
 
   it('keeps unavailable options disabled in embedded and modal menus', async () => {
-    await element(by.id('regression-case-options')).tap();
+    await selectCase('options');
     let currentLabel = 'Ready choice';
     for (const modal of [false, true]) {
       if (modal) {
@@ -182,7 +196,7 @@ describe('Native regression cases', () => {
   it('forwards image credentials and bodies and isolates cached accounts', async () => {
     const server = await startImageServer();
     try {
-      await element(by.id('regression-case-images')).tap();
+      await selectCase('images');
       await waitFor(element(by.id('regression-request-image')))
         .toBeVisible()
         .withTimeout(5000);
@@ -241,7 +255,7 @@ describe('Native regression cases', () => {
       // Synchronization is restored before inspecting the settled native menu.
       await device.disableSynchronization();
       try {
-        await element(by.id('regression-case-images')).tap();
+        await selectCase('images');
         // Unsynchronized, the tap returns before the case renders
         await waitFor(element(by.id('regression-image-mode')))
           .toBeVisible()
@@ -299,7 +313,7 @@ describe('Native regression cases', () => {
   itOnIOS(
     'retains focus and selection when switching the iOS input between line modes',
     async () => {
-      await element(by.id('regression-case-text')).tap();
+      await selectCase('text');
       const field = element(by.id('regression-text'));
       await field.tap();
       await expect(field).toBeFocused();
@@ -336,10 +350,23 @@ describe('Native regression cases', () => {
   );
 
   it('reports disabled states on the element with the testID', async () => {
-    await element(by.id('regression-case-disabled')).tap();
+    await selectCase('disabled');
     // TextField editable={false}: the UITextField / UITextView, the EditText
     await expectDisabled('regression-readonly-field');
     await expectDisabled('regression-readonly-notes');
+    await expectResourceIds({
+      'regression-readonly-field': { label: "Can't edit", enabled: false },
+      'regression-readonly-notes': {
+        label: "Can't edit these lines",
+        enabled: false,
+      },
+      'regression-actions': { label: 'Actions' },
+      // Material makes the selected item unclickable
+      'regression-tab-home': { label: 'Home', clickable: false },
+      'regression-tab-saved': { label: 'Saved', enabled: false },
+      'regression-rail-inbox': { label: 'Inbox', clickable: false },
+      'regression-rail-archive': { label: 'Archive', enabled: false },
+    });
 
     // A disabled menu action, next to an enabled one
     await element(by.id('regression-actions')).tap();
@@ -348,6 +375,14 @@ describe('Native regression cases', () => {
       .withTimeout(6000);
     await expectDisabled('regression-action-delete');
     await expectDisabled('regression-action-copy', false);
+    await expectResourceIds({
+      'regression-action-copy': { label: 'Copy', clickable: false },
+      'regression-action-delete': {
+        label: 'Delete',
+        enabled: false,
+        clickable: false,
+      },
+    });
     await element(by.id('regression-action-copy')).tap();
     await waitFor(element(by.id('regression-action-copy')))
       .not.toExist()
@@ -369,5 +404,36 @@ describe('Native regression cases', () => {
       jestExpect(await tab('regression-tab-saved')).toBe(false);
       jestExpect(await tab('regression-tab-home')).toBe(true);
     }
+  });
+
+  it('exposes each testID as the Android resource-id of its element', async () => {
+    // UI Automator's resource-id (Maestro `id:`, Appium) lands on the element
+    // Detox finds by.id, with the label, the touches and the enabled state;
+    // the component's host view doesn't report it too. iOS has one
+    // identifier, accessibilityIdentifier, checked by the other flows.
+    if (!isAndroid()) return;
+    await selectCase('ids');
+    await expectResourceIds({
+      'regression-id-button': { label: 'Save' },
+      'regression-id-fab': { label: 'Compose' },
+      'regression-id-chip': { label: 'Ada' },
+      'regression-id-chip-close': { label: 'Remove Ada' },
+      'regression-id-split': { label: 'Reply' },
+      'regression-id-split-menu': { label: 'Reply options' },
+      'regression-id-group-day': { label: 'Day' },
+      'regression-id-group-week': { label: 'Week' },
+      'regression-id-list': { label: 'List' },
+      'regression-id-grid': { label: 'Grid' },
+      'regression-id-checkbox': { label: 'Remember me' },
+      'regression-id-radio-email': { label: 'Email' },
+      'regression-id-radio-phone': { label: 'Phone', enabled: false },
+      'regression-id-switch': { label: 'Wi-Fi' },
+    });
+    await element(by.id('demo-scroll')).scrollTo('bottom');
+    await expectResourceIds({
+      'regression-id-field': { label: 'Search' },
+      'regression-id-field-send': { label: 'Send' },
+      'regression-id-menu': { label: 'First option' },
+    });
   });
 });

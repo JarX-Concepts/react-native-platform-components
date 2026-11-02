@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
   ButtonGroup,
+  Checkbox,
+  Chip,
   DatePicker,
+  FloatingActionButton,
   NavigationRail,
+  RadioGroup,
   SegmentedControl,
   SelectionMenu,
+  SplitButton,
+  Switch,
   TabBar,
   TextField,
   type PlatformIcon,
@@ -21,6 +27,7 @@ const CASES = [
   { label: 'Options', value: 'options' },
   { label: 'Images', value: 'images' },
   { label: 'Disabled', value: 'disabled' },
+  { label: 'Test IDs', value: 'ids' },
 ] as const;
 
 const SEGMENTS = [
@@ -494,24 +501,125 @@ function DisabledStatesCase() {
   );
 }
 
+// One of each component whose testID sits on an element inside it. On
+// Android that element's view tag (Detox) and resource-id (UI Automator,
+// Maestro, Appium) are both the testID, and it has the label.
+function TestIDsCase() {
+  const [remember, setRemember] = useState(false);
+  const [contact, setContact] = useState('email');
+  const [wifi, setWifi] = useState(false);
+  const [view, setView] = useState('list');
+  const [range, setRange] = useState(['day']);
+  const [sort, setSort] = useState<string | null>('first');
+  return (
+    <Section title="Test IDs">
+      <View style={styles.content}>
+        <View style={styles.actions}>
+          <Button testID="regression-id-button" label="Save" />
+          <FloatingActionButton
+            testID="regression-id-fab"
+            icon={{ ios: 'plus', android: 'add' }}
+            size="small"
+            accessibilityLabel="Compose"
+          />
+          <Chip testID="regression-id-chip" label="Ada" onClose={() => {}} />
+        </View>
+        <SplitButton
+          testID="regression-id-split"
+          label="Reply"
+          menu={[{ id: 'all', title: 'Reply All' }]}
+          menuAccessibilityLabel="Reply options"
+        />
+        <ButtonGroup
+          testID="regression-id-group"
+          buttons={[
+            { label: 'Day', value: 'day' },
+            { label: 'Week', value: 'week' },
+          ]}
+          selection="single"
+          selectedValues={range}
+          onSelectionChange={setRange}
+        />
+        <SegmentedControl
+          testID="regression-id-segments"
+          segments={[
+            { label: 'List', value: 'list', testID: 'regression-id-list' },
+            { label: 'Grid', value: 'grid', testID: 'regression-id-grid' },
+          ]}
+          selectedValue={view}
+          onSelect={setView}
+        />
+        <Checkbox
+          testID="regression-id-checkbox"
+          label="Remember me"
+          checked={remember}
+          onCheckedChange={setRemember}
+        />
+        <RadioGroup
+          testID="regression-id-radio"
+          options={[
+            { label: 'Email', value: 'email' },
+            { label: 'Phone', value: 'phone', disabled: true },
+          ]}
+          value={contact}
+          onValueChange={setContact}
+        />
+        <Switch
+          testID="regression-id-switch"
+          label="Wi-Fi"
+          value={wifi}
+          onValueChange={setWifi}
+        />
+        <TextField
+          testID="regression-id-field"
+          label="Search"
+          trailingIcon={{
+            ios: { type: 'sfSymbol', name: 'paperplane' },
+            android: { type: 'drawable', name: 'send' },
+          }}
+          trailingIconTestID="regression-id-field-send"
+          trailingIconAccessibilityLabel="Send"
+        />
+        <SelectionMenu
+          testID="regression-id-menu"
+          options={OPTIONS}
+          selected={sort}
+          presentation="embedded"
+          onSelect={setSort}
+          android={{ material: 'system' }}
+        />
+      </View>
+    </Section>
+  );
+}
+
 /** Isolated edge cases for native regression tests and manual inspection. */
 export function NativeRegressionDemo() {
   const [activeCase, setActiveCase] =
     useState<(typeof CASES)[number]['value']>('selection');
   return (
     <>
-      <ChipTabs
-        testID="regression-case"
-        value={activeCase}
-        options={CASES}
-        onChange={setActiveCase}
-      />
+      {/* More cases than fit across a phone */}
+      <ScrollView
+        testID="regression-cases"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.cases}
+      >
+        <ChipTabs
+          testID="regression-case"
+          value={activeCase}
+          options={CASES}
+          onChange={setActiveCase}
+        />
+      </ScrollView>
       {activeCase === 'selection' && <ControlledSelectionCases />}
       {activeCase === 'date' && <DateLifecycleCase />}
       {activeCase === 'text' && <TextLifecycleCase />}
       {activeCase === 'options' && <DisabledOptionsCase />}
       {activeCase === 'images' && <ImageCases />}
       {activeCase === 'disabled' && <DisabledStatesCase />}
+      {activeCase === 'ids' && <TestIDsCase />}
     </>
   );
 }
@@ -521,4 +629,5 @@ const styles = StyleSheet.create({
   status: { fontSize: 13 },
   actions: { flexDirection: 'row', gap: 8 },
   rail: { height: 220, flexDirection: 'row' },
+  cases: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 12 },
 });

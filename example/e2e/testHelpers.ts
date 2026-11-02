@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import { expect } from 'detox';
 
 export const isAndroid = () => device.getPlatform() === 'android';
@@ -53,6 +54,104 @@ export const expectDisabled = async (
     } else {
       await waitFor(dimmed).not.toExist().withTimeout(5000);
     }
+  }
+};
+
+export type ResourceIdExpectation = {
+  /** The node's content description or text. */
+  label: string;
+  /** Default: true. */
+  enabled?: boolean;
+  /**
+   * Default: true. A popup menu row's title reports false: the tap on it
+   * lands on the row around it.
+   */
+  clickable?: boolean;
+};
+
+type AccessibilityNode = Record<string, string>;
+
+const decodeXml = (value: string) =>
+  value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&amp;/g, '&');
+
+/** Every node of every window on screen, as UI Automator reports it. */
+const dumpAccessibilityNodes = (): AccessibilityNode[] => {
+  const xml = execFileSync(
+    'adb',
+    [
+      '-s',
+      device.id,
+      'exec-out',
+      'uiautomator',
+      'dump',
+      '--windows',
+      '/dev/tty',
+    ],
+    { encoding: 'utf8', timeout: 30000 }
+  );
+  return [...xml.matchAll(/<node\s([^>]*?)\/?>/g)].map(([, attributes]) =>
+    Object.fromEntries(
+      [...attributes!.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, k, v]) => [
+        k!,
+        decodeXml(v!),
+      ])
+    )
+  );
+};
+
+const resourceIdProblems = (
+  nodes: AccessibilityNode[],
+  expected: Record<string, ResourceIdExpectation>
+) =>
+  Object.entries(expected).flatMap(([testID, want]) => {
+    const matches = nodes.filter((node) => node['resource-id'] === testID);
+    if (matches.length !== 1) {
+      return [`${testID}: ${matches.length} nodes have this resource-id`];
+    }
+    const node = matches[0]!;
+    const problems: string[] = [];
+    const label = [node['content-desc'], node.text];
+    if (!label.includes(want.label)) {
+      problems.push(`label ${JSON.stringify(label)}, expected "${want.label}"`);
+    }
+    if (node.enabled !== String(want.enabled ?? true)) {
+      problems.push(`enabled=${node.enabled}`);
+    }
+    if (node.clickable !== String(want.clickable ?? true)) {
+      problems.push(`clickable=${node.clickable}`);
+    }
+    return problems.map((problem) => `${testID} (${node.class}): ${problem}`);
+  });
+
+/**
+ * Android: the node that UI Automator reports with `resource-id == testID`
+ * (what Maestro's `id:` and Appium's id locators match) is the only one, and
+ * it is the element with the label, the touches and the enabled state, the
+ * same element Detox's `by.id` finds by view tag. Waits for the screen to
+ * settle; no-op on iOS, where `accessibilityIdentifier` serves both.
+ */
+export const expectResourceIds = async (
+  expected: Record<string, ResourceIdExpectation>
+) => {
+  if (!isAndroid()) return;
+  let problems: string[] = [];
+  for (const deadline = Date.now() + 8000; ; await pause(500)) {
+    try {
+      problems = resourceIdProblems(dumpAccessibilityNodes(), expected);
+    } catch (error) {
+      // "could not get idle state" while something animates
+      problems = [`uiautomator dump failed: ${error}`];
+    }
+    if (problems.length === 0 || Date.now() > deadline) break;
+  }
+  if (problems.length > 0) {
+    throw new Error(`Resource ids:\n  ${problems.join('\n  ')}`);
   }
 };
 
