@@ -133,14 +133,24 @@ function panelSpec(component, platform, video) {
   const info = probe(video);
   const crop = shot.crop;
   const aspect = (info.width * crop.w) / (info.height * crop.h);
-  const start = shot.start;
   const duration = component.clip.duration ?? CLIP_SECONDS;
-  if (start + duration > info.duration + 0.05) {
-    console.warn(
-      `  warning: ${component.name} ${platform} clip runs past the recording (${(start + duration).toFixed(1)}s of ${info.duration.toFixed(1)}s); the last frame will hold`
-    );
+  // A clip is one stretch of the recording from `start`, or several
+  // `segments` ({ start, duration }) played back to back, whose durations add
+  // up to the clip's. Segment starts are the recording's own timestamps, not
+  // -ss positions (see buildClip)
+  const segments = shot.segments ?? [{ start: shot.start, duration }];
+  const total = segments.reduce((s, seg) => s + seg.duration, 0);
+  if (Math.abs(total - duration) > 0.001) {
+    throw new Error(`${component.name} ${platform}: segments last ${total}s, the clip ${duration}s`);
   }
-  return { video, crop, aspect, start, duration };
+  for (const seg of segments) {
+    if (seg.start + seg.duration > info.duration + 0.05) {
+      console.warn(
+        `  warning: ${component.name} ${platform} clip runs past the recording (${(seg.start + seg.duration).toFixed(1)}s of ${info.duration.toFixed(1)}s); the last frame will hold`
+      );
+    }
+  }
+  return { video, crop, aspect, segments, duration };
 }
 
 function buildClip(component, index) {
@@ -173,18 +183,35 @@ function buildClip(component, index) {
   const args = ['-f', 'lavfi', '-i', `color=c=${BG}:s=${W}x${H}:r=${FPS}:d=${duration}`];
   const filters = ['[0:v]format=rgba[base]'];
   let last = 'base';
+  let inputs = 0;
   panels.forEach((panel, i) => {
     const spec = specs[panel.platform];
-    args.push('-ss', spec.start.toFixed(3), '-t', (duration + 0.5).toFixed(3), '-i', spec.video);
-    const inp = i + 1;
-    filters.push(
-      `[${inp}:v]fps=${FPS},${cropExpr(spec.crop)},scale=${panel.w}:${panel.h}:flags=lanczos,setsar=1,setpts=PTS-STARTPTS[p${i}]`
-    );
+    const panelFilters = `${cropExpr(spec.crop)},scale=${panel.w}:${panel.h}:flags=lanczos,setsar=1,setpts=PTS-STARTPTS`;
+    if (spec.segments.length === 1) {
+      args.push('-ss', spec.segments[0].start.toFixed(3), '-t', (duration + 0.5).toFixed(3), '-i', spec.video);
+      inputs += 1;
+      filters.push(`[${inputs}:v]fps=${FPS},${panelFilters}[p${i}]`);
+    } else {
+      // Segments are cut on the recording's own timestamps (fps fills the
+      // still stretches, then trim), not seeked with -ss: a seek into a
+      // still stretch lands on the next change, so a segment couldn't show
+      // the state before it
+      args.push('-i', spec.video);
+      inputs += 1;
+      const split = spec.segments.map((_, j) => `[p${i}r${j}]`).join('');
+      filters.push(`[${inputs}:v]fps=${FPS},split=${spec.segments.length}${split}`);
+      const parts = spec.segments.map((seg, j) => {
+        const end = seg.start + seg.duration;
+        filters.push(`[p${i}r${j}]trim=start=${seg.start.toFixed(3)}:end=${end.toFixed(3)},${panelFilters}[p${i}s${j}]`);
+        return `[p${i}s${j}]`;
+      });
+      filters.push(`${parts.join('')}concat=n=${parts.length}:v=1:a=0[p${i}]`);
+    }
     filters.push(`[${last}][p${i}]overlay=${panel.x}:${panel.y}:eof_action=repeat:format=auto[o${i}]`);
     last = `o${i}`;
   });
   args.push('-i', chrome);
-  filters.push(`[${last}][${panels.length + 1}:v]overlay=0:0:eof_action=repeat:format=auto,format=yuv420p[v]`);
+  filters.push(`[${last}][${inputs + 1}:v]overlay=0:0:eof_action=repeat:format=auto,format=yuv420p[v]`);
 
   const out = path.join(work, `clip-${index}.mp4`);
   ffmpeg([
