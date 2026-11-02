@@ -350,7 +350,7 @@ class PCActionSheetView(context: Context) : ReactViewGroup(context) {
   /** The row's enabled state and tag, from [action]. */
   private fun applyRowState(row: Row, action: Action) {
     row.view.isEnabled = !action.disabled
-    row.view.tag = action.testID.ifEmpty { null }
+    PCTestID.apply(row.view, action.testID)
     val alpha = if (action.disabled) DISABLED_ALPHA else 1f
     row.label.alpha = alpha
     row.icon?.alpha = alpha

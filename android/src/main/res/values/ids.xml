@@ -4,4 +4,6 @@
   <item name="pc_capped_text_size" type="id" />
   <!-- A menu popup's list whose rows carry their items' testIDs; see PCMenuSupport.tagPopupRows -->
   <item name="pc_menu_rows_tagged" type="id" />
+  <!-- A view whose testID is also its accessibility resource-id; see PCTestID.apply -->
+  <item name="pc_test_id_watched" type="id" />
 </resources>

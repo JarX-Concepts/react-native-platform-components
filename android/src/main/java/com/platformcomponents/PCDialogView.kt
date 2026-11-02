@@ -295,7 +295,7 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
       shownActions = actions
       for ((button, index) in shownButtons) {
         val action = actions[index]
-        button.tag = action.testID.ifEmpty { null }
+        PCTestID.apply(button, action.testID)
         button.isEnabled = !action.disabled
       }
     }
@@ -451,7 +451,7 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
   /** Sets up [button] for the action at [index] of [shownActions]. */
   private fun configureButton(owner: AlertDialog, button: Button, index: Int) {
     val action = shownActions[index]
-    button.tag = action.testID.ifEmpty { null }
+    PCTestID.apply(button, action.testID)
     button.isEnabled = !action.disabled
     if (action.role == "destructive") {
       val error = PCMenuSupport.errorColor(button.context)

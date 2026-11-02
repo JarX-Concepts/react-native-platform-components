@@ -224,7 +224,7 @@ class PCChipGroupView(context: Context) :
       g.addView(chip, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
       if (item.closeIcon) {
         // After the group, so it is drawn and touched above the chips
-        h.addTarget(PCChipSupport.CloseTarget(context, chip).apply { tag = item.closeTestID.ifEmpty { null } })
+        h.addTarget(PCChipSupport.CloseTarget(context, chip).also { PCTestID.apply(it, item.closeTestID) })
       }
     }
 

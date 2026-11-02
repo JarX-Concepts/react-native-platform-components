@@ -161,8 +161,8 @@ class PCFloatingActionButtonView(context: Context) :
   fun applyButtonTestID(value: String) {
     if (buttonTestID == value) return
     buttonTestID = value
-    fab?.tag = value.ifEmpty { null }
-    extendedFab?.tag = value.ifEmpty { null }
+    PCTestID.apply(fab, value)
+    PCTestID.apply(extendedFab, value)
   }
 
   // ---- Shrink and extend ----
@@ -313,7 +313,7 @@ class PCFloatingActionButtonView(context: Context) :
       contentDescription = spokenLabel.ifEmpty { null }
       // Detox's by.id matches the view tag; the button carries the label and
       // takes the touches
-      tag = buttonTestID.ifEmpty { null }
+      PCTestID.apply(this, buttonTestID)
       isEnabled = interactivity == "enabled"
       setOnClickListener { onPress?.invoke() }
     }
@@ -337,7 +337,7 @@ class PCFloatingActionButtonView(context: Context) :
       isAllCaps = false
       maxLines = 1
       contentDescription = spokenLabel.ifEmpty { null }
-      tag = buttonTestID.ifEmpty { null }
+      PCTestID.apply(this, buttonTestID)
       isEnabled = interactivity == "enabled"
       setOnClickListener { onPress?.invoke() }
     }

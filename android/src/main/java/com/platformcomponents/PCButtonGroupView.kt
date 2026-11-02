@@ -218,7 +218,7 @@ class PCButtonGroupView(context: Context) :
   fun applyMenuTestID(value: String) {
     if (menuTestID == value) return
     menuTestID = value
-    splitMenuButton()?.tag = value.ifEmpty { null }
+    PCTestID.apply(splitMenuButton(), value)
   }
 
   fun applyMaterial(value: String?) {
@@ -340,7 +340,7 @@ class PCButtonGroupView(context: Context) :
         contentDescription = item.spokenLabel.ifEmpty { null }
         // Detox's by.id matches the view tag: the button carries the label
         // and takes the touches, so all three are found under one id
-        tag = item.testID.ifEmpty { null }
+        PCTestID.apply(this, item.testID)
         isEnabled = !item.disabled && interactivity == "enabled"
         if (iconOnly) {
           // Centre the icon instead of leaving it at the start edge
@@ -412,7 +412,7 @@ class PCButtonGroupView(context: Context) :
       minWidth = dp(SPLIT_MIN_WIDTH_DP)
       minimumWidth = dp(SPLIT_MIN_WIDTH_DP)
       contentDescription = menuAccessibilityLabel.ifEmpty { null }
-      tag = menuTestID.ifEmpty { null }
+      PCTestID.apply(this, menuTestID)
       isEnabled = interactivity == "enabled"
     }
     leading.setPaddingRelative(dp(metrics.leadingStart), leading.paddingTop, dp(metrics.leadingEnd), leading.paddingBottom)

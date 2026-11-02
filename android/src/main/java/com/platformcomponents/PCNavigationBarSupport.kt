@@ -250,7 +250,7 @@ object PCNavigationBarSupport {
     val count = minOf(items.size, bar.maxItemCount)
     for (index in 0 until count) {
       val itemView = menuView.findViewById<View>(itemId(index)) ?: continue
-      itemView.tag = items[index].testID.ifEmpty { null }
+      PCTestID.apply(itemView, items[index].testID)
       styleLabels(itemView, font)
     }
   }

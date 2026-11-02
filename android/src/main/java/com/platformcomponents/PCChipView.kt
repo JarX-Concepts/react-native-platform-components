@@ -153,7 +153,7 @@ class PCChipView(context: Context) :
   fun applyChipTestID(value: String) {
     if (chipTestID == value) return
     chipTestID = value
-    chip?.tag = value.ifEmpty { null }
+    PCTestID.apply(chip, value)
   }
 
   fun applyMaxFontSizeMultiplier(value: Float) {
@@ -229,7 +229,7 @@ class PCChipView(context: Context) :
 
     closeTarget = if (closeIcon) {
       PCChipSupport.CloseTarget(context, c).also {
-        it.tag = closeTestID.ifEmpty { null }
+        PCTestID.apply(it, closeTestID)
         addView(it)
       }
     } else {

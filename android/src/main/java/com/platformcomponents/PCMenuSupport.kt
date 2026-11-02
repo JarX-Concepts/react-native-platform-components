@@ -223,8 +223,8 @@ object PCMenuSupport {
         val testID = menuItem?.let { itemFor(it, items)?.testID }.orEmpty()
         val row = list.getChildAt(i)
         val title = row.findViewById<View>(AppCompatR.id.title) ?: row.findViewById(android.R.id.title)
-        row.tag = if (title == null) testID.ifEmpty { null } else null
-        title?.tag = testID.ifEmpty { null }
+        PCTestID.apply(row, if (title == null) testID else null)
+        PCTestID.apply(title, testID)
         // The row owns the disabled flag (its title only mirrors the row's
         // drawable state), so the tagged title reports it too
         if (title != null && menuItem != null) title.isEnabled = menuItem.isEnabled

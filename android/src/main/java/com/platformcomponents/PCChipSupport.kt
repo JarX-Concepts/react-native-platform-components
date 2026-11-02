@@ -81,7 +81,7 @@ object PCChipSupport {
     chip.isCloseIconVisible = item.closeIcon
     chip.closeIconContentDescription = item.closeAccessibilityLabel.ifEmpty { null }
     // Detox's by.id matches the view tag
-    chip.tag = item.testID.ifEmpty { null }
+    PCTestID.apply(chip, item.testID)
     val applyPadding = applySizing(chip, sizing)
     applyIcon(chip, variant, item.icon, isCurrent) {
       applyPadding()
@@ -217,6 +217,9 @@ object PCChipSupport {
     init {
       importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
       isFocusable = false
+      // Reported as clickable to UI Automator (Maestro, Appium find it by
+      // its resource-id); a click action closes the chip
+      isClickable = true
       layoutParams = FrameLayout.LayoutParams(0, 0)
       // What Material's close icon node announces
       contentDescription = chip.closeIconContentDescription?.takeIf { it.isNotEmpty() }
@@ -235,6 +238,17 @@ object PCChipSupport {
       )
       chip.dispatchTouchEvent(forwarded)
       forwarded.recycle()
+      return true
+    }
+
+    /** Disabled with its chip, so it reports the chip's disabled state. */
+    // (View's constructor may ask before `chip` is assigned)
+    @Suppress("SENSELESS_COMPARISON", "UNNECESSARY_SAFE_CALL")
+    override fun isEnabled(): Boolean = if (chip == null) super.isEnabled() else chip.isEnabled
+
+    override fun performClick(): Boolean {
+      super.performClick()
+      if (chip.isEnabled) chip.performCloseIconClick()
       return true
     }
   }

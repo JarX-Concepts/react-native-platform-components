@@ -101,7 +101,7 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
   fun applyTestID(value: String) {
     if (testID == value) return
     testID = value
-    checkbox?.tag = value.ifEmpty { null }
+    PCTestID.apply(checkbox, value)
   }
 
   fun applyMaxFontSizeMultiplier(value: Float) {
@@ -147,7 +147,7 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     val box = MaterialCheckBox(base).apply {
       text = label
       isEnabled = interactivity == "enabled"
-      tag = testID.ifEmpty { null }
+      PCTestID.apply(this, testID)
       PCThemeSupport.capTextSize(this, maxFontSizeMultiplier)
       addOnCheckedStateChangedListener { _, state ->
         if (suppressCallbacks) return@addOnCheckedStateChangedListener

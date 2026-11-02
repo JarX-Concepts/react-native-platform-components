@@ -290,7 +290,7 @@ class PCSegmentedControlView(context: Context) :
         // Screen readers (and Detox) always get the label, even when hidden
         contentDescription = segment.spokenLabel
         // Detox matches the view tag
-        tag = segment.testID.ifEmpty { null }
+        PCTestID.apply(this, segment.testID)
         isEnabled = !segment.disabled && interactivity == "enabled"
 
         // Enable text truncation with ellipsis when space is limited

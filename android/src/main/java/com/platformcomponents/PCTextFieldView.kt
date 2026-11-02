@@ -928,16 +928,16 @@ class PCTextFieldView(context: Context) :
    */
   private fun applyTestIDs() {
     val edit = editText ?: return
-    edit.tag = inputTestID.ifEmpty { null }
+    PCTestID.apply(edit, inputTestID)
     val til = layout ?: return
-    til.findViewById<View>(MaterialR.id.text_input_start_icon)?.tag = leadingIconTestID.ifEmpty { null }
+    PCTestID.apply(til.findViewById(MaterialR.id.text_input_start_icon), leadingIconTestID)
     til.startIconContentDescription = leadingIconSpokenLabel.ifEmpty { null }
     // The password toggle and clear button keep Material's own descriptions
     if (trailingIcon.isPresent) {
-      til.findViewById<View>(MaterialR.id.text_input_end_icon)?.tag = trailingIconTestID.ifEmpty { null }
+      PCTestID.apply(til.findViewById(MaterialR.id.text_input_end_icon), trailingIconTestID)
       til.endIconContentDescription = trailingIconSpokenLabel.ifEmpty { null }
     } else {
-      til.findViewById<View>(MaterialR.id.text_input_end_icon)?.tag = null
+      PCTestID.apply(til.findViewById(MaterialR.id.text_input_end_icon), null)
     }
   }
 
