@@ -27,8 +27,31 @@ ANDROID_PAUSE_CAP="${ANDROID_PAUSE_CAP:-0.6}"
 ANDROID_NAV_FROM="${ANDROID_NAV_FROM:-8}"
 ANDROID_NAV_WINDOW="${ANDROID_NAV_WINDOW:-30}"
 
+# Length and size budget. Each GIF keeps at most this many seconds of its own
+# timeline (after the trim and, on Android, the pause cap); 0 turns the cap
+# off. A flow that scrolls changes nearly every pixel of every frame, so the
+# GIF costs 3-5 MB per 10 s on Android (2026-11: Button 11 MB for 33 s, a
+# re-recorded SegmentedControl 17 MB for 47 s) against about 1 MB per 10 s
+# for most iOS flows. MAX_<GIF NAME>=<s> overrides the cap for one GIF, e.g.
+# MAX_ANDROID_TEXTFIELD=60.
+IOS_GIF_MAX_SECONDS="${IOS_GIF_MAX_SECONDS:-45}"
+ANDROID_GIF_MAX_SECONDS="${ANDROID_GIF_MAX_SECONDS:-30}"
+# A GIF over GIF_MAX_MB (whole MiB) is encoded again at 60% of the frame rate
+# (20, 12, then GIF_MIN_FPS), which keeps the whole flow but makes scrolling
+# choppier. Smaller steps barely help: the emulator records at about 15 fps,
+# so at 20 the GIF only repeats frames, which cost almost nothing. A GIF
+# still over budget at GIF_MIN_FPS is listed at the end; GIF_STRICT=1 then
+# exits with an error. The docs show these GIFs one per page; the README's
+# showreel has its own limit (under ~8 MB, see scripts/visuals/showreel.mjs).
+# In 2026-11 most GIFs were 0.2-4.7 MiB; the six above 5 were the longest
+# flows (iOS TabBar 8.5 at 56 s; iOS ContextMenu, Button, LiquidGlass and
+# TextField 6-7 at 48-62 s; Android Button 11 at 33 s).
+GIF_MAX_MB="${GIF_MAX_MB:-5}"
+GIF_MIN_FPS="${GIF_MIN_FPS:-10}"
+
 # GIFS=ios-switch,android-switch converts only the GIFs named (and skips the
-# hero and showreel, which `yarn generate:visuals` builds)
+# hero and showreel, which `yarn generate:visuals` builds). Only those GIFs'
+# recordings need to exist then.
 
 echo "=== README GIF Generator ==="
 echo ""
@@ -53,7 +76,9 @@ echo ""
 echo "Step 3: Finding the newest recording of each flow..."
 
 # The newest passing recording of a flow across every artifacts run, so a
-# single-flow run (see CONTRIBUTING) refreshes just that component's GIFs
+# single-flow run (see CONTRIBUTING) refreshes just that component's GIFs.
+# The Android prefix matches both android.emu.release and android.att.release
+# runs (an emulator pinned with DETOX_DEVICE_NAME=emulator-<port>).
 newest_flow() {
     local config_prefix="$1" flow="$2"
     find "$ARTIFACTS_DIR" -type f -path "*/${config_prefix}.*/✓ Platform Components Example should test ${flow}/test.mp4" -print0 2>/dev/null \
@@ -66,6 +91,7 @@ newest_recording() {
 }
 
 # Locate the 39 video files (LiquidGlass is iOS-only)
+ANDROID_RUNS='android.*.release'
 IOS_TEXTFIELD=$(newest_recording ios.sim.release "Text Field")
 IOS_DATEPICKER=$(newest_recording ios.sim.release "Date Picker")
 IOS_SELECTIONMENU=$(newest_recording ios.sim.release "Selection Menu")
@@ -86,35 +112,39 @@ IOS_GLASSDISCLOSURE=$(newest_recording ios.sim.release "Glass Disclosure")
 IOS_PROGRESSINDICATOR=$(newest_recording ios.sim.release "Progress Indicator")
 IOS_LIQUIDGLASS=$(newest_recording ios.sim.release "Liquid Glass")
 IOS_THEME=$(newest_recording ios.sim.release "Theme")
-ANDROID_TEXTFIELD=$(newest_recording android.emu.release "Text Field")
-ANDROID_DATEPICKER=$(newest_recording android.emu.release "Date Picker")
-ANDROID_SELECTIONMENU=$(newest_recording android.emu.release "Selection Menu")
-ANDROID_CONTEXTMENU=$(newest_recording android.emu.release "Context Menu")
-ANDROID_ACTIONSHEET=$(newest_recording android.emu.release "Action Sheet")
-ANDROID_DIALOG=$(newest_recording android.emu.release "Dialog")
-ANDROID_CHIP=$(newest_flow android.emu.release "Chip group selection")
-ANDROID_SWITCH=$(newest_recording android.emu.release "Switch")
-ANDROID_CHECKBOX=$(newest_recording android.emu.release "Checkbox")
-ANDROID_RADIOGROUP=$(newest_flow android.emu.release "Radio Group selection")
-ANDROID_SEGMENTEDCONTROL=$(newest_recording android.emu.release "Segmented Control")
-ANDROID_TABBAR=$(newest_recording android.emu.release "Tab Bar")
-ANDROID_NAVIGATIONRAIL=$(newest_recording android.emu.release "Navigation Rail")
-ANDROID_BUTTON=$(newest_recording android.emu.release "Button")
-ANDROID_FAB=$(newest_recording android.emu.release "Floating Action Button")
-ANDROID_FLOATINGTOOLBAR=$(newest_recording android.emu.release "Floating Toolbar")
-ANDROID_GLASSDISCLOSURE=$(newest_recording android.emu.release "Glass Disclosure")
-ANDROID_PROGRESSINDICATOR=$(newest_recording android.emu.release "Progress Indicator")
-ANDROID_THEME=$(newest_recording android.emu.release "Theme")
+ANDROID_TEXTFIELD=$(newest_recording "$ANDROID_RUNS" "Text Field")
+ANDROID_DATEPICKER=$(newest_recording "$ANDROID_RUNS" "Date Picker")
+ANDROID_SELECTIONMENU=$(newest_recording "$ANDROID_RUNS" "Selection Menu")
+ANDROID_CONTEXTMENU=$(newest_recording "$ANDROID_RUNS" "Context Menu")
+ANDROID_ACTIONSHEET=$(newest_recording "$ANDROID_RUNS" "Action Sheet")
+ANDROID_DIALOG=$(newest_recording "$ANDROID_RUNS" "Dialog")
+ANDROID_CHIP=$(newest_flow "$ANDROID_RUNS" "Chip group selection")
+ANDROID_SWITCH=$(newest_recording "$ANDROID_RUNS" "Switch")
+ANDROID_CHECKBOX=$(newest_recording "$ANDROID_RUNS" "Checkbox")
+ANDROID_RADIOGROUP=$(newest_flow "$ANDROID_RUNS" "Radio Group selection")
+ANDROID_SEGMENTEDCONTROL=$(newest_recording "$ANDROID_RUNS" "Segmented Control")
+ANDROID_TABBAR=$(newest_recording "$ANDROID_RUNS" "Tab Bar")
+ANDROID_NAVIGATIONRAIL=$(newest_recording "$ANDROID_RUNS" "Navigation Rail")
+ANDROID_BUTTON=$(newest_recording "$ANDROID_RUNS" "Button")
+ANDROID_FAB=$(newest_recording "$ANDROID_RUNS" "Floating Action Button")
+ANDROID_FLOATINGTOOLBAR=$(newest_recording "$ANDROID_RUNS" "Floating Toolbar")
+ANDROID_GLASSDISCLOSURE=$(newest_recording "$ANDROID_RUNS" "Glass Disclosure")
+ANDROID_PROGRESSINDICATOR=$(newest_recording "$ANDROID_RUNS" "Progress Indicator")
+ANDROID_THEME=$(newest_recording "$ANDROID_RUNS" "Theme")
 
-# Verify all files exist (LiquidGlass is iOS-only, no Android video)
-for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SWITCH" "$IOS_CHECKBOX" "$IOS_RADIOGROUP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_GLASSDISCLOSURE" "$IOS_PROGRESSINDICATOR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SWITCH" "$ANDROID_CHECKBOX" "$ANDROID_RADIOGROUP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_GLASSDISCLOSURE" "$ANDROID_PROGRESSINDICATOR" "$ANDROID_THEME"; do
+# Verify all files exist (LiquidGlass is iOS-only, no Android video). With
+# GIFS set, convert_to_gif checks just the recordings it converts.
+[ -n "$GIFS" ] || for f in "$IOS_TEXTFIELD" "$IOS_DATEPICKER" "$IOS_SELECTIONMENU" "$IOS_CONTEXTMENU" "$IOS_ACTIONSHEET" "$IOS_DIALOG" "$IOS_CHIP" "$IOS_SWITCH" "$IOS_CHECKBOX" "$IOS_RADIOGROUP" "$IOS_SEGMENTEDCONTROL" "$IOS_TABBAR" "$IOS_NAVIGATIONRAIL" "$IOS_BUTTON" "$IOS_FAB" "$IOS_FLOATINGTOOLBAR" "$IOS_GLASSDISCLOSURE" "$IOS_PROGRESSINDICATOR" "$IOS_LIQUIDGLASS" "$IOS_THEME" "$ANDROID_TEXTFIELD" "$ANDROID_DATEPICKER" "$ANDROID_SELECTIONMENU" "$ANDROID_CONTEXTMENU" "$ANDROID_ACTIONSHEET" "$ANDROID_DIALOG" "$ANDROID_CHIP" "$ANDROID_SWITCH" "$ANDROID_CHECKBOX" "$ANDROID_RADIOGROUP" "$ANDROID_SEGMENTEDCONTROL" "$ANDROID_TABBAR" "$ANDROID_NAVIGATIONRAIL" "$ANDROID_BUTTON" "$ANDROID_FAB" "$ANDROID_FLOATINGTOOLBAR" "$ANDROID_GLASSDISCLOSURE" "$ANDROID_PROGRESSINDICATOR" "$ANDROID_THEME"; do
     if [ -z "$f" ] || [ ! -f "$f" ]; then
         echo "Error: No recording found for one of the flows (run its Detox test first)"
         exit 1
     fi
 done
 
-echo "All 39 videos found!"
+[ -n "$GIFS" ] || echo "All 39 videos found!"
+
+# GIFs still over GIF_MAX_MB at GIF_MIN_FPS (see convert_to_gif)
+OVER_BUDGET=()
 
 # Create temp directory for processing
 TEMP_DIR=$(mktemp -d)
@@ -132,18 +162,40 @@ convert_to_gif() {
     local pause_cap="${5:-0}"
 
     # GIFS=ios-switch,android-switch converts just those
-    if [ -n "$GIFS" ] && [[ ",$GIFS," != *",$(basename "$output" .gif),"* ]]; then
+    local name
+    name="$(basename "$output" .gif)"
+    if [ -n "$GIFS" ] && [[ ",$GIFS," != *",$name,"* ]]; then
         return
     fi
+    if [ -z "$input" ] || [ ! -f "$input" ]; then
+        echo "Error: No recording found for $name.gif (run its Detox test first)"
+        exit 1
+    fi
+    local var_name
+    var_name="$(echo "$name" | tr 'a-z-' 'A-Z_')"
 
     # A trim set by hand wins over the detected one: TRIM_<GIF NAME>, e.g.
     # TRIM_ANDROID_CHECKBOX=7.3 for android-checkbox.gif. The detection looks
     # for the largest change on screen, and a demo that looks much like the
     # Date Picker one (white cards on the same background) can score below
     # the flow's own first steps
-    local override="TRIM_$(basename "$output" .gif | tr 'a-z-' 'A-Z_')"
+    local override="TRIM_$var_name"
     if [ -n "${!override}" ]; then
         trim_start="${!override}"
+    fi
+
+    # The length cap: MAX_<GIF NAME>, else the platform's (see
+    # IOS_GIF_MAX_SECONDS). It cuts the GIF's own timeline, after the pauses
+    # are shortened, so it keeps as much of the flow as it can, and after the
+    # frame rate is fixed: on the recordings' variable frame rate the last
+    # frame kept would otherwise hold until the next one, seconds later
+    local max_override="MAX_$var_name"
+    local max_seconds="$IOS_GIF_MAX_SECONDS"
+    [[ "$name" == android-* ]] && max_seconds="$ANDROID_GIF_MAX_SECONDS"
+    [ -n "${!max_override}" ] && max_seconds="${!max_override}"
+    local cap=""
+    if [ "$max_seconds" != "0" ]; then
+        cap="trim=duration=$max_seconds,"
     fi
 
     local trimmed_input="$input"
@@ -170,17 +222,41 @@ convert_to_gif() {
     # differences between frames and applied with an ordered dither: it keeps
     # text edges clean, and unlike error diffusion it leaves unchanged pixels
     # unchanged from frame to frame, so the long flows that scroll stay a
-    # reasonable size.
-    echo "  Generating palette for $(basename "$output")..."
-    ffmpeg -y -i "$trimmed_input" -vf "${pauses}fps=$fps,scale=$GIF_WIDTH:-1:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" "$TEMP_DIR/palette.png" 2>/dev/null
+    # reasonable size. Over budget, it is encoded again at a lower frame rate
+    # (see GIF_MAX_MB).
+    local budget=$((GIF_MAX_MB * 1024 * 1024))
+    local size
+    while true; do
+        echo "  Generating palette for $name.gif ($fps fps)..."
+        ffmpeg -y -i "$trimmed_input" -vf "${pauses}fps=$fps,${cap}scale=$GIF_WIDTH:-1:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" "$TEMP_DIR/palette.png" 2>/dev/null
 
-    echo "  Creating GIF: $(basename "$output")..."
-    ffmpeg -y -i "$trimmed_input" -i "$TEMP_DIR/palette.png" \
-        -filter_complex "${pauses}fps=$fps,scale=$GIF_WIDTH:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" \
-        "$output" 2>/dev/null
+        echo "  Creating GIF: $name.gif..."
+        ffmpeg -y -i "$trimmed_input" -i "$TEMP_DIR/palette.png" \
+            -filter_complex "${pauses}fps=$fps,${cap}scale=$GIF_WIDTH:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" \
+            "$output" 2>/dev/null
 
-    local size=$(du -h "$output" | cut -f1)
-    echo "  Done: $output ($size)"
+        size=$(wc -c < "$output" | tr -d ' ')
+        if [ "$size" -le "$budget" ] || [ "$fps" -le "$GIF_MIN_FPS" ]; then
+            break
+        fi
+        local lower=$((fps * 3 / 5))
+        [ "$lower" -lt "$GIF_MIN_FPS" ] && lower="$GIF_MIN_FPS"
+        echo "  $name.gif is $(mib "$size") MiB, over the ${GIF_MAX_MB} MiB budget; trying $lower fps"
+        fps="$lower"
+    done
+
+    local seconds
+    seconds=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$output")
+    echo "  Done: $output ($(mib "$size") MiB, ${seconds%.*} s, $fps fps)"
+    if [ "$size" -gt "$budget" ]; then
+        echo "  Warning: $name.gif is over the ${GIF_MAX_MB} MiB budget; shorten it with MAX_$var_name=<s>"
+        OVER_BUDGET+=("$name.gif ($(mib "$size") MiB)")
+    fi
+}
+
+# Bytes as MiB with one decimal
+mib() {
+    awk -v b="$1" 'BEGIN { printf "%.1f", b / 1048576 }'
 }
 
 # Seconds to trim from a test that navigates from the Date Picker demo: up to
@@ -263,6 +339,15 @@ convert_to_gif "$ANDROID_FLOATINGTOOLBAR" "$ASSETS_DIR/android-floatingtoolbar.g
 convert_to_gif "$ANDROID_GLASSDISCLOSURE" "$ASSETS_DIR/android-glassdisclosure.gif" "$(navigation_trim "$ANDROID_GLASSDISCLOSURE" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_PROGRESSINDICATOR" "$ASSETS_DIR/android-progressindicator.gif" "$(navigation_trim "$ANDROID_PROGRESSINDICATOR" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
 convert_to_gif "$ANDROID_THEME" "$ASSETS_DIR/android-theme.gif" "$(navigation_trim "$ANDROID_THEME" "$ANDROID_NAV_WINDOW" "$ANDROID_NAV_FROM")" "" "$ANDROID_PAUSE_CAP"
+
+if [ ${#OVER_BUDGET[@]} -gt 0 ]; then
+    echo ""
+    echo "Over the ${GIF_MAX_MB} MiB budget at ${GIF_MIN_FPS} fps:"
+    printf '  %s\n' "${OVER_BUDGET[@]}"
+    if [ -n "$GIF_STRICT" ]; then
+        exit 1
+    fi
+fi
 
 echo ""
 if [ -n "$GIFS" ]; then
