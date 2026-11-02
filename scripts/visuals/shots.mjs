@@ -16,17 +16,34 @@ export const COMPONENTS = [
     native: { ios: 'useNativeTheme()', android: 'brand color and appearance, app-wide' },
     caption: 'Brand color and dark mode from JavaScript, applied to every component',
     // The brand color moving through the Buttons, Switch, Checkbox,
-    // RadioGroup, ProgressIndicator and Chips at the top of the demo: Default,
-    // Teal, Indigo, then Orange on iOS; Teal, Indigo, Orange, a Switch toggle
-    // and a segment on Android. Dark mode comes later in the flows (10 s
-    // later on iOS), and Android blanks the components for a frame as the
-    // appearance changes, so the clips stop before it; the hero's dark tiles
-    // show it instead. The iOS start sits before a still stretch of the
-    // recording: a start inside one skips ahead to the next change.
+    // RadioGroup, ProgressIndicator and Chips at the top of the demo:
+    // Default, Teal, Indigo, Orange, then dark mode and Teal again while
+    // dark. The flows wait 2-10 s between those steps (and toggle the Switch
+    // and pick a segment before going dark), so each clip is cut from
+    // segments around the changes; the content holds still between them, so
+    // the cuts barely show. Segment starts are the recordings' own
+    // timestamps, not -ss positions (see showreel.mjs).
     clip: {
-      duration: 9.5,
-      ios: { start: 8.4, crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.84 } },
-      android: { start: 27.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 } },
+      duration: 9.0,
+      ios: {
+        segments: [
+          { start: 10.3, duration: 1.7 }, // Teal at 10.83
+          { start: 13.6, duration: 1.5 }, // Indigo at 13.97
+          { start: 16.7, duration: 1.6 }, // Orange at 17.10
+          { start: 27.5, duration: 2.1 }, // dark at 28.24
+          { start: 30.8, duration: 2.1 }, // Teal at 31.34
+        ],
+        crop: { x: 0.03, y: 0.12, w: 0.94, h: 0.84 },
+      },
+      android: {
+        segments: [
+          { start: 19.6, duration: 1.7 }, // Teal at 20.23
+          { start: 21.7, duration: 1.5 }, // Indigo at 22.13
+          { start: 23.4, duration: 1.6 }, // Orange at 23.83
+          { start: 29.25, duration: 4.2 }, // dark at 30.28, Teal at 31.95
+        ],
+        crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.82 },
+      },
     },
   },
   {
@@ -39,14 +56,14 @@ export const COMPONENTS = [
       // whole on the card's own color. Android's embedded date picker is the
       // spinner, so its tile shows the embedded time picker's clock instead.
       ios: { time: 10.5, crop: { x: 0.13, y: 0.553, w: 0.74, h: 0.392 }, bg: '#e3e7e9' },
-      android: { time: 10.2, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2' },
+      android: { time: 10.6, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2' },
     },
     // The social card's tile is wider than tall: the clock fitted whole
     social: {
-      android: { time: 10.2, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2', fit: 'contain' },
+      android: { time: 10.6, crop: { x: 0.04, y: 0.35, w: 0.92, h: 0.32 }, bg: '#9ea3a2', fit: 'contain' },
     },
     clip: {
-      ios: { start: 7.7, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
+      ios: { start: 8.2, crop: { x: 0.03, y: 0.36, w: 0.94, h: 0.57 } },
       android: { start: 8.4, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.78 } },
     },
   },
@@ -122,8 +139,8 @@ export const COMPONENTS = [
     test: 'Button',
     native: { ios: 'UIButton', android: 'MaterialButton' },
     still: {
-      ios: { time: 48.0, crop: { x: 0.03, y: 0.1, w: 0.94, h: 0.6 } },
-      android: { time: 36.1, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.56 } },
+      ios: { time: 47.0, crop: { x: 0.03, y: 0.1, w: 0.94, h: 0.6 } },
+      android: { time: 35.8, crop: { x: 0.03, y: 0.3, w: 0.94, h: 0.56 } },
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.4 } },
@@ -159,7 +176,7 @@ export const COMPONENTS = [
     // switches and the custom colors. The clip turns Wi-Fi off and on again.
     still: {
       ios: { time: 11.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.47 } },
-      android: { time: 11.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.45 } },
+      android: { time: 10.2, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.45 } },
     },
     clip: {
       ios: { start: 4.8, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.3 } },
@@ -226,12 +243,12 @@ export const COMPONENTS = [
     // The clips run the demo's simulated upload from 0 to 100%
     still: {
       ios: { time: 19.7, crop: { x: 0.03, y: 0.475, w: 0.94, h: 0.47 } },
-      android: { time: 32.9, crop: { x: 0.03, y: 0.47, w: 0.94, h: 0.45 } },
+      android: { time: 18.9, crop: { x: 0.03, y: 0.47, w: 0.94, h: 0.45 } },
     },
     clip: {
       duration: 4.5,
       ios: { start: 17.05, crop: { x: 0.03, y: 0.14, w: 0.94, h: 0.56 } },
-      android: { start: 14.5, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.6 } },
+      android: { start: 15.7, crop: { x: 0.03, y: 0.135, w: 0.94, h: 0.6 } },
     },
   },
   {
@@ -296,7 +313,7 @@ export const COMPONENTS = [
     native: { ios: 'UIMenu', android: 'Material exposed dropdown' },
     still: {
       ios: { time: 20.7, crop: { x: 0.22, y: 0.26, w: 0.75, h: 0.36 } },
-      android: { time: 10.2, crop: { x: 0.2, y: 0.47, w: 0.75, h: 0.32 } },
+      android: { time: 9.6, crop: { x: 0.2, y: 0.47, w: 0.75, h: 0.32 } },
     },
     clip: {
       ios: { start: 4.0, crop: { x: 0.03, y: 0.24, w: 0.94, h: 0.48 } },
@@ -340,7 +357,7 @@ export const COMPONENTS = [
     clip: {
       duration: 4.0,
       ios: { start: 10.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
-      android: { start: 8.2, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
+      android: { start: 6.9, crop: { x: 0.03, y: 0.13, w: 0.94, h: 0.45 } },
     },
   },
   {
@@ -355,21 +372,26 @@ export const COMPONENTS = [
       ios: { time: 19.0, crop: { x: 0.03, y: 0.175, w: 0.94, h: 0.19 } },
     },
     clip: {
-      ios: { start: 13.0, crop: { x: 0.03, y: 0.155, w: 0.94, h: 0.22 } },
+      ios: { start: 18.0, crop: { x: 0.03, y: 0.155, w: 0.94, h: 0.22 } },
     },
   },
 ];
 
-/** The Theme demo in dark appearance, for the hero's dark-mode tiles. */
+/**
+ * The Theme demo in dark appearance with the Teal brand color, for the
+ * hero's dark-mode tiles: the Components card from the Buttons down (the
+ * Switch, Checkbox, RadioGroup, ProgressIndicator and Chips, and on iOS the
+ * segments and the selection menu too).
+ */
 export const THEME_DARK = {
-  ios: { time: 22.5, crop: { x: 0.03, y: 0.41, w: 0.94, h: 0.52 } },
-  android: { time: 21.0, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
+  ios: { time: 33.0, crop: { x: 0.03, y: 0.414, w: 0.94, h: 0.47 } },
+  android: { time: 32.6, crop: { x: 0.03, y: 0.433, w: 0.94, h: 0.44 } },
 };
 
-/** The Theme demo in light appearance with the same brand color (Teal). */
+/** The same, in light appearance with the same brand color (Teal). */
 export const THEME_LIGHT = {
-  ios: { time: 8.5, crop: { x: 0.03, y: 0.41, w: 0.94, h: 0.52 } },
-  android: { time: 14.1, crop: { x: 0.03, y: 0.43, w: 0.94, h: 0.53 } },
+  ios: { time: 11.6, crop: { x: 0.03, y: 0.414, w: 0.94, h: 0.47 } },
+  android: { time: 21.0, crop: { x: 0.03, y: 0.433, w: 0.94, h: 0.44 } },
 };
 
 export const byKey = Object.fromEntries(COMPONENTS.map((c) => [c.key, c]));
