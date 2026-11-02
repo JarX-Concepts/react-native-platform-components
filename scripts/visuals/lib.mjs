@@ -15,7 +15,13 @@ export const ASSETS_DIR = path.join(PROJECT_DIR, 'assets');
 export const DOCS_STATIC_DIR = path.join(PROJECT_DIR, 'docs', 'static');
 export const ARTIFACTS_DIR = path.join(PROJECT_DIR, 'example', 'artifacts');
 
-export const CONFIG_PREFIX = { ios: 'ios.sim.release', android: 'android.emu.release' };
+// Android runs count from android.emu.release and from android.att.release
+// (an emulator pinned with DETOX_DEVICE_NAME=emulator-<port>), as in
+// scripts/generate-readme-gifs.sh
+export const CONFIG_PREFIXES = {
+  ios: ['ios.sim.release'],
+  android: ['android.emu.release', 'android.att.release'],
+};
 
 export function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -65,12 +71,12 @@ export function probe(file) {
  * "should test" (see flowOf in shots.mjs).
  */
 export function newestRecording(platform, flow) {
-  const prefix = CONFIG_PREFIX[platform];
+  const prefixes = CONFIG_PREFIXES[platform];
   const wanted = `✓ Platform Components Example should test ${flow}`;
   if (!fs.existsSync(ARTIFACTS_DIR)) return null;
   const candidates = [];
   for (const runDir of fs.readdirSync(ARTIFACTS_DIR)) {
-    if (!runDir.startsWith(`${prefix}.`)) continue;
+    if (!prefixes.some((prefix) => runDir.startsWith(`${prefix}.`))) continue;
     const file = path.join(ARTIFACTS_DIR, runDir, wanted, 'test.mp4');
     if (fs.existsSync(file)) {
       candidates.push({ file, mtime: fs.statSync(file).mtimeMs });
