@@ -1,5 +1,6 @@
 package platformcomponents.example
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,6 +12,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.DatePicker
@@ -28,6 +30,7 @@ import com.facebook.react.bridge.ReadableNativeMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.common.mapbuffer.ReadableMapBuffer
 import com.facebook.react.uimanager.StateWrapper
+import com.facebook.react.views.view.ReactViewGroup
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -49,6 +52,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.platformcomponents.PCDatePickerView
 import com.platformcomponents.PCButtonGroupView
+import com.platformcomponents.PCButtonView
+import com.platformcomponents.PCCheckboxView
+import com.platformcomponents.PCChipView
 import com.platformcomponents.PCButtonSupport
 import com.platformcomponents.PCContextMenuView
 import com.platformcomponents.PCImageLoader
@@ -56,6 +62,7 @@ import com.platformcomponents.PCNavigationBarSupport
 import com.platformcomponents.PCNavigationRailView
 import com.platformcomponents.PCSegmentedControlView
 import com.platformcomponents.PCSelectionMenuView
+import com.platformcomponents.PCSwitchView
 import com.platformcomponents.PCTabBarView
 import com.platformcomponents.PCTextFieldView
 import java.io.ByteArrayOutputStream
@@ -258,6 +265,111 @@ class NativeRegressionTest {
       inputIn(field).onEditorAction(EditorInfo.IME_ACTION_DONE)
       assertEquals("uv", submitted)
     }
+  }
+
+  /**
+   * A rebuild (a prop change, or a native theme change such as a light/dark
+   * switch) replaces a view's widgets, and the view lays them out itself
+   * because React Native's parents ignore requestLayout. That pass used to be
+   * posted behind the frame the rebuild had already scheduled, so the frame
+   * drew the new widgets unmeasured and every library widget blanked for a
+   * frame on each light/dark or brand color switch.
+   */
+  @Test
+  fun rebuiltWidgetsAreLaidOutBeforeTheNextFrameDraws() {
+    lateinit var views: List<ViewGroup>
+    lateinit var button: PCButtonView
+    onMain {
+      val parent = ReactViewGroup(activity)
+      host.addView(parent, FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      ))
+      button = PCButtonView(activity).apply { applyLabel("Save") }
+      views = listOf(
+        button,
+        PCSwitchView(activity).apply { applyLabel("Notifications") },
+        PCCheckboxView(activity).apply { applyLabel("Remember me") },
+        PCChipView(activity).apply { applyLabel("Photos") },
+        PCSegmentedControlView(activity).apply {
+          applySegments(listOf(segment("day"), segment("week")))
+          applySelectedValue("week")
+        },
+      )
+      // Placed the way Fabric places views: measured and laid out by the
+      // mounting layer, under a parent that doesn't lay out its children
+      views.forEachIndexed { index, view ->
+        parent.addView(view)
+        val top = index * 200
+        view.measure(
+          View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(160, View.MeasureSpec.EXACTLY)
+        )
+        view.layout(0, top, 800, top + 160)
+      }
+    }
+    settle()
+
+    // A prop change that rebuilds the button
+    expectLaidOutOnNextDraw(views, rebuilt = listOf(button)) { button.applyLabel("Share") }
+    // A light/dark switch rebuilds every library view, then back
+    expectLaidOutOnNextDraw(views, rebuilt = views) { dispatchNightMode(dark = !isNight()) }
+    expectLaidOutOnNextDraw(views, rebuilt = views) { dispatchNightMode(dark = !isNight()) }
+  }
+
+  private var dispatchedNight: Boolean? = null
+
+  private fun isNight(): Boolean = dispatchedNight
+    ?: ((activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+      Configuration.UI_MODE_NIGHT_YES)
+
+  /**
+   * What the activity's configuration listeners get when `Appearance.setColorScheme`
+   * switches AppCompat's night mode in an activity that handles uiMode changes.
+   */
+  private fun dispatchNightMode(dark: Boolean) {
+    dispatchedNight = dark
+    val config = Configuration(activity.resources.configuration)
+    val night = if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+    config.uiMode = night or (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
+    activity.onConfigurationChanged(config)
+  }
+
+  /**
+   * Runs [change], which replaces the widgets of the [rebuilt] views, then checks
+   * that the next frame draws every view laid out.
+   */
+  private fun expectLaidOutOnNextDraw(
+    views: List<ViewGroup>,
+    rebuilt: List<ViewGroup>,
+    change: () -> Unit
+  ) {
+    val drawn = CountDownLatch(1)
+    val unlaid = mutableListOf<String>()
+    onMain {
+      val before = rebuilt.map { it.getChildAt(0) }
+      change()
+      rebuilt.zip(before).forEach { (view, old) ->
+        assertFalse("${view.javaClass.simpleName} wasn't rebuilt", view.getChildAt(0) === old)
+      }
+      val observer = host.viewTreeObserver
+      observer.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
+        override fun onDraw() {
+          if (drawn.count == 0L) return
+          views.forEach { view ->
+            descendants(view)
+              .filter { it.visibility != View.GONE && it.isLayoutRequested }
+              .forEach { unlaid += "${view.javaClass.simpleName} > ${it.javaClass.simpleName}" }
+          }
+          drawn.countDown()
+          // Draw listeners can't be removed while they're dispatched
+          host.post { observer.removeOnDrawListener(this) }
+        }
+      })
+    }
+    assertTrue("No frame was drawn after the change", drawn.await(5, TimeUnit.SECONDS))
+    assertEquals("Drawn before being laid out", emptyList<String>(), unlaid)
+    settle()
   }
 
   @Test

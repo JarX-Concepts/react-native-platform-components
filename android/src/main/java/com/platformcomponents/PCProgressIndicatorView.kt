@@ -175,7 +175,23 @@ class PCProgressIndicatorView(context: Context) : FrameLayout(context) {
       // then switches to determinate (Material's own transition)
       if (indicator.isIndeterminate || indicator.progress != target) {
         indicator.setProgressCompat(target, animated)
+        if (!animated) skipFirstSpringFrame(indicator)
       }
+    }
+  }
+
+  /**
+   * Material starts its progress spring on every level change, even when
+   * `setProgressCompat(animated = false)` then jumps to the value. The spring's
+   * first frame puts its start value (0 on a new indicator) back, and it only
+   * ends on the next frame, so a rebuilt indicator (for a light/dark or brand
+   * color switch) drew empty for a frame. Jumps again after that first frame,
+   * which runs earlier in the same frame's animation callbacks.
+   */
+  private fun skipFirstSpringFrame(indicator: BaseProgressIndicator<*>) {
+    if (indicator.isIndeterminate) return
+    indicator.postOnAnimation {
+      if (!indicator.isIndeterminate) indicator.progressDrawable?.jumpToCurrentState()
     }
   }
 
@@ -203,7 +219,7 @@ class PCProgressIndicatorView(context: Context) : FrameLayout(context) {
     super.requestLayout()
     if (!manualLayoutPending) {
       manualLayoutPending = true
-      post { runManualLayout() }
+      PCManualLayout.beforeNextDraw(this) { if (manualLayoutPending) runManualLayout() }
     }
   }
 

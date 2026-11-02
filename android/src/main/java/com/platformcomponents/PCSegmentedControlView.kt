@@ -509,7 +509,7 @@ class PCSegmentedControlView(context: Context) :
     super.requestLayout()
     if (!manualLayoutPending) {
       manualLayoutPending = true
-      post { runManualLayout() }
+      PCManualLayout.beforeNextDraw(this) { if (manualLayoutPending) runManualLayout() }
     }
   }
 
