@@ -1,5 +1,26 @@
 # Changelog
 
+# [1.10.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.9.0...v1.10.0) (2026-11-06)
+
+### Bug Fixes
+
+* **android:** draw a rebuilt progress indicator at its value from the first frame ([8dd635b](https://github.com/JarX-Concepts/react-native-platform-components/commit/8dd635bee8d02db6977e241131792227d96450cd))
+* **android:** keep the JS-set dark mode when the brand color changes ([2d1834d](https://github.com/JarX-Concepts/react-native-platform-components/commit/2d1834d6f4053c4db2df7e1ff66fc54707d52796))
+* **android:** lay rebuilt widgets out before the next frame draws ([06b8223](https://github.com/JarX-Concepts/react-native-platform-components/commit/06b8223ba87d1c7e2f58d58a74a37054fece4a06))
+* **android:** put each testID's resource-id on the element with the label ([109a36e](https://github.com/JarX-Concepts/react-native-platform-components/commit/109a36e2be4a060a066d4858e3b82c2d64988bfd)), closes [#156](https://github.com/JarX-Concepts/react-native-platform-components/issues/156)
+* **button:** put testID on the native button that has the label ([d419d3d](https://github.com/JarX-Concepts/react-native-platform-components/commit/d419d3dd0e8b8fde8bfc25d29e7054569568035c)), closes [#149](https://github.com/JarX-Concepts/react-native-platform-components/issues/149)
+* give the views that carry item testIDs their labels ([40ddd0b](https://github.com/JarX-Concepts/react-native-platform-components/commit/40ddd0b2537fb7a626aa9e44291056cc2ba9e341))
+* **GlassDisclosure:** size the glass container to the closed pill ([5b68c15](https://github.com/JarX-Concepts/react-native-platform-components/commit/5b68c15b9b6d2e4f0f6d65875f5eadd8d780bdf4)), closes [#148](https://github.com/JarX-Concepts/react-native-platform-components/issues/148)
+* report a disabled state on the element that carries the testID ([b920722](https://github.com/JarX-Concepts/react-native-platform-components/commit/b920722c3f92b0c42d1922159658f72a87032a78))
+* **selection-menu:** put the embedded menu's testID and label on the field ([b7497c4](https://github.com/JarX-Concepts/react-native-platform-components/commit/b7497c4c6b8b7db27c4564d7b84d9f63610e8912))
+
+### Features
+
+* add Checkbox and RadioGroup ([2a428f9](https://github.com/JarX-Concepts/react-native-platform-components/commit/2a428f936d1cfc127436529ddf4f041f06901f54)), closes [#149](https://github.com/JarX-Concepts/react-native-platform-components/issues/149) [#152](https://github.com/JarX-Concepts/react-native-platform-components/issues/152)
+* add ProgressIndicator, native linear, circular and loading progress ([3ac2097](https://github.com/JarX-Concepts/react-native-platform-components/commit/3ac2097588dae1e799e7da05c6044c63d066b7e7)), closes [#150](https://github.com/JarX-Concepts/react-native-platform-components/issues/150)
+* add Switch (Material 3 MaterialSwitch on Android, UISwitch on iOS) ([53feeb8](https://github.com/JarX-Concepts/react-native-platform-components/commit/53feeb83e3098dd94193f06632ce309c36ebbd94)), closes [#151](https://github.com/JarX-Concepts/react-native-platform-components/issues/151)
+* **button-group:** give each button its own testID ([a1b39ac](https://github.com/JarX-Concepts/react-native-platform-components/commit/a1b39ac6398313bdbe949bcf4d0b26fc19a4601a))
+
 # [1.9.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.8.0...v1.9.0) (2026-10-31)
 
 ### Bug Fixes
