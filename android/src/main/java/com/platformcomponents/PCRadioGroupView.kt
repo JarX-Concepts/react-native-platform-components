@@ -1,6 +1,7 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.os.Build
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -8,6 +9,7 @@ import android.text.style.AbsoluteSizeSpan
 import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.CompoundButton
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
@@ -46,6 +48,7 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
   var errorState: String = "none" // "none" | "error"
   var errorText: String = ""
   var interactivity: String = "enabled" // "enabled" | "disabled"
+  var color: Int? = null // the chosen option's button; null = the theme's
   var groupLabel: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
 
@@ -63,6 +66,9 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
 
   /** Set by the apply* calls that need new radio buttons; see commit(). */
   private var needsRebuild = false
+
+  /** The theme's tint of the radio buttons, captured when they are built, under `color`. */
+  private var themeButtonTint: ColorStateList? = null
 
   // --- Native theme ---
   private var builtThemeVersion = PCNativeTheme.version
@@ -100,6 +106,12 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
     if (interactivity == next) return
     interactivity = next
     needsRebuild = true
+  }
+
+  fun applyColor(value: Int?) {
+    if (color == value) return
+    color = value
+    applyButtonTints()
   }
 
   fun applyGroupLabel(value: String) {
@@ -176,6 +188,9 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
     }
     c.addView(g, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     group = g
+    // The options share the theme's tint
+    themeButtonTint = (g.getChildAt(0) as? CompoundButton)?.let { PCSelectionSupport.themeButtonTint(it) }
+    applyButtonTints()
 
     val error = PCSelectionSupport.createErrorText(base).apply {
       PCThemeSupport.capTextSize(this, maxFontSizeMultiplier)
@@ -210,6 +225,13 @@ class PCRadioGroupView(context: Context) : PCSelectionHostView(context) {
       setSpan(AbsoluteSizeSpan(probe.textSize.toInt()), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
       setSpan(ForegroundColorSpan(color), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
+  }
+
+  /** `color` on the checked option; the theme's in every other state. */
+  private fun applyButtonTints() {
+    val g = group ?: return
+    val tint = PCSelectionSupport.withCheckedColor(themeButtonTint, color)
+    for (i in 0 until g.childCount) (g.getChildAt(i) as? CompoundButton)?.buttonTintList = tint
   }
 
   private fun applyErrorState() {

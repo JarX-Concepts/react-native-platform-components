@@ -2,10 +2,10 @@ import UIKit
 
 /// A checkbox (Checkbox). UIKit has none; this is the iOS list idiom: a row
 /// with a leading `circle` that fills into `checkmark.circle.fill` in the
-/// tint color when checked (`minus.circle.fill` when indeterminate), and a
-/// label that wraps. In the error state the symbol turns red and the
-/// message sits under the label. The whole row is one control and one
-/// VoiceOver element (see `PCSelectionRow`).
+/// tint color (or `color`) when checked (`minus.circle.fill` when
+/// indeterminate), and a label that wraps. In the error state the symbol
+/// turns red and the message sits under the label. The whole row is one
+/// control and one VoiceOver element (see `PCSelectionRow`).
 ///
 /// Controlled: the row shows `checked`, and a tap reports the state it asks
 /// for.
@@ -35,6 +35,11 @@ public final class PCCheckboxView: UIView {
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
         didSet { if oldValue != interactivity { apply() } }
+    }
+
+    /// Color of the symbol while checked or indeterminate; nil = the tint color
+    public var color: UIColor? {
+        didSet { if oldValue != color { apply() } }
     }
 
     public var maxFontSizeMultiplier: CGFloat = 0 {
@@ -117,7 +122,7 @@ public final class PCCheckboxView: UIView {
             // An empty circle is drawn in gray, as in Reminders
             symbolColor = .tertiaryLabel
         } else {
-            symbolColor = nil // the tint color
+            symbolColor = color // nil = the tint color
         }
 
         row.configure(PCSelectionRow.Model(

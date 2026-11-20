@@ -3,8 +3,9 @@ import UIKit
 /// A single choice (RadioGroup). UIKit has no radio button; this is the iOS
 /// list idiom (Settings, `UITableViewCell.AccessoryType.checkmark`): a list
 /// of rows separated by hairlines, with a trailing `checkmark` in the tint
-/// color on the chosen row. A description goes under an option's label in
-/// the secondary color, and the validation message under the group in red.
+/// color (or `color`) on the chosen row. A description goes under an
+/// option's label in the secondary color, and the validation message under
+/// the group in red.
 ///
 /// Each row is one control and one VoiceOver element (see
 /// `PCSelectionRow`); the group is a semantic group VoiceOver names with
@@ -44,6 +45,11 @@ public final class PCRadioGroupView: UIView {
     /// "enabled" | "disabled"
     public var interactivity: String = "enabled" {
         didSet { if oldValue != interactivity { apply() } }
+    }
+
+    /// Color of the chosen row's checkmark; nil = the tint color
+    public var color: UIColor? {
+        didSet { if oldValue != color { apply() } }
     }
 
     public var maxFontSizeMultiplier: CGFloat = 0 {
@@ -170,7 +176,7 @@ public final class PCRadioGroupView: UIView {
                 detail: item.description,
                 symbolName: chosen ? "checkmark" : "",
                 symbolPlacement: .trailing,
-                symbolColor: disabled ? .tertiaryLabel : (showsError ? .systemRed : nil),
+                symbolColor: disabled ? .tertiaryLabel : (showsError ? .systemRed : color),
                 titleColor: disabled ? .tertiaryLabel : .label,
                 detailColor: disabled ? .tertiaryLabel : .secondaryLabel,
                 detailStyle: .subheadline,

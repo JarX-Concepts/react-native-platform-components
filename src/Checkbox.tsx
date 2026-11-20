@@ -1,6 +1,6 @@
 // Checkbox.tsx
 import React, { useCallback, useState } from 'react';
-import type { ViewProps } from 'react-native';
+import type { ColorValue, ViewProps } from 'react-native';
 
 import NativeCheckbox, {
   type CheckboxChangeEvent,
@@ -36,6 +36,17 @@ export interface CheckboxProps extends ViewProps {
 
   /** Whether the checkbox is disabled. */
   disabled?: boolean;
+
+  /**
+   * Color of the box while checked or indeterminate. Default: the theme's
+   * (iOS: the tint color, which follows the brand color set with
+   * `useNativeTheme`; Android: the Material theme's `colorPrimary`). The
+   * unchecked, disabled and error looks keep the theme's.
+   *
+   * iOS: the color of the `checkmark.circle.fill` / `minus.circle.fill`
+   * symbol. Android: `buttonTintList` (checked and indeterminate).
+   */
+  color?: ColorValue;
 
   /**
    * Error state. `true` shows the error look (Material 3's error colors on
@@ -74,6 +85,7 @@ export function Checkbox(props: CheckboxProps): React.ReactElement {
     onCheckedChange,
     label,
     disabled,
+    color,
     error,
     haptics,
     maxFontSizeMultiplier,
@@ -108,6 +120,7 @@ export function Checkbox(props: CheckboxProps): React.ReactElement {
       errorState={error ? 'error' : 'none'}
       errorText={typeof error === 'string' ? error : ''}
       interactivity={disabled ? 'disabled' : 'enabled'}
+      color={color}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       spokenLabel={accessibilityLabel ?? ''}
       haptics={haptics ?? ''}

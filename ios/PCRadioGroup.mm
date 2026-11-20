@@ -131,6 +131,11 @@ static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback
     _view.interactivity = NSStringFromStd(newProps.interactivity, @"enabled");
   }
 
+  // Colors arrive as SharedColor (already processed by React Native)
+  if (!prevProps || newProps.color != prevProps->color) {
+    _view.color = RCTUIColorFromSharedColor(newProps.color);
+  }
+
   if (!prevProps || newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
     _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
   }

@@ -1,6 +1,6 @@
 // RadioGroup.tsx
 import React, { useCallback, useMemo, useState } from 'react';
-import type { ViewProps } from 'react-native';
+import type { ColorValue, ViewProps } from 'react-native';
 
 import NativeRadioGroup, {
   type RadioGroupChangeEvent,
@@ -59,6 +59,19 @@ export interface RadioGroupProps extends ViewProps {
   disabled?: boolean;
 
   /**
+   * Color of the chosen option's mark. Default: the theme's (iOS: the tint
+   * color, which follows the brand color set with `useNativeTheme`;
+   * Android: the Material theme's `colorPrimary`). Unchosen and disabled
+   * options keep the theme's look, and so does the error state on iOS (a
+   * red checkmark). Material has no error look for radio buttons, so
+   * Android keeps `color` there.
+   *
+   * iOS: the chosen row's `checkmark`. Android: the `MaterialRadioButton`s'
+   * `buttonTintList` (checked).
+   */
+  color?: ColorValue;
+
+  /**
    * Haptic played when the user picks an option. Default: none, like the
    * native controls. See {@link Haptics}.
    */
@@ -88,6 +101,7 @@ export function RadioGroup(props: RadioGroupProps): React.ReactElement {
     onValueChange,
     error,
     disabled,
+    color,
     haptics,
     maxFontSizeMultiplier,
     accessibilityLabel,
@@ -129,6 +143,7 @@ export function RadioGroup(props: RadioGroupProps): React.ReactElement {
       errorState={error ? 'error' : 'none'}
       errorText={typeof error === 'string' ? error : ''}
       interactivity={disabled ? 'disabled' : 'enabled'}
+      color={color}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 0}
       groupLabel={accessibilityLabel ?? ''}
       haptics={haptics ?? ''}

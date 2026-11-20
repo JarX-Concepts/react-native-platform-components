@@ -442,6 +442,31 @@ describe('Checkbox and RadioGroup (web)', () => {
     change(inputs[1]!);
     expect(onValueChange).toHaveBeenCalledWith('express', 1);
   });
+
+  it('tints the inputs with color, except in the error state', () => {
+    const accent = (tree: ReactTestRenderer) =>
+      tree.root.findAllByType('input').map((i) => i.props.style.accentColor);
+    const options = [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B' },
+    ];
+
+    const checkbox = render(<Checkbox checked color="#2E7D32" />);
+    expect(accent(checkbox)).toEqual(['#2E7D32']);
+    act(() => checkbox.update(<Checkbox checked color="#2E7D32" error />));
+    expect(accent(checkbox)).toEqual(['#B3261E']);
+
+    const group = render(
+      <RadioGroup options={options} value="a" color="#2E7D32" />
+    );
+    expect(accent(group)).toEqual(['#2E7D32', '#2E7D32']);
+    act(() =>
+      group.update(
+        <RadioGroup options={options} value="a" color="#2E7D32" error />
+      )
+    );
+    expect(accent(group)).toEqual(['#B3261E', '#B3261E']);
+  });
 });
 
 describe('FloatingActionButton (web)', () => {
