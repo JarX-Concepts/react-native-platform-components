@@ -49,6 +49,7 @@ describe('Checkbox', () => {
     expect(props.errorState).toBe('none');
     expect(props.errorText).toBe('');
     expect(props.interactivity).toBe('enabled');
+    expect(props.color).toBeUndefined();
     expect(props.maxFontSizeMultiplier).toBe(0);
     expect(props.spokenLabel).toBe('');
     expect(props.haptics).toBe('');
@@ -56,12 +57,13 @@ describe('Checkbox', () => {
     act(() => tree.unmount());
   });
 
-  it('maps the checked, indeterminate, label and disabled props', () => {
+  it('maps the checked, indeterminate, label, disabled and color props', () => {
     const tree = render(
       <Checkbox
         checked
         label="I have read the terms"
         disabled
+        color="#2E7D32"
         haptics="selection"
         maxFontSizeMultiplier={1.5}
         accessibilityLabel="Accept the terms"
@@ -72,6 +74,7 @@ describe('Checkbox', () => {
     expect(props.checked).toBe('true');
     expect(props.label).toBe('I have read the terms');
     expect(props.interactivity).toBe('disabled');
+    expect(props.color).toBe('#2E7D32');
     expect(props.haptics).toBe('selection');
     expect(props.maxFontSizeMultiplier).toBe(1.5);
     expect(props.spokenLabel).toBe('Accept the terms');
@@ -170,19 +173,21 @@ describe('RadioGroup', () => {
     expect(props.errorState).toBe('none');
     expect(props.errorText).toBe('');
     expect(props.interactivity).toBe('enabled');
+    expect(props.color).toBeUndefined();
     expect(props.groupLabel).toBe('');
     expect(props.haptics).toBe('');
     expect(props.testID).toBe('delivery');
     act(() => tree.unmount());
   });
 
-  it('maps no value, the validation message, disabled and the group label', () => {
+  it('maps no value, the validation message, disabled, color and the group label', () => {
     const tree = render(
       <RadioGroup
         options={OPTIONS}
         value={null}
         error="Choose a delivery method"
         disabled
+        color="#2E7D32"
         accessibilityLabel="Delivery method"
       />
     );
@@ -191,6 +196,7 @@ describe('RadioGroup', () => {
     expect(props.errorState).toBe('error');
     expect(props.errorText).toBe('Choose a delivery method');
     expect(props.interactivity).toBe('disabled');
+    expect(props.color).toBe('#2E7D32');
     expect(props.groupLabel).toBe('Delivery method');
     expect(props.accessibilityLabel).toBeUndefined();
     // No group testID: no option testIDs either

@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 import type { CheckboxProps } from '../Checkbox';
 import type { RadioGroupProps } from '../RadioGroup';
-import { usePrimaryColor, type CSSStyle } from './shared';
+import { cssColor, usePrimaryColor, type CSSStyle } from './shared';
 
 /** The Material 3 baseline error color. */
 const ERROR_COLOR = '#B3261E';
@@ -36,9 +36,10 @@ function errorStyle(): CSSStyle {
 
 /**
  * A native `<input type="checkbox">` inside its `<label>`, so the box and
- * the text are one target. `indeterminate` is the input's DOM property
- * (there is no attribute for it). The message of `error` is the input's
- * description (`aria-describedby`), and `aria-invalid` marks the error.
+ * the text are one target, tinted with `color` or the brand color.
+ * `indeterminate` is the input's DOM property (there is no attribute for
+ * it). The message of `error` is the input's description
+ * (`aria-describedby`), and `aria-invalid` marks the error.
  */
 export function Checkbox(props: CheckboxProps): React.ReactElement {
   const primary = usePrimaryColor();
@@ -47,6 +48,7 @@ export function Checkbox(props: CheckboxProps): React.ReactElement {
     onCheckedChange,
     label,
     disabled,
+    color,
     error,
     haptics: _haptics,
     // Browsers scale text with page zoom, which has no cap
@@ -97,7 +99,7 @@ export function Checkbox(props: CheckboxProps): React.ReactElement {
           }}
           style={{
             ...INPUT,
-            accentColor: error ? ERROR_COLOR : primary,
+            accentColor: error ? ERROR_COLOR : (cssColor(color) ?? primary),
             cursor: 'inherit',
           }}
         />
@@ -115,10 +117,10 @@ export function Checkbox(props: CheckboxProps): React.ReactElement {
 }
 
 /**
- * Native `<input type="radio">`s sharing one name, in a `radiogroup`; each
- * option's input sits inside its `<label>` with the description. The
- * validation message under the group is the group's description and a
- * polite live region.
+ * Native `<input type="radio">`s sharing one name, in a `radiogroup`, tinted
+ * with `color` or the brand color; each option's input sits inside its
+ * `<label>` with the description. The validation message under the group
+ * is the group's description and a polite live region.
  */
 export function RadioGroup(props: RadioGroupProps): React.ReactElement {
   const primary = usePrimaryColor();
@@ -128,6 +130,7 @@ export function RadioGroup(props: RadioGroupProps): React.ReactElement {
     onValueChange,
     error,
     disabled,
+    color,
     haptics: _haptics,
     maxFontSizeMultiplier: _maxFontSizeMultiplier,
     accessibilityLabel,
@@ -174,7 +177,9 @@ export function RadioGroup(props: RadioGroupProps): React.ReactElement {
                 onChange={() => onValueChange?.(option.value, index)}
                 style={{
                   ...INPUT,
-                  accentColor: error ? ERROR_COLOR : primary,
+                  accentColor: error
+                    ? ERROR_COLOR
+                    : (cssColor(color) ?? primary),
                   cursor: 'inherit',
                 }}
               />

@@ -1,5 +1,5 @@
 // CheckboxNativeComponent.ts
-import type { HostComponent, ViewProps } from 'react-native';
+import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 
@@ -30,6 +30,9 @@ export interface CheckboxNativeProps extends ViewProps {
 
   /** 'enabled' | 'disabled' */
   interactivity?: string;
+
+  /** Color of the box while checked or indeterminate; unset = the theme's. */
+  color?: ColorValue;
 
   /** Cap on the label's font scaling; 0 (or below 1) = no cap. */
   maxFontSizeMultiplier?: Double;

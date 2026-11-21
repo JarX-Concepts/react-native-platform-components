@@ -1,6 +1,7 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,6 +28,7 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
   var errorState: String = "none" // "none" | "error"
   var errorText: String = ""
   var interactivity: String = "enabled" // "enabled" | "disabled"
+  var color: Int? = null // the box while checked or indeterminate; null = the theme's
   var spokenLabel: String = ""
   var testID: String = ""
   var maxFontSizeMultiplier: Float = 0f // < 1 = no cap
@@ -44,6 +46,12 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
 
   /** The style's errorAccessibilityLabel (Material's localized "Error: invalid"). */
   private var defaultErrorAccessibilityLabel: CharSequence? = null
+
+  /** The theme's tint of the box, captured when it is built, under `color`. */
+  private var themeButtonTint: ColorStateList? = null
+
+  /** The theme's tint of the check mark, captured with [themeButtonTint]. */
+  private var themeIconTint: ColorStateList? = null
 
   // --- Native theme ---
   // Widgets read theme colors when they are created, so they are rebuilt when the
@@ -89,6 +97,12 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     interactivity = next
     checkbox?.isEnabled = next == "enabled"
     errorView?.isEnabled = next == "enabled"
+  }
+
+  fun applyColor(value: Int?) {
+    if (color == value) return
+    color = value
+    applyButtonTint()
   }
 
   fun applySpokenLabel(value: String) {
@@ -157,6 +171,9 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     c.addView(box, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     checkbox = box
     defaultErrorAccessibilityLabel = box.errorAccessibilityLabel
+    themeButtonTint = PCSelectionSupport.themeButtonTint(box)
+    themeIconTint = box.buttonIconTintList
+    applyButtonTint()
 
     val error = PCSelectionSupport.createErrorText(base).apply {
       PCThemeSupport.capTextSize(this, maxFontSizeMultiplier)
@@ -186,6 +203,19 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
       it.visibility = if (shows && errorText.isNotEmpty()) View.VISIBLE else View.GONE
     }
     requestLayout()
+  }
+
+  /**
+   * `color` while checked or indeterminate, with a check mark that contrasts
+   * with it; the theme's in every other state.
+   */
+  private fun applyButtonTint() {
+    val box = checkbox ?: return
+    box.buttonTintList = PCSelectionSupport.withCheckedColor(themeButtonTint, color)
+    // A theme without a check mark tint keeps Material's own drawing
+    val iconTint = themeIconTint ?: return
+    box.buttonIconTintList =
+      PCSelectionSupport.withCheckedColor(iconTint, PCSelectionSupport.checkMarkColor(color))
   }
 
   private fun applyAccessibility() {

@@ -1,11 +1,15 @@
 package com.platformcomponents
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.TypedValue
 import android.view.View
+import android.widget.CompoundButton
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.core.widget.TextViewCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
@@ -14,9 +18,11 @@ import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.views.scroll.ReactScrollViewHelper
 import androidx.appcompat.R as AppCompatR
 import com.google.android.material.R as MaterialR
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.radiobutton.MaterialRadioButton
 
-/** Shared by Checkbox and RadioGroup: the error message and text styling. */
+/** Shared by Checkbox and RadioGroup: the error message, text styling and button colors. */
 internal object PCSelectionSupport {
   // Material 3 baseline error color, used when the theme has no colorError.
   private const val FALLBACK_ERROR_COLOR = 0xFFB3261E.toInt()
@@ -43,6 +49,75 @@ internal object PCSelectionSupport {
       setTextColor(errorColor(this))
       visibility = View.GONE
     }
+
+  /**
+   * The theme's tint of a checkbox's box or a radio button's circle, read when
+   * the widget is built. A Material 2 theme sets it only once the widget is
+   * attached (`useMaterialThemeColors`); this sets it now, as Material would,
+   * so [withCheckedColor] keeps those colors.
+   */
+  fun themeButtonTint(button: CompoundButton): ColorStateList? {
+    if (button.buttonTintList == null) {
+      when (button) {
+        is MaterialCheckBox -> if (button.isUseMaterialThemeColors) button.isUseMaterialThemeColors = true
+        is MaterialRadioButton -> if (button.isUseMaterialThemeColors) button.isUseMaterialThemeColors = true
+      }
+    }
+    return button.buttonTintList
+  }
+
+  /**
+   * [base] (the theme's button tint) with the enabled checked and
+   * indeterminate color replaced by [color]. The unchecked, disabled and error
+   * (Material's `state_error`) colors stay the theme's. Returns [base] when
+   * [color] is null.
+   */
+  fun withCheckedColor(base: ColorStateList?, color: Int?): ColorStateList? {
+    if (color == null) return base
+    val fallback = base?.defaultColor ?: Color.GRAY
+    fun theme(vararg state: Int): Int = base?.getColorForState(state, fallback) ?: fallback
+    val enabled = android.R.attr.state_enabled
+    val checked = android.R.attr.state_checked
+    val indeterminate = MaterialR.attr.state_indeterminate
+    val error = MaterialR.attr.state_error
+    return ColorStateList(
+      arrayOf(
+        intArrayOf(-enabled, checked),
+        intArrayOf(-enabled, indeterminate),
+        intArrayOf(-enabled),
+        intArrayOf(error, checked),
+        intArrayOf(error, indeterminate),
+        intArrayOf(error),
+        intArrayOf(checked),
+        intArrayOf(indeterminate),
+        intArrayOf()
+      ),
+      intArrayOf(
+        theme(checked),
+        theme(indeterminate),
+        theme(),
+        theme(enabled, error, checked),
+        theme(enabled, error, indeterminate),
+        theme(enabled, error),
+        color,
+        color,
+        theme(enabled)
+      )
+    )
+  }
+
+  /**
+   * The check mark for a box drawn in [color]: black or white, whichever
+   * contrasts more. The theme's mark (`colorOnPrimary`) is chosen to go with
+   * `colorPrimary`, not with a color set from JS. Null when [color] is null.
+   */
+  fun checkMarkColor(color: Int?): Int? {
+    if (color == null) return null
+    val opaque = ColorUtils.setAlphaComponent(color, 255)
+    val onBlack = ColorUtils.calculateContrast(Color.BLACK, opaque)
+    val onWhite = ColorUtils.calculateContrast(Color.WHITE, opaque)
+    return if (onBlack > onWhite) Color.BLACK else Color.WHITE
+  }
 }
 
 /**

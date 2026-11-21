@@ -84,6 +84,11 @@ class PCCheckboxViewManager :
     view.applyInteractivity(value)
   }
 
+  // Colors arrive already processed by React Native (ARGB ints)
+  override fun setColor(view: PCCheckboxView, value: Int?) {
+    view.applyColor(value)
+  }
+
   override fun setMaxFontSizeMultiplier(view: PCCheckboxView, value: Double) {
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }
