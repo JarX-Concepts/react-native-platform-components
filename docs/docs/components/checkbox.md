@@ -108,7 +108,7 @@ Leave `color` unset to follow the theme: the tint color on iOS, which follows th
 ```
 
 - **iOS**: the color of the `checkmark.circle.fill` / `minus.circle.fill` symbol.
-- **Android**: the checked and indeterminate states of the `MaterialCheckBox`'s `buttonTintList`. The check mark inside the box keeps the theme's color (`colorOnPrimary`).
+- **Android**: the checked and indeterminate states of the `MaterialCheckBox`'s `buttonTintList`. The check mark inside the box turns black or white, whichever contrasts more with `color`, so it stays readable in light and dark mode.
 - **Web**: the input's `accent-color`.
 
 ### Accessibility

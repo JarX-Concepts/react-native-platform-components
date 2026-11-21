@@ -44,7 +44,8 @@ export interface CheckboxProps extends ViewProps {
    * unchecked, disabled and error looks keep the theme's.
    *
    * iOS: the color of the `checkmark.circle.fill` / `minus.circle.fill`
-   * symbol. Android: `buttonTintList` (checked and indeterminate).
+   * symbol. Android: `buttonTintList` (checked and indeterminate), with a
+   * black or white check mark, whichever contrasts more with `color`.
    */
   color?: ColorValue;
 

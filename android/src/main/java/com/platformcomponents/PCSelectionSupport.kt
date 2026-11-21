@@ -9,6 +9,7 @@ import android.widget.CompoundButton
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.core.widget.TextViewCompat
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.uimanager.PixelUtil
@@ -103,6 +104,19 @@ internal object PCSelectionSupport {
         theme(enabled)
       )
     )
+  }
+
+  /**
+   * The check mark for a box drawn in [color]: black or white, whichever
+   * contrasts more. The theme's mark (`colorOnPrimary`) is chosen to go with
+   * `colorPrimary`, not with a color set from JS. Null when [color] is null.
+   */
+  fun checkMarkColor(color: Int?): Int? {
+    if (color == null) return null
+    val opaque = ColorUtils.setAlphaComponent(color, 255)
+    val onBlack = ColorUtils.calculateContrast(Color.BLACK, opaque)
+    val onWhite = ColorUtils.calculateContrast(Color.WHITE, opaque)
+    return if (onBlack > onWhite) Color.BLACK else Color.WHITE
   }
 }
 

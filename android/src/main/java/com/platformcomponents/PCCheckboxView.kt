@@ -50,6 +50,9 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
   /** The theme's tint of the box, captured when it is built, under `color`. */
   private var themeButtonTint: ColorStateList? = null
 
+  /** The theme's tint of the check mark, captured with [themeButtonTint]. */
+  private var themeIconTint: ColorStateList? = null
+
   // --- Native theme ---
   // Widgets read theme colors when they are created, so they are rebuilt when the
   // native theme changes (brand color, light/dark switch).
@@ -169,6 +172,7 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     checkbox = box
     defaultErrorAccessibilityLabel = box.errorAccessibilityLabel
     themeButtonTint = PCSelectionSupport.themeButtonTint(box)
+    themeIconTint = box.buttonIconTintList
     applyButtonTint()
 
     val error = PCSelectionSupport.createErrorText(base).apply {
@@ -201,9 +205,17 @@ class PCCheckboxView(context: Context) : PCSelectionHostView(context) {
     requestLayout()
   }
 
-  /** `color` while checked or indeterminate; the theme's in every other state. */
+  /**
+   * `color` while checked or indeterminate, with a check mark that contrasts
+   * with it; the theme's in every other state.
+   */
   private fun applyButtonTint() {
-    checkbox?.buttonTintList = PCSelectionSupport.withCheckedColor(themeButtonTint, color)
+    val box = checkbox ?: return
+    box.buttonTintList = PCSelectionSupport.withCheckedColor(themeButtonTint, color)
+    // A theme without a check mark tint keeps Material's own drawing
+    val iconTint = themeIconTint ?: return
+    box.buttonIconTintList =
+      PCSelectionSupport.withCheckedColor(iconTint, PCSelectionSupport.checkMarkColor(color))
   }
 
   private fun applyAccessibility() {
