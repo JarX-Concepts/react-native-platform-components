@@ -57,6 +57,7 @@ const [error, setError] = useState<string>();
 | `onCheckedChange`       | `(checked: boolean) => void`                                                                   | Called when the user toggles the checkbox, with the state asked for: the opposite of `checked`, and `true` from `'indeterminate'`               |
 | `label`                 | `string`                                                                                       | Text beside the box. It wraps onto as many lines as it needs                                                                                    |
 | `disabled`              | `boolean`                                                                                      | Disables the checkbox                                                                                                                           |
+| `color`                 | `ColorValue`                                                                                   | Color of the box while checked or indeterminate. Default: the theme's. See [Colors](#colors)                                                    |
 | `error`                 | `boolean \| string`                                                                            | Error state. A string is also the message shown under the label. See [Error](#error)                                                            |
 | `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user toggles the checkbox. See [Haptics](/guides/haptics). Default: none                                                 |
 | `maxFontSizeMultiplier` | `number`                                                                                       | Largest scale the label may reach with the system text size (Dynamic Type / font scale), as on `Text`. Unset or `0`: no cap                     |
@@ -92,6 +93,23 @@ const all =
 
 - **Android**: Material 3's error state (`isErrorShown`), which draws the box in the theme's `colorError`. The message goes under the label, lined up with its start, in `colorError` and Material's supporting-text style (Body Small). TalkBack reads it with the checkbox (`errorAccessibilityLabel`); with `error={true}` it reads Material's localized "Error: invalid".
 - **iOS**: the symbol turns `systemRed`, and the message sits under the label in red (footnote), inside the row. VoiceOver reads it after the checkbox's state.
+
+### Colors
+
+Leave `color` unset to follow the theme: the tint color on iOS, which follows the brand color from [`useNativeTheme`](/guides/theming), and the Material theme's `colorPrimary` on Android. `color` replaces it while the box is checked or indeterminate, so a screen with its own palette can color its checkboxes to match. The unchecked, disabled and error looks keep the theme's colors.
+
+```tsx
+<Checkbox
+  label="Remember me"
+  checked={remember}
+  onCheckedChange={setRemember}
+  color="#2E7D32"
+/>
+```
+
+- **iOS**: the color of the `checkmark.circle.fill` / `minus.circle.fill` symbol.
+- **Android**: the checked and indeterminate states of the `MaterialCheckBox`'s `buttonTintList`. The check mark inside the box turns black or white, whichever contrasts more with `color`, so it stays readable in light and dark mode.
+- **Web**: the input's `accent-color`.
 
 ### Accessibility
 

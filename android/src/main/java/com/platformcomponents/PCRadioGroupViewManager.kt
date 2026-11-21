@@ -103,6 +103,11 @@ class PCRadioGroupViewManager :
     view.applyInteractivity(value)
   }
 
+  // Colors arrive already processed by React Native (ARGB ints)
+  override fun setColor(view: PCRadioGroupView, value: Int?) {
+    view.applyColor(value)
+  }
+
   override fun setMaxFontSizeMultiplier(view: PCRadioGroupView, value: Double) {
     view.applyMaxFontSizeMultiplier(value.toFloat())
   }

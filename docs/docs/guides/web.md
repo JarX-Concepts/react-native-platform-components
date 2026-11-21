@@ -34,8 +34,8 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `SplitButton`          | The main button alone: there is no web menu (a warning is logged once)                                                                                                             |
 | `Switch`               | A checkbox with `role="switch"` (a native switch in Safari 17.4+), tinted with `color`; with a `label`, a `<label>` row around the text and the box |
 | `Chip`, `ChipGroup`    | Pill-shaped toggle `<button>`s (`aria-pressed` when selectable) in a wrapping row, or one scrolling row with `wrap={false}`; a close `<button>` beside each removable chip |
-| `Checkbox`             | A native `<input type="checkbox">` inside its `<label>`; `indeterminate` is the input's DOM flag, and the error message its description |
-| `RadioGroup`           | Native `<input type="radio">`s sharing one name in a `role="radiogroup"`, each in a `<label>` with its description; the validation message is a polite live region |
+| `Checkbox`             | A native `<input type="checkbox">` inside its `<label>`, tinted with `color`; `indeterminate` is the input's DOM flag, and the error message its description |
+| `RadioGroup`           | Native `<input type="radio">`s sharing one name in a `role="radiogroup"`, each in a `<label>` with its description, tinted with `color`; the validation message is a polite live region |
 | `SegmentedControl`     | A radio group of `<button>`s in a track, like the iOS control                                                                                                                      |
 | `TabBar`               | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                       |
 | `NavigationRail`       | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above                                                                  |

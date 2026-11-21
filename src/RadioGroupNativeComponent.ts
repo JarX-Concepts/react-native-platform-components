@@ -1,5 +1,5 @@
 // RadioGroupNativeComponent.ts
-import type { HostComponent, ViewProps } from 'react-native';
+import type { ColorValue, HostComponent, ViewProps } from 'react-native';
 import { codegenNativeComponent } from 'react-native';
 import type { BubblingEventHandler, Double, Int32 } from './codegenTypes';
 
@@ -40,6 +40,9 @@ export interface RadioGroupNativeProps extends ViewProps {
 
   /** 'enabled' | 'disabled' */
   interactivity?: string;
+
+  /** Color of the chosen option's mark; unset = the theme's. */
+  color?: ColorValue;
 
   /** Cap on the labels' font scaling; 0 (or below 1) = no cap. */
   maxFontSizeMultiplier?: Double;

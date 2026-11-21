@@ -64,6 +64,7 @@ const [error, setError] = useState<string>();
 | `onValueChange`         | `(value: string, index: number) => void`                                                       | Called when the user picks an option                                                                                              |
 | `error`                 | `boolean \| string`                                                                            | Error state. A string is the validation message shown under the group. See [Validation message](#validation-message)              |
 | `disabled`              | `boolean`                                                                                      | Disables every option                                                                                                             |
+| `color`                 | `ColorValue`                                                                                   | Color of the chosen option's mark. Default: the theme's. See [Colors](#colors)                                                    |
 | `haptics`               | `'selection' \| 'light' \| 'medium' \| 'heavy' \| 'success' \| 'warning' \| 'error' \| 'none'` | Haptic played when the user picks an option. See [Haptics](/guides/haptics). Default: none                                        |
 | `maxFontSizeMultiplier` | `number`                                                                                       | Largest scale the labels may reach with the system text size (Dynamic Type / font scale), as on `Text`. Unset or `0`: no cap      |
 | `accessibilityLabel`    | `string`                                                                                       | Screen-reader name of the group, such as "Delivery method". See [Accessibility](#accessibility)                                   |
@@ -93,6 +94,23 @@ The option shape follows [ChipGroup](/components/chip#chipgroupitem)'s items.
 - **Android**: the message, lined up with the labels, in the theme's `colorError` and Material's supporting-text style (Body Small). TalkBack announces it when it appears (a polite live region). Material has no error state for radio buttons, so they keep their colors.
 - **iOS**: the message under the last row in red (footnote), and the checkmark turns red. VoiceOver reaches the message after the options.
 - **Web**: the message is the group's description (`aria-describedby`) and a polite live region, and the group has `aria-invalid`.
+
+### Colors
+
+Leave `color` unset to follow the theme: the tint color on iOS, which follows the brand color from [`useNativeTheme`](/guides/theming), and the Material theme's `colorPrimary` on Android. `color` replaces it on the chosen option, so a screen with its own palette can color its choices to match. Unchosen and disabled options keep the theme's colors.
+
+```tsx
+<RadioGroup
+  options={plans}
+  value={plan}
+  onValueChange={setPlan}
+  color="#2E7D32"
+/>
+```
+
+- **iOS**: the color of the chosen row's `checkmark`. In the error state it stays red.
+- **Android**: the checked state of the `MaterialRadioButton`s' `buttonTintList`. Material has no error state for radio buttons, so the color stays in the error state too.
+- **Web**: the inputs' `accent-color`, except in the error state.
 
 ### Accessibility
 

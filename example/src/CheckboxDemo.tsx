@@ -76,6 +76,10 @@ export function CheckboxDemo(): React.JSX.Element {
   const [deliveryError, setDeliveryError] = useState<string | undefined>();
   const [lastEvent, setLastEvent] = useState('(none)');
 
+  // A screen's own color instead of the theme's
+  const [colored, setColored] = useState(true);
+  const [coloredAccount, setColoredAccount] = useState('business');
+
   return (
     <>
       <Section title="Agreement (long label, error on submit)">
@@ -248,6 +252,38 @@ export function CheckboxDemo(): React.JSX.Element {
             {lastEvent}
           </Text>
         </Row>
+      </Section>
+
+      <Section title="Colors">
+        <View style={styles.content}>
+          <Checkbox
+            testID="checkbox-color"
+            label="Custom color"
+            checked={colored}
+            color="#2E7D32"
+            onCheckedChange={setColored}
+          />
+          <Checkbox
+            testID="checkbox-color-indeterminate"
+            label="Custom color, indeterminate"
+            checked="indeterminate"
+            color="#2E7D32"
+          />
+          <Checkbox
+            testID="checkbox-color-error"
+            label="Custom color, error state"
+            checked
+            color="#2E7D32"
+            error
+          />
+          <RadioGroup
+            testID="radio-color"
+            options={ACCOUNT_TYPES}
+            value={coloredAccount}
+            color="#2E7D32"
+            onValueChange={setColoredAccount}
+          />
+        </View>
       </Section>
     </>
   );
