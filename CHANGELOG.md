@@ -1,5 +1,15 @@
 # Changelog
 
+# [1.11.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.10.0...v1.11.0) (2026-11-22)
+
+### Bug Fixes
+
+* **checkbox:** a check mark that contrasts with color on Android ([96ab2e1](https://github.com/JarX-Concepts/react-native-platform-components/commit/96ab2e142d2a97b5d2bc2bdbf4203a75960749f0))
+
+### Features
+
+* **checkbox:** color on Checkbox and RadioGroup ([d13b79c](https://github.com/JarX-Concepts/react-native-platform-components/commit/d13b79ce239f2939f6c50412d5ccb4f745e994e5))
+
 # [1.10.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.9.0...v1.10.0) (2026-11-06)
 
 ### Bug Fixes
