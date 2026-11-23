@@ -300,6 +300,20 @@ export interface TextFieldProps extends Omit<
    */
   error?: boolean | string;
 
+  /**
+   * Test identifier of the line below the field: the supporting text, or
+   * the error message in its place. Its text is the message, so
+   * `toHaveText` works on it.
+   */
+  supportingTextTestID?: string;
+
+  /**
+   * Keep the line below the field even while it's empty, so an error or
+   * supporting text appearing doesn't change the field's height and the
+   * form below doesn't move. Default: `false`.
+   */
+  reserveSupportingText?: boolean;
+
   /** Text shown before the input, inside the field (a currency sign). */
   prefix?: string;
 
@@ -613,6 +627,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       placeholder,
       supportingText,
       error,
+      supportingTextTestID,
+      reserveSupportingText,
       prefix,
       suffix,
       leadingIcon,
@@ -870,6 +886,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         supportingText={supportingText ?? ''}
         errorState={error ? 'error' : 'none'}
         errorText={typeof error === 'string' ? error : ''}
+        supportingTextTestID={supportingTextTestID ?? ''}
+        supportingLine={reserveSupportingText ? 'reserved' : 'auto'}
         prefix={prefix ?? ''}
         suffix={suffix ?? ''}
         leadingIcon={nativeLeadingIcon}

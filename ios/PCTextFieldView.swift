@@ -33,6 +33,16 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         didSet { if oldValue != errorText { applyFooter() } }
     }
 
+    /// accessibilityIdentifier of the line below the field (supporting text or error)
+    public var supportingTextTestID: String = "" {
+        didSet { if oldValue != supportingTextTestID { applyFooter() } }
+    }
+
+    /// Keep the line below the field, one line tall, while it's empty
+    public var reserveSupportingText: Bool = false {
+        didSet { if oldValue != reserveSupportingText { applyFooter() } }
+    }
+
     public var prefix: String = "" {
         didSet { if oldValue != prefix { applyAccessories() } }
     }
@@ -750,7 +760,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let showsError = errorState == "error"
         let message = showsError && !errorText.isEmpty ? errorText : supportingText
         footerLabel.text = message
-        footerLabel.isHidden = message.isEmpty
+        footerLabel.isHidden = message.isEmpty && !reserveSupportingText
+        footerLabel.accessibilityIdentifier = supportingTextTestID.isEmpty ? nil : supportingTextTestID
+        // A reserved, empty line has nothing to read out
+        footerLabel.isAccessibilityElement = !message.isEmpty
 
         if characterCount {
             let count = (text as NSString).length
@@ -1277,9 +1290,13 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
                 ? 0
                 : ceil(counterLabel.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude)).width) + 8
             let messageWidth = max(1, fieldWidth - counterWidth)
+            // A reserved line is at least one line tall while it's empty
             let messageHeight = footerLabel.isHidden
                 ? 0
-                : ceil(footerLabel.sizeThatFits(CGSize(width: messageWidth, height: .greatestFiniteMagnitude)).height)
+                : max(
+                    ceil(footerLabel.sizeThatFits(CGSize(width: messageWidth, height: .greatestFiniteMagnitude)).height),
+                    reserveSupportingText ? ceil(footerLabel.font.lineHeight) : 0
+                )
             let counterHeight = counterLabel.isHidden ? 0 : ceil(counterLabel.font.lineHeight)
             footerHeight = max(messageHeight, counterHeight)
         }

@@ -47,6 +47,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       placeholder,
       supportingText,
       error,
+      supportingTextTestID,
+      reserveSupportingText,
       prefix,
       suffix,
       leadingIcon,
@@ -309,12 +311,15 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             )
           ) : null}
         </FieldContainer>
-        {bottomText || counter ? (
+        {bottomText || counter || reserveSupportingText ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Text
+              testID={supportingTextTestID}
               style={{
                 flex: 1,
                 fontSize: 12,
+                // A reserved line keeps one line's height while it's empty
+                minHeight: 15,
                 color: errorText ? errorTint : MUTED_COLOR,
               }}
             >

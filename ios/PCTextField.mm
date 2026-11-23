@@ -236,6 +236,14 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
     _view.supportingText = NSStringFromStd(newProps.supportingText, @"");
   }
 
+  if (!prevProps || newProps.supportingTextTestID != prevProps->supportingTextTestID) {
+    _view.supportingTextTestID = NSStringFromStd(newProps.supportingTextTestID, @"");
+  }
+
+  if (!prevProps || newProps.supportingLine != prevProps->supportingLine) {
+    _view.reserveSupportingText = newProps.supportingLine == "reserved";
+  }
+
   if (!prevProps || newProps.errorState != prevProps->errorState) {
     _view.errorState = NSStringFromStd(newProps.errorState, @"none");
   }

@@ -106,6 +106,8 @@ describe('TextField', () => {
     expect(props.placeholder).toBe('');
     expect(props.errorState).toBe('none');
     expect(props.errorText).toBe('');
+    expect(props.supportingTextTestID).toBe('');
+    expect(props.supportingLine).toBe('auto');
     expect(props.clearButtonMode).toBe('never');
     expect(props.passwordToggle).toBe('hidden');
     expect(props.characterCount).toBe('hidden');
@@ -257,6 +259,21 @@ describe('TextField', () => {
     expect(lastNativeProps().errorState).toBe('error');
     expect(lastNativeProps().errorText).toBe('');
     expect(lastNativeProps().supportingText).toBe('Keep me');
+    act(() => tree.unmount());
+  });
+
+  it('maps the supporting line testID and reservation', () => {
+    const tree = render(
+      <TextField
+        error="Too short"
+        supportingTextTestID="email.error"
+        reserveSupportingText
+      />
+    );
+    expect(lastNativeProps().supportingTextTestID).toBe('email.error');
+    expect(lastNativeProps().supportingLine).toBe('reserved');
+    act(() => tree.update(<TextField reserveSupportingText={false} />));
+    expect(lastNativeProps().supportingLine).toBe('auto');
     act(() => tree.unmount());
   });
 

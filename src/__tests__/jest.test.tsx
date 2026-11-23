@@ -109,6 +109,24 @@ describe('TextField (mock)', () => {
     expect(tree.root.findByType(TextInput).props.value).toBe('Ada');
   });
 
+  it('puts the testID on the line below and can reserve it', () => {
+    const tree = render(
+      <TextField error="Required" supportingTextTestID="name.error" />
+    );
+    expect(tree.root.findByProps({ testID: 'name.error' }).props.children).toBe(
+      'Required'
+    );
+    act(() =>
+      tree.update(
+        <TextField supportingTextTestID="name.error" reserveSupportingText />
+      )
+    );
+    expect(tree.root.findByProps({ testID: 'name.error' }).props.children).toBe(
+      ''
+    );
+    act(() => tree.unmount());
+  });
+
   it('shows the error, submits with the text and clears through the ref', () => {
     const onSubmitEditing = jest.fn();
     const onChangeText = jest.fn();

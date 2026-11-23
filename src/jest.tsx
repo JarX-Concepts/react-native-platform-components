@@ -157,6 +157,8 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
       placeholder,
       supportingText,
       error,
+      supportingTextTestID,
+      reserveSupportingText,
       prefix,
       suffix,
       leadingIcon,
@@ -314,7 +316,9 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
             onPress={() => onTrailingIconPress?.()}
           />
         ) : null}
-        {helper ? <Text>{helper}</Text> : null}
+        {helper || reserveSupportingText ? (
+          <Text testID={supportingTextTestID}>{helper ?? ''}</Text>
+        ) : null}
         {toolbar?.items?.map((item, index) =>
           item === 'flexibleSpace' ? null : (
             <Pressable
