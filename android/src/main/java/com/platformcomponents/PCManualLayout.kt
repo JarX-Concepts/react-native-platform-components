@@ -1,6 +1,7 @@
 package com.platformcomponents
 
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 
 /**
@@ -39,23 +40,30 @@ internal object PCManualLayout {
   }
 
   /**
-   * Measures and lays [view] out again in the frame it already has, after it was
-   * measured at other widths to work out an intrinsic size to report to Fabric.
+   * Measures [view] again at the frame it already has, after it was measured at
+   * other widths to work out an intrinsic size to report to Fabric.
    *
-   * Measuring alone isn't enough. View.measure caches sizes by measure spec, and a
-   * cache hit hands back the laid-out size without running onMeasure, so a label
-   * kept the text layout of the last probe: a centred label was drawn at the start
-   * of a button stretched wider than it (#171). forceLayout() clears that cache,
-   * and layout() re-measures any descendant that got a cache hit of its own.
+   * Measuring alone isn't enough for a single text view. View.measure caches sizes
+   * by measure spec, and a cache hit hands back the laid-out size without running
+   * onMeasure, so a label kept the text layout of the last probe: a centred label
+   * was drawn at the start of a button stretched wider than it (#171).
+   * forceLayout() skips that cache, and layout() in the view's own frame clears
+   * the flag again.
+   *
+   * A ViewGroup only gets the plain measure. Laying one out again lays out its
+   * children, and a MaterialButtonGroup asks for layout while it does, which
+   * schedules the host's own layout pass, which lands back here: the host laid
+   * itself out on every frame and the app never went idle.
    * Does nothing before the view's first layout.
    */
   fun restoreLaidOutSize(view: View) {
     if (view.width <= 0 || view.height <= 0) return
-    view.forceLayout()
+    val forced = view !is ViewGroup
+    if (forced) view.forceLayout()
     view.measure(
       View.MeasureSpec.makeMeasureSpec(view.width, View.MeasureSpec.EXACTLY),
       View.MeasureSpec.makeMeasureSpec(view.height, View.MeasureSpec.EXACTLY)
     )
-    view.layout(view.left, view.top, view.right, view.bottom)
+    if (forced) view.layout(view.left, view.top, view.right, view.bottom)
   }
 }
