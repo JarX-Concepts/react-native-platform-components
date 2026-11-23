@@ -19,6 +19,8 @@ import kotlin.math.roundToInt
  *
  * `wavy` gives the linear and circular indicators the Expressive wave, with
  * the amplitude and wavelengths of the Material 3 Expressive wavy styles.
+ * `stopIndicator` false takes Material's stop indicator (the dot at the end
+ * of a determinate track) off the linear bars.
  *
  * This view carries the testID, accessibility label and value (React
  * Native's props), and the Material widgets inside are hidden from
@@ -36,6 +38,7 @@ class PCProgressIndicatorView(context: Context) : FrameLayout(context) {
   var size: String = "" // "small" | "large" | "" (large)
   var segments: Int = 0
   var wavy: Boolean = false
+  var stopIndicator: Boolean = true
 
   // --- UI ---
   private var bars: List<LinearProgressIndicator> = emptyList()
@@ -86,7 +89,7 @@ class PCProgressIndicatorView(context: Context) : FrameLayout(context) {
       "circular" -> "circular|$size|$wavy|$indicatorColor|$trackColor"
       else -> {
         val count = if (indeterminate) 1 else segments.coerceAtLeast(1)
-        "linear|$count|$wavy|$indicatorColor|$trackColor"
+        "linear|$count|$wavy|$stopIndicator|$indicatorColor|$trackColor"
       }
     }
 
@@ -138,6 +141,8 @@ class PCProgressIndicatorView(context: Context) : FrameLayout(context) {
               bar.wavelengthDeterminate = dp(40f)
               bar.wavelengthIndeterminate = dp(20f)
             }
+            // A new bar has the style's stop indicator size
+            if (!stopIndicator) bar.trackStopIndicatorSize = 0
             add(bar)
           }
         }

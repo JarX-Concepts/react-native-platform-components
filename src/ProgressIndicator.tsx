@@ -40,6 +40,15 @@ export interface ProgressIndicatorAndroidProps {
    * or circular indicator is drawn as a wave. Default: `false`.
    */
   wavy?: boolean;
+
+  /**
+   * Material's stop indicator: the dot at the end of a determinate `linear`
+   * track (each segment's, with `segments`). Set `false` for a plain bar,
+   * like iOS's. Material keeps it by default for accessibility, as it marks
+   * the end of a track whose color contrasts weakly with the indicator's.
+   * Default: `true`.
+   */
+  stopIndicator?: boolean;
 }
 
 export interface ProgressIndicatorProps extends ViewProps {
@@ -69,8 +78,8 @@ export interface ProgressIndicatorProps extends ViewProps {
    * Splits a determinate `linear` bar into this many segments, for step
    * progress: segment `i` fills as `progress` passes `i / segments`. Each
    * segment is a native bar; on Android each carries Material's stop
-   * indicator at its end until it fills. Ignored below 2, by indeterminate
-   * bars and by the other variants.
+   * indicator at its end until it fills (see `android.stopIndicator`).
+   * Ignored below 2, by indeterminate bars and by the other variants.
    */
   segments?: number;
 
@@ -101,6 +110,7 @@ export function ProgressIndicator(
 
   const value = variant === 'loading' ? undefined : normalizeProgress(progress);
   const wavy = android?.wavy === true;
+  const stopIndicator = android?.stopIndicator !== false;
   const { accessibilityValue, accessibilityState } = progressAccessibility(
     value,
     Platform.OS
@@ -129,7 +139,10 @@ export function ProgressIndicator(
       trackColor={trackColor}
       size={size ?? ''}
       segments={normalizeSegments(segments)}
-      android={{ wavy: wavy ? 'true' : 'false' }}
+      android={{
+        wavy: wavy ? 'true' : 'false',
+        stopIndicator: stopIndicator ? 'true' : 'false',
+      }}
     />
   );
 }

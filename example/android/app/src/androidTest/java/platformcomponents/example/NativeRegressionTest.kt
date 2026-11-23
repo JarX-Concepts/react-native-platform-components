@@ -47,6 +47,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -60,6 +61,7 @@ import com.platformcomponents.PCContextMenuView
 import com.platformcomponents.PCImageLoader
 import com.platformcomponents.PCNavigationBarSupport
 import com.platformcomponents.PCNavigationRailView
+import com.platformcomponents.PCProgressIndicatorView
 import com.platformcomponents.PCSegmentedControlView
 import com.platformcomponents.PCSelectionMenuView
 import com.platformcomponents.PCSwitchView
@@ -370,6 +372,33 @@ class NativeRegressionTest {
     assertTrue("No frame was drawn after the change", drawn.await(5, TimeUnit.SECONDS))
     assertEquals("Drawn before being laid out", emptyList<String>(), unlaid)
     settle()
+  }
+
+  /** `android.stopIndicator` false takes Material's stop indicator off every segment (#172). */
+  @Test
+  fun linearProgressStopIndicatorCanBeTurnedOff() {
+    onMain {
+      val view = PCProgressIndicatorView(activity).apply {
+        progress = 0.3
+        segments = 3
+        commit()
+      }
+      host.addView(view)
+      fun bars() = descendants(view).filterIsInstance<LinearProgressIndicator>().toList()
+      val materialSize = bars().first().trackStopIndicatorSize
+      assertTrue("Material's bars have a stop indicator", materialSize > 0)
+
+      view.stopIndicator = false
+      view.commit()
+      assertEquals(3, bars().size)
+      bars().forEach { assertEquals(0, it.trackStopIndicatorSize) }
+      // The bars still show the progress: 0.3 of 3 segments
+      assertEquals(listOf(900, 0, 0), bars().map { it.progress })
+
+      view.stopIndicator = true
+      view.commit()
+      bars().forEach { assertEquals(materialSize, it.trackStopIndicatorSize) }
+    }
   }
 
   @Test
