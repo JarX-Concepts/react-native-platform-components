@@ -221,6 +221,7 @@ export function ButtonDemo(): React.JSX.Element {
   const [styled, setStyled] = useState(true);
   const [expressive, setExpressive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [favorite, setFavorite] = useState(false);
   const [bold, setBold] = useState(true);
   const [italic, setItalic] = useState(false);
@@ -368,6 +369,21 @@ export function ButtonDemo(): React.JSX.Element {
             accessibilityLabel="Edit"
             loading={loading}
             onPress={() => setLastPressed('edit (loading)')}
+            {...common}
+          />
+        </View>
+        {/* A full-width button that loads while a 1 s request runs */}
+        <View style={styles.groupRow}>
+          <Button
+            testID="button-sign-in"
+            style={styles.stretch}
+            label="Sign in"
+            loading={signingIn}
+            onPress={() => {
+              setLastPressed('sign in');
+              setSigningIn(true);
+              setTimeout(() => setSigningIn(false), 1000);
+            }}
             {...common}
           />
         </View>
