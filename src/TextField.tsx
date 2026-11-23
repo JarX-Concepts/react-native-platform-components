@@ -295,7 +295,8 @@ export interface TextFieldProps extends Omit<
   /**
    * Error state. A string is shown below the field in place of the
    * supporting text; `true` marks the field as invalid and keeps the
-   * supporting text.
+   * supporting text, in the error color. With no message and no supporting
+   * text, `true` only changes the field's colors and adds nothing below it.
    */
   error?: boolean | string;
 

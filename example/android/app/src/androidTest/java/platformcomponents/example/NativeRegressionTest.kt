@@ -49,6 +49,7 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.platformcomponents.PCDatePickerView
 import com.platformcomponents.PCButtonGroupView
@@ -543,6 +544,43 @@ class NativeRegressionTest {
       assertTrue("MotionEvent timestamps use uptime", event.eventTime in downTime..SystemClock.uptimeMillis())
     } finally {
       event.recycle()
+    }
+  }
+
+  /**
+   * `error` with nothing to show only changes a Material text field's colors
+   * (#174). Material's error state needs a non-empty error, and the
+   * placeholder for it used to add a blank line below the box.
+   */
+  @Test
+  fun textFieldSupportingLineKeepsTheHeightItShould() {
+    onMain {
+      val field = PCTextFieldView(activity).apply { applyLabel("Email") }
+      host.addView(field)
+      val til = descendant<TextInputLayout>(field)
+      fun height(): Int {
+        field.measure(
+          View.MeasureSpec.makeMeasureSpec(900, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        return field.measuredHeight
+      }
+      val plain = height()
+
+      field.applyError("error", "")
+      assertTrue("In the error state", til.isErrorEnabled && !til.error.isNullOrEmpty())
+      assertEquals("An error with nothing to show adds no line", plain, height())
+
+      field.applyError("error", "Too short")
+      assertTrue("A message adds a line", height() > plain)
+      field.applyError("none", "")
+      assertEquals(plain, height())
+
+      field.applyError("error", "")
+      assertEquals(plain, height())
+      // The counter keeps the line
+      field.applyCharacterCount(true)
+      assertTrue(height() > plain)
     }
   }
 

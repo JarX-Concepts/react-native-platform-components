@@ -196,7 +196,7 @@ A field without a `label` has the placeholder as its only hint and, on Android, 
 
 ### Validation
 
-`error` puts the field in the error state: red outline, label and supporting text on Android, red caption and message on iOS. A string replaces the supporting text with the message; `true` keeps the supporting text and only changes the colors. On Android the Material error icon takes the end of the field while the error shows, unless the field has a `passwordToggle` or a `trailingIcon`, which stay in place.
+`error` puts the field in the error state: red outline, label and supporting text on Android, red caption and message on iOS. A string replaces the supporting text with the message; `true` keeps the supporting text and only changes the colors. With no supporting text, `true` adds nothing below the field, so your own message can sit right under it. On Android the Material error icon takes the end of the field while the error shows, unless the field has a `passwordToggle` or a `trailingIcon`, which stay in place.
 
 ```tsx
 <TextField
