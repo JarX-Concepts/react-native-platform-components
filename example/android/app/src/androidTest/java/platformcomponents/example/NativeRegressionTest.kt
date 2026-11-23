@@ -317,6 +317,119 @@ class NativeRegressionTest {
     expectLaidOutOnNextDraw(views, rebuilt = views) { dispatchNightMode(dark = !isNight()) }
   }
 
+  /**
+   * Buttons stretched wider than their labels (#171). Reporting the natural size
+   * measures the MaterialButton at its natural width, then measures it back at
+   * the laid-out width. View.measure's cache answered that last measure without
+   * running onMeasure, so a label kept the text layout of the natural width and
+   * was drawn at the start of its button: after `loading` ended, and on later
+   * size reports. Button groups restore their buttons the same way.
+   */
+  @Test
+  fun stretchedButtonsKeepTheirLabelsCentred() {
+    lateinit var button: PCButtonView
+    lateinit var group: PCButtonGroupView
+    onMain {
+      val parent = ReactViewGroup(activity)
+      host.addView(parent, FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      ))
+      button = PCButtonView(activity).apply { applyLabel("Login") }
+      button.stateWrapper = fabricState { button.reportIntrinsicSize() }
+      group = PCButtonGroupView(activity).apply {
+        applyItems(listOf("Day", "Week").map {
+          PCButtonGroupView.Item(it, it, false, PCButtonSupport.NO_ICON, "")
+        })
+      }
+      group.stateWrapper = fabricState { group.reportIntrinsicSize() }
+      button.reportIntrinsicSize()
+      group.reportIntrinsicSize()
+      // Stretched to the width of a column, the way Fabric places them
+      listOf(button, group).forEachIndexed { index, view ->
+        parent.addView(view)
+        val top = index * 200
+        view.measure(
+          View.MeasureSpec.makeMeasureSpec(900, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(140, View.MeasureSpec.EXACTLY)
+        )
+        view.layout(0, top, 900, top + 140)
+      }
+    }
+    settle()
+    expectCentredLabels(button, "button, before loading") { button.reportIntrinsicSize() }
+
+    // A request that takes a while
+    expectCentredLabels(button, "button, while loading") { button.applyLoading(true) }
+    expectCentredLabels(button, "button, after a long load") { button.applyLoading(false) }
+    expectCentredLabels(button, "button, on a later size report") { button.reportIntrinsicSize() }
+
+    // A request that ends within a frame
+    expectCentredLabels(button, "button, after a short load") {
+      button.applyLoading(true)
+      button.post { button.applyLoading(false) }
+    }
+
+    expectCentredLabels(group, "button group, on a size report") { group.reportIntrinsicSize() }
+    expectCentredLabels(group, "button group, after a rebuild") { group.applySize("medium") }
+    expectCentredLabels(group, "button group, on a later size report") { group.reportIntrinsicSize() }
+  }
+
+  /**
+   * A state wrapper like Fabric's: each reported size comes back through the
+   * manager's updateState, which reports again.
+   */
+  private fun fabricState(report: () -> Unit) = object : StateWrapper {
+    override val stateDataMapBuffer: ReadableMapBuffer? = null
+    override val stateData: ReadableNativeMap? = null
+    override fun updateState(map: WritableMap) {
+      host.post(report)
+    }
+    override fun destroyState() = Unit
+  }
+
+  /**
+   * Runs [change], then checks at the next two drawn frames, and once things
+   * settle, that the label of every button in [view] (that shows one) is
+   * centred in its button.
+   */
+  private fun expectCentredLabels(view: ViewGroup, step: String, change: () -> Unit) {
+    val drawn = CountDownLatch(2)
+    val offCentre = Collections.synchronizedList(mutableListOf<String>())
+    fun check(frame: String) {
+      descendants(view).filterIsInstance<MaterialButton>().forEach { b ->
+        // No text layout yet: the draw builds one at the drawn width
+        val layout = b.layout ?: return@forEach
+        if (b.text.isEmpty()) return@forEach
+        val textCentre = b.compoundPaddingLeft + (layout.getLineLeft(0) + layout.getLineRight(0)) / 2
+        val buttonCentre = (b.compoundPaddingLeft + b.width - b.compoundPaddingRight) / 2f
+        if (kotlin.math.abs(textCentre - buttonCentre) > 2) {
+          offCentre += "$step, $frame: \"${b.text}\" centred at x=$textCentre " +
+            "in a ${b.width} px button (centre $buttonCentre)"
+        }
+      }
+    }
+    onMain {
+      change()
+      val observer = host.viewTreeObserver
+      observer.addOnDrawListener(object : ViewTreeObserver.OnDrawListener {
+        override fun onDraw() {
+          if (drawn.count == 0L) return
+          check("frame ${3 - drawn.count}")
+          drawn.countDown()
+          // Draw listeners can't be removed while they're dispatched
+          if (drawn.count == 0L) host.post { observer.removeOnDrawListener(this) }
+          else host.post { host.invalidate() }
+        }
+      })
+      host.invalidate()
+    }
+    assertTrue("No frames were drawn after the change ($step)", drawn.await(5, TimeUnit.SECONDS))
+    settle()
+    onMain { check("settled") }
+    assertEquals("Label off centre", emptyList<String>(), offCentre.toList())
+  }
+
   private var dispatchedNight: Boolean? = null
 
   private fun isNight(): Boolean = dispatchedNight

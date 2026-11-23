@@ -254,13 +254,7 @@ abstract class PCSelectionHostView(context: Context) :
 
     // Measuring re-wraps the labels; restore the laid-out size so they are
     // placed for the bounds they are drawn in.
-    if (c.width > 0 && c.height > 0) {
-      c.measure(
-        MeasureSpec.makeMeasureSpec(c.width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(c.height, MeasureSpec.EXACTLY)
-      )
-      c.layout(0, 0, c.width, c.height)
-    }
+    PCManualLayout.restoreLaidOutSize(c)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
       lastReportedWidth = widthDp

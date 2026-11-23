@@ -37,4 +37,25 @@ internal object PCManualLayout {
     }
     view.post { pass() }
   }
+
+  /**
+   * Measures and lays [view] out again in the frame it already has, after it was
+   * measured at other widths to work out an intrinsic size to report to Fabric.
+   *
+   * Measuring alone isn't enough. View.measure caches sizes by measure spec, and a
+   * cache hit hands back the laid-out size without running onMeasure, so a label
+   * kept the text layout of the last probe: a centred label was drawn at the start
+   * of a button stretched wider than it (#171). forceLayout() clears that cache,
+   * and layout() re-measures any descendant that got a cache hit of its own.
+   * Does nothing before the view's first layout.
+   */
+  fun restoreLaidOutSize(view: View) {
+    if (view.width <= 0 || view.height <= 0) return
+    view.forceLayout()
+    view.measure(
+      View.MeasureSpec.makeMeasureSpec(view.width, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(view.height, View.MeasureSpec.EXACTLY)
+    )
+    view.layout(view.left, view.top, view.right, view.bottom)
+  }
 }

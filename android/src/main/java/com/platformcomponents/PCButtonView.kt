@@ -520,13 +520,8 @@ class PCButtonView(context: Context) :
     val heightDp = PixelUtil.toDIPFromPixel(child.measuredHeight.toFloat())
 
     // Measuring re-wraps the text; restore the laid-out size so the label is
-    // ellipsized to the bounds it is drawn in.
-    if (child.width > 0 && child.height > 0) {
-      child.measure(
-        MeasureSpec.makeMeasureSpec(child.width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(child.height, MeasureSpec.EXACTLY)
-      )
-    }
+    // centred and ellipsized in the bounds it is drawn in.
+    PCManualLayout.restoreLaidOutSize(child)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
       lastReportedWidth = widthDp
