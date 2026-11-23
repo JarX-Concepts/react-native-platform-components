@@ -3069,9 +3069,8 @@ describe('Platform Components Example', () => {
     }
     await typeInto('field-email', 'not-an-email');
     await pressReturn('field-email');
-    await waitFor(element(by.text('Enter a valid email address')))
-      .toBeVisible()
-      .withTimeout(8000);
+    // The error takes the supporting text's place, on the line's testID
+    await expectText('field-email-line', 'Enter a valid email address');
 
     // A password with its toggle. On iOS the keyboard's prediction bar would
     // cover the toggle where the field sits; bring the field up first.
@@ -3085,6 +3084,14 @@ describe('Platform Components Example', () => {
     await pause(900);
     if (!isAndroid()) {
       await pressReturn('field-password');
+    }
+
+    // A reserved line under the field shows the error by its testID
+    await scrollToId('field-invite');
+    await typeInto('field-invite', 'AB');
+    await expectText('field-invite-line', 'Invite codes have 6 characters');
+    if (!isAndroid()) {
+      await pressReturn('field-invite');
     }
 
     // Affixes, and a multi-line field that grows with its counter
