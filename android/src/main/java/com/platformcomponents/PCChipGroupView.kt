@@ -390,12 +390,7 @@ class PCChipGroupView(context: Context) :
 
     // Measuring re-wraps the chips; restore the laid-out size so they are
     // placed and ellipsized for the bounds they are drawn in.
-    if (content.width > 0 && content.height > 0) {
-      content.measure(
-        MeasureSpec.makeMeasureSpec(content.width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(content.height, MeasureSpec.EXACTLY)
-      )
-    }
+    PCManualLayout.restoreLaidOutSize(content)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
       lastReportedWidth = widthDp

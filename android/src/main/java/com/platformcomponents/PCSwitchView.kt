@@ -496,20 +496,8 @@ class PCSwitchView(context: Context) :
     val heightDp = PixelUtil.toDIPFromPixel(contentHeight(fitted).toFloat())
 
     // Measuring re-wraps the label; restore the laid-out sizes
-    if (sw.width > 0 && sw.height > 0) {
-      sw.measure(
-        MeasureSpec.makeMeasureSpec(sw.width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(sw.height, MeasureSpec.EXACTLY)
-      )
-    }
-    labelView?.let { tv ->
-      if (tv.width > 0 && tv.height > 0) {
-        tv.measure(
-          MeasureSpec.makeMeasureSpec(tv.width, MeasureSpec.EXACTLY),
-          MeasureSpec.makeMeasureSpec(tv.height, MeasureSpec.EXACTLY)
-        )
-      }
-    }
+    PCManualLayout.restoreLaidOutSize(sw)
+    labelView?.let { PCManualLayout.restoreLaidOutSize(it) }
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
       lastReportedWidth = widthDp

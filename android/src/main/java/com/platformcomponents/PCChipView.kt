@@ -325,12 +325,7 @@ class PCChipView(context: Context) :
 
     // Measuring re-ellipsizes the label; restore the laid-out size so it is
     // ellipsized to the bounds it is drawn in.
-    if (child.width > 0 && child.height > 0) {
-      child.measure(
-        MeasureSpec.makeMeasureSpec(child.width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(child.height, MeasureSpec.EXACTLY)
-      )
-    }
+    PCManualLayout.restoreLaidOutSize(child)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
       lastReportedWidth = widthDp
