@@ -1,5 +1,18 @@
 # Changelog
 
+# [1.12.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.11.0...v1.12.0) (2026-11-24)
+
+### Bug Fixes
+
+* **android:** only force a fresh layout pass on single views ([9f2e98e](https://github.com/JarX-Concepts/react-native-platform-components/commit/9f2e98eb5cbf7e27d8c98dad12f43ad27e200404))
+* **button:** keep a stretched button's label centred after loading ([e899c96](https://github.com/JarX-Concepts/react-native-platform-components/commit/e899c966cb3bf4a787e3b10e24d94dbf8e587b7f)), closes [#171](https://github.com/JarX-Concepts/react-native-platform-components/issues/171) [#171](https://github.com/JarX-Concepts/react-native-platform-components/issues/171)
+* **text-field:** an error without a message adds no line below the field ([7603670](https://github.com/JarX-Concepts/react-native-platform-components/commit/76036701b9cd231d76829186d0040479840cf706)), closes [#174](https://github.com/JarX-Concepts/react-native-platform-components/issues/174) [#174](https://github.com/JarX-Concepts/react-native-platform-components/issues/174)
+
+### Features
+
+* **progress-indicator:** android.stopIndicator to hide the stop indicator ([ac161e9](https://github.com/JarX-Concepts/react-native-platform-components/commit/ac161e99cf3eb61d9ecc2374135beba79526ac1f)), closes [#172](https://github.com/JarX-Concepts/react-native-platform-components/issues/172) [#172](https://github.com/JarX-Concepts/react-native-platform-components/issues/172)
+* **text-field:** supportingTextTestID and reserveSupportingText ([7bfb107](https://github.com/JarX-Concepts/react-native-platform-components/commit/7bfb10766fa6ba30e814d08bbc2f3e93377ce295)), closes [#175](https://github.com/JarX-Concepts/react-native-platform-components/issues/175) [#175](https://github.com/JarX-Concepts/react-native-platform-components/issues/175)
+
 # [1.11.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.10.0...v1.11.0) (2026-11-22)
 
 ### Bug Fixes
