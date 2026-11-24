@@ -3093,6 +3093,14 @@ describe('Platform Components Example', () => {
     if (!isAndroid()) {
       await pressReturn('field-invite');
     }
+  });
+
+  // The fields below the Validation section: their own flow, since one flow
+  // for the whole demo ran close to the 120 s test timeout on CI's slower
+  // simulator
+  it('should test Text Field affixes, variants and read-only fields', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
 
     // Affixes, and a multi-line field that grows with its counter
     await scrollToId('field-amount');
