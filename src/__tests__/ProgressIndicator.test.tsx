@@ -48,7 +48,7 @@ describe('ProgressIndicator', () => {
     expect(props.progress).toBe(-1);
     expect(props.size).toBe('');
     expect(props.segments).toBe(0);
-    expect(props.android).toEqual({ wavy: 'false' });
+    expect(props.android).toEqual({ wavy: 'false', stopIndicator: 'true' });
     expect(props.testID).toBe('p');
     expect(props.accessible).toBe(true);
     expect(props.accessibilityRole).toBe('progressbar');
@@ -122,8 +122,25 @@ describe('ProgressIndicator', () => {
     expect(props.segments).toBe(4);
     expect(props.color).toBe('#ff0000');
     expect(props.trackColor).toBe('#00ff00');
-    expect(props.android).toEqual({ wavy: 'true' });
+    expect(props.android).toEqual({ wavy: 'true', stopIndicator: 'true' });
     expect(StyleSheet.flatten(props.style)).toEqual({ width: 37, height: 37 });
+    act(() => tree.unmount());
+  });
+
+  it('turns the stop indicator off only when asked', () => {
+    const tree = render(
+      <ProgressIndicator progress={0.5} android={{ stopIndicator: false }} />
+    );
+    expect(lastNativeProps().android).toEqual({
+      wavy: 'false',
+      stopIndicator: 'false',
+    });
+    act(() =>
+      tree.update(
+        <ProgressIndicator progress={0.5} android={{ stopIndicator: true }} />
+      )
+    );
+    expect(lastNativeProps().android.stopIndicator).toBe('true');
     act(() => tree.unmount());
   });
 

@@ -1,6 +1,6 @@
 // ProgressIndicatorDemo.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import { ProgressIndicator } from 'react-native-platform-components';
 import { Divider, PillButton, Row, Section, ui, useDemoColors } from './DemoUI';
 
@@ -12,6 +12,7 @@ export function ProgressIndicatorDemo(): React.JSX.Element {
   // undefined = indeterminate
   const [progress, setProgress] = useState<number | undefined>(0.4);
   const [step, setStep] = useState(2);
+  const [stopIndicator, setStopIndicator] = useState(true);
   const [running, setRunning] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -120,6 +121,7 @@ export function ProgressIndicatorDemo(): React.JSX.Element {
             segments={STEPS}
             accessibilityLabel="Checkout"
             accessibilityValue={{ text: `Step ${step} of ${STEPS}` }}
+            android={{ stopIndicator }}
           />
         </View>
         <Divider />
@@ -145,6 +147,15 @@ export function ProgressIndicatorDemo(): React.JSX.Element {
           <Text testID="progress-step-value" style={ui.valueText}>
             {step} of {STEPS}
           </Text>
+        </Row>
+        <Divider />
+        <Row label={`Stop indicator${isAndroid ? '' : ' (Android)'}`}>
+          <Switch
+            style={ui.alignEnd}
+            testID="progress-stop-indicator-switch"
+            value={stopIndicator}
+            onValueChange={setStopIndicator}
+          />
         </Row>
       </Section>
 

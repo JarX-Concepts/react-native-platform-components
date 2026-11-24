@@ -70,7 +70,7 @@ static inline NSString *NSStringFromStd(const std::string &s, NSString *fallback
   if (!prevProps || newProps.segments != prevProps->segments) {
     _view.segments = newProps.segments;
   }
-  // android.wavy has no iOS counterpart
+  // android.wavy and android.stopIndicator have no iOS counterpart
 
   [_view commit];
 

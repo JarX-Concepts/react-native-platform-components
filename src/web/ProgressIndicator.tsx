@@ -28,7 +28,7 @@ const trackFor = (primary: string) =>
  * CSS ring for the circular and loading variants, spinning while
  * indeterminate. The view carries the `progressbar` role, the label and
  * the value; the elements inside are hidden from assistive technology.
- * `android.wavy` is ignored.
+ * `android.wavy` and `android.stopIndicator` are ignored.
  */
 export function ProgressIndicator(
   props: ProgressIndicatorProps

@@ -9,6 +9,8 @@ import type { Double, Int32, WithDefault } from './codegenTypes';
 export type ProgressIndicatorAndroidNativeProps = Readonly<{
   /** 'true' | 'false': the Material 3 Expressive wavy indicator. */
   wavy?: string;
+  /** 'true' | 'false': Material's stop indicator at the end of a linear track. */
+  stopIndicator?: string;
 }>;
 
 export interface ProgressIndicatorNativeProps extends ViewProps {

@@ -39,17 +39,18 @@ import { ProgressIndicator } from 'react-native-platform-components';
 
 ### Props
 
-| Prop                 | Type                                  | Description                                                                                                                         |
-| -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `variant`            | `'linear' \| 'circular' \| 'loading'` | See [Variants](#variants). Default: `'linear'`                                                                                      |
-| `progress`           | `number`                              | Progress from 0 to 1, clamped. Omit it (or pass `undefined`) for an indeterminate indicator. Changes animate. Ignored by `loading`  |
-| `color`              | `ColorValue`                          | Indicator color. Default: the platform's (Material primary; the tint color for iOS bars and rings, gray for the iOS spinner)        |
-| `trackColor`         | `ColorValue`                          | Track color, the unfilled part. On Android, a `loading` indicator takes it as its container color (the contained loading indicator) |
-| `size`               | `'small' \| 'large'`                  | Size of a `circular` indicator (and of the iOS spinner for `loading`). See [Sizes](#sizes)                                          |
-| `segments`           | `number`                              | Splits a determinate `linear` bar into this many segments, for step progress. See [Steps](#steps)                                   |
-| `accessibilityLabel` | `string`                              | Screen-reader label. The progress is read out as the value                                                                          |
-| `android.wavy`       | `boolean`                             | The Material 3 Expressive wavy indicator. See [Wavy](#wavy-android). Default: `false`                                               |
-| `testID`             | `string`                              | Test identifier, on the view that carries the label and value                                                                       |
+| Prop                    | Type                                  | Description                                                                                                                          |
+| ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `variant`               | `'linear' \| 'circular' \| 'loading'` | See [Variants](#variants). Default: `'linear'`                                                                                       |
+| `progress`              | `number`                              | Progress from 0 to 1, clamped. Omit it (or pass `undefined`) for an indeterminate indicator. Changes animate. Ignored by `loading`   |
+| `color`                 | `ColorValue`                          | Indicator color. Default: the platform's (Material primary; the tint color for iOS bars and rings, gray for the iOS spinner)         |
+| `trackColor`            | `ColorValue`                          | Track color, the unfilled part. On Android, a `loading` indicator takes it as its container color (the contained loading indicator)  |
+| `size`                  | `'small' \| 'large'`                  | Size of a `circular` indicator (and of the iOS spinner for `loading`). See [Sizes](#sizes)                                           |
+| `segments`              | `number`                              | Splits a determinate `linear` bar into this many segments, for step progress. See [Steps](#steps)                                    |
+| `accessibilityLabel`    | `string`                              | Screen-reader label. The progress is read out as the value                                                                           |
+| `android.wavy`          | `boolean`                             | The Material 3 Expressive wavy indicator. See [Wavy](#wavy-android). Default: `false`                                                |
+| `android.stopIndicator` | `boolean`                             | Material's stop indicator, the dot at the end of a determinate `linear` track (each segment's). See [Steps](#steps). Default: `true` |
+| `testID`                | `string`                              | Test identifier, on the view that carries the label and value                                                                        |
 
 The component is a view in your layout: `style` sizes and places it (see [Layout](#layout)).
 
@@ -92,6 +93,8 @@ The Android `LoadingIndicator` is 48dp (a 34dp shape in a 48dp container, Materi
 ```
 
 On Android each segment is a `LinearProgressIndicator` with Material 3's stop indicator, the dot at the end of its track, which marks the end of each step until the segment fills. `segments` applies to determinate linear bars only; an indeterminate bar is one bar.
+
+`android={{ stopIndicator: false }}` leaves the dot off, on a segmented bar or a single one, for plain bars like iOS's. Material shows it by default for accessibility: it marks where the track ends when the track's color contrasts weakly with the indicator's (under 3:1), so keep it if your colors are close.
 
 | iOS 26                                                                                   | Android                                                                                                            |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |

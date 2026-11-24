@@ -52,10 +52,12 @@ class PCProgressIndicatorViewManager :
     view.segments = value
   }
 
-  // android: { wavy: 'true' | 'false' }
+  // android: { wavy: 'true' | 'false', stopIndicator: 'true' | 'false' }
   override fun setAndroid(view: PCProgressIndicatorView, value: ReadableMap?) {
-    view.wavy =
-      value != null && value.hasKey("wavy") && !value.isNull("wavy") && value.getString("wavy") == "true"
+    fun flag(key: String): String? =
+      if (value != null && value.hasKey(key) && !value.isNull(key)) value.getString(key) else null
+    view.wavy = flag("wavy") == "true"
+    view.stopIndicator = flag("stopIndicator") != "false"
   }
 
   /** Applies the props of an update together, once they are all in. */
