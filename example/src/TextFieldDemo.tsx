@@ -48,6 +48,8 @@ export function TextFieldDemo(): React.JSX.Element {
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [username, setUsername] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState('');
   const [amount, setAmount] = useState('');
@@ -180,6 +182,7 @@ export function TextFieldDemo(): React.JSX.Element {
             onBlur={() => setEmailTouched(true)}
             error={emailError}
             supportingText="We never share it"
+            supportingTextTestID="field-email-line"
             keyboardType="email-address"
             autoComplete="email"
             autoCapitalize="none"
@@ -233,6 +236,40 @@ export function TextFieldDemo(): React.JSX.Element {
             testID="field-set"
             label="Set 'Grace'"
             onPress={() => setName('Grace Hopper')}
+          />
+        </View>
+      </Section>
+
+      <Section title="Validation">
+        <View style={styles.fields}>
+          {/* error without a message: only the field's colors change */}
+          <TextField
+            testID="field-username"
+            label="Username"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            autoCorrect={false}
+            error={username.length > 0 && username.length < 3}
+            {...common}
+          />
+          {/* The line below is kept while empty, so the error appearing
+              doesn't move what's under the field */}
+          <TextField
+            testID="field-invite"
+            label="Invite code"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            error={
+              inviteCode.length > 0 && inviteCode.length !== 6
+                ? 'Invite codes have 6 characters'
+                : undefined
+            }
+            reserveSupportingText
+            supportingTextTestID="field-invite-line"
+            {...common}
           />
         </View>
       </Section>

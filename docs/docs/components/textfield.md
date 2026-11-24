@@ -52,6 +52,8 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `placeholder`         | `string`                                                 | Shown while the field is empty                                                                  |
 | `supportingText`      | `string`                                                 | Helper text below the field                                                                     |
 | `error`               | `boolean \| string`                                      | Error state; a string is the message. See [Validation](#validation)                              |
+| `supportingTextTestID` | `string`                                                | Test identifier of the line below the field (supporting text or error). See [Testing](#testing) |
+| `reserveSupportingText` | `boolean`                                              | Keep the line below the field while it's empty, so the layout doesn't move. See [Validation](#validation). Default: `false` |
 | `prefix`, `suffix`    | `string`                                                 | Text inside the field before and after the input (`$`, `kg`)                                    |
 | `leadingIcon`         | `PlatformIcon`                                           | Icon at the start of the field. See [Icons](#icons)                                             |
 | `trailingIcon`        | `PlatformIcon`                                           | Icon at the end of the field; pressing it calls `onTrailingIconPress`                           |
@@ -196,7 +198,7 @@ A field without a `label` has the placeholder as its only hint and, on Android, 
 
 ### Validation
 
-`error` puts the field in the error state: red outline, label and supporting text on Android, red caption and message on iOS. A string replaces the supporting text with the message; `true` keeps the supporting text and only changes the colors. On Android the Material error icon takes the end of the field while the error shows, unless the field has a `passwordToggle` or a `trailingIcon`, which stay in place.
+`error` puts the field in the error state: red outline, label and supporting text on Android, red caption and message on iOS. A string replaces the supporting text with the message; `true` keeps the supporting text and only changes the colors. With no supporting text, `true` adds nothing below the field, so your own message can sit right under it. On Android the Material error icon takes the end of the field while the error shows, unless the field has a `passwordToggle` or a `trailingIcon`, which stay in place.
 
 ```tsx
 <TextField
@@ -206,6 +208,19 @@ A field without a `label` has the placeholder as its only hint and, on Android, 
   onBlur={() => setTouched(true)}
   error={touched && !isValid(email) ? 'Enter a valid email address' : undefined}
   supportingText="Work address"
+/>
+```
+
+The line below the field comes and goes with its text, so a message appearing moves whatever is under the field. `reserveSupportingText` keeps the line, one line tall, while it's empty, so a form stays still as errors come and go. That's Material's `app:errorEnabled="true"` set up front, and a fixed-height message label on iOS:
+
+```tsx
+<TextField
+  label="Invite code"
+  value={code}
+  onChangeText={setCode}
+  error={code.length > 0 && code.length !== 6 ? 'Invite codes have 6 characters' : undefined}
+  reserveSupportingText
+  supportingTextTestID="invite.error"
 />
 ```
 
@@ -416,9 +431,12 @@ By default the colors come from the theme: the app's Material 3 theme or the bra
 
 `testID` is set on the inner text input, the `UITextField` / `UITextView` on iOS and the `EditText` on Android, not on the host view. E2E drivers can then type into and clear the field by id (Detox `typeText`, `replaceText`, `clearText`). `leadingIconTestID` and `trailingIconTestID` identify the icons, so a test can tap a trailing icon that opens a picker. On iOS, the keyboard toolbar's items carry their own `testID`, and `ios.keyboardToolbar.doneTestID` identifies Done. On Android they apply to the Material field; the `material: 'system'` field draws its icons as compound drawables, which have no view to carry an id.
 
+`supportingTextTestID` identifies the line below the field. Its text is what the line shows, the supporting text or the error message in its place, so a test can check a field's own message (empty while a reserved line is blank):
+
 ```ts
 await element(by.id('email')).typeText('ada@example.com');
 await element(by.id('dob-picker')).tap(); // trailingIconTestID="dob-picker"
+await expect(element(by.id('email.error'))).toHaveText('Enter a valid email address'); // supportingTextTestID="email.error"
 ```
 
 For Jest, see [Testing](/guides/testing).

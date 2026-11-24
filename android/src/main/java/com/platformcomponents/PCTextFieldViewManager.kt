@@ -122,6 +122,15 @@ class PCTextFieldViewManager :
     view.applyPasswordToggle(value == "shown")
   }
 
+  override fun setSupportingTextTestID(view: PCTextFieldView, value: String?) {
+    view.applySupportingTextTestID(value ?: "")
+  }
+
+  // "reserved" | "auto"
+  override fun setSupportingLine(view: PCTextFieldView, value: String?) {
+    view.applyReserveSupportingText(value == "reserved")
+  }
+
   override fun setCharacterCount(view: PCTextFieldView, value: String?) {
     view.applyCharacterCount(value == "shown")
   }

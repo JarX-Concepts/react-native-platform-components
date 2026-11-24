@@ -899,6 +899,32 @@ describe('TextField (web)', () => {
     expect(tree.root.findByType(TextInput).props['aria-invalid']).toBe(true);
   });
 
+  it('puts the testID on the line below and can reserve it', () => {
+    const tree = render(
+      <TextField error="Required" supportingTextTestID="name.error" value="" />
+    );
+    expect(tree.root.findByProps({ testID: 'name.error' }).props.children).toBe(
+      'Required'
+    );
+    act(() =>
+      tree.update(<TextField supportingTextTestID="name.error" value="" />)
+    );
+    expect(tree.root.findAllByProps({ testID: 'name.error' })).toHaveLength(0);
+    act(() =>
+      tree.update(
+        <TextField
+          supportingTextTestID="name.error"
+          reserveSupportingText
+          value=""
+        />
+      )
+    );
+    expect(tree.root.findByProps({ testID: 'name.error' }).props.children).toBe(
+      ''
+    );
+    act(() => tree.unmount());
+  });
+
   it('clears through the clear button and the ref', () => {
     const onChangeText = jest.fn();
     const ref = createRef<TextFieldRef>();

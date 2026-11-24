@@ -60,6 +60,9 @@ class PCTextFieldView(context: Context) :
 
   companion object {
     private const val TAG = "PCTextField"
+
+    /** Holds the line below a Material field when there's no text for it. */
+    private const val LINE_PLACEHOLDER = " "
   }
 
   // --- State Wrapper for Fabric state updates ---
@@ -73,6 +76,10 @@ class PCTextFieldView(context: Context) :
   var supportingText: String = ""
   var errorState: String = "none" // "none" | "error"
   var errorText: String = ""
+  /** testID of the line below the field (the supporting text or the error) */
+  var supportingTextTestID: String = ""
+  /** Keep the line below the field while it's empty */
+  var reserveSupportingText: Boolean = false
   var prefix: String = ""
   var suffix: String = ""
   var leadingIcon: PCButtonSupport.Icon = PCButtonSupport.NO_ICON
@@ -221,6 +228,18 @@ class PCTextFieldView(context: Context) :
   fun applySupportingText(value: String) {
     if (supportingText == value) return
     supportingText = value
+    applyHelperAndError()
+  }
+
+  fun applySupportingTextTestID(value: String) {
+    if (supportingTextTestID == value) return
+    supportingTextTestID = value
+    applyHelperAndError()
+  }
+
+  fun applyReserveSupportingText(value: Boolean) {
+    if (reserveSupportingText == value) return
+    reserveSupportingText = value
     applyHelperAndError()
   }
 
@@ -773,17 +792,65 @@ class PCTextFieldView(context: Context) :
       applySystemHelper()
       return
     }
-    til.helperText = supportingText.ifEmpty { null }
+    // An empty helper text turns the line off, so a reserved line holds a
+    // placeholder (shown blank, see applySupportingLine)
+    til.helperText = supportingText.ifEmpty { if (reserveSupportingText) LINE_PLACEHOLDER else null }
     if (errorState == "error") {
       // No message: the supporting text turns to the error color, as the
-      // Material spec shows; with nothing to show, keep the outline red only
+      // Material spec shows. Material only shows the error state (outline,
+      // label and icon colors, "invalid" for accessibility) with a non-empty
+      // error, so a placeholder stands in when there's nothing to show.
       til.isErrorEnabled = true
-      til.error = errorText.ifEmpty { supportingText.ifEmpty { " " } }
+      til.error = errorText.ifEmpty { supportingText.ifEmpty { LINE_PLACEHOLDER } }
     } else {
       til.error = null
       til.isErrorEnabled = false
     }
+    applySupportingLine()
     requestLayout()
+  }
+
+  /** The indicator row this view hid, to show again (see applySupportingLine). */
+  private var hiddenIndicatorRow: View? = null
+
+  /**
+   * The line below a Material field, once Material has set it up:
+   *
+   * - An error with nothing to show only changes the field's colors (#174).
+   *   Its placeholder would take a line below the box, so the indicator row
+   *   holding it is hidden, unless the line is reserved or shows the counter.
+   * - Placeholders show blank: an empty TextView keeps its one-line height,
+   *   and its text is what tests read (`toHaveText('')`).
+   * - The testID goes on the view that shows the line, the error's or the
+   *   helper text's, so it never matches two views. Material creates them
+   *   when the error or the helper text turns on.
+   */
+  private fun applySupportingLine() {
+    val til = layout ?: return
+    val errorView = til.findViewById<TextView>(MaterialR.id.textinput_error)
+    val helperView = til.findViewById<TextView>(MaterialR.id.textinput_helper_text)
+    listOfNotNull(errorView, helperView).forEach {
+      if (it.text?.toString() == LINE_PLACEHOLDER) it.text = ""
+    }
+    val showsError = errorView != null && errorState == "error"
+    PCTestID.apply(errorView, if (showsError) supportingTextTestID else null)
+    PCTestID.apply(helperView, if (showsError) null else supportingTextTestID)
+
+    // Material's indicator row: error and helper sit in a caption frame in it
+    val row = errorView?.parent?.parent as? View
+    val blank = showsError && errorText.isEmpty() && supportingText.isEmpty()
+    if (row != null && row.parent === til && blank && !reserveSupportingText && !characterCount) {
+      row.visibility = View.GONE
+      hiddenIndicatorRow = row
+    } else {
+      // Material shows the row while it has an indicator in it
+      hiddenIndicatorRow?.let { hidden ->
+        val hasIndicator = errorView != null || helperView != null ||
+          til.findViewById<View>(MaterialR.id.textinput_counter) != null
+        if (hidden.parent === til && hasIndicator) hidden.visibility = View.VISIBLE
+      }
+      hiddenIndicatorRow = null
+    }
   }
 
   /** The system field's supporting / error line, in the theme's secondary or error color. */
@@ -792,7 +859,8 @@ class PCTextFieldView(context: Context) :
     val showsError = errorState == "error"
     val message = if (showsError && errorText.isNotEmpty()) errorText else supportingText
     helper.text = message
-    helper.visibility = if (message.isEmpty()) View.GONE else View.VISIBLE
+    helper.visibility = if (message.isEmpty() && !reserveSupportingText) View.GONE else View.VISIBLE
+    PCTestID.apply(helper, supportingTextTestID)
     val color = if (showsError) {
       errorColor ?: themeColor(AppCompatR.attr.colorError, 0xFFB3261E.toInt())
     } else {
@@ -1036,6 +1104,8 @@ class PCTextFieldView(context: Context) :
     val til = layout ?: return
     til.counterMaxLength = maxLength
     til.isCounterEnabled = characterCount
+    // The counter keeps the line below the field
+    applySupportingLine()
     requestLayout()
   }
 

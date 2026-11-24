@@ -137,6 +137,12 @@ export interface TextFieldNativeProps extends ViewProps {
   /** Error message shown instead of the supporting text. */
   errorText?: string;
 
+  /** E2E identifier of the supporting / error line below the field. */
+  supportingTextTestID?: string;
+
+  /** 'reserved' | 'auto': keep the line below the field while it's empty. */
+  supportingLine?: string;
+
   /** Text shown before the input, inside the field. */
   prefix?: string;
 

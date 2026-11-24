@@ -3069,9 +3069,8 @@ describe('Platform Components Example', () => {
     }
     await typeInto('field-email', 'not-an-email');
     await pressReturn('field-email');
-    await waitFor(element(by.text('Enter a valid email address')))
-      .toBeVisible()
-      .withTimeout(8000);
+    // The error takes the supporting text's place, on the line's testID
+    await expectText('field-email-line', 'Enter a valid email address');
 
     // A password with its toggle. On iOS the keyboard's prediction bar would
     // cover the toggle where the field sits; bring the field up first.
@@ -3086,6 +3085,22 @@ describe('Platform Components Example', () => {
     if (!isAndroid()) {
       await pressReturn('field-password');
     }
+
+    // A reserved line under the field shows the error by its testID
+    await scrollToId('field-invite');
+    await typeInto('field-invite', 'AB');
+    await expectText('field-invite-line', 'Invite codes have 6 characters');
+    if (!isAndroid()) {
+      await pressReturn('field-invite');
+    }
+  });
+
+  // The fields below the Validation section: their own flow, since one flow
+  // for the whole demo ran close to the 120 s test timeout on CI's slower
+  // simulator
+  it('should test Text Field affixes, variants and read-only fields', async () => {
+    await selectDemo('Text Field');
+    await expect(element(by.id('field-name'))).toBeVisible();
 
     // Affixes, and a multi-line field that grows with its counter
     await scrollToId('field-amount');

@@ -50,6 +50,7 @@ import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.platformcomponents.PCDatePickerView
 import com.platformcomponents.PCButtonGroupView
@@ -685,6 +686,72 @@ class NativeRegressionTest {
       assertTrue("MotionEvent timestamps use uptime", event.eventTime in downTime..SystemClock.uptimeMillis())
     } finally {
       event.recycle()
+    }
+  }
+
+  /**
+   * The line below a Material text field. `error` with nothing to show only
+   * changes the field's colors (#174): Material's error state needs a
+   * non-empty error, and the placeholder for it used to add a blank line. A
+   * reserved line (#175) keeps the field's height whether it shows a message
+   * or not, reads blank while empty, and only the view that shows the line
+   * carries its testID.
+   */
+  @Test
+  fun textFieldSupportingLineKeepsTheHeightItShould() {
+    onMain {
+      val field = PCTextFieldView(activity).apply { applyLabel("Email") }
+      host.addView(field)
+      val til = descendant<TextInputLayout>(field)
+      fun height(): Int {
+        field.measure(
+          View.MeasureSpec.makeMeasureSpec(900, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        return field.measuredHeight
+      }
+      fun line(): List<String> = descendants(field)
+        .filter { it.tag == "email.error" }
+        .map { (it as TextView).text.toString() }
+        .toList()
+      val plain = height()
+
+      field.applySupportingTextTestID("email.error")
+      field.applyError("error", "")
+      assertTrue("In the error state", til.isErrorEnabled && !til.error.isNullOrEmpty())
+      assertEquals("An error with nothing to show adds no line", plain, height())
+
+      field.applyError("error", "Too short")
+      val withLine = height()
+      assertTrue("A message adds a line", withLine > plain)
+      assertEquals(listOf("Too short"), line())
+
+      field.applyError("none", "")
+      assertEquals(plain, height())
+      assertEquals(emptyList<String>(), line())
+
+      field.applyReserveSupportingText(true)
+      assertEquals("A reserved line is there while empty", withLine, height())
+      assertEquals(listOf(""), line())
+      field.applyError("error", "")
+      assertEquals(withLine, height())
+      assertEquals(listOf(""), line())
+      field.applyError("error", "Too short")
+      assertEquals(withLine, height())
+      assertEquals(listOf("Too short"), line())
+      field.applyError("none", "")
+      field.applySupportingText("Work address")
+      assertEquals(withLine, height())
+      assertEquals(listOf("Work address"), line())
+
+      // Back to an unreserved, blank error: no line again
+      field.applySupportingText("")
+      field.applyReserveSupportingText(false)
+      field.applyError("error", "")
+      assertEquals(plain, height())
+      // The counter keeps the line
+      field.applyCharacterCount(true)
+      assertTrue(height() > plain)
     }
   }
 
