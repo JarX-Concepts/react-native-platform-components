@@ -517,6 +517,15 @@ export interface TextFieldProps extends Omit<
     labelWidth?: number;
 
     /**
+     * What a `'leading'` label does when it doesn't fit beside the field.
+     * `'above'` (default) moves it above the field when it is wider than
+     * `labelWidth` or the text size is an accessibility size, as Apple's
+     * lists do, and back beside it when it fits again. `'none'` keeps the
+     * column and wraps the label inside it.
+     */
+    leadingFallback?: 'above' | 'none';
+
+    /**
      * A toolbar above the keyboard (`inputAccessoryView`) with a Done
      * button and your own buttons. Number and phone pads have no return
      * key, so this is how they are dismissed.
@@ -858,6 +867,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         borderStyle: ios?.borderStyle ?? '',
         labelPlacement: ios?.labelPlacement ?? '',
         labelWidth: ios?.labelWidth ?? 0,
+        leadingFallback: ios?.leadingFallback ?? '',
         passwordRules: ios?.passwordRules ?? '',
       }),
       [ios]

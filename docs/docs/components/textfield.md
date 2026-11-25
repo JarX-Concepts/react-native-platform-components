@@ -117,6 +117,7 @@ The text traits, each `'default'` unless set. They apply on the iOS version that
 | `borderStyle`              | `'roundedRect' \| 'none' \| 'line' \| 'bezel'`  | `UITextField.borderStyle`. Default: `'roundedRect'`                                          |
 | `labelPlacement`           | `'above' \| 'leading'`                          | The label above the field (default) or in a leading column. See [Grouped forms on iOS](#grouped-forms-on-ios) |
 | `labelWidth`               | `number`                                        | Width of the leading label column, in points. Default: `100`                                  |
+| `leadingFallback`          | `'above' \| 'none'`                             | A leading label that doesn't fit its column, or is at an accessibility text size, moves above the field (`'above'`, default) or wraps in its column (`'none'`). See [Grouped forms on iOS](#grouped-forms-on-ios) |
 | `keyboardToolbar`          | `{ done?, items?, onItemPress?, doneTestID? }`  | A `UIToolbar` above the keyboard. See [Keyboard toolbar (iOS)](#keyboard-toolbar-ios)          |
 | `passwordRules`            | `string`                                        | Rules for suggested strong passwords. See [Password rules (iOS)](#password-rules-ios)         |
 
@@ -346,6 +347,8 @@ const row = { ios: { labelPlacement: 'leading', borderStyle: 'none' } } as const
   <TextField label="Last" value={last} onChangeText={setLast} {...row} />
 </View>
 ```
+
+At the accessibility text sizes, and whenever a label is wider than `labelWidth`, the label moves above the field, as it does in Apple's own lists, and moves back when it fits again. Set `ios.leadingFallback: 'none'` to keep the column; the label then wraps inside it. Labels wrap in either placement rather than being cut off, and the field grows to fit them.
 
 ### Variants
 

@@ -99,6 +99,8 @@ export type TextFieldIOSProps = Readonly<{
   labelPlacement?: string;
   /** Width of a leading label column in points; 0 = default */
   labelWidth?: Double;
+  /** 'above' | 'none': a leading label that doesn't fit moves above */
+  leadingFallback?: string;
   /** UITextInputPasswordRules descriptor; '' = none */
   passwordRules?: string;
 }>;

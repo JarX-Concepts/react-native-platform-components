@@ -583,6 +583,27 @@ export function TextFieldDemo(): React.JSX.Element {
           </>
         )}
       </Section>
+
+      {/* Labels wrap instead of being cut off. On iOS a leading label too
+          wide for its column moves above the field, as every leading label
+          does at the accessibility text sizes. */}
+      <Section title="Long labels">
+        <View style={styles.form}>
+          <TextField
+            testID="field-long-label"
+            label="Quantity (number of shares, units, or other measures)"
+            keyboardType="number-pad"
+            {...common}
+          />
+          <Divider />
+          <TextField
+            testID="field-long-leading"
+            label="Description of the company"
+            placeholder="optional"
+            {...formRow}
+          />
+        </View>
+      </Section>
     </>
   );
 }
