@@ -54,7 +54,7 @@ const [tab, setTab] = useState('home');
 | `scrollViewNativeID`    | `string`                                               | The `nativeID` of the ScrollView or FlatList that drives `minimizeBehavior`                     |
 | `accessory`             | `ReactNode`                                            | A view carried with the bar, such as a mini player. See [Bottom accessory](#bottom-accessory)   |
 | `onAccessoryEnvironmentChange` | `(environment: 'regular' \| 'inline') => void` | iOS 26: the accessory moved into its row above the bar (`'regular'`) or beside the minimized bar (`'inline'`) |
-| `maxFontSizeMultiplier` | `number`                                               | Cap on the label font scale, as on `Text`. Android only; iOS tab labels have a fixed size      |
+| `maxFontSizeMultiplier` | `number`                                               | Cap on the label font scale, as on `Text`, for labels that scale. Both bars keep their labels at a fixed size and show them larger on a long press, so it applies only on Android with `labelFontScalingEnabled` on in the app theme |
 | `testID`                | `string`                                               | Test identifier of the bar                                                                     |
 
 ### TabBarItem
