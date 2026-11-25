@@ -81,7 +81,7 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `keyboardAppearance`  | `'default' \| 'light' \| 'dark'`                         | iOS keyboard appearance                                                                         |
 | `textStyle`           | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }`    | Font of the input text                                                                          |
 | `textAlign`           | `'left' \| 'center' \| 'right'`                           | Text alignment. Default: natural (leading)                                                      |
-| `maxFontSizeMultiplier` | `number`                                               | Cap on the system text size scale, as on `Text`. See [Styling](#styling)                        |
+| `maxFontSizeMultiplier` | `number`                                               | Cap on the system text size scale, as on `Text`. See [Styling](#styling). On Android the floated label isn't capped: Material sizes it from its own text appearance |
 | `activeColor`, `outlineColor`, `errorColor`, `containerColor`, `textColor`, `placeholderTextColor` | `ColorValue` | Field colors. See [Colors](#colors) |
 | `accessibilityLabel`  | `string`                                                 | Screen-reader label. Defaults to `label`                                                        |
 | `testID`              | `string`                                                 | Set on the inner text input. See [Testing](#testing)                                            |
