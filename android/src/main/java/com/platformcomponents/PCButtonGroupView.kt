@@ -2,7 +2,6 @@ package com.platformcomponents
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.text.TextUtils
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -335,8 +334,8 @@ class PCButtonGroupView(context: Context) :
         id = View.generateViewId()
         text = item.label
         isAllCaps = false // Preserve original text casing
-        ellipsize = TextUtils.TruncateAt.END
-        maxLines = 1
+        // A label too long for the width wraps, as on any MaterialButton, and
+        // the button grows taller (see updateFrameSizeState)
         contentDescription = item.spokenLabel.ifEmpty { null }
         // Detox's by.id matches the view tag: the button carries the label
         // and takes the touches, so all three are found under one id
@@ -658,7 +657,7 @@ class PCButtonGroupView(context: Context) :
     val heightDp = PixelUtil.toDIPFromPixel(child.measuredHeight.toFloat())
 
     // Measuring re-wraps the labels; restore the laid-out size so they are
-    // ellipsized to the bounds they are drawn in.
+    // wrapped to the bounds they are drawn in.
     PCManualLayout.restoreLaidOutSize(child)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {

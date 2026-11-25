@@ -125,7 +125,7 @@ const [format, setFormat] = useState<string[]>(['bold']);
 
 | `overflow` | Android | iOS |
 | ---------- | ------- | --- |
-| `'none'` (default) | Clipped | Clipped |
+| `'none'` (default) | Squeezed: the last buttons get what room is left, their labels wrapped | Clipped |
 | `'menu'` | `MaterialButtonGroup` overflow mode: the trailing buttons move into the group's overflow menu (a `PopupMenu` behind a ⋮ button) | The trailing buttons fold into a "…" button (`ellipsis`) at the end of the row, with a `UIMenu` of the hidden buttons |
 | `'wrap'` | The buttons wrap onto more rows | Clipped: UIKit has no wrapping button row |
 
