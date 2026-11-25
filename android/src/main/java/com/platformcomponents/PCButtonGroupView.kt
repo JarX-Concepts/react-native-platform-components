@@ -580,12 +580,15 @@ class PCButtonGroupView(context: Context) :
 
   /**
    * The group's natural width: every button on one row. MaterialButtonGroup
-   * answers that itself, except in the "wrap" overflow mode, which refuses an
-   * AT_MOST width and lays every button on its own row for UNSPECIFIED; there
-   * the buttons are summed instead.
+   * answers that itself, except with an overflow mode: "wrap" refuses an
+   * AT_MOST width and lays every button on its own row for UNSPECIFIED, and
+   * "menu" folds every button into the menu for UNSPECIFIED (no room at all),
+   * so the group came out as its menu button, as tall as that button rather
+   * than the labels (clipped at large font scales). There the buttons are
+   * summed instead, the menu button left out.
    */
   private fun naturalWidth(child: MaterialButtonGroup): Int {
-    if (overflow != "wrap") {
+    if (child.overflowMode == MaterialButtonGroup.OVERFLOW_MODE_NONE) {
       child.measure(unspecified, unspecified)
       return child.measuredWidth
     }
@@ -593,7 +596,8 @@ class PCButtonGroupView(context: Context) :
     var visible = 0
     for (i in 0 until child.childCount) {
       val button = child.getChildAt(i)
-      if (button.visibility == View.GONE) continue
+      // Material's overflow menu button; buttons it folded away still count
+      if (button.id !in buttonIdToIndex) continue
       button.measure(unspecified, unspecified)
       val params = button.layoutParams as? MarginLayoutParams
       total += button.measuredWidth + (params?.leftMargin ?: 0) + (params?.rightMargin ?: 0)
