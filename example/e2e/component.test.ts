@@ -2078,6 +2078,37 @@ describe('Platform Components Example', () => {
     await expectText('rail-last-event', 'header: compose');
   });
 
+  // iOS: as in a tab bar, the collapsed rail's labels keep their size at an
+  // accessibility text size (a long press shows the Large Content Viewer
+  // instead), so the rail keeps its width. The size changes while the demo
+  // is open: the demo menu itself clips at the accessibility sizes.
+  it('should test Navigation Rail at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Navigation Rail');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const sizes = async () => ({
+      rail: (await frameOf(by.id('rail'))).width,
+      search: (await frameOf(by.id('rail-search'))).height,
+    });
+    const before = await sizes();
+    let large: typeof before;
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      large = await sizes();
+    } finally {
+      contentSize('large');
+    }
+    if (JSON.stringify(large) !== JSON.stringify(before)) {
+      throw new Error(
+        `At the largest text size ${JSON.stringify(large)}, default ${JSON.stringify(before)}: the rail grew`
+      );
+    }
+  });
+
   it('should test Button functionality', async () => {
     await selectDemo('Button');
     await expect(element(by.id('button-filled'))).toBeVisible();
