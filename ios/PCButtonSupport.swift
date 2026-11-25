@@ -159,7 +159,8 @@ enum PCButtonSupport {
         imagePlacement: NSDirectionalRectEdge = .leading,
         cornerRadius: CGFloat? = nil,
         maxFontSizeMultiplier: CGFloat = 0,
-        traits: UITraitCollection? = nil
+        traits: UITraitCollection? = nil,
+        wrapsTitle: Bool = true
     ) -> UIButton.Configuration {
         var config = configuration(variant: variant, selected: selected)
         config.title = label.isEmpty ? nil : label
@@ -167,7 +168,9 @@ enum PCButtonSupport {
         config.imagePadding = (image != nil && !label.isEmpty) ? 8 : 0
         config.imagePlacement = imagePlacement
         config.buttonSize = buttonSize(size)
-        config.titleLineBreakMode = .byTruncatingTail
+        // A title too long for the button's width wraps onto more lines, as
+        // UIKit's own configurations do, rather than being cut off
+        config.titleLineBreakMode = wrapsTitle ? .byWordWrapping : .byTruncatingTail
         if let cornerRadius {
             // A numeric radius overrides the shape
             config.cornerStyle = .fixed

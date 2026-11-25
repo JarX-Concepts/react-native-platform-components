@@ -290,6 +290,15 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
 
 #pragma mark - State (Measuring)
 
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
+  [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+  // A new width changes how many lines the title wraps onto
+  if (layoutMetrics.frame.size.width != oldLayoutMetrics.frame.size.width) {
+    [self updateMeasurements];
+  }
+}
+
 - (void)updateState:(const State::Shared &)state
            oldState:(const State::Shared &)oldState {
   _state = std::static_pointer_cast<const MeasuringPCButtonShadowNode::ConcreteState>(state);
@@ -306,12 +315,15 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
   if (_state == nullptr)
     return;
 
-  // The button's natural size; Yoga clamps it to the available width
-  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeZero];
+  // The width of the button with its title on one line, and the height at
+  // the current width (a long title wraps when Yoga narrows the button)
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(self.bounds.size.width, 0)];
 
   PCButtonStateFrameSize next;
   next.frameSize = {(Float)size.width, (Float)size.height};
-  _state->updateState(std::move(next));
+  if (_state->getData() != next) {
+    _state->updateState(std::move(next));
+  }
 }
 
 @end

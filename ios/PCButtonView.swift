@@ -434,12 +434,18 @@ public final class PCButtonView: UIView {
     }
 
     /// Called by the measuring pipeline to get the size for Yoga layout: the
-    /// button's natural size, or its height at the given width.
+    /// width of the title on one line (Yoga clamps it to the space there
+    /// is), and the height at the given width, where a long title wraps.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
-        let fitted = measuredButton.sizeThatFits(
-            CGSize(width: constrainedSize.width > 0 ? constrainedSize.width : .greatestFiniteMagnitude,
-                   height: .greatestFiniteMagnitude)
+        let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+        let natural = measuredButton.sizeThatFits(unbounded)
+        let width = ceil(natural.width)
+        guard constrainedSize.width > 0, constrainedSize.width < width else {
+            return CGSize(width: width, height: ceil(natural.height))
+        }
+        let wrapped = measuredButton.sizeThatFits(
+            CGSize(width: constrainedSize.width, height: .greatestFiniteMagnitude)
         )
-        return CGSize(width: ceil(fitted.width), height: ceil(fitted.height))
+        return CGSize(width: width, height: ceil(max(natural.height, wrapped.height)))
     }
 }
