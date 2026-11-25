@@ -65,6 +65,13 @@ using namespace facebook::react;
       strongSelf.eventEmitterTyped.onConfirm(event);
     };
 
+    _datePickerView.onNeedsRemeasure = ^{
+      __typeof(self) strongSelf = weakSelf;
+      if (!strongSelf)
+        return;
+      [strongSelf updateMeasurements];
+    };
+
     _datePickerView.onCancelHandler = ^{
       __typeof(self) strongSelf = weakSelf;
       if (!strongSelf)

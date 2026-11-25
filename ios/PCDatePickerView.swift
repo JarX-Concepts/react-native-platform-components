@@ -110,6 +110,10 @@ public final class PCDatePickerView: UIControl,
     /// via the `visible` prop; valueChanged still emits confirmed=false.
     public var confirmToolbarMode: String = "show"
 
+    /// Called when the embedded picker's size may have changed (the text
+    /// size did), so the Fabric measurement can be refreshed.
+    public var onNeedsRemeasure: (() -> Void)?
+
     // MARK: - Init
 
     public override init(frame: CGRect) {
@@ -180,6 +184,23 @@ public final class PCDatePickerView: UIControl,
                     height: height
                 )
             }
+        }
+    }
+
+    // The embedded picker's text follows Dynamic Type, and the compact pill
+    // grows with it: measure it again when the text size changes
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard presentation == "embedded",
+              previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
+        // UIKit passes the new traits to the picker after this, and it
+        // resizes its own text then; measure once it has
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.needsStyleReset = true
+            self.invalidateSize()
+            self.onNeedsRemeasure?()
         }
     }
 
