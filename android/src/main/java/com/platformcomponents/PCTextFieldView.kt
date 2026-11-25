@@ -391,6 +391,8 @@ class PCTextFieldView(context: Context) :
     fontWeight = weight
     fontStyle = style
     editText?.let { applyFont(it) }
+    // minFieldHeight's padding is worked out from the height of a line
+    applyFieldMetrics()
     requestLayout()
   }
 
