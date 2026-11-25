@@ -184,7 +184,9 @@ enum PCButtonSupport {
         if let foregroundColor {
             config.baseForegroundColor = foregroundColor
         }
-        var titleFont = font
+        var titleFont = font.map { font in
+            traits.map { scaledFont(font, maxFontSizeMultiplier: maxFontSizeMultiplier, traits: $0) } ?? font
+        }
         if titleFont == nil, maxFontSizeMultiplier >= 1, !label.isEmpty, let traits,
            let systemFont = defaultTitleFont(for: config) {
             titleFont = cappedFont(systemFont, maxFontSizeMultiplier: maxFontSizeMultiplier, traits: traits)
@@ -197,6 +199,22 @@ enum PCButtonSupport {
             }
         }
         return config
+    }
+
+    /// A `labelStyle` font, given at its size for the default text size,
+    /// scaled with Dynamic Type along the body style's curve, as React
+    /// Native's `Text` scales a fontSize, and capped at
+    /// `maxFontSizeMultiplier` times that size when it is 1 or more.
+    static func scaledFont(_ font: UIFont, maxFontSizeMultiplier: CGFloat, traits: UITraitCollection) -> UIFont {
+        let metrics = UIFontMetrics(forTextStyle: .body)
+        if maxFontSizeMultiplier >= 1 {
+            return metrics.scaledFont(
+                for: font,
+                maximumPointSize: font.pointSize * maxFontSizeMultiplier,
+                compatibleWith: traits
+            )
+        }
+        return metrics.scaledFont(for: font, compatibleWith: traits)
     }
 
     /// The title font UIKit picks for a configuration, read from a throwaway

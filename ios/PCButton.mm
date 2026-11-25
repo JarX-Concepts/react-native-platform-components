@@ -44,28 +44,22 @@ static inline bool LabelStyleEqual(
 }
 
 /// Builds the label font from RN-style font props, or nil when every field is
-/// unset so the button keeps the configuration's font. Without a fontSize the
-/// size follows Dynamic Type (the body style), capped at maxFontSizeMultiplier
-/// times its default size when that is 1 or more.
-static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double maxFontSizeMultiplier) {
+/// unset so the button keeps the configuration's font. The font is built at
+/// the default text size (the body style's size without a fontSize); the view
+/// scales it with Dynamic Type, capped at maxFontSizeMultiplier.
+static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style) {
   if (style.fontFamily.empty() && style.fontSize <= 0 &&
       style.fontWeight.empty() && style.fontStyle.empty()) {
     return nil;
   }
   // UIButton titles default to the body text style; start there so a lone
   // fontWeight or fontStyle doesn't change the size.
-  UIFont *body = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
-  NSNumber *size = style.fontSize > 0 ? @(style.fontSize) : nil;
-  if (!size && maxFontSizeMultiplier >= 1) {
-    UITraitCollection *defaultTraits =
-        [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
-    CGFloat baseSize = [UIFont preferredFontForTextStyle:UIFontTextStyleBody
-                           compatibleWithTraitCollection:defaultTraits].pointSize;
-    size = @(MIN(body.pointSize, baseSize * maxFontSizeMultiplier));
-  }
-  return [RCTFont updateFont:body
+  UITraitCollection *defaultSize =
+      [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
+  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody
+                                 compatibleWithTraitCollection:defaultSize]
                   withFamily:NSStringFromStd(style.fontFamily, nil)
-                        size:size
+                        size:style.fontSize > 0 ? @(style.fontSize) : nil
                       weight:NSStringFromStd(style.fontWeight, nil)
                        style:NSStringFromStd(style.fontStyle, nil)
                      variant:nil
@@ -233,9 +227,8 @@ static UIFont *FontFromLabelStyle(const PCButtonLabelStyleStruct &style, double 
   }
 
   // labelStyle: {fontFamily, fontSize, fontWeight, fontStyle}
-  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle) ||
-      newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
-    _view.labelFont = FontFromLabelStyle(newProps.labelStyle, newProps.maxFontSizeMultiplier);
+  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
+    _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
   }
 
   if (!prevProps || newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {

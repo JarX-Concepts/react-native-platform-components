@@ -77,7 +77,8 @@ public final class PCButtonGroupView: UIView {
         didSet { applyConfigurations() }
     }
 
-    /// Label font; nil keeps the configuration's font
+    /// Label font at the default text size, scaled with Dynamic Type; nil
+    /// keeps the configuration's font
     public var labelFont: UIFont? {
         didSet { applyConfigurations() }
     }
@@ -272,6 +273,7 @@ public final class PCButtonGroupView: UIView {
                 containerColor: containerColor,
                 foregroundColor: foregroundColor,
                 font: labelFont,
+                traits: traitCollection,
                 // Squeezed buttons wrap their titles; with overflow "menu"
                 // the buttons that don't fit fold into the menu instead
                 wrapsTitle: overflow != "menu" || split
@@ -307,8 +309,26 @@ public final class PCButtonGroupView: UIView {
             image: UIImage(systemName: symbol),
             containerColor: containerColor,
             foregroundColor: foregroundColor,
-            font: labelFont
+            font: labelFont,
+            traits: traitCollection
         )
+    }
+
+    // The text size changed: the buttons are configured again (a labelStyle
+    // font is fixed at the size it was scaled to) and the group measured again
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
+        applyConfigurations()
+        onNeedsRemeasure?()
+        // UIKit passes the new traits to the buttons after this, and they
+        // resize their own titles then; measure again once they have
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.applyConfigurations()
+            self.onNeedsRemeasure?()
+        }
     }
 
     // MARK: - Split menu
