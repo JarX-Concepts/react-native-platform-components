@@ -349,7 +349,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     private func setup() {
-        captionLabel.numberOfLines = 1
+        // Long labels and large text sizes wrap, as the supporting text does
+        captionLabel.numberOfLines = 0
         captionLabel.adjustsFontForContentSizeCategory = true
 
         footerLabel.numberOfLines = 0
@@ -1232,6 +1233,13 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         if previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory {
             applyFonts()
             applyAccessories()
+            // UIKit passes the new traits to the subviews after this, and
+            // they resize their own text then; measure again once they have
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.applyFonts()
+                self.applyAccessories()
+            }
         }
         if previousTraitCollection?.hasDifferentColorAppearance(comparedTo: traitCollection) == true {
             applyColors()
@@ -1261,8 +1269,12 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     }
 
     private func metrics(for width: CGFloat) -> Metrics {
-        let captionHeight = label.isEmpty ? 0 : ceil(captionLabel.font.lineHeight)
         let fieldWidth = max(1, width - fieldOffset())
+        // The label wraps: in its column, or across the full width above
+        let captionWidth = max(1, leadingLabel ? leadingColumnWidth : width)
+        let captionHeight = label.isEmpty
+            ? 0
+            : ceil(captionLabel.sizeThatFits(CGSize(width: captionWidth, height: .greatestFiniteMagnitude)).height)
 
         var inputHeight: CGFloat
         var inputScrolls = false
