@@ -199,6 +199,11 @@ const FORMAT_BUTTONS = [
   { label: 'Underline', value: 'underline' },
 ];
 
+const LONG_BUTTONS = [
+  { label: 'Save draft', value: 'save draft' },
+  { label: 'Send later', value: 'send later' },
+];
+
 // Colors accept anything React Native does (hex, rgba, named, PlatformColor).
 const CUSTOM_STYLE = {
   color: '#FF6B35',
@@ -875,6 +880,33 @@ export function ButtonDemo(): React.JSX.Element {
             {overflowPressed ?? '(none)'}
           </Text>
         </Row>
+      </Section>
+
+      {/* Labels longer than the space there is wrap onto more lines, as
+          system buttons do; try them at a large text size */}
+      <Section title="Long Labels">
+        <View style={styles.wrap}>
+          <Button
+            testID="button-short-label"
+            label="Done"
+            onPress={() => setLastPressed('done')}
+          />
+        </View>
+        <View style={styles.groupRow}>
+          <Button
+            testID="button-long-label"
+            label="Continue to checkout"
+            onPress={() => setLastPressed('continue')}
+          />
+        </View>
+        <View style={styles.groupRow}>
+          <ButtonGroup
+            testID="button-group-long"
+            buttons={LONG_BUTTONS}
+            variant="tonal"
+            onPress={(value) => setLastPressed(value)}
+          />
+        </View>
       </Section>
     </>
   );
