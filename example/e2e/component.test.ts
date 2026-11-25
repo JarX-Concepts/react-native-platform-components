@@ -3290,6 +3290,43 @@ describe('Platform Components Example', () => {
     await expectLabelBeside(true);
   });
 
+  // iOS: an empty multi-line field is as tall as its wrapped placeholder, at
+  // the default text size and after a change to the largest one
+  const LONG_PLACEHOLDER =
+    'What happened, what you expected instead, and the steps that lead to it';
+  it('should test Text Field placeholder at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Text Field');
+    await scrollToId('field-long-placeholder');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const expectPlaceholderInside = async () => {
+      const field = await frameOf(by.id('field-long-placeholder'));
+      const placeholder = await frameOf(by.text(LONG_PLACEHOLDER));
+      if (placeholder.y + placeholder.height > field.y + field.height + 1) {
+        throw new Error(
+          `Placeholder ${JSON.stringify(placeholder)} runs past the field ${JSON.stringify(field)}`
+        );
+      }
+      return placeholder.height;
+    };
+    const line = (await frameOf(by.text('Report'))).height;
+    const height = await expectPlaceholderInside();
+    if (height < line * 1.5) {
+      throw new Error(`The placeholder is ${height}pt tall: not wrapped`);
+    }
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // Frames are read without scrolling: the page moves as the text grows
+      await expectPlaceholderInside();
+    } finally {
+      contentSize('large');
+    }
+  });
+
   it('should test Theme functionality', async () => {
     await selectDemo('Theme');
     await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
