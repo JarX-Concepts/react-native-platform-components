@@ -139,6 +139,7 @@ describe('TextField', () => {
       borderStyle: '',
       labelPlacement: '',
       labelWidth: 0,
+      leadingFallback: '',
       passwordRules: '',
     });
     expect(props.submitBehavior).toBe('blurAndSubmit');

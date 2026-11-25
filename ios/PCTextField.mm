@@ -458,6 +458,9 @@ static UIFont *FontFromTextStyle(const PCTextFieldTextStyleStruct &style) {
   if (!prevProps || newIOS.labelWidth != oldIOS.labelWidth) {
     _view.labelWidth = newIOS.labelWidth;
   }
+  if (!prevProps || newIOS.leadingFallback != oldIOS.leadingFallback) {
+    _view.leadingFallback = NSStringFromStd(newIOS.leadingFallback, @"");
+  }
   if (!prevProps || newIOS.passwordRules != oldIOS.passwordRules) {
     _view.passwordRules = NSStringFromStd(newIOS.passwordRules, @"");
   }

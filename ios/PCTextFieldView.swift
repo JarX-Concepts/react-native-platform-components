@@ -172,12 +172,19 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     /// "" | "above" | "leading": the caption above the field, or in a column
     /// beside it, the layout of the grouped forms in Contacts and Settings
     public var labelPlacement: String = "" {
-        didSet { if oldValue != labelPlacement { applyLabel(); applyFonts(); applyColors() } }
+        didSet { if oldValue != labelPlacement { applyLabel(); applyColors() } }
     }
 
     /// Width of the leading label column; 0 = default
     public var labelWidth: CGFloat = 0 {
-        didSet { if oldValue != labelWidth { setNeedsLayout(); onNeedsRemeasure?() } }
+        didSet { if oldValue != labelWidth { applyFonts() } }
+    }
+
+    /// "" | "above" | "none": whether a leading label moves above the field
+    /// when it doesn't fit its column or the text size is an accessibility
+    /// size, as Apple's lists do; "none" keeps the column and wraps the label
+    public var leadingFallback: String = "" {
+        didSet { if oldValue != leadingFallback { applyFonts() } }
     }
 
     /// Test id of the inner input, where E2E drivers type (see PCTextField.mm)
@@ -260,7 +267,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         didSet { if oldValue != fieldPaddingHorizontal { applyBorderStyle() } }
     }
 
-    private var leadingLabel: Bool { labelPlacement == "leading" && !label.isEmpty }
+    /// Whether the label is in a leading column right now: asked for, and
+    /// (unless `leadingFallback` is "none") it fits the column and the text
+    /// isn't at an accessibility size. Updated by `applyFonts`.
+    private var leadingLabel = false
 
     /// Whether the field acts as a button: pressable and not editable
     private var actsAsButton: Bool { pressable && interactivity == "disabled" }
@@ -737,8 +747,8 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         captionLabel.text = label
         captionLabel.isHidden = label.isEmpty
         applyAccessibility()
-        setNeedsLayout()
-        onNeedsRemeasure?()
+        // Whether the label still fits a leading column
+        applyFonts()
     }
 
     private func applyPlaceholder() {
@@ -801,7 +811,31 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
     private var inputFont: UIFont { scaledFont(.body, base: textFont) }
 
+    /// Whether a leading label stays beside the field. Apple's list cells
+    /// (`UIListContentConfiguration.prefersSideBySideTextAndSecondaryText`)
+    /// stack the label above the value at the accessibility text sizes, and
+    /// when the label is too wide for its column.
+    private func resolveLeadingLabel() -> Bool {
+        guard labelPlacement == "leading", !label.isEmpty else { return false }
+        if leadingFallback == "none" { return true }
+        let font = scaledFont(.body)
+        // Measured on the font, so a maxFontSizeMultiplier that keeps the
+        // text below the accessibility sizes keeps the column
+        let accessibilitySize = UIFont.preferredFont(
+            forTextStyle: .body,
+            compatibleWith: UITraitCollection(preferredContentSizeCategory: .accessibilityMedium)
+        ).pointSize
+        if font.pointSize >= accessibilitySize { return false }
+        let width = ceil((label as NSString).size(withAttributes: [.font: font]).width)
+        return width <= leadingColumnWidth
+    }
+
     private func applyFonts() {
+        let leading = resolveLeadingLabel()
+        if leading != leadingLabel {
+            leadingLabel = leading
+            applyColors()
+        }
         captionLabel.font = scaledFont(leadingLabel ? .body : .subheadline)
         footerLabel.font = scaledFont(.footnote)
         counterLabel.font = scaledFont(.footnote)

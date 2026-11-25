@@ -3230,6 +3230,66 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // iOS: at an accessibility text size the leading labels of the Name form
+  // move above their fields, as in Apple's lists, and back at the default
+  // size. The size changes while the demo is open: the demo menu itself
+  // clips at the accessibility sizes.
+  const LONG_LABEL = 'Quantity (number of shares, units, or other measures)';
+  it('should test Text Field labels at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Text Field');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const expectLabelBeside = async (
+      beside: boolean,
+      text = 'First',
+      fieldId = 'field-first-name'
+    ) => {
+      const caption = await frameOf(by.text(text));
+      const field = await frameOf(by.id(fieldId));
+      const above = caption.y + caption.height <= field.y + 1;
+      const leftOf = caption.x + caption.width <= field.x + 1;
+      if (beside ? !leftOf || above : !above) {
+        throw new Error(
+          `Label ${JSON.stringify(caption)}, field ${JSON.stringify(field)}: ` +
+            `expected the label ${beside ? 'beside' : 'above'} the field`
+        );
+      }
+    };
+    await expectLabelBeside(true);
+    // A leading label too wide for its column is above its field already
+    await scrollToId('field-long-leading');
+    await expectLabelBeside(
+      false,
+      'Description of the company',
+      'field-long-leading'
+    );
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // A long label wraps instead of being cut off at one line. Frames
+      // are read without scrolling: the page moves as the text grows.
+      const long = await frameOf(by.text(LONG_LABEL));
+      const field = await frameOf(by.id('field-long-label'));
+      const line = await frameOf(by.text('First'));
+      if (
+        long.height < 2 * line.height - 1 ||
+        long.y + long.height > field.y + 1
+      ) {
+        throw new Error(
+          `Long label ${JSON.stringify(long)} over ${JSON.stringify(field)}: not wrapped above the field`
+        );
+      }
+      await expectLabelBeside(false);
+    } finally {
+      contentSize('large');
+    }
+    await pause(1500);
+    await expectLabelBeside(true);
+  });
+
   it('should test Theme functionality', async () => {
     await selectDemo('Theme');
     await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
