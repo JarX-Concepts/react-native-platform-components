@@ -427,10 +427,11 @@ class PCDialogView(context: Context) : ReactViewGroup(context) {
     }
     val ordered = actions.filter { !it.isCancel } + actions.filter { it.isCancel }
     val buttons = ordered.mapIndexed { index, action ->
-      // The theme's dialog button style (Widget.Material3.Button.TextButton.Dialog)
+      // The theme's dialog button style (Widget.Material3.Button.TextButton.Dialog),
+      // which keeps a title on one line and ends a long one in "…", as on
+      // the dialog's own buttons
       val button = MaterialButton(ctx, null, AppCompatR.attr.buttonBarPositiveButtonStyle).apply {
         text = action.title
-        maxLines = 2
       }
       column.addView(
         button,
