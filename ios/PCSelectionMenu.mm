@@ -254,6 +254,15 @@ static inline NSString *ToNSString(const std::string &value) {
 
 #pragma mark - State (Measuring)
 
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
+  [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+  // A new width changes how many lines a long value wraps onto
+  if (layoutMetrics.frame.size.width != oldLayoutMetrics.frame.size.width) {
+    [self updateMeasurements];
+  }
+}
+
 - (void)updateState:(const State::Shared &)state
            oldState:(const State::Shared &)oldState {
   _state = std::static_pointer_cast<
@@ -271,13 +280,16 @@ static inline NSString *ToNSString(const std::string &value) {
   if (_state == nullptr)
     return;
 
-  // Measure unconstrained so the view reports its true intrinsic size.
-  // Yoga's measureContent() will clamp to parent layout constraints.
-  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(CGFLOAT_MAX, 0)];
+  // The field's width with its value on one line (Yoga's measureContent()
+  // clamps it to the parent's constraints), and its height at the current
+  // width, where a long value wraps
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(self.bounds.size.width, 0)];
 
   PCSelectionMenuStateFrameSize next;
   next.frameSize = {(Float)size.width, (Float)size.height};
-  _state->updateState(std::move(next));
+  if (_state->getData() != next) {
+    _state->updateState(std::move(next));
+  }
 }
 
 @end
