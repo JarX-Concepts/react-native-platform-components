@@ -391,6 +391,8 @@ class PCTextFieldView(context: Context) :
     fontWeight = weight
     fontStyle = style
     editText?.let { applyFont(it) }
+    // minFieldHeight's padding is worked out from the height of a line
+    applyFieldMetrics()
     requestLayout()
   }
 
@@ -1228,7 +1230,10 @@ class PCTextFieldView(context: Context) :
 
   private fun applyFont(edit: TextInputEditText) {
     PCButtonSupport.applyFont(edit, fontFamily, fontSize, fontWeight, fontStyle)
-    edit.setTag(R.id.pc_capped_text_size, null)
+    // A fresh size is capped from scratch. Without one the size stays the
+    // one capped before, which capTextSize recognizes; capping that again
+    // would shrink the text on every call.
+    if (fontSize > 0) edit.setTag(R.id.pc_capped_text_size, null)
     PCThemeSupport.capTextSize(edit, maxFontSizeMultiplier)
   }
 

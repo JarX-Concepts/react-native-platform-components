@@ -62,6 +62,12 @@ final class PCChipCell: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         clipsToBounds = false
+        // A chip keeps its label to one line, cut off past the chip's
+        // largest width; at the accessibility text sizes a long press shows
+        // the whole label in the Large Content Viewer
+        button.showsLargeContentViewer = true
+        button.scalesLargeContentImage = true
+        addInteraction(UILargeContentViewerInteraction())
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
         button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
         addSubview(button)
@@ -126,6 +132,8 @@ final class PCChipCell: UIView {
         button.isEnabled = !model.disabled
         button.accessibilityLabel = model.accessibilityLabel.isEmpty ? model.label : model.accessibilityLabel
         button.accessibilityIdentifier = model.testID.isEmpty ? nil : model.testID
+        button.largeContentTitle = model.label.isEmpty ? model.accessibilityLabel : model.label
+        button.largeContentImage = image
 
         updateCloseButton(font: font)
         setNeedsLayout()

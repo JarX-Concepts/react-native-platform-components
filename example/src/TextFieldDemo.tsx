@@ -33,6 +33,8 @@ const JOIN_SIZE = Platform.select({ ios: 'large', default: 'medium' } as const);
 const FIELD_HEIGHT = Platform.select({ ios: 50, default: 56 });
 const DUE_DATES = ['Today', 'Tomorrow', 'Next week'];
 const BIG_AMOUNT_STYLE = { fontSize: 36, fontWeight: '600' } as const;
+const LONG_PLACEHOLDER =
+  'What happened, what you expected instead, and the steps that lead to it';
 // Rules for the strong password iOS offers, unlike its default
 // xxxxxx-xxxxxx-xxxxxx format
 const PASSWORD_RULES =
@@ -582,6 +584,36 @@ export function TextFieldDemo(): React.JSX.Element {
             </Row>
           </>
         )}
+      </Section>
+
+      {/* Labels wrap instead of being cut off. On iOS a leading label too
+          wide for its column moves above the field, as every leading label
+          does at the accessibility text sizes. */}
+      <Section title="Long labels">
+        <View style={styles.form}>
+          <TextField
+            testID="field-long-label"
+            label="Quantity (number of shares, units, or other measures)"
+            keyboardType="number-pad"
+            {...common}
+          />
+          <Divider />
+          <TextField
+            testID="field-long-leading"
+            label="Description of the company"
+            placeholder="optional"
+            {...formRow}
+          />
+          <Divider />
+          {/* An empty multi-line field is as tall as its placeholder */}
+          <TextField
+            testID="field-long-placeholder"
+            label="Report"
+            placeholder={LONG_PLACEHOLDER}
+            multiline
+            {...common}
+          />
+        </View>
       </Section>
     </>
   );

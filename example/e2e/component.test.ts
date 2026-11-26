@@ -2124,6 +2124,37 @@ describe('Platform Components Example', () => {
     await expectText('rail-last-event', 'header: compose');
   });
 
+  // iOS: as in a tab bar, the collapsed rail's labels keep their size at an
+  // accessibility text size (a long press shows the Large Content Viewer
+  // instead), so the rail keeps its width. The size changes while the demo
+  // is open: the demo menu itself clips at the accessibility sizes.
+  it('should test Navigation Rail at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Navigation Rail');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const sizes = async () => ({
+      rail: (await frameOf(by.id('rail'))).width,
+      search: (await frameOf(by.id('rail-search'))).height,
+    });
+    const before = await sizes();
+    let large: typeof before;
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      large = await sizes();
+    } finally {
+      contentSize('large');
+    }
+    if (JSON.stringify(large) !== JSON.stringify(before)) {
+      throw new Error(
+        `At the largest text size ${JSON.stringify(large)}, default ${JSON.stringify(before)}: the rail grew`
+      );
+    }
+  });
+
   it('should test Button functionality', async () => {
     await selectDemo('Button');
     await expect(element(by.id('button-filled'))).toBeVisible();
@@ -3328,6 +3359,103 @@ describe('Platform Components Example', () => {
       await expectText('field-selection-value', '12–12');
       await element(by.id('toolbar-selection-done')).tap();
       await pause(500);
+    }
+  });
+
+  // iOS: at an accessibility text size the leading labels of the Name form
+  // move above their fields, as in Apple's lists, and back at the default
+  // size. The size changes while the demo is open: the demo menu itself
+  // clips at the accessibility sizes.
+  const LONG_LABEL = 'Quantity (number of shares, units, or other measures)';
+  it('should test Text Field labels at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Text Field');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const expectLabelBeside = async (
+      beside: boolean,
+      text = 'First',
+      fieldId = 'field-first-name'
+    ) => {
+      const caption = await frameOf(by.text(text));
+      const field = await frameOf(by.id(fieldId));
+      const above = caption.y + caption.height <= field.y + 1;
+      const leftOf = caption.x + caption.width <= field.x + 1;
+      if (beside ? !leftOf || above : !above) {
+        throw new Error(
+          `Label ${JSON.stringify(caption)}, field ${JSON.stringify(field)}: ` +
+            `expected the label ${beside ? 'beside' : 'above'} the field`
+        );
+      }
+    };
+    await expectLabelBeside(true);
+    // A leading label too wide for its column is above its field already
+    await scrollToId('field-long-leading');
+    await expectLabelBeside(
+      false,
+      'Description of the company',
+      'field-long-leading'
+    );
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // A long label wraps instead of being cut off at one line. Frames
+      // are read without scrolling: the page moves as the text grows.
+      const long = await frameOf(by.text(LONG_LABEL));
+      const field = await frameOf(by.id('field-long-label'));
+      const line = await frameOf(by.text('First'));
+      if (
+        long.height < 2 * line.height - 1 ||
+        long.y + long.height > field.y + 1
+      ) {
+        throw new Error(
+          `Long label ${JSON.stringify(long)} over ${JSON.stringify(field)}: not wrapped above the field`
+        );
+      }
+      await expectLabelBeside(false);
+    } finally {
+      contentSize('large');
+    }
+    await pause(1500);
+    await expectLabelBeside(true);
+  });
+
+  // iOS: an empty multi-line field is as tall as its wrapped placeholder, at
+  // the default text size and after a change to the largest one
+  const LONG_PLACEHOLDER =
+    'What happened, what you expected instead, and the steps that lead to it';
+  it('should test Text Field placeholder at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Text Field');
+    await scrollToId('field-long-placeholder');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const expectPlaceholderInside = async () => {
+      const field = await frameOf(by.id('field-long-placeholder'));
+      const placeholder = await frameOf(by.text(LONG_PLACEHOLDER));
+      if (placeholder.y + placeholder.height > field.y + field.height + 1) {
+        throw new Error(
+          `Placeholder ${JSON.stringify(placeholder)} runs past the field ${JSON.stringify(field)}`
+        );
+      }
+      return placeholder.height;
+    };
+    const line = (await frameOf(by.text('Report'))).height;
+    const height = await expectPlaceholderInside();
+    if (height < line * 1.5) {
+      throw new Error(`The placeholder is ${height}pt tall: not wrapped`);
+    }
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // Frames are read without scrolling: the page moves as the text grows
+      await expectPlaceholderInside();
+    } finally {
+      contentSize('large');
     }
   });
 

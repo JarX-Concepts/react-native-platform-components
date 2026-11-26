@@ -62,7 +62,7 @@ const [destination, setDestination] = useState('home');
 | `railColor`             | `ColorValue`                                       | Rail background. Default: the Material surface on Android, none on iOS                              |
 | `badgeStyle`            | `{ backgroundColor?, color? }`                     | Badge colors                                                                                        |
 | `labelStyle`            | `{ fontFamily?, fontSize?, fontWeight?, fontStyle? }` | Label font                                                                                       |
-| `maxFontSizeMultiplier` | `number`                                           | Cap on the label font scale, as on `Text`                                                           |
+| `maxFontSizeMultiplier` | `number`                                           | Cap on the label font scale, as on `Text`. iOS: the expanded rail only. See [Text size](#text-size) |
 | `testID`                | `string`                                           | Test identifier of the rail                                                                         |
 
 ### Android Props (`android`)
@@ -107,6 +107,10 @@ Material pairs the collapsed rail with a floating action button and the expanded
 The rail takes its natural width: 96dp collapsed on Android (the Material 3 Expressive rail), the width of its widest destination or header on iOS (at least 80pt). Its height is yours: in a row it stretches to the row's height. The Android rail doesn't pad itself for the status or navigation bar; add the safe-area insets around it, as for [TabBar](/components/tabbar#placement-and-safe-areas).
 
 The collapsed Android rail shows up to seven destinations (`getCollapsedMaxItemCount`), and `NavigationRail` warns in development when you pass more. The expanded rail and the iOS fallback show all of them, and the Android rail scrolls when they don't fit.
+
+### Text size
+
+On Android the labels follow the font scale, capped by `maxFontSizeMultiplier`. On iOS the collapsed rail behaves as `UITabBar` does: its labels keep their size at every text size, so the rail keeps its width, and at the accessibility text sizes a long press on a destination shows its icon and label in the Large Content Viewer (lifting the finger there selects it). The expanded rail's labels follow Dynamic Type, as a sidebar's rows do, capped by `maxFontSizeMultiplier`; the Large Content Viewer works there too.
 
 ### Styling
 
