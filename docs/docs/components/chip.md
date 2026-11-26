@@ -189,6 +189,8 @@ Material 3 has one chip size, and iOS has no system chip, so the chips take numb
 | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | ![Chips at minHeight 44 and paddingHorizontal 20 on iOS 26](/img/components/chip/sizing-ios.webp) | ![Material 3 chips at minHeight 44 and paddingHorizontal 20 on Android](/img/components/chip/sizing-android.webp) |
 
+A chip keeps its label to one line. On iOS a label longer than the chip's largest width (the group's, or the container's for a standalone chip) is cut off, and at the accessibility text sizes a long press on the chip shows the whole label in the Large Content Viewer.
+
 - **`minHeight`** is the smallest height of the chip's shape. The label and icon stay centered, and the font keeps its size (it follows the system text size as usual). iOS: the capsule is at least this tall. Android: `chipMinHeight`. Material keeps a 48dp touch target around a chip, so a chip under 48dp still takes 48dp of layout.
 - **`paddingHorizontal`** is the space between the chip's edges and its content: the leading icon or the label at the start, and the label or the close icon at the end. iOS: the button's leading and trailing content insets (12 points by default), and the close button moves in with it. Android: Material splits the edge padding across `chipStartPadding`, the icon and text paddings, and `chipEndPadding`, by variant (4 to 16dp). The chip padding takes up whatever the text and icon paddings leave, and it is applied again when a filter chip's checkmark appears or goes.
 

@@ -234,8 +234,10 @@ export function GlassDisclosureCore(
       onPress={expand}
       style={styles.pillContent}
     >
+      {/* Two lines at most: a long title still fits a phone's width at the
+          accessibility text sizes */}
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={[styles.pillTitle, { color: colors.title }]}
       >
         {title}
@@ -273,7 +275,7 @@ export function GlassDisclosureCore(
           style={styles.headerTitle}
         >
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={[styles.panelTitle, { color: colors.title }]}
           >
             {title}
@@ -504,7 +506,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 6,
   },
-  pillTitle: { fontSize: 15, fontWeight: '600' },
+  pillTitle: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
   pillSubtitle: { fontSize: 12 },
   panelContent: { padding: 12 },
   header: {
@@ -517,6 +519,6 @@ const styles = StyleSheet.create({
   headerLeading: { justifyContent: 'flex-start' },
   headerTrailing: { justifyContent: 'flex-end' },
   headerTitle: { flexShrink: 1, alignItems: 'center', paddingHorizontal: 8 },
-  panelTitle: { fontSize: 17, fontWeight: '600' },
+  panelTitle: { fontSize: 17, fontWeight: '600', textAlign: 'center' },
   panelSubtitle: { fontSize: 13 },
 });

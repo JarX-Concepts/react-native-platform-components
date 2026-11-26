@@ -123,8 +123,11 @@ export interface TabBarProps extends ViewProps {
 
   /**
    * Largest scale the labels may reach with the system font scale, as on
-   * `Text`. Android only: iOS tab bar labels keep a fixed size and show the
-   * large content viewer instead. Unset or `0`: no cap.
+   * `Text`, for labels that follow it. Both platforms' bars keep their
+   * labels at a fixed size and show them larger on a long press (iOS: the
+   * large content viewer; Material 3: a tooltip), `labelStyle.fontSize`
+   * included, so this applies on Android only, where the app's theme turns
+   * `labelFontScalingEnabled` on. Unset or `0`: no cap.
    */
   maxFontSizeMultiplier?: number;
 

@@ -251,13 +251,22 @@ object PCNavigationBarSupport {
     for (index in 0 until count) {
       val itemView = menuView.findViewById<View>(itemId(index)) ?: continue
       PCTestID.apply(itemView, items[index].testID)
-      styleLabels(itemView, font)
+      styleLabels(itemView, font, bar.scaleLabelTextWithFont)
     }
   }
 
-  private fun styleLabels(view: View, font: LabelFont) {
+  /**
+   * [scales]: whether the bar's labels follow the font scale. A Material 3
+   * bottom navigation bar keeps them at their size (labelFontScalingEnabled
+   * is false; a long press shows the label scaled instead), the Expressive
+   * bar and the rail scale them. A custom size does the same, and the
+   * maxFontSizeMultiplier cap only applies to labels that scale.
+   */
+  private fun styleLabels(view: View, font: LabelFont, scales: Boolean) {
     if (view is TextView) {
-      if (font.size > 0) view.setTextSize(TypedValue.COMPLEX_UNIT_SP, font.size)
+      if (font.size > 0) {
+        view.setTextSize(if (scales) TypedValue.COMPLEX_UNIT_SP else TypedValue.COMPLEX_UNIT_DIP, font.size)
+      }
       if (font.family.isNotEmpty() || font.weight.isNotEmpty() || font.style.isNotEmpty()) {
         view.typeface = ReactTypefaceUtils.applyStyles(
           view.typeface,
@@ -267,9 +276,9 @@ object PCNavigationBarSupport {
           view.context.assets
         )
       }
-      PCThemeSupport.capTextSize(view, font.maxFontSizeMultiplier)
+      if (scales) PCThemeSupport.capTextSize(view, font.maxFontSizeMultiplier)
     } else if (view is ViewGroup) {
-      for (i in 0 until view.childCount) styleLabels(view.getChildAt(i), font)
+      for (i in 0 until view.childCount) styleLabels(view.getChildAt(i), font, scales)
     }
   }
 
