@@ -1,5 +1,30 @@
 # Changelog
 
+# [1.13.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.12.0...v1.13.0) (2026-11-26)
+
+### Bug Fixes
+
+* **button-group:** size a menu-overflow group from its buttons ([3073a94](https://github.com/JarX-Concepts/react-native-platform-components/commit/3073a94d07a30ce5f650f87f03fbe64b5811f1e9))
+* **button:** let Android button labels wrap ([b1fdbfa](https://github.com/JarX-Concepts/react-native-platform-components/commit/b1fdbfa3d81010125ea4f528add01169ec5da8e1))
+* **glass-disclosure:** let a long title take two lines ([c3160dc](https://github.com/JarX-Concepts/react-native-platform-components/commit/c3160dc9b345160f5ad6c363e2c289c71632c491))
+* **ios:** follow text size changes in Button and ButtonGroup, and scale labelStyle ([c624219](https://github.com/JarX-Concepts/react-native-platform-components/commit/c6242196473a9add1454262c3bf73a3b18087f5c))
+* **ios:** keep the collapsed NavigationRail's labels at their size, as a tab bar does ([9860b98](https://github.com/JarX-Concepts/react-native-platform-components/commit/9860b986770579124c76d64c26951f577750518a))
+* **ios:** measure an embedded DatePicker again when the text size changes ([05483f4](https://github.com/JarX-Concepts/react-native-platform-components/commit/05483f43ef7330955b220b09d2ff9ffe5e8acc18))
+* **ios:** show FloatingActionButton and Chip in the Large Content Viewer ([a8f7055](https://github.com/JarX-Concepts/react-native-platform-components/commit/a8f7055c5d0f1b7fdd1c8400b09d02d77b4c8b04))
+* **ios:** size an empty multi-line TextField to its whole placeholder ([1b889d5](https://github.com/JarX-Concepts/react-native-platform-components/commit/1b889d582ffa67610758fef00c5d06fd5af26c34))
+* **ios:** wrap a long SelectionMenu value instead of truncating it ([280c883](https://github.com/JarX-Concepts/react-native-platform-components/commit/280c8835ae380fd268428b60c0cd5c8b3a3b68aa))
+* **ios:** wrap long Button and ButtonGroup labels instead of truncating them ([0d671d1](https://github.com/JarX-Concepts/react-native-platform-components/commit/0d671d1392b9b4175f943338a987de8e78ca4690))
+* **ios:** wrap TextField labels instead of cutting them off ([3c15782](https://github.com/JarX-Concepts/react-native-platform-components/commit/3c15782e9a0a2fb3744b259fea7c595c751acf44)), closes [#178](https://github.com/JarX-Concepts/react-native-platform-components/issues/178)
+* **selection-menu:** wrap a long placeholder in the Android field ([34f8915](https://github.com/JarX-Concepts/react-native-platform-components/commit/34f89151980e35c0e0a557ece6e33aec67792e37))
+* **tab-bar:** stop maxFontSizeMultiplier shrinking Android labels ([1ec79ae](https://github.com/JarX-Concepts/react-native-platform-components/commit/1ec79aeb2893b806c49470b076dd084a91039cb9))
+* **text-field:** keep capped Android text from shrinking on each update ([1930207](https://github.com/JarX-Concepts/react-native-platform-components/commit/1930207dcb5784f035f58269ad1f5a2c1e39a2c7))
+* **text-field:** reapply minFieldHeight after a font change on Android ([2d96201](https://github.com/JarX-Concepts/react-native-platform-components/commit/2d9620104305464c779afa89e6e80a912b5f34d0))
+* **text-field:** wrap Android labels too long for one line ([6b949b1](https://github.com/JarX-Concepts/react-native-platform-components/commit/6b949b114b3fa426a8904a65d97b787278348563)), closes [#180](https://github.com/JarX-Concepts/react-native-platform-components/issues/180)
+
+### Features
+
+* **ios:** stack leading TextField labels at accessibility text sizes ([a7dfc6f](https://github.com/JarX-Concepts/react-native-platform-components/commit/a7dfc6fa2b4f1a6546e7a6c1302943e0f7b22c6f)), closes [#179](https://github.com/JarX-Concepts/react-native-platform-components/issues/179)
+
 # [1.12.0](https://github.com/JarX-Concepts/react-native-platform-components/compare/v1.11.0...v1.12.0) (2026-11-24)
 
 ### Bug Fixes
