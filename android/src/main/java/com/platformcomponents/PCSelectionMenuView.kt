@@ -161,6 +161,9 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     // regardless of what constraints React Native passed.
     val unconstrainedHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     super.onMeasure(widthMeasureSpec, unconstrainedHeightSpec)
+    if (MeasureSpec.getSize(widthMeasureSpec) > 0) {
+      repeat(fitPlaceholderLines()) { super.onMeasure(widthMeasureSpec, unconstrainedHeightSpec) }
+    }
 
     val intrinsicHeight = measuredHeight
 
@@ -173,6 +176,26 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
       super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
     }
     setMeasuredDimension(measuredWidth, height)
+  }
+
+  /**
+   * Lets a placeholder too long for one line wrap, as a TextField's label
+   * does (see PCTextInputSupport.fitHintLines), after a measure at the
+   * field's real width. Returns how many more measures the field needs.
+   */
+  private fun fitPlaceholderLines(): Int {
+    val til = inlineLayout ?: return 0
+    val actv = inlineText ?: return 0
+    val changed = PCTextInputSupport.fitHintLines(til, actv)
+    if (til.hintMaxLines == 1) {
+      // Material never undoes the room it made for more lines; fresh
+      // widgets lay a placeholder that fits again out as any other
+      if (changed) post { if (inlineLayout === til) rebuildUI() }
+      return 0
+    }
+    // Material works out the room for the lines at the end of a measure,
+    // for the next one to use; two when the limit only just changed
+    return if (changed) 2 else 1
   }
 
   // Override requestLayout to handle React Native's layout timing.
@@ -270,12 +293,21 @@ class PCSelectionMenuView(context: Context) : FrameLayout(context), ReactScrollV
     val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     inlineWidget.measure(widthSpec, heightSpec)
     val intrinsicWidthPx = inlineWidget.measuredWidth
-    val intrinsicHeightPx = inlineWidget.measuredHeight
+    var intrinsicHeightPx = inlineWidget.measuredHeight
 
     // Measure the widget again at the size it is laid out at, or a later
     // layout pass places it at its natural width (a full-width field's box
     // shrank to its text)
     if (inlineWidget.width > 0 && inlineWidget.height > 0) {
+      if ((inlineLayout?.hintMaxLines ?: 1) != 1) {
+        // A placeholder on more than one line takes the height it has at the
+        // field's width; the wide measure above fits it on one. Twice, as
+        // Material sizes the room for the lines at the end of a measure.
+        repeat(2) {
+          inlineWidget.measure(MeasureSpec.makeMeasureSpec(inlineWidget.width, MeasureSpec.EXACTLY), heightSpec)
+        }
+        intrinsicHeightPx = inlineWidget.measuredHeight
+      }
       inlineWidget.measure(
         MeasureSpec.makeMeasureSpec(inlineWidget.width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(inlineWidget.height, MeasureSpec.EXACTLY)

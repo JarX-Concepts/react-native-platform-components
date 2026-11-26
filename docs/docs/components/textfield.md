@@ -413,6 +413,8 @@ A field that opens a menu, a date picker or a search screen is a non-editable fi
 
 `textStyle` sets the input font with the `Text` style conventions; the label, supporting text and counter keep the platform's typography. Every text follows the system text size (Dynamic Type on iOS, the font scale on Android), the `textStyle` font included. `maxFontSizeMultiplier` caps that scale as it does on `Text`: with `1.5`, a 17pt input stops at 25.5pt however large the system setting.
 
+On Android a label too long for one line wraps, at rest and floated, and the field grows to fit it, as Material's `hintMaxLines` allows; a label that fits keeps Material's one-line layout. Material keeps a right-to-left label on one line.
+
 `textAlign` aligns the typed text and the placeholder; the natural alignment (leading) is the default.
 
 ### Colors

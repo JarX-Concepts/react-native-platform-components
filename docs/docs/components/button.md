@@ -118,7 +118,7 @@ Material 3 Expressive defines five button sizes; iOS maps them onto `UIButton.Co
 | `large`  | 96dp           | `.large`  |
 | `xlarge` | 136dp          | `.large`  |
 
-The button wraps its content. Give it `alignSelf: 'stretch'` or a `width` style to make it fill.
+The button wraps its content. Give it `alignSelf: 'stretch'` or a `width` style to make it fill. On Android a label too long for the width the button gets wraps onto more lines and the button grows taller, as a `MaterialButton` does.
 
 ### Shape
 
