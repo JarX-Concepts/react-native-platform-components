@@ -2,7 +2,6 @@ package com.platformcomponents
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.text.TextUtils
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -335,8 +334,8 @@ class PCButtonGroupView(context: Context) :
         id = View.generateViewId()
         text = item.label
         isAllCaps = false // Preserve original text casing
-        ellipsize = TextUtils.TruncateAt.END
-        maxLines = 1
+        // A label too long for the width wraps, as on any MaterialButton, and
+        // the button grows taller (see updateFrameSizeState)
         contentDescription = item.spokenLabel.ifEmpty { null }
         // Detox's by.id matches the view tag: the button carries the label
         // and takes the touches, so all three are found under one id
@@ -581,12 +580,15 @@ class PCButtonGroupView(context: Context) :
 
   /**
    * The group's natural width: every button on one row. MaterialButtonGroup
-   * answers that itself, except in the "wrap" overflow mode, which refuses an
-   * AT_MOST width and lays every button on its own row for UNSPECIFIED; there
-   * the buttons are summed instead.
+   * answers that itself, except with an overflow mode: "wrap" refuses an
+   * AT_MOST width and lays every button on its own row for UNSPECIFIED, and
+   * "menu" folds every button into the menu for UNSPECIFIED (no room at all),
+   * so the group came out as its menu button, as tall as that button rather
+   * than the labels (clipped at large font scales). There the buttons are
+   * summed instead, the menu button left out.
    */
   private fun naturalWidth(child: MaterialButtonGroup): Int {
-    if (overflow != "wrap") {
+    if (child.overflowMode == MaterialButtonGroup.OVERFLOW_MODE_NONE) {
       child.measure(unspecified, unspecified)
       return child.measuredWidth
     }
@@ -594,7 +596,8 @@ class PCButtonGroupView(context: Context) :
     var visible = 0
     for (i in 0 until child.childCount) {
       val button = child.getChildAt(i)
-      if (button.visibility == View.GONE) continue
+      // Material's overflow menu button; buttons it folded away still count
+      if (button.id !in buttonIdToIndex) continue
       button.measure(unspecified, unspecified)
       val params = button.layoutParams as? MarginLayoutParams
       total += button.measuredWidth + (params?.leftMargin ?: 0) + (params?.rightMargin ?: 0)
@@ -658,7 +661,7 @@ class PCButtonGroupView(context: Context) :
     val heightDp = PixelUtil.toDIPFromPixel(child.measuredHeight.toFloat())
 
     // Measuring re-wraps the labels; restore the laid-out size so they are
-    // ellipsized to the bounds they are drawn in.
+    // wrapped to the bounds they are drawn in.
     PCManualLayout.restoreLaidOutSize(child)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {

@@ -3336,6 +3336,45 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // Android: a label too long for one line wraps instead of ending in "…",
+  // and the input grows for it, at the default font scale and at 2.0. The
+  // fields' inputs carry the testIDs; the long label's is a line taller than
+  // the one-line label's (two lines against one, then three against two),
+  // where they were the same height while labels were cut at one line. A
+  // font scale change restarts the activity, so the demo is opened again.
+  it('should test Text Field long labels on Android', async () => {
+    if (!isAndroid()) {
+      return;
+    }
+    const fontScale = (scale: string) =>
+      execSync(
+        `"${adbPath()}" -s ${device.id} shell settings put system font_scale ${scale}`
+      );
+    const expectWrapped = async (scale: string) => {
+      await waitFor(element(by.id('demo-picker')))
+        .toBeVisible()
+        .withTimeout(10000);
+      await selectDemo('Text Field');
+      await scrollToId('field-long-leading');
+      const long = await heightOf('field-long-label');
+      const short = await heightOf('field-long-leading');
+      if (long < short + 30) {
+        throw new Error(
+          `At font scale ${scale}: long label input ${long} px, short ${short} px; the long label didn't wrap`
+        );
+      }
+    };
+    await expectWrapped('1.0');
+    try {
+      fontScale('2.0');
+      await device.launchApp({ newInstance: true });
+      await expectWrapped('2.0');
+    } finally {
+      fontScale('1.0');
+    }
+    await device.launchApp({ newInstance: true });
+  });
+
   // Selection events from native, and a selection set from JS: on iOS by a
   // keyboard toolbar button, on Android by the demo's button. A flow of its
   // own: with the keyboard features, it ran past CI's 120 s limit.

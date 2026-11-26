@@ -1464,7 +1464,7 @@ class PCTextFieldView(context: Context) :
     // The field fills the width it is given and takes the height its
     // content needs; Yoga catches up through the state update.
     val width = resolveWidth(widthMeasureSpec)
-    measureWidget(child, width)
+    measureWidget(child, width, fitLabel = MeasureSpec.getSize(widthMeasureSpec) > 0)
     val naturalHeight = child.measuredHeight
     val heightSize = MeasureSpec.getSize(heightMeasureSpec)
     val height = when (MeasureSpec.getMode(heightMeasureSpec)) {
@@ -1477,12 +1477,31 @@ class PCTextFieldView(context: Context) :
     reportHeight(naturalHeight)
   }
 
-  /** Measures the widget at [width], as tall as its content needs. */
-  private fun measureWidget(child: View, width: Int) {
-    child.measure(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
+  /**
+   * Measures the widget at [width], as tall as its content needs. [fitLabel]
+   * when that is the field's real width, not the fallback used before Yoga
+   * has placed it: the label's lines are worked out from it.
+   */
+  private fun measureWidget(child: View, width: Int, fitLabel: Boolean) {
+    val widthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
+    val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    child.measure(widthSpec, heightSpec)
+    if (!fitLabel) return
+    val til = layout ?: return
+    val edit = editText ?: return
+    val changed = PCTextInputSupport.fitHintLines(til, edit)
+    if (til.hintMaxLines == 1) {
+      // A label that fits a line again (a shorter label, a wider field).
+      // Material never undoes the room it made for more lines, so fresh
+      // widgets lay it out as any one-line label.
+      if (changed) post { if (layout === til) rebuildUI() }
+      return
+    }
+    // A label on more than one line: Material works out the room for it (the
+    // label's margin, the edit text's height and padding) at the end of a
+    // measure, for the next one to use; one more measure picks that up, and
+    // two when the line limit only just changed.
+    repeat(if (changed) 2 else 1) { child.measure(widthSpec, heightSpec) }
   }
 
   private fun resolveWidth(spec: Int): Int {
@@ -1522,7 +1541,7 @@ class PCTextFieldView(context: Context) :
   fun reportIntrinsicSize() {
     val child = widget ?: return
     val width = if (width > 0) width else (PCConstants.FALLBACK_WIDTH_DP * resources.displayMetrics.density).toInt()
-    measureWidget(child, width)
+    measureWidget(child, width, fitLabel = this.width > 0)
     reportHeight(child.measuredHeight)
   }
 

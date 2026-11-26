@@ -379,6 +379,51 @@ class NativeRegressionTest {
   }
 
   /**
+   * A label too long for one line wraps and the field grows, while a label
+   * that fits keeps Material's one-line layout (a filled field's padding, an
+   * outlined label's notch). When the label fits again, the field is
+   * rebuilt: Material doesn't undo the room it made for more lines.
+   */
+  @Test
+  fun textFieldWrapsOnlyALabelTooLongForALine() {
+    lateinit var field: PCTextFieldView
+    fun height(width: Int): Int {
+      field.measure(
+        View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+      )
+      return field.measuredHeight
+    }
+    fun layout() = descendant<TextInputLayout>(field)
+    var short = 0
+    lateinit var wrappedLayout: TextInputLayout
+    onMain {
+      // Narrower than the host, which lays the field out at its own width
+      field = PCTextFieldView(activity).apply { applyLabel("Quantity") }
+      host.addView(field, FrameLayout.LayoutParams(600, ViewGroup.LayoutParams.WRAP_CONTENT))
+      short = height(600)
+      assertEquals("A label that fits keeps one line", 1, layout().hintMaxLines)
+
+      field.applyLabel("Quantity (number of shares, units, or other measures)")
+      val wrapped = height(600)
+      wrappedLayout = layout()
+      assertTrue("A long label wraps", wrappedLayout.hintMaxLines > 1)
+      assertTrue("The field grows for it: $wrapped, $short", wrapped > short)
+      // Measured again as it is: the same height
+      assertEquals(wrapped, height(600))
+
+      field.applyLabel("Quantity")
+      height(600)
+    }
+    settle()
+    onMain {
+      assertTrue("Fresh widgets for a label that fits", layout() !== wrappedLayout)
+      assertEquals(1, layout().hintMaxLines)
+      assertEquals(short, height(600))
+    }
+  }
+
+  /**
    * A state wrapper like Fabric's: each reported size comes back through the
    * manager's updateState, which reports again.
    */

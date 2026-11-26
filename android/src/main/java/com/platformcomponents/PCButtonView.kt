@@ -1,7 +1,6 @@
 package com.platformcomponents
 
 import android.content.Context
-import android.text.TextUtils
 import android.view.View
 import android.view.ViewParent
 import android.widget.FrameLayout
@@ -316,8 +315,8 @@ class PCButtonView(context: Context) :
       id = View.generateViewId()
       text = label
       isAllCaps = false // Preserve original text casing
-      ellipsize = TextUtils.TruncateAt.END
-      maxLines = 1
+      // A label too long for the width wraps, as on any MaterialButton, and
+      // the button grows taller (see updateFrameSizeState)
       contentDescription = spokenLabel.ifEmpty { null }
       // Detox's by.id matches the view tag. The button carries the label
       // (its text or contentDescription) and takes the touches.
@@ -520,7 +519,7 @@ class PCButtonView(context: Context) :
     val heightDp = PixelUtil.toDIPFromPixel(child.measuredHeight.toFloat())
 
     // Measuring re-wraps the text; restore the laid-out size so the label is
-    // centred and ellipsized in the bounds it is drawn in.
+    // centred and wrapped in the bounds it is drawn in.
     PCManualLayout.restoreLaidOutSize(child)
 
     if (widthDp != lastReportedWidth || heightDp != lastReportedHeight) {
