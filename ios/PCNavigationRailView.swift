@@ -21,6 +21,11 @@ struct PCNavigationRailItem {
 /// accent color as `UITabBar` shows it, badges, and the React header above
 /// them. Expanded, the image sits before the title. Selection is controlled
 /// from JS; a press reports the destination and whether it was selected.
+///
+/// As in `UITabBar`, the collapsed rail's labels keep their size at every
+/// text size, and at the accessibility sizes a long press on a destination
+/// shows it in the Large Content Viewer. The expanded rail's titles follow
+/// Dynamic Type, as a sidebar's rows do.
 @objcMembers
 public final class PCNavigationRailView: UIView {
     // MARK: - Props (set from ObjC++)
@@ -54,9 +59,19 @@ public final class PCNavigationRailView: UIView {
     public var badgeBackgroundColor: UIColor? { didSet { updateBadges() } }
     public var badgeTextColor: UIColor? { didSet { updateBadges() } }
 
-    /// Label font; nil keeps the default (caption, medium)
+    /// Label font at the default text size; nil keeps the default (caption,
+    /// medium; subheadline, medium when expanded)
     public var labelFont: UIFont? {
         didSet { applyConfigurations(); onNeedsRemeasure?() }
+    }
+
+    /// Cap on the expanded rail's Dynamic Type scaling; below 1 = no cap
+    public var maxFontSizeMultiplier: CGFloat = 0 {
+        didSet {
+            guard oldValue != maxFontSizeMultiplier else { return }
+            applyConfigurations()
+            onNeedsRemeasure?()
+        }
     }
 
     /// The `haptics` prop; PCNavigationRail.mm plays it on a destination press
@@ -99,6 +114,8 @@ public final class PCNavigationRailView: UIView {
     }
 
     private func setup() {
+        // The destinations show themselves in the Large Content Viewer
+        addInteraction(UILargeContentViewerInteraction())
         addSubview(headerContainer)
         headerContainer.onSizeChange = { [weak self] in
             self?.setNeedsLayout()
@@ -149,6 +166,8 @@ public final class PCNavigationRailView: UIView {
             button.addTarget(self, action: #selector(pressed(_:)), for: .touchUpInside)
             button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
             button.accessibilityIdentifier = item.testID.isEmpty ? nil : item.testID
+            button.showsLargeContentViewer = true
+            button.scalesLargeContentImage = true
             let badge = UILabel()
             badge.textAlignment = .center
             badge.clipsToBounds = true
@@ -194,10 +213,26 @@ public final class PCNavigationRailView: UIView {
 
     // MARK: - Appearance
 
-    private var defaultLabelFont: UIFont {
+    /// The labels' font. Collapsed, it keeps its default-size size, as a
+    /// tab bar's titles do; expanded, it follows Dynamic Type along the
+    /// subheadline style's curve, capped at `maxFontSizeMultiplier`.
+    private var titleFont: UIFont {
         let style: UIFont.TextStyle = expanded ? .subheadline : .caption1
-        let base = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: style).pointSize, weight: .medium)
-        return base
+        let defaultTraits = UITraitCollection(preferredContentSizeCategory: .large)
+        let font = labelFont ?? UIFont.systemFont(
+            ofSize: UIFont.preferredFont(forTextStyle: style, compatibleWith: defaultTraits).pointSize,
+            weight: .medium
+        )
+        guard expanded else { return font }
+        let metrics = UIFontMetrics(forTextStyle: .subheadline)
+        if maxFontSizeMultiplier >= 1 {
+            return metrics.scaledFont(
+                for: font,
+                maximumPointSize: font.pointSize * maxFontSizeMultiplier,
+                compatibleWith: traitCollection
+            )
+        }
+        return metrics.scaledFont(for: font, compatibleWith: traitCollection)
     }
 
     /// The symbol configuration of a destination's image.
@@ -223,9 +258,13 @@ public final class PCNavigationRailView: UIView {
 
     private func applyConfigurations() {
         let widest = expanded ? widestImage : 0
+        let font = titleFont
         for (index, button) in buttons.enumerated() where index < railItems.count {
-            button.configuration = configuration(for: index, widestImage: widest)
+            button.configuration = configuration(for: index, widestImage: widest, font: font)
             let item = railItems[index]
+            // The Large Content Viewer shows the label even where it is hidden
+            button.largeContentTitle = item.label.isEmpty ? item.accessibilityLabel : item.label
+            button.largeContentImage = image(for: index)
             button.isEnabled = !item.disabled
             let isSelected = item.value == selectedValue
             // Set outright, so it also carries what isEnabled would have
@@ -239,7 +278,7 @@ public final class PCNavigationRailView: UIView {
         setNeedsLayout()
     }
 
-    private func configuration(for index: Int, widestImage: CGFloat) -> UIButton.Configuration {
+    private func configuration(for index: Int, widestImage: CGFloat, font: UIFont) -> UIButton.Configuration {
         let item = railItems[index]
         let isSelected = item.value == selectedValue
         var config = UIButton.Configuration.plain()
@@ -265,7 +304,6 @@ public final class PCNavigationRailView: UIView {
         config.baseForegroundColor = isSelected
             ? (activeTintColor ?? tintColor)
             : (inactiveTintColor ?? .secondaryLabel)
-        let font = labelFont ?? defaultLabelFont
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
             outgoing.font = font

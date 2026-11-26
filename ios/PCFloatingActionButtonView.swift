@@ -133,6 +133,12 @@ public final class PCFloatingActionButtonView: UIView {
 
         // Frame layout: the button's width animates inside this view
         addSubview(button)
+        // The round button keeps its size at every text size, so at the
+        // accessibility sizes a long press shows it in the Large Content
+        // Viewer, as UIKit's fixed-size bar buttons do
+        button.showsLargeContentViewer = true
+        button.scalesLargeContentImage = true
+        addInteraction(UILargeContentViewerInteraction())
         button.addTarget(self, action: #selector(pressed), for: .touchUpInside)
         button.addTarget(self, action: #selector(touchedDown), for: .touchDown)
         applyConfiguration()
@@ -147,10 +153,12 @@ public final class PCFloatingActionButtonView: UIView {
         haptics.prepare(in: self)
     }
 
-    /// The label stays the spoken name while the button is shrunk.
+    /// The label stays the spoken name while the button is shrunk, and the
+    /// Large Content Viewer's title.
     private func updateAccessibilityLabel() {
         let spoken = spokenLabel.isEmpty ? label : spokenLabel
         button.accessibilityLabel = spoken.isEmpty ? nil : spoken
+        button.largeContentTitle = label.isEmpty ? (spoken.isEmpty ? nil : spoken) : label
     }
 
     // MARK: - Icon
@@ -226,6 +234,7 @@ public final class PCFloatingActionButtonView: UIView {
 
     private func applyConfiguration() {
         button.configuration = makeConfiguration(extended: shownExtended)
+        button.largeContentImage = iconImage
         sizingButton.configuration = label.isEmpty ? nil : makeConfiguration(extended: true)
         setNeedsLayout()
     }

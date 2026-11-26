@@ -63,7 +63,7 @@ The button doesn't position itself on either platform: place it in your layout, 
 
 Android uses the theme's FAB styles for each size (`floatingActionButtonSmallStyle`, `floatingActionButtonStyle`, `floatingActionButtonMediumStyle`, `floatingActionButtonLargeStyle` and the three extended styles), so a Material 3 Expressive app theme gets the Expressive FABs and a customized FAB style carries over. Material 3 Expressive drops the small FAB in favor of the medium one; `small` is the Material 3 small FAB. Extended FABs come in three sizes, so `small` and `regular` both use the 56dp one.
 
-On iOS the button is a circle of the size's diameter (the small one keeps the 44pt minimum touch target), and extended, a capsule of the same height. The SF Symbol and the label scale with the size.
+On iOS the button is a circle of the size's diameter (the small one keeps the 44pt minimum touch target), and extended, a capsule of the same height. The SF Symbol and the label scale with the size. The extended label follows Dynamic Type; the round button keeps its size at every text size, as UIKit's bar buttons do, and at the accessibility text sizes a long press shows its icon and label (or `accessibilityLabel`) in the Large Content Viewer.
 
 | iOS 26 | iOS 18 | Android |
 | --- | --- | --- |

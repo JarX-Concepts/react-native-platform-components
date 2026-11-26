@@ -99,8 +99,10 @@ export interface NavigationRailProps extends ViewProps {
   labelStyle?: LabelStyle;
 
   /**
-   * Largest scale the labels may reach with the system font scale, as on
-   * `Text`. Unset or `0`: no cap.
+   * Largest scale the labels may reach with the system text size (Dynamic
+   * Type / font scale), as on React Native `Text`. Unset or `0`: no cap.
+   * iOS: the expanded rail only; the collapsed rail's labels keep their size,
+   * as a tab bar's do, and show the Large Content Viewer instead.
    */
   maxFontSizeMultiplier?: number;
 

@@ -58,26 +58,21 @@ static inline bool LabelStyleEqual(
 }
 
 /// Builds the label font from RN-style font props, or nil when every field is
-/// unset so the rail keeps its default. Without a fontSize the size follows
-/// Dynamic Type (the caption style), capped at maxFontSizeMultiplier times its
-/// default size when that is 1 or more.
-static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style, double maxFontSizeMultiplier) {
+/// unset so the rail keeps its default. The font is built at the default text
+/// size (the caption style's size without a fontSize); the expanded rail
+/// scales it with Dynamic Type.
+static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style) {
   if (style.fontFamily.empty() && style.fontSize <= 0 &&
-      style.fontWeight.empty() && style.fontStyle.empty() && maxFontSizeMultiplier < 1) {
+      style.fontWeight.empty() && style.fontStyle.empty()) {
     return nil;
   }
-  UIFont *caption = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
-  NSNumber *size = style.fontSize > 0 ? @(style.fontSize) : nil;
-  if (!size && maxFontSizeMultiplier >= 1) {
-    UITraitCollection *defaultTraits =
-        [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
-    CGFloat baseSize = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1
-                           compatibleWithTraitCollection:defaultTraits].pointSize;
-    size = @(MIN(caption.pointSize, baseSize * maxFontSizeMultiplier));
-  }
-  return [RCTFont updateFont:[UIFont systemFontOfSize:caption.pointSize weight:UIFontWeightMedium]
+  UITraitCollection *defaultSize =
+      [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
+  CGFloat captionSize = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1
+                            compatibleWithTraitCollection:defaultSize].pointSize;
+  return [RCTFont updateFont:[UIFont systemFontOfSize:captionSize weight:UIFontWeightMedium]
                   withFamily:NSStringFromStd(style.fontFamily, nil)
-                        size:size
+                        size:style.fontSize > 0 ? @(style.fontSize) : nil
                       weight:NSStringFromStd(style.fontWeight, nil)
                        style:NSStringFromStd(style.fontStyle, nil)
                      variant:nil
@@ -222,9 +217,12 @@ static UIFont *FontFromLabelStyle(const PCNavigationRailLabelStyleStruct &style,
     _view.badgeTextColor = RCTUIColorFromSharedColor(newProps.badgeTextColor);
   }
 
-  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle) ||
-      newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
-    _view.labelFont = FontFromLabelStyle(newProps.labelStyle, newProps.maxFontSizeMultiplier);
+  if (!prevProps || !LabelStyleEqual(newProps.labelStyle, prevProps->labelStyle)) {
+    _view.labelFont = FontFromLabelStyle(newProps.labelStyle);
+  }
+
+  if (!prevProps || newProps.maxFontSizeMultiplier != prevProps->maxFontSizeMultiplier) {
+    _view.maxFontSizeMultiplier = newProps.maxFontSizeMultiplier;
   }
 
   // items' systemItem: TabBar only
