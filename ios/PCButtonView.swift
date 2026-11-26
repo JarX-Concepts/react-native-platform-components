@@ -78,13 +78,13 @@ public final class PCButtonView: UIView {
         didSet { applyConfiguration() }
     }
 
-    /// Label font; nil keeps the configuration's font
+    /// Label font at the default text size, scaled with Dynamic Type; nil
+    /// keeps the configuration's font
     public var labelFont: UIFont? {
         didSet { applyConfiguration() }
     }
 
-    /// Cap on the default title font's Dynamic Type scaling; below 1 = no cap.
-    /// (A labelStyle font is capped when it is built, in PCButton.mm.)
+    /// Cap on the title font's Dynamic Type scaling; below 1 = no cap.
     public var maxFontSizeMultiplier: CGFloat = 0 {
         didSet { if oldValue != maxFontSizeMultiplier { applyConfiguration() } }
     }
@@ -413,14 +413,21 @@ public final class PCButtonView: UIView {
         }
     }
 
-    // A capped title font is fixed, so it is rebuilt when the text size changes
+    // A scaled or capped title font is fixed, so it is rebuilt when the text
+    // size changes, and the button measured again at its new size
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        guard maxFontSizeMultiplier >= 1,
-              previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
         else { return }
         applyConfiguration()
         onNeedsRemeasure?()
+        // UIKit passes the new traits to the buttons after this, and they
+        // resize their own titles then; measure again once they have
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.applyConfiguration()
+            self.onNeedsRemeasure?()
+        }
     }
 
     // MARK: - Sizing
@@ -434,12 +441,18 @@ public final class PCButtonView: UIView {
     }
 
     /// Called by the measuring pipeline to get the size for Yoga layout: the
-    /// button's natural size, or its height at the given width.
+    /// width of the title on one line (Yoga clamps it to the space there
+    /// is), and the height at the given width, where a long title wraps.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
-        let fitted = measuredButton.sizeThatFits(
-            CGSize(width: constrainedSize.width > 0 ? constrainedSize.width : .greatestFiniteMagnitude,
-                   height: .greatestFiniteMagnitude)
+        let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+        let natural = measuredButton.sizeThatFits(unbounded)
+        let width = ceil(natural.width)
+        guard constrainedSize.width > 0, constrainedSize.width < width else {
+            return CGSize(width: width, height: ceil(natural.height))
+        }
+        let wrapped = measuredButton.sizeThatFits(
+            CGSize(width: constrainedSize.width, height: .greatestFiniteMagnitude)
         )
-        return CGSize(width: ceil(fitted.width), height: ceil(fitted.height))
+        return CGSize(width: width, height: ceil(max(natural.height, wrapped.height)))
     }
 }

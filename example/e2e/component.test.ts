@@ -1136,6 +1136,52 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // iOS: an embedded menu follows a text size change made while the demo is
+  // open: at the largest size the placeholder no longer fits beside the row's
+  // label and wraps onto a second line instead of being cut off.
+  it('should test Selection Menu at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Selection Menu');
+    await element(by.id('embedded-switch')).tap();
+    await pause(600);
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    // The Notify menu shows a short value, on one line at every size
+    const heights = async () => ({
+      state: (await frameOf(by.id('state-menu-embedded'))).height,
+      notify: (await frameOf(by.id('notify-menu-embedded'))).height,
+    });
+    const before = await heights();
+    if (Math.abs(before.state - before.notify) > 1) {
+      throw new Error(`One-line menus differ: ${JSON.stringify(before)}`);
+    }
+    let large: typeof before;
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      large = await heights();
+    } finally {
+      contentSize('large');
+    }
+    if (
+      large.notify < before.notify * 1.5 ||
+      large.state < large.notify * 1.5
+    ) {
+      throw new Error(
+        `At the largest text size ${JSON.stringify(large)}: the placeholder is cut off`
+      );
+    }
+    await pause(1500);
+    const after = await heights();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error(
+        `Back at the default size ${JSON.stringify(after)}, was ${JSON.stringify(before)}`
+      );
+    }
+  });
+
   it('should test Context Menu functionality', async () => {
     // Navigate to ContextMenu tab
     await selectDemo('Context Menu');
@@ -2087,6 +2133,11 @@ describe('Platform Components Example', () => {
       return;
     }
     await selectDemo('Navigation Rail');
+    // The header is the app's own Button, which grows with the text like
+    // any Button and widens the rail to fit; the rail's items don't
+    await scrollToId('rail-header-switch');
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
     const contentSize = (size: string) =>
       execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
     const sizes = async () => ({
@@ -2334,6 +2385,61 @@ describe('Platform Components Example', () => {
     await element(by.id('button-styled')).tap();
     await pause(350);
     await expect(element(by.id('button-last-pressed'))).toHaveText('brand');
+  });
+
+  // iOS: buttons follow a text size change made while the demo is open (the
+  // demo menu itself clips at the accessibility sizes): a long label wraps
+  // onto a second line rather than being cut off, in a Button and in a
+  // squeezed ButtonGroup, and a labelStyle font grows with the rest.
+  it('should test Button labels at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Button');
+    await scrollToId('button-group-long');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const heights = async () => ({
+      short: (await frameOf(by.id('button-short-label'))).height,
+      long: (await frameOf(by.id('button-long-label'))).height,
+      group: (await frameOf(by.id('button-group-long'))).height,
+      styled: (await frameOf(by.id('button-styled'))).height,
+    });
+    const before = await heights();
+    // One line each at the default size
+    if (
+      Math.abs(before.long - before.short) > 1 ||
+      Math.abs(before.group - before.short) > 1
+    ) {
+      throw new Error(`One-line buttons differ: ${JSON.stringify(before)}`);
+    }
+    let large: typeof before;
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // Frames are read without scrolling: the page moves as the text grows
+      large = await heights();
+    } finally {
+      contentSize('large');
+    }
+    if (
+      large.short < before.short * 1.5 ||
+      large.long < large.short * 1.6 ||
+      large.group < large.short * 1.6 ||
+      large.styled < before.styled * 1.5
+    ) {
+      throw new Error(
+        `At the largest text size ${JSON.stringify(large)}, default ${JSON.stringify(before)}: ` +
+          'a label is cut off or did not grow'
+      );
+    }
+    await pause(1500);
+    const after = await heights();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error(
+        `Back at the default size ${JSON.stringify(after)}, was ${JSON.stringify(before)}`
+      );
+    }
   });
 
   it('should test Chip group selection', async () => {

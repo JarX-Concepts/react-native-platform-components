@@ -77,7 +77,8 @@ public final class PCButtonGroupView: UIView {
         didSet { applyConfigurations() }
     }
 
-    /// Label font; nil keeps the configuration's font
+    /// Label font at the default text size, scaled with Dynamic Type; nil
+    /// keeps the configuration's font
     public var labelFont: UIFont? {
         didSet { applyConfigurations() }
     }
@@ -86,9 +87,8 @@ public final class PCButtonGroupView: UIView {
     public var overflow: String = "none" {
         didSet {
             guard oldValue != overflow else { return }
-            overflowDirty = true
-            invalidateIntrinsicContentSize()
-            setNeedsLayout()
+            // Folding buttons keep their titles to one line
+            applyConfigurations()
         }
     }
 
@@ -272,7 +272,11 @@ public final class PCButtonGroupView: UIView {
                 image: iconImages[index],
                 containerColor: containerColor,
                 foregroundColor: foregroundColor,
-                font: labelFont
+                font: labelFont,
+                traits: traitCollection,
+                // Squeezed buttons wrap their titles; with overflow "menu"
+                // the buttons that don't fit fold into the menu instead
+                wrapsTitle: overflow != "menu" || split
             )
             button.accessibilityLabel = item.spokenLabel.isEmpty ? nil : item.spokenLabel
         }
@@ -305,8 +309,26 @@ public final class PCButtonGroupView: UIView {
             image: UIImage(systemName: symbol),
             containerColor: containerColor,
             foregroundColor: foregroundColor,
-            font: labelFont
+            font: labelFont,
+            traits: traitCollection
         )
+    }
+
+    // The text size changed: the buttons are configured again (a labelStyle
+    // font is fixed at the size it was scaled to) and the group measured again
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory
+        else { return }
+        applyConfigurations()
+        onNeedsRemeasure?()
+        // UIKit passes the new traits to the buttons after this, and they
+        // resize their own titles then; measure again once they have
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.applyConfigurations()
+            self.onNeedsRemeasure?()
+        }
     }
 
     // MARK: - Split menu
@@ -368,11 +390,11 @@ public final class PCButtonGroupView: UIView {
     /// How many buttons fit before the "…" button, or nil when all of them
     /// fit.
     private func fittingCount() -> Int? {
-        let widths = uiButtons.map { $0.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width }
+        let widths = uiButtons.map { Self.oneLineSize($0).width }
         let gap = stack.spacing
         let all = widths.reduce(0, +) + gap * CGFloat(max(widths.count - 1, 0))
         guard all > bounds.width + 0.5 else { return nil }
-        var used = makeOverflowButton().systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width
+        var used = Self.oneLineSize(makeOverflowButton()).width
         var count = 0
         for width in widths {
             guard used + gap + width <= bounds.width + 0.5 else { break }
@@ -457,13 +479,18 @@ public final class PCButtonGroupView: UIView {
 
     // MARK: - Sizing
 
-    /// The row with every button showing: an overflowing group reports its
-    /// full width, and Yoga clamps it to the space there is.
+    /// A button's size with its title on one line. (A compressed Auto Layout
+    /// fitting size would let a title wrap down to its longest word.)
+    private static func oneLineSize(_ view: UIView) -> CGSize {
+        view.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude))
+    }
+
+    /// The row with every button showing and every title on one line: an
+    /// overflowing group reports its full width, and Yoga clamps it to the
+    /// space there is.
     private func naturalSize() -> CGSize {
-        guard visibleCount != nil else {
-            return stack.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        }
-        let sizes = uiButtons.map { $0.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize) }
+        let views = visibleCount == nil ? stack.arrangedSubviews.filter { !$0.isHidden } : uiButtons
+        let sizes = views.map(Self.oneLineSize)
         let width = sizes.map(\.width).reduce(0, +) + stack.spacing * CGFloat(max(sizes.count - 1, 0))
         return CGSize(width: width, height: sizes.map(\.height).max() ?? 0)
     }
@@ -476,9 +503,31 @@ public final class PCButtonGroupView: UIView {
         naturalSize()
     }
 
-    /// Called by the measuring pipeline to get the size for Yoga layout.
+    /// Called by the measuring pipeline to get the size for Yoga layout: the
+    /// row's natural width (Yoga clamps it to the space there is), and its
+    /// height at the given width, where squeezed buttons wrap their titles.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
         let fitted = naturalSize()
-        return CGSize(width: ceil(fitted.width), height: ceil(fitted.height))
+        let width = ceil(fitted.width)
+        // Overflow "menu" folds the buttons that don't fit instead
+        guard constrainedSize.width > 0, constrainedSize.width < width, overflow != "menu" || split else {
+            return CGSize(width: width, height: ceil(fitted.height))
+        }
+        return CGSize(width: width, height: ceil(max(fitted.height, squeezedHeight(width: constrainedSize.width))))
+    }
+
+    /// The row's height when it is narrower than its natural width: the stack
+    /// shares the width in proportion to the buttons' natural widths
+    /// (`.fillProportionally`), and the tallest button sets the height.
+    private func squeezedHeight(width: CGFloat) -> CGFloat {
+        let shown = stack.arrangedSubviews.filter { !$0.isHidden }
+        let naturals = shown.map { Self.oneLineSize($0).width }
+        let total = naturals.reduce(0, +)
+        guard total > 0 else { return 0 }
+        let available = max(0, width - stack.spacing * CGFloat(max(shown.count - 1, 0)))
+        return zip(shown, naturals).map { view, natural in
+            let share = available * natural / total
+            return view.sizeThatFits(CGSize(width: share, height: .greatestFiniteMagnitude)).height
+        }.max() ?? 0
     }
 }

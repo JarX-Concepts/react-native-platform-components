@@ -113,7 +113,9 @@ final class PCChipCell: UIView {
             image: image,
             containerColor: nil,
             foregroundColor: foregroundColor,
-            font: font
+            font: font,
+            // A chip keeps to one line
+            wrapsTitle: false
         )
         config.imagePadding = image != nil ? 6 : 0
         config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(font: font, scale: .small)

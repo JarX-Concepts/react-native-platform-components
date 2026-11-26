@@ -226,7 +226,9 @@ public final class PCSelectionMenuView: UIControl {
 
         var config = UIButton.Configuration.plain()
         config.title = displayTitle
-        config.titleLineBreakMode = .byTruncatingTail
+        // A value too long for the field's width wraps onto more lines, as
+        // a pop-up button's title does, rather than being cut off
+        config.titleLineBreakMode = .byWordWrapping
         if boxed {
             let hasValue = !selectedData.isEmpty && parsedOptions.contains { $0.data == selectedData }
             config.baseForegroundColor = hasValue ? .label : .placeholderText
@@ -626,15 +628,21 @@ public final class PCSelectionMenuView: UIControl {
 
     // MARK: - Sizing
 
-    /// The embedded button's size: its content, at least `minFieldHeight`
-    /// tall (by default 44pt borderless, UIKit's 34pt rounded rect boxed).
-    private func inlineSize() -> CGSize {
+    /// The embedded button's size: its content with the title on one line,
+    /// at least `minFieldHeight` tall (by default 44pt borderless, UIKit's
+    /// 34pt rounded rect boxed). Given a narrower `width`, the height is the
+    /// one the wrapped title needs there.
+    private func inlineSize(width: CGFloat = 0) -> CGSize {
         let minimum = minFieldHeight > 0
             ? minFieldHeight
             : (boxed ? Self.boxHeight : PCConstants.minTouchTargetHeight)
         guard let button = menuButton else { return CGSize(width: 0, height: minimum) }
         let fitted = button.intrinsicContentSize
-        return CGSize(width: ceil(fitted.width), height: max(ceil(fitted.height), minimum))
+        var height = fitted.height
+        if width > 0, width < fitted.width {
+            height = max(height, button.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height)
+        }
+        return CGSize(width: ceil(fitted.width), height: max(ceil(height), minimum))
     }
 
     public override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -649,11 +657,13 @@ public final class PCSelectionMenuView: UIControl {
         return inlineSize()
     }
 
-    /// Called by the measuring pipeline to get the size for Yoga layout.
+    /// Called by the measuring pipeline to get the size for Yoga layout: the
+    /// width of the field with its value on one line (Yoga clamps it to the
+    /// space there is), and the height at the given width.
     /// Headless mode returns zero so Yoga reserves nothing.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
         guard anchorMode == "inline" else { return .zero }
-        return inlineSize()
+        return inlineSize(width: constrainedSize.width)
     }
 }
 

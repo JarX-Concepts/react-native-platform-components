@@ -298,7 +298,9 @@ Colors take any React Native `ColorValue`. Fonts follow the `Text` style convent
 | `android.rippleColor` | Press ripple                   | —                     |
 | `android.strokeColor` | Outline (`outlined` variant)   | —                     |
 
-The label grows with the system text size (Dynamic Type on iOS, font scale on Android). `maxFontSizeMultiplier` caps that growth with the `Text` semantics: `2` lets the label reach twice its default size and no more; unset or `0` means no cap. On iOS the cap applies to the system title font and to a `labelStyle` without a `fontSize` (which follows the body text style); a fixed `labelStyle.fontSize` doesn't scale on iOS, so there is nothing to cap.
+The label grows with the system text size (Dynamic Type on iOS, font scale on Android). `maxFontSizeMultiplier` caps that growth with the `Text` semantics: `2` lets the label reach twice its default size and no more; unset or `0` means no cap. On iOS a `labelStyle.fontSize` scales with Dynamic Type as a `Text` fontSize does (along the body text style's curve), and the cap applies to it as it does to the system title font.
+
+A label longer than the width the button gets wraps onto more lines, as UIKit's own button titles do, rather than being cut off: the button reports the width of its label on one line, and takes the height of the wrapped label when its container makes it narrower. This matters most at the accessibility text sizes.
 
 ```tsx
 <Button label="Continue" maxFontSizeMultiplier={1.5} />

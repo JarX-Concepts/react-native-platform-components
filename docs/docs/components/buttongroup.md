@@ -125,9 +125,9 @@ const [format, setFormat] = useState<string[]>(['bold']);
 
 | `overflow` | Android | iOS |
 | ---------- | ------- | --- |
-| `'none'` (default) | Squeezed: the last buttons get what room is left, their labels wrapped | Clipped |
+| `'none'` (default) | Squeezed: the last buttons get what room is left, their labels wrapped | The buttons share the width in proportion to their labels, which wrap onto more lines |
 | `'menu'` | `MaterialButtonGroup` overflow mode: the trailing buttons move into the group's overflow menu (a `PopupMenu` behind a ⋮ button) | The trailing buttons fold into a "…" button (`ellipsis`) at the end of the row, with a `UIMenu` of the hidden buttons |
-| `'wrap'` | The buttons wrap onto more rows | Clipped: UIKit has no wrapping button row |
+| `'wrap'` | The buttons wrap onto more rows | As `'none'`: UIKit has no wrapping button row |
 
 A pick from the overflow menu is a press of that button: `onPress` is called with its value and index, and in a selecting group the selection changes as for a tap. The menu shows each hidden button's label (or `accessibilityLabel`), its icon, its disabled state, and on iOS a checkmark on the selected ones.
 

@@ -66,13 +66,17 @@ static inline bool LabelStyleEqual(
 }
 
 /// Builds the label font from RN-style font props, or nil when every field is
-/// unset so the buttons keep the configuration's font.
+/// unset so the buttons keep the configuration's font. The font is built at
+/// the default text size; the view scales it with Dynamic Type.
 static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
   if (style.fontFamily.empty() && style.fontSize <= 0 &&
       style.fontWeight.empty() && style.fontStyle.empty()) {
     return nil;
   }
-  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody]
+  UITraitCollection *defaultSize =
+      [UITraitCollection traitCollectionWithPreferredContentSizeCategory:UIContentSizeCategoryLarge];
+  return [RCTFont updateFont:[UIFont preferredFontForTextStyle:UIFontTextStyleBody
+                                 compatibleWithTraitCollection:defaultSize]
                   withFamily:NSStringFromStd(style.fontFamily, nil)
                         size:style.fontSize > 0 ? @(style.fontSize) : nil
                       weight:NSStringFromStd(style.fontWeight, nil)
@@ -298,6 +302,15 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
 
 #pragma mark - State (Measuring)
 
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
+  [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+  // A new width changes how many lines squeezed titles wrap onto
+  if (layoutMetrics.frame.size.width != oldLayoutMetrics.frame.size.width) {
+    [self updateMeasurements];
+  }
+}
+
 - (void)updateState:(const State::Shared &)state
            oldState:(const State::Shared &)oldState {
   _state = std::static_pointer_cast<const MeasuringPCButtonGroupShadowNode::ConcreteState>(state);
@@ -314,12 +327,15 @@ static UIFont *FontFromLabelStyle(const PCButtonGroupLabelStyleStruct &style) {
   if (_state == nullptr)
     return;
 
-  // The group's natural size; Yoga clamps it to the available width
-  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeZero];
+  // The group's natural width, and its height at the current width
+  // (squeezed buttons wrap their titles when Yoga narrows the group)
+  CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(self.bounds.size.width, 0)];
 
   PCButtonGroupStateFrameSize next;
   next.frameSize = {(Float)size.width, (Float)size.height};
-  _state->updateState(std::move(next));
+  if (_state->getData() != next) {
+    _state->updateState(std::move(next));
+  }
 }
 
 @end
