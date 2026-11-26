@@ -9,7 +9,7 @@ It is a JavaScript component: a `View` with the native controls inside it.
 
 | iOS 26 | iOS 26, dark | iOS 26, the largest text size |
 | --- | --- | --- |
-| ![A Payee section on iOS 26: a header, a rounded white card with Name and Phone fields beside their labels and two switch rows, separators between the rows, and a footer below the card; then a Delivery confirmation section with a switch, a carrier menu and a checkbox](/img/components/formsection/light-ios.webp) | ![The same sections in dark mode: dark gray cards on black](/img/components/formsection/dark-ios.webp) | ![The same Payee section at the largest accessibility text size: the field labels above their fields, the switch rows taller for their wrapped labels, and the footer wrapping over several lines](/img/components/formsection/ax5-ios.webp) |
+| ![A Payee section on iOS 26: a header, a rounded white card with Name and Phone fields beside their labels and two switch rows, separators between the rows, and a footer below the card; then a Delivery confirmation section with a switch, a carrier menu and a checkbox](/img/components/formsection/light-ios.webp) | ![The same sections in dark mode: dark gray cards on black](/img/components/formsection/dark-ios.webp) | ![The same Payee section at the largest accessibility text size: the field labels above their fields with the rows' margins kept, the switch rows taller for their wrapped labels, and the footer wrapping over several lines](/img/components/formsection/ax5-ios.webp) |
 
 ```tsx
 import {
@@ -81,7 +81,7 @@ The section has no margins of its own: place it with `style` or its parent's pad
 
 ### Large text
 
-At the accessibility text sizes the rows grow with their text and the separators stay at the rows' edges. A TextField's leading label moves above its field, as in Apple's lists (see [Grouped forms on iOS](/components/textfield#grouped-forms-on-ios)), and the header and footer wrap. `maxFontSizeMultiplier` caps the header and footer; the rows' own components have their own `maxFontSizeMultiplier`.
+At the accessibility text sizes the rows grow with their text and the separators stay at the rows' edges. A TextField's leading label moves above its field, and its row keeps its margins above the label and below the field, as in Apple's lists (see [Grouped forms on iOS](/components/textfield#grouped-forms-on-ios)), and the header and footer wrap. `maxFontSizeMultiplier` caps the header and footer; the rows' own components have their own `maxFontSizeMultiplier`.
 
 ### Accessibility
 
