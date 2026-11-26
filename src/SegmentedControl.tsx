@@ -136,8 +136,10 @@ export interface SegmentedControlProps extends ViewProps {
   labelStyle?: SegmentedControlLabelStyle;
 
   /**
-   * Largest scale the labels may reach with the system text size (Dynamic
-   * Type / font scale), as on React Native `Text`. Unset or `0`: no cap.
+   * Largest scale the labels may reach with the system font scale, as on
+   * React Native `Text`. Unset or `0`: no cap. Android only: iOS segment
+   * titles keep their size, as `UISegmentedControl`'s do, and show the Large
+   * Content Viewer on a long press at the accessibility text sizes.
    */
   maxFontSizeMultiplier?: number;
 
