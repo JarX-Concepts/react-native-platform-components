@@ -2133,6 +2133,11 @@ describe('Platform Components Example', () => {
       return;
     }
     await selectDemo('Navigation Rail');
+    // The header is the app's own Button, which grows with the text like
+    // any Button and widens the rail to fit; the rail's items don't
+    await scrollToId('rail-header-switch');
+    await element(by.id('rail-header-switch')).tap();
+    await pause(600);
     const contentSize = (size: string) =>
       execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
     const sizes = async () => ({
