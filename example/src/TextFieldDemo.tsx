@@ -605,6 +605,19 @@ export function TextFieldDemo(): React.JSX.Element {
             {...formRow}
           />
           <Divider />
+          {/* A grouped row with a size cap: the label still moves above at
+              the accessibility sizes, and the row keeps its margins */}
+          <View testID="row-capped-leading" collapsable={false}>
+            <TextField
+              testID="field-capped-leading"
+              label="Account"
+              placeholder="Checking"
+              maxFontSizeMultiplier={1.5}
+              minFieldHeight={Platform.OS === 'ios' ? 50 : undefined}
+              {...formRow}
+            />
+          </View>
+          <Divider />
           {/* An empty multi-line field is as tall as its placeholder */}
           <TextField
             testID="field-long-placeholder"

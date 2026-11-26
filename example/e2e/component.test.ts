@@ -3442,9 +3442,31 @@ describe('Platform Components Example', () => {
       'Description of the company',
       'field-long-leading'
     );
+    // A grouped row (borderless, 50pt) whose text is capped at 1.5x
+    await scrollToId('row-capped-leading');
+    await expectLabelBeside(true, 'Account', 'field-capped-leading');
+    const cappedRow = await frameOf(by.id('row-capped-leading'));
+    if (Math.abs(cappedRow.height - 50) > 1) {
+      throw new Error(`The leading row is ${cappedRow.height}pt tall, not 50`);
+    }
     try {
       contentSize('accessibility-extra-extra-extra-large');
       await pause(1500);
+      // The size setting stacks the label even though the cap keeps the
+      // text below the accessibility sizes, and the row keeps its margins
+      // above the label and below the field
+      await expectLabelBeside(false, 'Account', 'field-capped-leading');
+      const row = await frameOf(by.id('row-capped-leading'));
+      const label = await frameOf(by.text('Account'));
+      const input = await frameOf(by.id('field-capped-leading'));
+      const top = label.y - row.y;
+      const bottom = row.y + row.height - (input.y + input.height);
+      if (top < 10 || bottom < 10 || Math.abs(top - bottom) > 2) {
+        throw new Error(
+          `Stacked row ${JSON.stringify(row)}, label ${JSON.stringify(label)}, ` +
+            `field ${JSON.stringify(input)}: margins ${top} above, ${bottom} below`
+        );
+      }
       // A long label wraps instead of being cut off at one line. Frames
       // are read without scrolling: the page moves as the text grows.
       const long = await frameOf(by.text(LONG_LABEL));
@@ -3464,6 +3486,13 @@ describe('Platform Components Example', () => {
     }
     await pause(1500);
     await expectLabelBeside(true);
+    await expectLabelBeside(true, 'Account', 'field-capped-leading');
+    const restored = await frameOf(by.id('row-capped-leading'));
+    if (Math.abs(restored.height - 50) > 1) {
+      throw new Error(
+        `The leading row is ${restored.height}pt tall again, not 50`
+      );
+    }
   });
 
   // iOS: an empty multi-line field is as tall as its wrapped placeholder, at

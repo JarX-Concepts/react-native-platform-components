@@ -348,7 +348,7 @@ const row = { ios: { labelPlacement: 'leading', borderStyle: 'none' } } as const
 </View>
 ```
 
-At the accessibility text sizes, and whenever a label is wider than `labelWidth`, the label moves above the field, as it does in Apple's own lists, and moves back when it fits again. Set `ios.leadingFallback: 'none'` to keep the column; the label then wraps inside it. Labels wrap in either placement rather than being cut off, and the field grows to fit them.
+At the accessibility text sizes, and whenever a label is wider than `labelWidth`, the label moves above the field, as it does in Apple's own lists, and moves back when it fits again. The text size setting decides it, not the font: a `maxFontSizeMultiplier` that keeps the text small still stacks the label at an accessibility size. A borderless row with a `minFieldHeight` keeps its margins when the label moves: the space above and below the text in the leading row goes above the label and below the field, and the field is as tall as its text, so a stacked row keeps the form's spacing without restyling. Set `ios.leadingFallback: 'none'` to keep the column; the label then wraps inside it. Labels wrap in either placement rather than being cut off, and the field grows to fit them.
 
 ### Variants
 
