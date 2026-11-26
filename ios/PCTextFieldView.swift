@@ -1313,7 +1313,11 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         var inputHeight: CGFloat
         var inputScrolls = false
         if multiline {
-            let fitted = ceil(textView.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude)).height)
+            // An empty field is as tall as its placeholder, which wraps
+            let fitted = max(
+                ceil(textView.sizeThatFits(CGSize(width: fieldWidth, height: .greatestFiniteMagnitude)).height),
+                textView.placeholderHeight(forWidth: fieldWidth)
+            )
             inputHeight = max(minInputHeight, fitted)
             let lineHeight = inputFont.lineHeight
             let chrome = textView.textContainerInset.top + textView.textContainerInset.bottom
@@ -1640,10 +1644,25 @@ final class PCPlaceholderTextView: UITextView {
         placeholderLabel.isHidden = !(text ?? "").isEmpty || placeholder.isEmpty
     }
 
+    /// The placeholder's width inside a text view `width` wide: where the
+    /// text wraps.
+    private func placeholderWidth(forWidth width: CGFloat) -> CGFloat {
+        let padding = textContainer.lineFragmentPadding
+        return max(0, width - textContainerInset.left - textContainerInset.right - padding * 2)
+    }
+
+    /// The height the view needs to show its whole placeholder at `width`,
+    /// insets included, while it shows (no text); 0 otherwise.
+    func placeholderHeight(forWidth width: CGFloat) -> CGFloat {
+        guard !placeholderLabel.isHidden else { return 0 }
+        let size = CGSize(width: placeholderWidth(forWidth: width), height: .greatestFiniteMagnitude)
+        return ceil(placeholderLabel.sizeThatFits(size).height + textContainerInset.top + textContainerInset.bottom)
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         let x = textContainerInset.left + textContainer.lineFragmentPadding
-        let width = max(0, bounds.width - x - textContainerInset.right - textContainer.lineFragmentPadding)
+        let width = placeholderWidth(forWidth: bounds.width)
         let height = placeholderLabel.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
         placeholderLabel.frame = CGRect(x: x, y: textContainerInset.top, width: width, height: height)
     }
