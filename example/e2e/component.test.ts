@@ -2986,11 +2986,27 @@ describe('Platform Components Example', () => {
     try {
       contentSize('accessibility-extra-extra-extra-large');
       await pause(1500);
+      // React Native re-measures text for a new text size, but a later React
+      // render brings back the text measured at the old size. The pill
+      // measured afresh after opening and closing is what an app launched
+      // at this size shows.
+      await element(by.id('disclosure-pill')).tap();
+      await waitFor(element(by.id('disclosure-close')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await element(by.id('disclosure-close')).tap();
+      await waitFor(element(by.id('disclosure-pill')))
+        .toBeVisible()
+        .withTimeout(5000);
+      await pause(1000);
       const pill = await expectPillBetweenButtons();
       // 1.5x: two title lines and the subtitle, not the 3.6x of AX5
-      if (pill.height > defaultPill.height * 2.5) {
+      if (
+        pill.height <= defaultPill.height ||
+        pill.height > defaultPill.height * 2.5
+      ) {
         throw new Error(
-          `The pill is ${pill.height}pt tall (${defaultPill.height} at the default size): titles not capped`
+          `The pill is ${pill.height}pt tall (${defaultPill.height} at the default size): expected it to grow up to 1.5x text`
         );
       }
       await element(by.id('disclosure-header-search')).tap();
