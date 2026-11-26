@@ -7,7 +7,7 @@ const repo = 'https://github.com/JarX-Concepts/react-native-platform-components'
 const config: Config = {
   title: 'react-native-platform-components',
   tagline:
-    'Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass for React Native. Native on Android too.',
+    'Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, FormSection, GlassDisclosure, ProgressIndicator and LiquidGlass for React Native. Native on Android too.',
   url: 'https://jarx-concepts.github.io',
   baseUrl: '/react-native-platform-components/',
   organizationName: 'JarX-Concepts',

@@ -41,6 +41,7 @@ import type { ContextMenuAction, ContextMenuProps } from './ContextMenu';
 import type { DatePickerProps, DateRangePickerProps } from './DatePicker';
 import type { FloatingActionButtonProps } from './FloatingActionButton';
 import type { FloatingToolbarProps } from './FloatingToolbar';
+import type { FormSectionProps } from './FormSection';
 import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
@@ -80,6 +81,7 @@ export type * from './Switch';
 export type * from './Checkbox';
 export type * from './RadioGroup';
 export type * from './FloatingToolbar';
+export type * from './FormSection';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -1441,6 +1443,34 @@ export function FloatingToolbar(
     ...viewProps
   } = props;
   return <View {...viewProps}>{children}</View>;
+}
+
+/**
+ * A view with the header (a `header`-role `Text`, `<testID>-header`), the
+ * children and the footer (`<testID>-footer`). No card or separators.
+ */
+export function FormSection(props: FormSectionProps): React.ReactElement {
+  const {
+    header,
+    footer,
+    labelWidth,
+    maxFontSizeMultiplier,
+    children,
+    testID,
+    ...viewProps
+  } = props;
+  const partID = (part: string) => (testID ? `${testID}-${part}` : undefined);
+  return (
+    <View testID={testID} {...viewProps}>
+      {header ? (
+        <Text testID={partID('header')} accessibilityRole="header">
+          {header}
+        </Text>
+      ) : null}
+      {children}
+      {footer ? <Text testID={partID('footer')}>{footer}</Text> : null}
+    </View>
+  );
 }
 
 /**

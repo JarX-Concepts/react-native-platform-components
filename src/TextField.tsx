@@ -21,6 +21,7 @@ import NativeTextField, {
 import { NO_ICON, resolveIcon, type PlatformIcon } from './icons';
 import { normalizeLabelStyle, type LabelStyle } from './labelStyle';
 import { focusRegistry } from './focusRegistry';
+import { useFormSectionRow } from './FormSectionContext';
 import { resolveSubmitBehavior } from './submitBehavior';
 import type { AndroidMaterialMode } from './sharedTypes';
 
@@ -509,11 +510,16 @@ export interface TextFieldProps extends Omit<
      * Where the label sits: above the field (default), or in a leading
      * column with the field beside it, the layout of the grouped forms in
      * Contacts and Settings. Pair `'leading'` with `borderStyle: 'none'`
-     * inside your own grouped row.
+     * in a grouped row. Default: `'above'`, and `'leading'` in a
+     * `FormSection`, which also defaults `borderStyle` to `'none'`,
+     * `labelWidth` to its own and `minFieldHeight` to its row height.
      */
     labelPlacement?: 'above' | 'leading';
 
-    /** Width of the leading label column, in points. Default: 100. */
+    /**
+     * Width of the leading label column, in points. Default: the
+     * `FormSection`'s `labelWidth`, else 100.
+     */
     labelWidth?: number;
 
     /**
@@ -684,6 +690,11 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
 
     const nativeRef = useRef<NativeTextFieldInstance>(null);
     const focused = useRef(false);
+
+    // A row of an iOS FormSection: the leading label and borderless field
+    // of a list row, the section's labelWidth and the row's height, unless
+    // set here. The row leaves its height to the field.
+    const section = useFormSectionRow('field');
 
     // The same synchronization as React Native's TextInput: every native edit
     // reports an event count, and a controlled value is pushed with the last
@@ -864,13 +875,13 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         smartDashes: ios?.smartDashes ?? '',
         smartInsertDelete: ios?.smartInsertDelete ?? '',
         mathExpressionCompletion: ios?.mathExpressionCompletion ?? '',
-        borderStyle: ios?.borderStyle ?? '',
-        labelPlacement: ios?.labelPlacement ?? '',
-        labelWidth: ios?.labelWidth ?? 0,
+        borderStyle: ios?.borderStyle ?? (section ? 'none' : ''),
+        labelPlacement: ios?.labelPlacement ?? (section ? 'leading' : ''),
+        labelWidth: ios?.labelWidth ?? section?.labelWidth ?? 0,
         leadingFallback: ios?.leadingFallback ?? '',
         passwordRules: ios?.passwordRules ?? '',
       }),
-      [ios]
+      [ios, section]
     );
 
     const nativeToolbarItems = useMemo(
@@ -935,7 +946,7 @@ export const TextField = forwardRef<TextFieldRef, TextFieldProps>(
         textAlign={textAlign ?? ''}
         minLines={minLines ?? 0}
         maxLines={maxLines ?? 0}
-        minFieldHeight={minFieldHeight ?? 0}
+        minFieldHeight={minFieldHeight ?? section?.minFieldHeight ?? 0}
         fieldPaddingHorizontal={fieldPaddingHorizontal ?? -1}
         pressMode={pressable ? 'button' : 'none'}
         ios={nativeIOS}

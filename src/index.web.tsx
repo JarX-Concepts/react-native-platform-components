@@ -23,6 +23,7 @@ export type * from './Switch';
 export type * from './Checkbox';
 export type * from './RadioGroup';
 export type * from './FloatingToolbar';
+export type * from './FormSection';
 export type * from './GlassDisclosure';
 export type * from './LiquidGlass';
 export type * from './LiquidGlassContainer';
@@ -56,6 +57,7 @@ export {
   Dialog,
   FloatingActionButton,
   FloatingToolbar,
+  FormSection,
   GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,

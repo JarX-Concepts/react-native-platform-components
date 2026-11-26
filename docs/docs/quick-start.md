@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass."
+description: "Copy-paste examples for every component: TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, FormSection, GlassDisclosure, ProgressIndicator and LiquidGlass."
 ---
 
 ### TextField
@@ -726,6 +726,38 @@ export function Example() {
         <Button label="Send" variant="tonal" onPress={() => console.log('send')} />
       </FloatingToolbar>
     </View>
+  );
+}
+```
+
+---
+
+### FormSection
+
+```tsx
+import { FormSection, Switch, TextField } from 'react-native-platform-components';
+import { useState } from 'react';
+import { PlatformColor, Platform, ScrollView } from 'react-native';
+
+export function Example() {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [overnight, setOvernight] = useState(false);
+
+  return (
+    <ScrollView
+      style={{
+        backgroundColor: Platform.OS === 'ios' ? PlatformColor('systemGroupedBackground') : undefined,
+      }}
+      contentContainerStyle={{ padding: 20 }}
+    >
+      {/* iOS: the inset grouped card, the fields beside their labels */}
+      <FormSection header="Payee" footer="We'll mail the check here." labelWidth={90}>
+        <TextField label="Name" value={name} onChangeText={setName} />
+        <TextField label="Phone" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        <Switch label="Overnight mail" value={overnight} onValueChange={setOvernight} />
+      </FormSection>
+    </ScrollView>
   );
 }
 ```

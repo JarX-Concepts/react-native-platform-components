@@ -5,6 +5,7 @@ import type { ColorValue, ViewProps } from 'react-native';
 import NativeCheckbox, {
   type CheckboxChangeEvent,
 } from './CheckboxNativeComponent';
+import { useFormSectionRow } from './FormSectionContext';
 import type { Haptics } from './haptics';
 
 /**
@@ -81,6 +82,9 @@ export interface CheckboxProps extends ViewProps {
 }
 
 export function Checkbox(props: CheckboxProps): React.ReactElement {
+  // In an iOS FormSection: a 44pt list row already, so the section's row
+  // only adds the rest of its height
+  useFormSectionRow('touchTarget');
   const {
     checked,
     onCheckedChange,

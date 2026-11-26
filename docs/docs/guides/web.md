@@ -40,6 +40,7 @@ The web entry point takes the same props as iOS and Android and uses the same ty
 | `TabBar`               | A `tablist` of `<button>` tabs, icon over label, the selected icon in a pill                                                                                                       |
 | `NavigationRail`       | A vertical `tablist` of `<button>` destinations, icon over label (beside it when expanded), with the header above                                                                  |
 | `FloatingToolbar`      | A pill-shaped surface that lays out its children                                                                                                                                   |
+| `FormSection`          | Its children as they are, as on Android, under a heading (`header`) and over small text (`footer`) |
 | `GlassDisclosure`      | A pill that opens a card over a dimmed backdrop, as on Android; Escape closes it                                                                                                   |
 | `LiquidGlass`          | A plain view. `isLiquidGlassSupported` is `false`, as on Android                                                                                                                   |
 | `ActionSheet`          | Its children; while `visible`, a `<dialog>` with the title, message, a `<button>` per action and a cancel button                                                                   |
@@ -203,7 +204,7 @@ on iOS and Android. There is no per-screen platform branch or custom import.
 
 `WebComponents` accepts these keys: `ActionSheet`, `Button`, `ButtonGroup`,
 `SplitButton`, `Chip`, `ChipGroup`, `Checkbox`, `RadioGroup`, `ContextMenu`, `DatePicker`, `DateRangePicker`, `Dialog`, `FloatingActionButton`,
-`FloatingToolbar`, `GlassDisclosure`, `LiquidGlass`, `LiquidGlassContainer`, `NavigationRail`,
+`FloatingToolbar`, `FormSection`, `GlassDisclosure`, `LiquidGlass`, `LiquidGlassContainer`, `NavigationRail`,
 `SegmentedControl`, `SelectionMenu`, `Switch`, `TabBar` and `TextField`.
 
 Each entry is checked against that component's public props. `WebComponentProps`

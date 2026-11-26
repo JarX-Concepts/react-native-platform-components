@@ -16,6 +16,7 @@ export * from './Switch';
 export * from './Checkbox';
 export * from './RadioGroup';
 export * from './FloatingToolbar';
+export * from './FormSection';
 export * from './GlassDisclosure';
 export * from './LiquidGlass';
 export * from './LiquidGlassContainer';

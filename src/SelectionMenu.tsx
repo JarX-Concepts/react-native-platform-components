@@ -2,6 +2,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Platform, type ViewProps } from 'react-native';
 
+import { useFormSectionRow } from './FormSectionContext';
 import NativeSelectionMenu, {
   type SelectionMenuNativeOption,
   type SelectionMenuSelectEvent,
@@ -203,6 +204,9 @@ export function SelectionMenu(props: SelectionMenuProps): React.ReactElement {
   } = props;
 
   const embedded = presentation === 'embedded';
+  // In an iOS FormSection: the embedded field is 44pt already, so the
+  // section's row only adds the rest of its height
+  useFormSectionRow(embedded ? 'touchTarget' : null);
 
   const selectedData = useMemo(
     () => normalizeSelectedData(selected),

@@ -20,6 +20,7 @@ import {
   DatePicker,
   Dialog,
   FloatingActionButton,
+  FormSection,
   ProgressIndicator,
   GlassDisclosure,
   LiquidGlass,
@@ -928,6 +929,26 @@ describe('menus, pickers and containers (mock)', () => {
     const date = new Date(2026, 8, 23);
     fire(byTestID(tree, 'date'), 'confirm', date, true);
     expect(onConfirm).toHaveBeenCalledWith(date, true);
+  });
+});
+
+describe('FormSection mock', () => {
+  it('renders the header, the children and the footer', () => {
+    const tree = render(
+      <FormSection testID="section" header="Payee" footer="We'll mail it.">
+        <TextField testID="name" label="Name" />
+        <Switch testID="overnight" label="Overnight mail" />
+      </FormSection>
+    );
+    expect(byTestID(tree, 'section-header').props.children).toBe('Payee');
+    expect(byTestID(tree, 'section-header').props.accessibilityRole).toBe(
+      'header'
+    );
+    expect(byTestID(tree, 'section-footer').props.children).toBe(
+      "We'll mail it."
+    );
+    expect(byTestID(tree, 'name')).toBeTruthy();
+    expect(byTestID(tree, 'overnight')).toBeTruthy();
   });
 });
 
