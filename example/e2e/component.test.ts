@@ -2957,6 +2957,53 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // iOS: at the largest text size the pill stays between the header's
+  // buttons (pillStyle), which stay tappable, and its title is capped
+  // (maxFontSizeMultiplier)
+  it('should test Glass Disclosure at large text sizes', async () => {
+    if (isAndroid()) {
+      return;
+    }
+    await selectDemo('Glass Disclosure');
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const expectPillBetweenButtons = async () => {
+      const pill = await frameOf(by.id('disclosure-pill'));
+      const leading = await frameOf(by.id('disclosure-header-channels'));
+      const trailing = await frameOf(by.id('disclosure-header-search'));
+      if (
+        pill.x < leading.x + leading.width ||
+        pill.x + pill.width > trailing.x
+      ) {
+        throw new Error(
+          `Pill ${JSON.stringify(pill)} overlaps the header buttons ` +
+            `${JSON.stringify(leading)} and ${JSON.stringify(trailing)}`
+        );
+      }
+      return pill;
+    };
+    const defaultPill = await expectPillBetweenButtons();
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      const pill = await expectPillBetweenButtons();
+      // 1.5x: two title lines and the subtitle, not the 3.6x of AX5
+      if (pill.height > defaultPill.height * 2.5) {
+        throw new Error(
+          `The pill is ${pill.height}pt tall (${defaultPill.height} at the default size): titles not capped`
+        );
+      }
+      await element(by.id('disclosure-header-search')).tap();
+      await expectText('disclosure-last-event', 'Search');
+      await element(by.id('disclosure-header-channels')).tap();
+      await expectText('disclosure-last-event', 'Channels');
+    } finally {
+      contentSize('large');
+    }
+    await pause(1500);
+    await expectPillBetweenButtons();
+  });
+
   it('should test Progress Indicator functionality', async () => {
     await selectDemo('Progress Indicator');
 

@@ -100,6 +100,8 @@ export function GlassDisclosureCore(
     children,
     style,
     panelStyle,
+    pillStyle,
+    maxFontSizeMultiplier,
     backdropColor,
     closeAccessibilityLabel,
     ios,
@@ -238,6 +240,7 @@ export function GlassDisclosureCore(
           accessibility text sizes */}
       <Text
         numberOfLines={2}
+        maxFontSizeMultiplier={maxFontSizeMultiplier}
         style={[styles.pillTitle, { color: colors.title }]}
       >
         {title}
@@ -245,6 +248,7 @@ export function GlassDisclosureCore(
       {subtitle ? (
         <Text
           numberOfLines={1}
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
           style={[styles.pillSubtitle, { color: colors.subtitle }]}
         >
           {subtitle}
@@ -276,6 +280,7 @@ export function GlassDisclosureCore(
         >
           <Text
             numberOfLines={2}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
             style={[styles.panelTitle, { color: colors.title }]}
           >
             {title}
@@ -283,6 +288,7 @@ export function GlassDisclosureCore(
           {subtitle ? (
             <Text
               numberOfLines={1}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
               style={[styles.panelSubtitle, { color: colors.subtitle }]}
             >
               {subtitle}
@@ -343,7 +349,7 @@ export function GlassDisclosureCore(
       // while open. Its frame changes with the glass's in the same morph,
       // and the glass stays at its origin, so the glass never leaves it.
       <LiquidGlassContainer
-        style={open ? styles.anchor : styles.pill}
+        style={open ? styles.anchor : [styles.pill, pillStyle]}
         pointerEvents="box-none"
       >
         <LiquidGlass
@@ -395,7 +401,7 @@ export function GlassDisclosureCore(
       <View style={styles.anchor} pointerEvents="box-none">
         <Animated.View
           collapsable={false}
-          style={[styles.pill, fades(pillOpacity)]}
+          style={[styles.pill, pillStyle, fades(pillOpacity)]}
           pointerEvents={open ? 'none' : 'auto'}
           accessibilityElementsHidden={open}
           importantForAccessibility={open ? 'no-hide-descendants' : 'auto'}

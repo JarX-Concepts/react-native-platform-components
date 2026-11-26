@@ -297,6 +297,51 @@ describe('GlassDisclosure', () => {
     expect(texts(tree)).not.toContain('Panel content');
   });
 
+  it('caps the titles and subtitles with maxFontSizeMultiplier', () => {
+    const caps = (tree: renderer.ReactTestRenderer) =>
+      tree.root
+        .findAllByType(Text)
+        .filter((node) => node.props.children !== 'Panel content')
+        .map((node) => node.props.maxFontSizeMultiplier);
+    const tree = render({ maxFontSizeMultiplier: 1.5 });
+    expect(caps(tree)).toEqual([1.5, 1.5]);
+
+    rerender(tree, { maxFontSizeMultiplier: 1.5, expanded: true });
+    expect(caps(tree)).toEqual([1.5, 1.5]);
+  });
+
+  it('applies pillStyle to the closed pill only', () => {
+    const pillStyle = { maxWidth: 200 };
+    // The host views styled with pillStyle, as the parts they hold
+    const styled = (tree: renderer.ReactTestRenderer) =>
+      tree.root
+        .findAll(
+          (node) =>
+            typeof node.type === 'string' &&
+            StyleSheet.flatten(node.props.style)?.maxWidth === 200
+        )
+        .map((node) => ({
+          pill:
+            node.findAll((n) => n.props.testID === 'disclosure-pill').length >
+            0,
+          panel:
+            node.findAll((n) => n.props.testID === 'disclosure-panel').length >
+            0,
+        }));
+
+    // Liquid Glass: the container is the pill's size while closed
+    const tree = render({ pillStyle });
+    expect(styled(tree)).toEqual([{ pill: true, panel: false }]);
+    rerender(tree, { pillStyle, expanded: true });
+    expect(styled(tree)).toEqual([]);
+
+    // The card opens over the pill, across the overlay's width
+    const card = render({ pillStyle, glass: false });
+    expect(styled(card)).toEqual([{ pill: true, panel: false }]);
+    rerender(card, { pillStyle, glass: false, expanded: true });
+    expect(styled(card)).toEqual([{ pill: true, panel: false }]);
+  });
+
   it('crossfades a card instead of morphing with Reduce Motion', async () => {
     jest
       .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')

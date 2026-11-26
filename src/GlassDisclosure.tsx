@@ -65,6 +65,19 @@ export interface GlassDisclosureProps extends Omit<ViewProps, 'children'> {
   /** Style of the expanded panel, such as `maxHeight` or `padding`. */
   panelStyle?: StyleProp<ViewStyle>;
 
+  /**
+   * Style of the collapsed pill, such as `maxWidth` or `marginHorizontal`:
+   * keeps the pill clear of a header's buttons while the panel still opens
+   * across the component's width. The title wraps, then truncates, to fit.
+   */
+  pillStyle?: StyleProp<ViewStyle>;
+
+  /**
+   * Largest scale of the pill's and the panel's title and subtitle at large
+   * text sizes, as on `Text`.
+   */
+  maxFontSizeMultiplier?: number;
+
   /** Color of the layer behind the panel. Default: black at 20%. */
   backdropColor?: ColorValue;
 

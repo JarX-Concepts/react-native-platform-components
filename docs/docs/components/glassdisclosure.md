@@ -60,6 +60,17 @@ function ChannelScreen() {
 
 The component fills its parent (`StyleSheet.absoluteFill`) and is transparent to touches while the pill is closed: only the pill takes them. Nothing it draws reaches past the closed pill, so views beside the pill, such as a screen header's buttons, stay tappable and visible to UI tests (Detox `toBeVisible()`). The pill sits at the top, centered, and the panel opens down from there across the full width. Pad the component through `style` to place them: the safe area at the top, the screen's margins at the sides.
 
+Between a header's buttons, keep the pill clear of them with `pillStyle`, which applies to the closed pill only, so the panel still opens across the full width. At large text sizes the title wraps onto a second line, then truncates, inside that width; `maxFontSizeMultiplier` caps how large the titles grow, as it does for the header's other text:
+
+```tsx
+<GlassDisclosure
+  style={{ paddingTop: insets.top + 8, paddingHorizontal: 12 }}
+  pillStyle={{ marginHorizontal: 52 }} // a 44pt button and its spacing on each side
+  maxFontSizeMultiplier={1.5}
+  ...
+/>
+```
+
 Render it last in a screen-sized parent. The backdrop behind the open panel covers that parent, and a React Native view can't take touches outside its parent, so a GlassDisclosure inside a small view can only dim and dismiss from that view.
 
 | In a screen header: the pill between the header's buttons, then open over them. iOS 26 (top) and Android (bottom), light and dark |
@@ -78,6 +89,8 @@ Render it last in a screen-sized parent. The backdrop behind the open panel cove
 | `children`                | `ReactNode`                  | The panel's content, under the header                                                                        |
 | `style`                   | `ViewStyle`                  | The overlay the component fills. Default: all of its parent. Pad it to place the pill and the panel          |
 | `panelStyle`              | `ViewStyle`                  | Style of the open panel, such as `maxHeight` or `padding`                                                    |
+| `pillStyle`               | `ViewStyle`                  | Style of the closed pill, such as `maxWidth` or `marginHorizontal`. See [Placement](#placement)              |
+| `maxFontSizeMultiplier`   | `number`                     | Largest scale of the titles and subtitles at large text sizes, as on `Text`                                  |
 | `backdropColor`           | `ColorValue`                 | Color of the layer behind the panel. Default: black at 20%                                                   |
 | `closeAccessibilityLabel` | `string`                     | Screen-reader label of the close button. Default: `'Close'`                                                  |
 | `fallbackColor`           | `ColorValue`                 | Color of the pill and the panel where there is no Liquid Glass. Default: the platform's surface              |
