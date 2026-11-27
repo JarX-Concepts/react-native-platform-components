@@ -447,14 +447,19 @@ public final class PCSegmentedControlView: UIControl {
     // that height whatever size Yoga gives the view.
 
     /// Called by the measuring pipeline to get the size for Yoga layout.
+    ///
+    /// The width is the control's own (its segments' fitted width), not the
+    /// width it was laid out at: Yoga offers a child in a row the rest of the
+    /// row as a maximum, so reporting that would leave its siblings nothing.
+    /// The shadow node widens it to a stretched layout's width. The height is
+    /// UIKit's at `constrainedSize.width`, or at the fitted width when that is 0.
     @objc public func sizeForLayout(withConstrainedTo constrainedSize: CGSize) -> CGSize {
-        let fitted = control.sizeThatFits(
-            CGSize(width: constrainedSize.width > 0 ? constrainedSize.width : .greatestFiniteMagnitude,
-                   height: .greatestFiniteMagnitude)
+        let natural = control.sizeThatFits(
+            CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         )
-        return CGSize(
-            width: constrainedSize.width > 0 ? constrainedSize.width : fitted.width,
-            height: height(fitting: fitted)
-        )
+        let fitted = constrainedSize.width > 0
+            ? control.sizeThatFits(CGSize(width: constrainedSize.width, height: .greatestFiniteMagnitude))
+            : natural
+        return CGSize(width: ceil(natural.width), height: height(fitting: fitted))
     }
 }

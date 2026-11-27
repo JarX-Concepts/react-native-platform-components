@@ -8,6 +8,7 @@ import android.text.TextUtils
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import com.facebook.react.bridge.WritableNativeMap
@@ -21,6 +22,7 @@ import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import kotlin.math.ceil
 
 class PCSegmentedControlView(context: Context) :
   FrameLayout(context),
@@ -577,6 +579,28 @@ class PCSegmentedControlView(context: Context) :
   }
 
   /**
+   * The segments' fitted width in px. They share the control's width equally
+   * (like UISegmentedControl), so it is the widest button's own width times
+   * the count, plus the group's margins (adjacent buttons overlap their
+   * strokes with a negative start margin) and padding.
+   */
+  private fun fittedWidth(group: ViewGroup): Int {
+    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    var widest = 0
+    var margins = 0
+    for (i in 0 until group.childCount) {
+      val child = group.getChildAt(i)
+      if (child.visibility == View.GONE) continue
+      child.measure(unspecified, unspecified)
+      widest = maxOf(widest, child.measuredWidth)
+      (child.layoutParams as? ViewGroup.MarginLayoutParams)?.let { margins += it.marginStart + it.marginEnd }
+    }
+    val buttons = (0 until group.childCount).count { group.getChildAt(it).visibility != View.GONE }
+    return widest * buttons + margins + group.paddingStart + group.paddingEnd +
+      paddingStart + paddingEnd
+  }
+
+  /**
    * Update Fabric state with the measured frame size.
    * This allows the shadow node to use actual measured dimensions for Yoga layout.
    */
@@ -584,12 +608,22 @@ class PCSegmentedControlView(context: Context) :
     val wrapper = stateWrapper ?: return
     val group = toggleGroup ?: return
 
-    // Measure the toggle group with exact width and unspecified height
-    val widthSpec = MeasureSpec.makeMeasureSpec(width.coerceAtLeast(1), MeasureSpec.EXACTLY)
+    // The control's own width, not the width it was laid out at: Yoga offers
+    // a child in a row the rest of the row as a maximum, so reporting that
+    // would leave its siblings nothing. The shadow node widens it to a
+    // stretched layout's width. Rounded up so pixel snapping can't take a
+    // pixel from the widest label.
+    val fittedWidth = fittedWidth(group)
+    val widthDp = ceil(PixelUtil.toDIPFromPixel(fittedWidth.toFloat()))
+
+    // The height at the width Yoga gave us (the control's own before then)
+    val widthSpec = MeasureSpec.makeMeasureSpec(
+      if (width > 0) width else fittedWidth.coerceAtLeast(1),
+      MeasureSpec.EXACTLY
+    )
     val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     group.measure(widthSpec, heightSpec)
 
-    val widthDp = PixelUtil.toDIPFromPixel(width.toFloat())
     // The buttons' own height, even while they are squeezed into less
     val heightPx = if (squeezed > 0 && naturalHeight > 0) naturalHeight else group.measuredHeight
     val heightDp = PixelUtil.toDIPFromPixel(heightPx.toFloat())
