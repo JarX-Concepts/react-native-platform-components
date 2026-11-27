@@ -13,6 +13,7 @@ import { DatePicker as DefaultDatePicker } from './DatePicker';
 import { DateRangePicker as DefaultDateRangePicker } from './DateRangePicker';
 import { Dialog as DefaultDialog } from './Dialog';
 import { FloatingActionButton as DefaultFloatingActionButton } from './FloatingActionButton';
+import { FormSection as DefaultFormSection } from './FormSection';
 import { GlassDisclosure as DefaultGlassDisclosure } from './GlassDisclosure';
 import { NavigationRail as DefaultNavigationRail } from './NavigationRail';
 import { ProgressIndicator as DefaultProgressIndicator } from './ProgressIndicator';
@@ -103,6 +104,10 @@ export const ContextMenu: WebComponents['ContextMenu'] = withWebComponent(
 );
 export const FloatingToolbar: WebComponents['FloatingToolbar'] =
   withWebComponent('FloatingToolbar', DefaultFloatingToolbar);
+export const FormSection: WebComponents['FormSection'] = withWebComponent(
+  'FormSection',
+  DefaultFormSection
+);
 export const GlassDisclosure: WebComponents['GlassDisclosure'] =
   withWebComponent('GlassDisclosure', DefaultGlassDisclosure);
 export const LiquidGlass: WebComponents['LiquidGlass'] = withWebComponent(

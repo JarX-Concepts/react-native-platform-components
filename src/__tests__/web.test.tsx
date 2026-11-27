@@ -21,6 +21,7 @@ import {
   DateRangePicker,
   Dialog,
   FloatingActionButton,
+  FormSection,
   GlassDisclosure,
   LiquidGlass,
   LiquidGlassContainer,
@@ -1295,6 +1296,37 @@ describe('icons (web)', () => {
     webIcon({ type: 'image', source: trashPng });
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
+  });
+});
+
+describe('FormSection (web)', () => {
+  it('renders the children as they are, under a heading and over the footer', () => {
+    const tree = render(
+      <FormSection
+        testID="section"
+        header="Payee"
+        footer="We'll mail it."
+        labelWidth={120}
+        maxFontSizeMultiplier={2}
+      >
+        <TextField testID="name" label="Name" />
+      </FormSection>
+    );
+    const header = tree.root.find(
+      (node) =>
+        node.props.testID === 'section-header' && node.props.role === 'heading'
+    );
+    expect(header.props.children).toBe('Payee');
+    const footer = tree.root.find(
+      (node) => node.props.testID === 'section-footer'
+    );
+    expect(footer.props.children).toBe("We'll mail it.");
+    // iOS-only props stay off the DOM
+    const section = tree.root.find(
+      (node) => node.props.testID === 'section' && typeof node.type === 'string'
+    );
+    expect(section.props.labelWidth).toBeUndefined();
+    expect(section.props.maxFontSizeMultiplier).toBeUndefined();
   });
 });
 

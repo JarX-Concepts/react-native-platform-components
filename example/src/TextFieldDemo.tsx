@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   Button,
+  FormSection,
   TextField,
   type PlatformIcon,
   type TextFieldRef,
@@ -109,9 +110,8 @@ export function TextFieldDemo(): React.JSX.Element {
   } as const;
   const common = { editable, android };
 
-  // The grouped form of Contacts and Settings on iOS: the label in a leading
-  // column, a borderless field beside it, one row per field. Android keeps
-  // its Material fields.
+  // A leading label outside a FormSection, beside fields with their labels
+  // above
   const formRow = {
     ios: { labelPlacement: 'leading', borderStyle: 'none' },
     ...common,
@@ -119,42 +119,42 @@ export function TextFieldDemo(): React.JSX.Element {
 
   return (
     <>
-      <Section title="Name">
-        <View style={styles.form}>
-          <TextField
-            testID="field-first-name"
-            label="First"
-            value={firstName}
-            onChangeText={setFirstName}
-            autoComplete="given-name"
-            autoCapitalize="words"
-            returnKeyType="next"
-            {...formRow}
-          />
-          <Divider />
-          <TextField
-            testID="field-middle-name"
-            label="Middle"
-            placeholder="optional"
-            value={middleName}
-            onChangeText={setMiddleName}
-            autoCapitalize="words"
-            returnKeyType="next"
-            {...formRow}
-          />
-          <Divider />
-          <TextField
-            testID="field-last-name"
-            label="Last"
-            value={lastName}
-            onChangeText={setLastName}
-            autoComplete="family-name"
-            autoCapitalize="words"
-            returnKeyType="done"
-            {...formRow}
-          />
-        </View>
-      </Section>
+      {/* The grouped form of Contacts and Settings on iOS: in a FormSection
+          a TextField has its label in a leading column and a borderless
+          field beside it, one row per field. Android keeps its Material
+          fields. */}
+      <FormSection header="Name" style={styles.nameForm}>
+        <TextField
+          testID="field-first-name"
+          label="First"
+          value={firstName}
+          onChangeText={setFirstName}
+          autoComplete="given-name"
+          autoCapitalize="words"
+          returnKeyType="next"
+          {...common}
+        />
+        <TextField
+          testID="field-middle-name"
+          label="Middle"
+          placeholder="optional"
+          value={middleName}
+          onChangeText={setMiddleName}
+          autoCapitalize="words"
+          returnKeyType="next"
+          {...common}
+        />
+        <TextField
+          testID="field-last-name"
+          label="Last"
+          value={lastName}
+          onChangeText={setLastName}
+          autoComplete="family-name"
+          autoCapitalize="words"
+          returnKeyType="done"
+          {...common}
+        />
+      </FormSection>
 
       <Section title="Basics">
         <View style={styles.fields}>
@@ -641,6 +641,10 @@ const styles = StyleSheet.create({
   form: Platform.select({
     ios: { paddingHorizontal: 16, paddingVertical: 4, gap: 6 },
     default: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
+  }),
+  nameForm: Platform.select({
+    ios: { marginTop: 12 },
+    default: { marginTop: 10, gap: 12 },
   }),
   inline: {
     flexDirection: 'row',

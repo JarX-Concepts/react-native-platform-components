@@ -72,7 +72,7 @@ The props that exist on React Native's `TextInput` keep their names and meaning 
 | `secureTextEntry`     | `boolean`                                                | Obscures the text                                                                               |
 | `multiline`           | `boolean`                                                | A field that grows with its text. Return inserts a newline, unless `submitBehavior` says otherwise |
 | `minLines`, `maxLines` | `number`                                                | Multi-line height bounds, in lines. See [Multi-line text](#multi-line-text)                    |
-| `minFieldHeight`      | `number`                                                 | Minimum height of the box, in points (dp). See [Field size](#field-size)                        |
+| `minFieldHeight`      | `number`                                                 | Minimum height of the box, in points (dp). Default: the platform's, and the row height in an iOS [FormSection](/components/formsection). See [Field size](#field-size) |
 | `fieldPaddingHorizontal` | `number`                                              | Space between the box's sides and the text. See [Field size](#field-size)                       |
 | `editable`            | `boolean`                                                | Default: `true`. A non-editable field is drawn disabled, unless it has `onPress`                |
 | `autoFocus`           | `boolean`                                                | Focuses the field when it mounts                                                                |
@@ -114,9 +114,9 @@ The text traits, each `'default'` unless set. They apply on the iOS version that
 | `smartDashes`              | `'default' \| 'yes' \| 'no'`                    | Smart dashes                                                                                 |
 | `smartInsertDelete`        | `'default' \| 'yes' \| 'no'`                    | Spaces around pasted and deleted words                                                       |
 | `mathExpressionCompletion` | `'default' \| 'yes' \| 'no'`                    | Math expression completion, `1+1=` (iOS 18)                                                  |
-| `borderStyle`              | `'roundedRect' \| 'none' \| 'line' \| 'bezel'`  | `UITextField.borderStyle`. Default: `'roundedRect'`                                          |
-| `labelPlacement`           | `'above' \| 'leading'`                          | The label above the field (default) or in a leading column. See [Grouped forms on iOS](#grouped-forms-on-ios) |
-| `labelWidth`               | `number`                                        | Width of the leading label column, in points. Default: `100`                                  |
+| `borderStyle`              | `'roundedRect' \| 'none' \| 'line' \| 'bezel'`  | `UITextField.borderStyle`. Default: `'roundedRect'`, and `'none'` in a [FormSection](/components/formsection) |
+| `labelPlacement`           | `'above' \| 'leading'`                          | The label above the field (default) or in a leading column (the default in a [FormSection](/components/formsection)). See [Grouped forms on iOS](#grouped-forms-on-ios) |
+| `labelWidth`               | `number`                                        | Width of the leading label column, in points. Default: the FormSection's `labelWidth`, else `100` |
 | `leadingFallback`          | `'above' \| 'none'`                             | A leading label that doesn't fit its column, or is at an accessibility text size, moves above the field (`'above'`, default) or wraps in its column (`'none'`). See [Grouped forms on iOS](#grouped-forms-on-ios) |
 | `keyboardToolbar`          | `{ done?, items?, onItemPress?, doneTestID? }`  | A `UIToolbar` above the keyboard. See [Keyboard toolbar (iOS)](#keyboard-toolbar-ios)          |
 | `passwordRules`            | `string`                                        | Rules for suggested strong passwords. See [Password rules (iOS)](#password-rules-ios)         |
@@ -334,18 +334,20 @@ Android keyboards have no toolbar. Their action key is already there on number p
 
 ### Grouped forms on iOS
 
-Apple's own forms (Contacts, Settings) put the label in a column at the left and a borderless field beside it, one row per field inside a rounded group. That is the same `UITextField` in a list cell layout; `ios.labelPlacement: 'leading'` with `ios.borderStyle: 'none'` gives the row, and your own grouped container with hairline separators gives the card. Rows in one group share a `labelWidth` so the fields line up. Android keeps its Material fields, so the same code is a stack of outlined fields there.
+Apple's own forms (Contacts, Settings) put the label in a column at the left and a borderless field beside it, one row per field inside a rounded group. That is the same `UITextField` in a list cell layout: `ios.labelPlacement: 'leading'` with `ios.borderStyle: 'none'` gives the row. A [FormSection](/components/formsection) gives the card, with the separators, header and footer, and makes those the defaults of the TextFields in it, with one `labelWidth` for its rows so the fields line up and a `minFieldHeight` of the native row height. Android keeps its Material fields, so the same code is a stack of outlined fields there.
 
 ```tsx
-const row = { ios: { labelPlacement: 'leading', borderStyle: 'none' } } as const;
+<FormSection header="Name" labelWidth={90}>
+  <TextField label="First" value={first} onChangeText={setFirst} />
+  <TextField label="Middle" placeholder="optional" value={middle} onChangeText={setMiddle} />
+  <TextField label="Last" value={last} onChangeText={setLast} />
+</FormSection>
+```
 
-<View style={styles.group}>
-  <TextField label="First" value={first} onChangeText={setFirst} {...row} />
-  <Divider />
-  <TextField label="Middle" placeholder="optional" value={middle} onChangeText={setMiddle} {...row} />
-  <Divider />
-  <TextField label="Last" value={last} onChangeText={setLast} {...row} />
-</View>
+A field's own `ios` props win over the section's defaults. Outside a FormSection, set the two props on each field and draw your own group:
+
+```tsx
+<TextField label="First" ios={{ labelPlacement: 'leading', borderStyle: 'none' }} />
 ```
 
 At the accessibility text sizes, and whenever a label is wider than `labelWidth`, the label moves above the field, as it does in Apple's own lists, and moves back when it fits again. The text size setting decides it, not the font: a `maxFontSizeMultiplier` that keeps the text small still stacks the label at an accessibility size. A borderless row with a `minFieldHeight` keeps its margins when the label moves: the space above and below the text in the leading row goes above the label and below the field, and the field is as tall as its text, so a stacked row keeps the form's spacing without restyling. Set `ios.leadingFallback: 'none'` to keep the column; the label then wraps inside it. Labels wrap in either placement rather than being cut off, and the field grows to fit them.

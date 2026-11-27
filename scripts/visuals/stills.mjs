@@ -280,7 +280,7 @@ function socialHtml() {
 <body>
   <div class="copy">
     <h1><small>react-native-platform-components</small><span class="ios">Liquid Glass</span> on iOS.<br><span class="android">Material 3 Expressive</span> on Android.</h1>
-    <p>TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass. The real native widgets behind one typed API.</p>
+    <p>TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, FormSection, GlassDisclosure, ProgressIndicator and LiquidGlass. The real native widgets behind one typed API.</p>
     <div class="tags"><span class="tag ios">iOS · UIKit</span><span class="tag android">Android · Material 3 Expressive</span><span class="tag">TypeScript</span><span class="tag">Expo</span></div>
   </div>
   <div class="grid">${tiles}</div>

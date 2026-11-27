@@ -6,6 +6,7 @@ import NativeRadioGroup, {
   type RadioGroupChangeEvent,
   type RadioGroupNativeOption,
 } from './RadioGroupNativeComponent';
+import { useFormSectionRow } from './FormSectionContext';
 import type { Haptics } from './haptics';
 import { warnSelectionIdentifiers } from './selectionIdentifiers';
 
@@ -95,6 +96,9 @@ export interface RadioGroupProps extends ViewProps {
 }
 
 export function RadioGroup(props: RadioGroupProps): React.ReactElement {
+  // In an iOS FormSection: a 44pt list row already, so the section's row
+  // only adds the rest of its height
+  useFormSectionRow('touchTarget');
   const {
     options,
     value,

@@ -2,10 +2,10 @@
 title: "Overview"
 sidebar_label: "Overview"
 slug: /
-description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, GlassDisclosure, ProgressIndicator and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
+description: "Native TextField, DatePicker, ContextMenu, ActionSheet, Dialog, SelectionMenu, SegmentedControl, TabBar, NavigationRail, Button, ButtonGroup, Chip, Switch, Checkbox, RadioGroup, FloatingActionButton, FloatingToolbar, FormSection, GlassDisclosure, ProgressIndicator and LiquidGlass for React Native, native on iOS and Android. Material 3 Expressive on Android."
 ---
 
-Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Switch**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **GlassDisclosure**, **ProgressIndicator** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
+Native **TextField**, **DatePicker**, **ContextMenu**, **ActionSheet**, **Dialog**, **SelectionMenu**, **SegmentedControl**, **TabBar**, **NavigationRail**, **Button**, **ButtonGroup**, **Chip**, **Switch**, **Checkbox**, **RadioGroup**, **FloatingActionButton**, **FloatingToolbar**, **FormSection**, **GlassDisclosure**, **ProgressIndicator** and **LiquidGlass** for React Native. Every component is the real platform widget on both iOS and Android (UIKit on iOS, Material 3 Expressive on Android), behind one typed, declarative API. No JavaScript re-implementations.
 
 <p align="center">
   <picture>
@@ -60,6 +60,7 @@ That renders `UISegmentedControl` on iOS and Material 3 segmented buttons (`Mate
 | [**RadioGroup**](/components/radiogroup) | List rows with a trailing `checkmark` on the chosen one, as in Settings (iOS has no radio button) | Material 3 `MaterialRadioButton`s in a `RadioGroup`, with descriptions and a validation message | The same hand-drawn rows |
 | [**FloatingActionButton**](/components/floatingactionbutton) | A round prominent `UIButton`, Liquid Glass on iOS 26 (iOS has no FAB) | Material `FloatingActionButton` / `ExtendedFloatingActionButton`: four sizes, shrink on scroll | `react-native-paper` FAB (drawn in JavaScript) |
 | [**FloatingToolbar**](/components/floatingtoolbar) | Liquid Glass capsule on iOS 26, blur before | Material 3 Expressive `FloatingToolbarLayout` | A custom view |
+| [**FormSection**](/components/formsection) | The inset grouped card of Settings: rows on a rounded `secondarySystemGroupedBackground` card with separators, a header and a footer; TextFields become leading-label list rows | The children as they are, with the header and footer as text | A hand-built card, separators and label column |
 | [**GlassDisclosure**](/components/glassdisclosure) | One Liquid Glass shape that morphs from a pill into a panel of React content on iOS 26; a card before | A card in Material 3 surface colors that fades and scales in | A hand-built overlay and animation |
 | [**ProgressIndicator**](/components/progressindicator) | `UIProgressView` and `UIActivityIndicatorView`; a ring for determinate circular progress | Material 3 linear and circular indicators, the Expressive wavy shape and `LoadingIndicator`; segmented step bars | `ActivityIndicator` (the old Android spinner) and bars drawn with `Animated` |
 | [**LiquidGlass**](/components/liquidglass) | `UIGlassEffect` on iOS 26+; `LiquidGlassContainer` merges and morphs it (`UIGlassContainerEffect`) | A fallback `View` | `@callstack/liquid-glass`, `expo-glass-effect` |

@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
         'components/radiogroup',
         'components/floatingactionbutton',
         'components/floatingtoolbar',
+        'components/formsection',
         'components/glassdisclosure',
         'components/progressindicator',
         'components/liquidglass',

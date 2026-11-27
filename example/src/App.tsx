@@ -21,6 +21,7 @@ import { DatePickerDemo } from './DatePickerDemo';
 import { DialogDemo } from './DialogDemo';
 import { FloatingActionButtonDemo } from './FloatingActionButtonDemo';
 import { FloatingToolbarDemo } from './FloatingToolbarDemo';
+import { FormSectionDemo } from './FormSectionDemo';
 import { GlassDisclosureDemo } from './GlassDisclosureDemo';
 import { LiquidGlassDemo } from './LiquidGlassDemo';
 import { NavigationRailDemo } from './NavigationRailDemo';
@@ -54,6 +55,7 @@ type DemoKey =
   | 'checkbox'
   | 'floatingActionButton'
   | 'floatingToolbar'
+  | 'formSection'
   | 'glassDisclosure'
   | 'progressIndicator'
   | 'textField'
@@ -77,6 +79,7 @@ const COMPONENT_DEMOS = [
   { label: 'Checkbox & Radio Group', data: 'checkbox' },
   { label: 'Floating Action Button', data: 'floatingActionButton' },
   { label: 'Floating Toolbar', data: 'floatingToolbar' },
+  { label: 'Form Section', data: 'formSection' },
   { label: 'Glass Disclosure', data: 'glassDisclosure' },
   { label: 'Progress Indicator', data: 'progressIndicator' },
 ];
@@ -169,6 +172,7 @@ export default function App(): React.ReactElement {
       {demo === 'checkbox' && <CheckboxDemo />}
       {demo === 'floatingActionButton' && <FloatingActionButtonDemo />}
       {demo === 'floatingToolbar' && <FloatingToolbarDemo />}
+      {demo === 'formSection' && <FormSectionDemo />}
       {demo === 'glassDisclosure' && <GlassDisclosureDemo />}
       {demo === 'progressIndicator' && <ProgressIndicatorDemo />}
       {demo === 'textField' && <TextFieldDemo />}

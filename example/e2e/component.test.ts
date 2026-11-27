@@ -3595,6 +3595,103 @@ describe('Platform Components Example', () => {
     }
   });
 
+  // iOS: the inset grouped card. At the default size the rows are 52pt
+  // (iOS 26), the separators sit at their bottoms, inset to line up with the
+  // labels, and a row that comes and goes brings its separator with it. At
+  // the largest accessibility size the rows grow with their text, the
+  // footer wraps, the separators stay at the row bottoms and the capped
+  // header stops growing. Android renders the children as they are.
+  it('should test Form Section rows at large text sizes', async () => {
+    await selectDemo('Form Section');
+    await expect(element(by.id('form-payee-header'))).toBeVisible();
+    await expect(element(by.id('form-name'))).toBeVisible();
+    if (isAndroid()) {
+      await expect(element(by.id('form-overnight'))).toBeVisible();
+      await expect(element(by.id('form-payee-footer'))).toExist();
+      return;
+    }
+    const contentSize = (size: string) =>
+      execSync(`xcrun simctl ui ${device.id} content_size ${size}`);
+    const near = (a: number, b: number, what: string, tolerance = 1) => {
+      if (Math.abs(a - b) > tolerance) {
+        throw new Error(`${what}: ${a}, expected ${b}`);
+      }
+    };
+    // Every separator at the bottom of its row and at the same inset; the
+    // last row has none
+    const expectSeparators = async (rows: number) => {
+      const card = await frameOf(by.id('form-payee-card'));
+      let inset: number | undefined;
+      for (let index = 0; index < rows - 1; index++) {
+        const row = await frameOf(by.id(`form-payee-row-${index}`));
+        const line = await frameOf(by.id(`form-payee-separator-${index}`));
+        near(
+          line.y + line.height,
+          row.y + row.height,
+          `Separator ${index} end`
+        );
+        inset ??= line.x - card.x;
+        near(line.x - card.x, inset, `Separator ${index} inset`);
+      }
+      await expect(
+        element(by.id(`form-payee-separator-${rows - 1}`))
+      ).not.toExist();
+      return inset ?? 0;
+    };
+
+    const name = await frameOf(by.id('form-payee-row-0'));
+    const overnight = await frameOf(by.id('form-payee-row-2'));
+    near(name.height, 52, 'TextField row height');
+    near(overnight.height, 52, 'Switch row height');
+    const inset = await expectSeparators(4);
+    // The leading label lines up with the separators
+    const card = await frameOf(by.id('form-payee-card'));
+    const label = await frameOf(by.text('Name'));
+    near(label.x - card.x, inset, 'Label inset');
+
+    // A row that comes and goes
+    await element(by.id('form-memo-switch')).tap();
+    await expect(element(by.id('form-memo'))).toBeVisible();
+    await expectSeparators(5);
+    await element(by.id('form-memo-switch')).tap();
+    await expect(element(by.id('form-memo'))).not.toExist();
+    await expectSeparators(4);
+
+    const footer = await frameOf(by.id('form-payee-footer'));
+    const capped = await frameOf(by.id('form-delivery-header'));
+    try {
+      contentSize('accessibility-extra-extra-extra-large');
+      await pause(1500);
+      // Frames are read without scrolling: the page moves as the text grows
+      const bigOvernight = await frameOf(by.id('form-payee-row-2'));
+      if (bigOvernight.height < overnight.height * 2) {
+        throw new Error(
+          `Switch row ${bigOvernight.height}pt at AX5: didn't grow with its label`
+        );
+      }
+      const bigFooter = await frameOf(by.id('form-payee-footer'));
+      if (bigFooter.height < footer.height * 2) {
+        throw new Error(`Footer ${bigFooter.height}pt at AX5: didn't wrap`);
+      }
+      await expectSeparators(4);
+      // maxFontSizeMultiplier={2} on the second section
+      const bigCapped = await frameOf(by.id('form-delivery-header'));
+      if (bigCapped.height > capped.height * 2.6) {
+        throw new Error(
+          `Capped header ${bigCapped.height}pt at AX5, ${capped.height}pt at the default size`
+        );
+      }
+    } finally {
+      contentSize('large');
+    }
+    await pause(1500);
+    near(
+      (await frameOf(by.id('form-payee-row-2'))).height,
+      52,
+      'Switch row height back at the default size'
+    );
+  });
+
   it('should test Theme functionality', async () => {
     await selectDemo('Theme');
     await expect(element(by.id('native-theme-brand-default'))).toBeVisible();
