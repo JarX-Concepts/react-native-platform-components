@@ -1,6 +1,13 @@
 // GlassDisclosureDemo.tsx
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import {
   Button,
   GlassDisclosure,
@@ -59,11 +66,28 @@ const ROWS = [
   { id: 'files', label: 'Files', value: '12' },
 ];
 
+// The header's text, the pill's included, grows to 1.5x at most
+const HEADER_TEXT_CAP = 1.5;
+
 export function GlassDisclosureDemo(): React.ReactElement {
   const colors = useDemoColors();
   const [expanded, setExpanded] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [lastEvent, setLastEvent] = useState('—');
+  // The header buttons grow with the text size: the pill keeps clear of the
+  // wider of the two
+  const [buttonWidths, setButtonWidths] = useState({
+    leading: 44,
+    trailing: 44,
+  });
+  const measureButton =
+    (side: 'leading' | 'trailing') => (event: LayoutChangeEvent) => {
+      const width = Math.ceil(event.nativeEvent.layout.width);
+      setButtonWidths((current) =>
+        current[side] === width ? current : { ...current, [side]: width }
+      );
+    };
+  const buttonWidth = Math.max(buttonWidths.leading, buttonWidths.trailing);
 
   const setOpen = (open: boolean) => {
     setExpanded(open);
@@ -100,27 +124,36 @@ export function GlassDisclosureDemo(): React.ReactElement {
           {/* A screen header: buttons on either side of the closed pill,
               which must stay visible and tappable beside it */}
           <View style={styles.header}>
-            <Button
-              testID="disclosure-header-channels"
-              icon={CHANNELS_ICON}
-              accessibilityLabel="Channels"
-              variant={headerVariant}
-              shape="round"
-              onPress={() => setLastEvent('Channels')}
-            />
-            <Button
-              testID="disclosure-header-search"
-              icon={SEARCH_ICON}
-              accessibilityLabel="Search"
-              variant={headerVariant}
-              shape="round"
-              onPress={() => setLastEvent('Search')}
-            />
+            <View onLayout={measureButton('leading')}>
+              <Button
+                testID="disclosure-header-channels"
+                icon={CHANNELS_ICON}
+                accessibilityLabel="Channels"
+                variant={headerVariant}
+                shape="round"
+                maxFontSizeMultiplier={HEADER_TEXT_CAP}
+                onPress={() => setLastEvent('Channels')}
+              />
+            </View>
+            <View onLayout={measureButton('trailing')}>
+              <Button
+                testID="disclosure-header-search"
+                icon={SEARCH_ICON}
+                accessibilityLabel="Search"
+                variant={headerVariant}
+                shape="round"
+                maxFontSizeMultiplier={HEADER_TEXT_CAP}
+                onPress={() => setLastEvent('Search')}
+              />
+            </View>
           </View>
 
           <GlassDisclosure
             testID="disclosure"
             style={styles.overlay}
+            // Between the header buttons; the panel opens across the stage
+            pillStyle={{ marginHorizontal: buttonWidth + 8 }}
+            maxFontSizeMultiplier={HEADER_TEXT_CAP}
             expanded={expanded}
             onExpandedChange={setOpen}
             title="concept-plans"
