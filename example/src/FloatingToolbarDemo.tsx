@@ -211,7 +211,7 @@ export function FloatingToolbarDemo(): React.JSX.Element {
             testID="view-toolbar"
             style={styles.toolbarHorizontal}
           >
-            {/* Any component can go in a toolbar; a SegmentedControl needs a width */}
+            {/* Any component can go in a toolbar; a width makes the SegmentedControl wider than its segments */}
             <SegmentedControl
               testID="view-switcher"
               style={styles.viewSwitcher}

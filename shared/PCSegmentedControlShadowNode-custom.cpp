@@ -28,16 +28,13 @@ Size MeasuringPCSegmentedControlShadowNode::measureContent(
     measuredH = fallbackHeight;
   }
 
-  // If width is 0, use available width from constraints
+  // The width is the control's own (native reports its segments' fitted
+  // width), widened to the minimum. Yoga offers a child in a row the rest of
+  // the row as a maximum, so filling the maximum would leave its siblings
+  // nothing. A stretched child (a column's default) gets minimum == maximum
+  // and still fills. Before native has measured, the width is the minimum.
   const Float kHuge = static_cast<Float>(1.0e9);
-  if (measuredW <= 0) {
-    const Float maxW = layoutConstraints.maximumSize.width;
-    measuredW = (maxW > 0 && maxW < kHuge) ? maxW : 300;
-  }
-
-  // Respect layout constraints, but if using fallback height,
-  // don't let maximum constraint override our fallback
-  measuredW = std::max<Float>(measuredW, layoutConstraints.minimumSize.width);
+  measuredW = std::max<Float>(std::max<Float>(measuredW, 0), layoutConstraints.minimumSize.width);
   if (layoutConstraints.maximumSize.width > 0 && layoutConstraints.maximumSize.width < kHuge) {
     measuredW = std::min<Float>(measuredW, layoutConstraints.maximumSize.width);
   }

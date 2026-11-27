@@ -1850,6 +1850,47 @@ describe('Platform Components Example', () => {
     await expectText('segment-sized-value', 'medium');
   });
 
+  // #194: in a row the control is as wide as its segments, so the field
+  // beside it gets the rest; a control stretched by its column still fills it
+  it('should test Segmented Control width in a row', async () => {
+    await selectDemo('Segmented Control');
+    await scrollToId('segment-unit-value', 'down', SEGMENTED_PAGE_START_X);
+    const row = await frameOf(by.id('segment-unit-row'));
+    const field = await frameOf(by.id('segment-unit-amount'));
+    const control = await frameOf(by.id('segment-unit'));
+    // Its own width: Android's buttons have Material's 88dp minimum each,
+    // so two segments take a bit under half a phone-width row
+    if (control.width > row.width * 0.6 || control.width < 60) {
+      throw new Error(
+        `Two-segment control ${control.width} wide in a ${row.width} row`
+      );
+    }
+    // The field gets the rest, beside the control and not under it
+    if (field.width < row.width / 3 || field.x + field.width > control.x) {
+      throw new Error(
+        `Field at x ${field.x}, ${field.width} wide, beside the control at x ${control.x}`
+      );
+    }
+    await element(by.id('segment-unit-percent')).tap();
+    await expectText('segment-unit-value', 'percent');
+
+    // A column stretches the control across its row, inside the row's equal
+    // padding (frames are pt on iOS, px on Android)
+    await scrollToId('segment-sized-value', 'up', SEGMENTED_PAGE_START_X);
+    const sizedRow = await frameOf(by.id('segment-sized-row'));
+    const sized = await frameOf(by.id('segment-sized'));
+    const leading = sized.x - sizedRow.x;
+    const trailing = sizedRow.x + sizedRow.width - (sized.x + sized.width);
+    if (
+      sized.width < sizedRow.width * 0.9 ||
+      Math.abs(leading - trailing) > 2
+    ) {
+      throw new Error(
+        `Stretched control ${sized.width} wide in a ${sizedRow.width} row`
+      );
+    }
+  });
+
   it('should test Tab Bar functionality', async () => {
     await selectDemo('Tab Bar');
     await expect(element(by.id('tab-bar'))).toBeVisible();

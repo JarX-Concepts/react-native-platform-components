@@ -260,8 +260,9 @@ static UIFont *FontFromLabelStyle(
   if (_state == nullptr)
     return;
 
-  // Use the real width Yoga gave us
-  const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 320;
+  // The height at the width Yoga gave us (0 before the first layout: the
+  // control's own width). The reported width is always the control's own.
+  const CGFloat w = self.bounds.size.width > 1 ? self.bounds.size.width : 0;
 
   CGSize size = [_view sizeForLayoutWithConstrainedTo:CGSizeMake(w, 0)];
 

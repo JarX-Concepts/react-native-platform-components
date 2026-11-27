@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   SegmentedControl,
+  TextField,
   type SegmentedControlLabelVisibility,
   type SegmentedControlSegmentProps,
 } from 'react-native-platform-components';
@@ -66,6 +67,11 @@ const CUSTOM_STYLE = {
   android: { rippleColor: 'rgba(255, 107, 53, 0.25)', strokeColor: '#FF6B35' },
 };
 
+const UNIT_SEGMENTS = [
+  { label: '$', value: 'dollars', testID: 'segment-unit-dollars' },
+  { label: '%', value: 'percent', testID: 'segment-unit-percent' },
+];
+
 const PARTIAL_DISABLED_SEGMENTS = [
   { label: 'Active', value: 'active' },
   {
@@ -113,6 +119,8 @@ export function SegmentedControlDemo(): React.JSX.Element {
   // moves the selection instead of scrolling the page, and the middle
   // segment is where E2E scrolls start
   const [sizedSelected, setSizedSelected] = useState<string>('low');
+  const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState<string>('dollars');
 
   const [disabled, setDisabled] = useState(false);
   const [momentary, setMomentary] = useState(false);
@@ -274,6 +282,35 @@ export function SegmentedControlDemo(): React.JSX.Element {
         </Row>
       </Section>
 
+      <Section title="In a row">
+        {/* The control is as wide as its segments, so the field beside it
+            takes the rest of the row */}
+        <View testID="segment-unit-row" style={styles.unitRow}>
+          <View style={styles.unitField}>
+            <TextField
+              testID="segment-unit-amount"
+              label="Amount"
+              placeholder="0"
+              keyboardType="decimal-pad"
+              value={amount}
+              onChangeText={setAmount}
+            />
+          </View>
+          <SegmentedControl
+            testID="segment-unit"
+            segments={UNIT_SEGMENTS}
+            selectedValue={unit}
+            onSelect={setUnit}
+          />
+        </View>
+        <Divider />
+        <Row label="Selected">
+          <Text testID="segment-unit-value" style={ui.valueText}>
+            {unit}
+          </Text>
+        </Row>
+      </Section>
+
       <Section title="Controls">
         <Row label="Disabled">
           <Switch
@@ -339,6 +376,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
+  unitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  unitField: { flex: 1 },
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center',

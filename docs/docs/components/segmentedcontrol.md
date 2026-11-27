@@ -169,6 +169,35 @@ The control takes each platform's own height: about 32 points for `UISegmentedCo
 - **A `style` height** sets the whole control on both platforms, taller or shorter. On Android the buttons fill it. When it is shorter than the buttons, they give up Material's touch target insets first and then their vertical padding, and the labels stay centered.
 - **Touch target (iOS):** a control shorter than 44 points still takes taps up to 44 points tall. A tap just above or below the control selects the segment under it, as long as the parent view contains the point.
 
+### Width
+
+The control is as wide as its segments, and a column stretches it across its width (React Native's default `alignItems: 'stretch'`). In a row it takes its own width, so the views beside it get the rest of the row:
+
+```tsx
+<View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+  <View style={{ flex: 1 }}>
+    <TextField
+      label="Amount"
+      keyboardType="decimal-pad"
+      value={amount}
+      onChangeText={setAmount}
+    />
+  </View>
+  <SegmentedControl
+    segments={[
+      { label: '$', value: 'dollars' },
+      { label: '%', value: 'percent' },
+    ]}
+    selectedValue={unit}
+    onSelect={setUnit}
+  />
+</View>
+```
+
+- **Its own width** fits every segment's label at the platform's equal segment width (iOS: `UISegmentedControl`'s own size; Android: the widest button times the segment count). With `ios.apportionsSegmentWidthsByContent`, each segment is as wide as its content.
+- **To fill a row**, give it `flex: 1` or a `width`. A column that doesn't stretch (`alignItems: 'center'` or `'flex-start'`) also leaves it at its own width.
+- Before 1.14 the control filled the width it was offered, even in a row, where it left its siblings no width.
+
 ### Styling
 
 Colors take any React Native `ColorValue` (hex, `rgba()`, named colors, `PlatformColor`, `DynamicColorIOS`). Fonts follow the `Text` style conventions, and each field falls back to the platform default.
