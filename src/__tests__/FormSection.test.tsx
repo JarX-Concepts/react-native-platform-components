@@ -107,10 +107,17 @@ const windowSize = (width: number, fontScale = 1) => {
   mockWindow = { width, fontScale };
 };
 
+let mockIOSVersion = '26.5';
+Object.defineProperty(Platform, 'Version', {
+  configurable: true,
+  get: () => mockIOSVersion,
+});
+
 describe('FormSection on iOS', () => {
   beforeEach(() => {
     Platform.OS = 'ios';
     mockLiquidGlass = true;
+    mockIOSVersion = '26.5';
     windowSize(420);
   });
 
@@ -197,6 +204,7 @@ describe('FormSection on iOS', () => {
 
   it('draws the card of earlier iOS versions', () => {
     mockLiquidGlass = false;
+    mockIOSVersion = '18.5';
     windowSize(393);
     const tree = render(
       <FormSection testID="section" header="Payee">
@@ -218,6 +226,35 @@ describe('FormSection on iOS', () => {
     expect(style(tree, 'section-header')).toMatchObject({
       fontSize: 13,
       textTransform: 'uppercase',
+    });
+  });
+
+  // UIDesignRequiresCompatibility: no glass, so the iOS 18 card, inside the
+  // margins of iOS 26 (16pt on a 402pt phone)
+  it('draws the earlier card with iOS 26 margins when the app keeps the iOS 18 design', () => {
+    mockLiquidGlass = false;
+    mockIOSVersion = '26.5';
+    windowSize(402);
+    const tree = render(
+      <FormSection testID="section" header="Payee">
+        <Text>One</Text>
+        <Text>Two</Text>
+      </FormSection>
+    );
+    expect(style(tree, 'section-card').borderRadius).toBe(10);
+    expect(style(tree, 'section-row-0')).toMatchObject({
+      paddingHorizontal: 16,
+      minHeight: 44,
+    });
+    expect(style(tree, 'section-separator-0')).toMatchObject({
+      height: StyleSheet.hairlineWidth,
+      start: 16,
+      end: 0,
+    });
+    expect(style(tree, 'section-header')).toMatchObject({
+      fontSize: 13,
+      textTransform: 'uppercase',
+      paddingHorizontal: 16,
     });
   });
 

@@ -71,7 +71,7 @@ The iOS values were measured on `UITableView(style: .insetGrouped)` and SwiftUI'
 
 The header and footer follow Dynamic Type with the text styles Apple's lists use (`headline` or `footnote`), and the gaps around them grow with the text.
 
-The iOS 26 design comes with Liquid Glass: it is used when [`isLiquidGlassSupported`](/components/liquidglass) is `true` (iOS 26 or newer, in a build made with Xcode 26 or newer). An app that keeps the earlier design by setting `UIDesignRequiresCompatibility` to `YES` in its Info.plist gets the iOS 18 section on iOS 26, matching the lists UIKit draws there.
+The iOS 26 design comes with Liquid Glass: it is used when [`isLiquidGlassSupported`](/components/liquidglass) is `true` (iOS 26 or newer, in a build made with Xcode 26 or newer). An app that keeps the earlier design by setting `UIDesignRequiresCompatibility` to `YES` in its Info.plist gets the iOS 18 section on iOS 26, matching the lists UIKit draws there. Its row inset still follows iOS 26 (16pt on a 402pt phone), as UIKit's does.
 
 | iOS 18 |
 | --- |
