@@ -269,8 +269,17 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
     /// Whether the label is in a leading column right now: asked for, and
     /// (unless `leadingFallback` is "none") it fits the column and the text
-    /// isn't at an accessibility size. Updated by `applyFonts`.
+    /// size isn't an accessibility size. Updated by `applyFonts`.
     private var leadingLabel = false
+
+    /// A borderless leading row (a grouped form's row) whose label fell
+    /// back to above the field. `minFieldHeight` is the row's height then,
+    /// not the input's: the row keeps the leading row's margins above the
+    /// label and below the input, and the input is as tall as its text.
+    private var stackedRow: Bool {
+        labelPlacement == "leading" && !leadingLabel && !label.isEmpty
+            && borderStyle == "none" && minFieldHeight > 0
+    }
 
     /// Whether the field acts as a button: pressable and not editable
     private var actsAsButton: Bool { pressable && interactivity == "disabled" }
@@ -344,7 +353,25 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
 
     /// The box's minimum height: single-line fields, the first line of a
     /// multi-line field, and the field beside a leading label
-    private var minInputHeight: CGFloat { minFieldHeight > 0 ? minFieldHeight : singleLineMinHeight }
+    private var minInputHeight: CGFloat {
+        if stackedRow { return 0 }
+        return minFieldHeight > 0 ? minFieldHeight : singleLineMinHeight
+    }
+
+    /// The space above the label and below the input of a stacked row: what
+    /// a leading row has above and below its line of text. It stays at its
+    /// default-size value as the text grows, as a list cell's margins do.
+    private var stackedRowMargin: CGFloat {
+        guard stackedRow else { return 0 }
+        let defaultFont = textFont ?? .preferredFont(
+            forTextStyle: .body,
+            compatibleWith: UITraitCollection(preferredContentSizeCategory: .large)
+        )
+        let line = ceil(min(inputFont.lineHeight, defaultFont.lineHeight))
+        // The text view's own inset is part of the space already
+        let inset = multiline ? textViewInsets.top : 0
+        return max(0, floor((minFieldHeight - line) / 2) - inset)
+    }
 
     // MARK: - Init
 
@@ -818,14 +845,10 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
     private func resolveLeadingLabel() -> Bool {
         guard labelPlacement == "leading", !label.isEmpty else { return false }
         if leadingFallback == "none" { return true }
+        // Decided by the text size setting, as Apple's lists do, so the label
+        // stacks even where maxFontSizeMultiplier keeps the text smaller
+        if traitCollection.preferredContentSizeCategory.isAccessibilityCategory { return false }
         let font = scaledFont(.body)
-        // Measured on the font, so a maxFontSizeMultiplier that keeps the
-        // text below the accessibility sizes keeps the column
-        let accessibilitySize = UIFont.preferredFont(
-            forTextStyle: .body,
-            compatibleWith: UITraitCollection(preferredContentSizeCategory: .accessibilityMedium)
-        ).pointSize
-        if font.pointSize >= accessibilitySize { return false }
         let width = ceil((label as NSString).size(withAttributes: [.font: font]).width)
         return width <= leadingColumnWidth
     }
@@ -857,7 +880,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
             insets.left = side
             insets.right = side
         }
-        if minFieldHeight > 0 {
+        if minFieldHeight > 0 && !stackedRow {
             let line = ceil(inputFont.lineHeight)
             let extra = max(0, minFieldHeight - (line + insets.top + insets.bottom))
             insets.top += floor(extra / 2)
@@ -1287,13 +1310,15 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         var inputHeight: CGFloat
         var footerHeight: CGFloat
         var leading: Bool
+        /// Above the label and below everything else: a stacked row's margin
+        var margin: CGFloat
         /// A multi-line field past maxLines scrolls its text
         var inputScrolls: Bool
         var total: CGFloat {
             var height = leading ? max(inputHeight, captionHeight) : inputHeight
             if captionHeight > 0 && !leading { height += captionHeight + 6 }
             if footerHeight > 0 { height += footerHeight + 4 }
-            return height
+            return height + 2 * margin
         }
     }
 
@@ -1355,6 +1380,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
             inputHeight: inputHeight,
             footerHeight: footerHeight,
             leading: leadingLabel,
+            margin: stackedRowMargin,
             inputScrolls: inputScrolls
         )
     }
@@ -1365,7 +1391,7 @@ public final class PCTextFieldView: UIView, UITextFieldDelegate, UITextViewDeleg
         let m = metrics(for: width)
         let x = fieldOffset()
         let fieldWidth = max(0, width - x)
-        var y: CGFloat = 0
+        var y: CGFloat = m.margin
         if multiline, textView.isScrollEnabled != m.inputScrolls {
             textView.isScrollEnabled = m.inputScrolls
         }

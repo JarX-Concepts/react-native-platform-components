@@ -519,9 +519,12 @@ export interface TextFieldProps extends Omit<
     /**
      * What a `'leading'` label does when it doesn't fit beside the field.
      * `'above'` (default) moves it above the field when it is wider than
-     * `labelWidth` or the text size is an accessibility size, as Apple's
-     * lists do, and back beside it when it fits again. `'none'` keeps the
-     * column and wraps the label inside it.
+     * `labelWidth` or the text size setting is an accessibility size (even
+     * where `maxFontSizeMultiplier` keeps the text smaller), as Apple's
+     * lists do, and back beside it when it fits again. A borderless row
+     * with a `minFieldHeight` keeps its margins above the label and below
+     * the field, so `minFieldHeight` stays the row's height there. `'none'`
+     * keeps the column and wraps the label inside it.
      */
     leadingFallback?: 'above' | 'none';
 
