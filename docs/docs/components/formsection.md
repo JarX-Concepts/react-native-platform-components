@@ -5,7 +5,7 @@ description: "The iOS inset grouped card for React Native forms: rows of TextFie
 
 A group of form rows. On iOS it is the inset grouped card of Settings and Contacts: the rows on a rounded card with separators between them, under a header and over a footer in Apple's style. A [TextField](/components/textfield) in it becomes a list row, its label in a leading column and a borderless field beside it, and the rows of one section share a label column so their fields line up. Android and web have no such card: the children render as they are, with the header and footer as text, so one screen's code works everywhere.
 
-It is a JavaScript component: a `View` with the native controls inside it.
+It is a JavaScript component: a `View` with the native controls inside it. On iOS an empty native view over the card reports where the card is in its window, so the rows get the inset of a native list in the same place.
 
 | iOS 26 | iOS 26, dark | iOS 26, the largest text size |
 | --- | --- | --- |
@@ -58,13 +58,15 @@ Android and web render the children unchanged, so space them as the platform doe
 
 ### Platform behavior
 
-The iOS values were measured on `UITableView(style: .insetGrouped)` and SwiftUI's `Form` on iPhone simulators (iPhone SE, 16, 17 Pro, Air and 17 Pro Max on iOS 26.5; iPhone SE, 16 and 16 Pro on iOS 18.5).
+The iOS values were measured on `UITableView(style: .insetGrouped)` and SwiftUI's `Form` on iPhone simulators (iPhone SE, 16, 17 Pro, Air and 17 Pro Max on iOS 26.5; iPhone SE, 16 and 16 Pro on iOS 18.5). The row inset was also measured on iPad (iPad Pro 11-inch and iPad mini on iOS 26.5, iPad Pro 11-inch on iOS 18.5), in landscape, and on tables from 300pt to 1400pt wide, with regular and compact size classes and text sizes from XS to AX5.
+
+The row inset is where the rows' content, the separators and the header and footer text start, measured from the card's edge. It follows the section's own width, not the window's, so a section in a sheet, a split view column or a padded container lines up with a native list of the same width. The size class and the text size don't change it.
 
 | | iOS 26 | iOS 15 – 18 | Android, web |
 | --- | --- | --- | --- |
 | Card | `secondarySystemGroupedBackground`, 26pt continuous corners | The same color, 10pt corners | None |
 | Row height | 52pt at the default text size, growing with the content | 44pt | The children's own |
-| Row inset | 20pt on the wider phones (420pt and up) and iPad, 16pt on the others | 20pt on phones wider than 375pt, 16pt on those | None |
+| Row inset | 16pt in a section 362pt wide or narrower (a list up to 402pt wide, with its 20pt margins), and on an iPhone in landscape when the section spans the safe area as a full-width list does; 20pt otherwise | 16pt on iPad, on 375pt phones (iPhone SE, mini) and in a section 320pt wide or narrower; 20pt otherwise | None |
 | Separators | `separator` color, 1pt, inset from both ends by the row inset | Hairline, from the row inset to the trailing edge | None |
 | Header | Body size, semibold, sentence case, `secondaryLabel`; 6pt above the card | Footnote, capitals, `secondaryLabel`; 7pt above the card | Android: Material's title small in `colorPrimary`. Web: semibold text |
 | Footer | Footnote, `secondaryLabel`; 7pt below the card | The same | Android: Material's body small in `colorOnSurfaceVariant`. Web: small text in `GrayText` |
@@ -77,7 +79,7 @@ The iOS 26 design comes with Liquid Glass: it is used when [`isLiquidGlassSuppor
 | --- |
 | ![The Payee section on iOS 18: a capitalized footnote header, a card with 10pt corners, 44pt rows and hairline separators that run to the trailing edge](/img/components/formsection/light-ios18.webp) |
 
-The section has no margins of its own: place it with `style` or its parent's padding. Apple's lists put the card 16 or 20 points from the screen's sides (the row inset) and leave about 30 points between one section's card and the next section's header.
+The section has no margins of its own: place it with `style` or its parent's padding. Apple's lists put the card 20 points inside the safe area (16 in lists narrower than 360 points), which isn't always the row inset: on a 402pt iPhone the card is 20 points from the screen's sides and its rows are inset 16. They leave about 30 points between one section's card and the next section's header.
 
 ### Large text
 
