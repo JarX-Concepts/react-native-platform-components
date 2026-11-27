@@ -36,14 +36,23 @@ public final class PCLiquidGlassView: UIVisualEffectView {
 
     // MARK: - Static
 
+    /// Whether UIKit draws Liquid Glass in this app: the iOS 26 SDK at build
+    /// time, iOS 26 at runtime, and no opt-out of the new design.
     @objc public static var isSupported: Bool {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            return true
+            return !designRequiresCompatibility
         }
         #endif
         return false
     }
+
+    /// The app keeps the iOS 18 design (`UIDesignRequiresCompatibility` in
+    /// its Info.plist). UIKit then draws no glass: a UIGlassEffect view is an
+    /// opaque fill, `.glass()` buttons are gray, and a tab bar's bottom
+    /// accessory isn't shown. Measured on iOS 26.5.
+    private static let designRequiresCompatibility: Bool =
+        (Bundle.main.object(forInfoDictionaryKey: "UIDesignRequiresCompatibility") as? NSNumber)?.boolValue ?? false
 
     /// Duration of the morphs inside a container.
     static let morphDuration: TimeInterval = 0.45

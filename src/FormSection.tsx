@@ -305,7 +305,8 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
     );
   }
 
-  // The iOS 26 design comes with the iOS 26 SDK, as Liquid Glass does
+  // The iOS 26 design comes with Liquid Glass: the iOS 26 SDK, iOS 26, and
+  // no UIDesignRequiresCompatibility in the app's Info.plist
   const ios26 = LiquidGlass.isLiquidGlassSupported;
   const metrics = ios26 ? IOS_26 : IOS_18;
   const inset = rowInset(width, ios26);

@@ -27,9 +27,10 @@ RCT_EXPORT_MODULE(PlatformComponentsTheme)
   });
 }
 
-/// Reports what this *build* can do, not just what the device runs: with an
-/// older Xcode the glass code is compiled out (see PCLiquidGlass.swift), so
-/// the iOS version alone would be a false positive.
+/// Reports what this *app* gets, not just what the device runs: with an
+/// older Xcode the glass code is compiled out, and an app that sets
+/// `UIDesignRequiresCompatibility` keeps the iOS 18 design (see
+/// PCLiquidGlass.swift), so the iOS version alone would be a false positive.
 - (NSNumber *)isLiquidGlassSupported
 {
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000

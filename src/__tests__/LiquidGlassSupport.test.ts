@@ -1,8 +1,9 @@
 /**
- * `isLiquidGlassSupported` has to describe the build, not just the device: a
+ * `isLiquidGlassSupported` has to describe the app, not just the device: a
  * library compiled with an Xcode older than the iOS 26 SDK has the glass code
  * compiled out (see PCLiquidGlass.swift), and then even an iOS 26 device only
- * gets the blur fallback.
+ * gets the blur fallback. An app that sets `UIDesignRequiresCompatibility`
+ * gets the iOS 18 design and no glass from UIKit, so native reports false.
  */
 jest.mock('../LiquidGlassNativeComponent', () => ({
   __esModule: true,
@@ -31,6 +32,8 @@ function loadFlag(
 
 const glassAvailable = { isLiquidGlassSupported: () => true };
 const glassCompiledOut = { isLiquidGlassSupported: () => false };
+// What native reports when the Info.plist sets UIDesignRequiresCompatibility
+const designCompatibility = { isLiquidGlassSupported: () => false };
 
 describe('isLiquidGlassSupported', () => {
   it('is true when the build reports glass support', () => {
@@ -39,6 +42,12 @@ describe('isLiquidGlassSupported', () => {
 
   it('is false on iOS 26 when the build was made without the iOS 26 SDK', () => {
     expect(loadFlag({ OS: 'ios', Version: '26.0' }, glassCompiledOut)).toBe(
+      false
+    );
+  });
+
+  it('is false on iOS 26 when the app keeps the iOS 18 design', () => {
+    expect(loadFlag({ OS: 'ios', Version: '26.5' }, designCompatibility)).toBe(
       false
     );
   });
