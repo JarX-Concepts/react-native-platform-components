@@ -3,7 +3,9 @@
  * library compiled with an Xcode older than the iOS 26 SDK has the glass code
  * compiled out (see PCLiquidGlass.swift), and then even an iOS 26 device only
  * gets the blur fallback. An app that sets `UIDesignRequiresCompatibility`
- * gets the iOS 18 design and no glass from UIKit, so native reports false.
+ * gets the iOS 18 design and no glass from UIKit, so native reports false,
+ * except on iOS 27 in a build made with the iOS 27 SDK, which ignores the key
+ * (see PCNativeThemeModule.mm).
  */
 jest.mock('../LiquidGlassNativeComponent', () => ({
   __esModule: true,
@@ -33,6 +35,7 @@ function loadFlag(
 const glassAvailable = { isLiquidGlassSupported: () => true };
 const glassCompiledOut = { isLiquidGlassSupported: () => false };
 // What native reports when the Info.plist sets UIDesignRequiresCompatibility
+// and UIKit honours it
 const designCompatibility = { isLiquidGlassSupported: () => false };
 
 describe('isLiquidGlassSupported', () => {

@@ -148,7 +148,7 @@ const FOOTER_FONT_SIZE = 13;
 // iOS 26 moved the 402pt phones (iPhone 17 Pro) to 16; before, every phone
 // wider than 375pt had 20. The margins follow the OS, not the design: an app
 // that keeps the iOS 18 design (UIDesignRequiresCompatibility) has 16pt ones
-// on a 402pt phone on iOS 26.5.
+// on a 402pt phone on iOS 26.5 and 27.
 function rowInset(windowWidth: number, ios26: boolean): number {
   return windowWidth >= (ios26 ? 410 : 380) ? 20 : 16;
 }
@@ -312,7 +312,8 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
   }
 
   // The iOS 26 design comes with Liquid Glass: the iOS 26 SDK, iOS 26, and
-  // no UIDesignRequiresCompatibility in the app's Info.plist
+  // no UIDesignRequiresCompatibility in the app's Info.plist that UIKit
+  // honours (iOS 27 ignores it in builds made with the iOS 27 SDK)
   const ios26 = LiquidGlass.isLiquidGlassSupported;
   const metrics = ios26 ? IOS_26 : IOS_18;
   const inset = rowInset(width, ios26 || iosMajorVersion() >= 26);

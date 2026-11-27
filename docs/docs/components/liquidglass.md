@@ -16,7 +16,7 @@ description: "Liquid glass for React Native: UIGlassEffect on iOS 26, glass that
 
 Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and older iOS versions, renders as a regular View with optional fallback styling. Put glass views in a [`LiquidGlassContainer`](#liquidglasscontainer) to have neighbours merge and morph into each other.
 
-> **Note:** LiquidGlass requires **iOS 26+** at runtime, and the library must be **built with Xcode 26** (the iOS 26 SDK). Built with an older Xcode, the glass code is compiled out and the component falls back to a blur, so the library still builds without Xcode 26. On older iOS versions and on Android, the component renders children without the glass effect. An app that keeps the earlier design with `UIDesignRequiresCompatibility` in its Info.plist gets no glass from UIKit on iOS 26: glass views draw as an opaque fill and glass buttons as gray ones. Use `isLiquidGlassSupported` to check availability and provide fallback UI — it reports what the app actually gets, not just the OS version.
+> **Note:** LiquidGlass requires **iOS 26+** at runtime, and the library must be **built with Xcode 26** (the iOS 26 SDK). Built with an older Xcode, the glass code is compiled out and the component falls back to a blur, so the library still builds without Xcode 26. On older iOS versions and on Android, the component renders children without the glass effect. An app that keeps the earlier design with `UIDesignRequiresCompatibility` in its Info.plist gets no glass from UIKit on iOS 26: glass views draw as an opaque fill and glass buttons as gray ones. iOS 27 ignores that key in apps built with Xcode 27 and draws glass again; built with Xcode 26, the app keeps the earlier design on iOS 27 too. Use `isLiquidGlassSupported` to check availability and provide fallback UI — it reports what the app actually gets, not just the OS version.
 
 ### Props
 
@@ -45,7 +45,7 @@ Native glass morphism effect using **UIGlassEffect** on iOS 26+. On Android and 
 
 | Export                   | Type      | Description                          |
 | ------------------------ | --------- | ------------------------------------ |
-| `isLiquidGlassSupported` | `boolean` | `true` on iOS 26+ when built with the iOS 26 SDK, unless the app sets `UIDesignRequiresCompatibility`; `false` otherwise |
+| `isLiquidGlassSupported` | `boolean` | `true` on iOS 26+ when built with the iOS 26 SDK, unless the app keeps the earlier design with `UIDesignRequiresCompatibility` (ignored on iOS 27 in builds made with the iOS 27 SDK); `false` otherwise |
 
 ### Effect Modes
 
