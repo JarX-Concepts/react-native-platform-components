@@ -146,9 +146,15 @@ const FOOTER_FONT_SIZE = 13;
 
 // UIKit's list margins: 20pt on the wider phones and iPad, 16pt otherwise.
 // iOS 26 moved the 402pt phones (iPhone 17 Pro) to 16; before, every phone
-// wider than 375pt had 20.
+// wider than 375pt had 20. The margins follow the OS, not the design: an app
+// that keeps the iOS 18 design (UIDesignRequiresCompatibility) has 16pt ones
+// on a 402pt phone on iOS 26.5 and 27.
 function rowInset(windowWidth: number, ios26: boolean): number {
   return windowWidth >= (ios26 ? 410 : 380) ? 20 : 16;
+}
+
+function iosMajorVersion(): number {
+  return parseInt(String(Platform.Version), 10) || 0;
 }
 
 // The gaps around the header and footer grow with the text, a little less
@@ -305,10 +311,12 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
     );
   }
 
-  // The iOS 26 design comes with the iOS 26 SDK, as Liquid Glass does
+  // The iOS 26 design comes with Liquid Glass: the iOS 26 SDK, iOS 26, and
+  // no UIDesignRequiresCompatibility in the app's Info.plist that UIKit
+  // honours (iOS 27 ignores it in builds made with the iOS 27 SDK)
   const ios26 = LiquidGlass.isLiquidGlassSupported;
   const metrics = ios26 ? IOS_26 : IOS_18;
-  const inset = rowInset(width, ios26);
+  const inset = rowInset(width, ios26 || iosMajorVersion() >= 26);
   const gapScale = textCap != null ? Math.min(fontScale, textCap) : fontScale;
   const rows = rowsOf(children);
   const headerCase = metrics.headerUppercase ? 'uppercase' : 'none';

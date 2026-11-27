@@ -25,9 +25,10 @@ function resolveLiquidGlassSupport(): boolean {
     return false;
   }
   try {
-    // The native module answers for this build: Liquid Glass is compiled out
+    // The native module answers for this app: Liquid Glass is compiled out
     // when the library is built with an Xcode that predates the iOS 26 SDK,
-    // and then no device version makes it available.
+    // and UIKit draws no glass when the app keeps the iOS 18 design with
+    // UIDesignRequiresCompatibility. Then no device version makes it available.
     const supported = NativePlatformComponentsTheme?.isLiquidGlassSupported();
     if (typeof supported === 'boolean') {
       return supported;
@@ -40,10 +41,14 @@ function resolveLiquidGlassSupport(): boolean {
 
 /**
  * Whether the LiquidGlass effect is supported here: iOS 26 or newer, in a
- * build compiled against the iOS 26 SDK. False on Android, on older iOS, and
- * in builds made with an older Xcode, where the views fall back to a blur.
+ * build compiled against the iOS 26 SDK. False on Android, on older iOS, in
+ * builds made with an older Xcode, where the views fall back to a blur, and
+ * in apps that keep the iOS 18 design with `UIDesignRequiresCompatibility`,
+ * where UIKit draws no glass. iOS 27 ignores that key in builds made with the
+ * iOS 27 SDK, so there it is true again.
  *
- * Use this to conditionally render fallback UI.
+ * It also tells whether UIKit draws the iOS 26 design, which comes with
+ * Liquid Glass. Use this to conditionally render fallback UI.
  */
 export const isLiquidGlassSupported: boolean = resolveLiquidGlassSupport();
 

@@ -71,7 +71,7 @@ The iOS values were measured on `UITableView(style: .insetGrouped)` and SwiftUI'
 
 The header and footer follow Dynamic Type with the text styles Apple's lists use (`headline` or `footnote`), and the gaps around them grow with the text.
 
-The iOS 26 design comes with the iOS 26 SDK, as Liquid Glass does: it is used when [`isLiquidGlassSupported`](/components/liquidglass) is `true` (iOS 26 or newer, in a build made with Xcode 26 or newer). An app that opts out of the new design with `UIDesignRequiresCompatibility` gets the iOS 26 card while UIKit draws the earlier one.
+The iOS 26 design comes with Liquid Glass: it is used when [`isLiquidGlassSupported`](/components/liquidglass) is `true` (iOS 26 or newer, in a build made with Xcode 26 or newer). An app that keeps the earlier design by setting `UIDesignRequiresCompatibility` to `YES` in its Info.plist gets the iOS 18 section on iOS 26, matching the lists UIKit draws there. Its row inset still follows iOS 26 (16pt on a 402pt phone), as UIKit's does. iOS 27 ignores the key in apps built with Xcode 27 (the iOS 27 SDK) and draws the new design, and so does `FormSection`; built with Xcode 26, the app keeps the earlier design on iOS 27 too.
 
 | iOS 18 |
 | --- |

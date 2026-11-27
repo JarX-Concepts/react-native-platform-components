@@ -11,10 +11,14 @@ export interface Spec extends TurboModule {
   setTheme(theme: UnsafeObject): void;
 
   /**
-   * Whether this build can render Liquid Glass: true only when the library was
-   * compiled against the iOS 26 SDK *and* the device runs iOS 26 or newer.
-   * Built with an older Xcode, the glass code is compiled out and the views
-   * fall back to a blur, so the device version alone cannot answer this.
+   * Whether this app gets Liquid Glass and the iOS 26 design: true only when
+   * the library was compiled against the iOS 26 SDK, the device runs iOS 26
+   * or newer, *and* the app doesn't keep the iOS 18 design with
+   * `UIDesignRequiresCompatibility`. Built with an older Xcode, the glass code
+   * is compiled out and the views fall back to a blur; with the Info.plist
+   * key, UIKit draws the iOS 18 design and no glass (on iOS 26, and on iOS 27
+   * in builds made with the iOS 26 SDK: iOS 27 ignores the key in builds made
+   * with the iOS 27 SDK). The device version alone cannot answer this.
    */
   isLiquidGlassSupported(): boolean;
 }
