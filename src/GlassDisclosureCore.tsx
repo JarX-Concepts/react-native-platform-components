@@ -23,6 +23,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { useFontScaleRemountKey } from './fontScaleKey';
 import type { GlassDisclosureProps } from './GlassDisclosure';
 import type { LiquidGlassProps } from './LiquidGlass';
 import type { LiquidGlassContainerProps } from './LiquidGlassContainer';
@@ -134,6 +135,9 @@ export function GlassDisclosureCore(
 
   const pillRef = useRef<ViewInstance>(null);
   const headerRef = useRef<ViewInstance>(null);
+  // Remounts only the Text after a text-size change on React Native < 0.87
+  // (react/react-native#57512); the pill, panel and glass stay mounted
+  const textKey = useFontScaleRemountKey();
 
   const onExpandedChangeRef = useRef(onExpandedChange);
   onExpandedChangeRef.current = onExpandedChange;
@@ -239,6 +243,7 @@ export function GlassDisclosureCore(
       {/* Two lines at most: a long title still fits a phone's width at the
           accessibility text sizes */}
       <Text
+        key={`title:${textKey}`}
         numberOfLines={2}
         maxFontSizeMultiplier={maxFontSizeMultiplier}
         style={[styles.pillTitle, { color: colors.title }]}
@@ -247,6 +252,7 @@ export function GlassDisclosureCore(
       </Text>
       {subtitle ? (
         <Text
+          key={`subtitle:${textKey}`}
           numberOfLines={1}
           maxFontSizeMultiplier={maxFontSizeMultiplier}
           style={[styles.pillSubtitle, { color: colors.subtitle }]}
@@ -279,6 +285,7 @@ export function GlassDisclosureCore(
           style={styles.headerTitle}
         >
           <Text
+            key={`title:${textKey}`}
             numberOfLines={2}
             maxFontSizeMultiplier={maxFontSizeMultiplier}
             style={[styles.panelTitle, { color: colors.title }]}
@@ -287,6 +294,7 @@ export function GlassDisclosureCore(
           </Text>
           {subtitle ? (
             <Text
+              key={`subtitle:${textKey}`}
               numberOfLines={1}
               maxFontSizeMultiplier={maxFontSizeMultiplier}
               style={[styles.panelSubtitle, { color: colors.subtitle }]}
