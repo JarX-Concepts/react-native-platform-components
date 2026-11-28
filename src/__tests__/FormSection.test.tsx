@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 
 import {
@@ -48,6 +48,15 @@ jest.mock('../SelectionMenuNativeComponent', () => {
   return {
     __esModule: true,
     default: (props: object) => React.createElement('PCSelectionMenu', props),
+  };
+});
+
+jest.mock('../FormSectionGeometryNativeComponent', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: (props: object) =>
+      React.createElement('PCFormSectionGeometry', props),
   };
 });
 
@@ -113,11 +122,61 @@ Object.defineProperty(Platform, 'Version', {
   get: () => mockIOSVersion,
 });
 
+// The device: Platform.isPad and the screen, for the earlier design
+let mockScreen = { width: 393, height: 852 };
+let mockPad = false;
+const realDimensionsGet = Dimensions.get;
+jest
+  .spyOn(Dimensions, 'get')
+  .mockImplementation((dim) =>
+    dim === 'screen'
+      ? { ...mockScreen, scale: 3, fontScale: 1 }
+      : realDimensionsGet(dim)
+  );
+Object.defineProperty(Platform, 'isPad', { get: () => mockPad });
+
+// What the native view over the card reports: where the card is in its
+// window, and the window's safe area
+type Geometry = {
+  width: number;
+  windowLeft?: number;
+  windowRight?: number;
+  safeAreaLeft?: number;
+  safeAreaRight?: number;
+};
+function reportGeometry(tree: renderer.ReactTestRenderer, geometry: Geometry) {
+  const probe = tree.root.find(
+    (node) => (node.type as unknown) === 'PCFormSectionGeometry'
+  );
+  act(() => {
+    probe.props.onGeometryChange({
+      nativeEvent: {
+        windowLeft: 20,
+        windowRight: 20,
+        safeAreaLeft: 0,
+        safeAreaRight: 0,
+        ...geometry,
+      },
+    });
+  });
+}
+
+const twoRows = (
+  <FormSection testID="section" header="Header">
+    <Text>One</Text>
+    <Text>Two</Text>
+  </FormSection>
+);
+const insetOf = (tree: renderer.ReactTestRenderer) =>
+  style(tree, 'section-row-0').paddingHorizontal;
+
 describe('FormSection on iOS', () => {
   beforeEach(() => {
     Platform.OS = 'ios';
     mockLiquidGlass = true;
     mockIOSVersion = '26.5';
+    mockPad = false;
+    mockScreen = { width: 393, height: 852 };
     windowSize(420);
   });
 
@@ -200,6 +259,111 @@ describe('FormSection on iOS', () => {
       start: 16,
       end: 16,
     });
+  });
+
+  it('puts the native geometry view over the card, out of the way', () => {
+    const tree = render(twoRows);
+    const probe = host(tree, 'section-card').find(
+      (node) => (node.type as unknown) === 'PCFormSectionGeometry'
+    );
+    expect(probe.props.pointerEvents).toBe('none');
+    expect(StyleSheet.flatten(probe.props.style)).toMatchObject({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
+  });
+
+  it("follows the card's own width, not the window's (iOS 26)", () => {
+    const tree = render(twoRows);
+    // Until the native view reports: a card filling the 420pt window
+    expect(insetOf(tree)).toBe(20);
+    // In a padded container: the 340pt list it lines up with is 16, as
+    // every list up to 402pt wide
+    reportGeometry(tree, { width: 300, windowLeft: 60, windowRight: 60 });
+    expect(insetOf(tree)).toBe(16);
+    expect(style(tree, 'section-separator-0')).toMatchObject({
+      start: 16,
+      end: 16,
+    });
+    expect(style(tree, 'section-header').paddingHorizontal).toBe(16);
+    // A 402pt list (iPhone 17) and a wider one
+    reportGeometry(tree, { width: 362 });
+    expect(insetOf(tree)).toBe(16);
+    reportGeometry(tree, { width: 365 });
+    expect(insetOf(tree)).toBe(20);
+    // iPad, full screen
+    reportGeometry(tree, { width: 794 });
+    expect(insetOf(tree)).toBe(20);
+  });
+
+  it('uses 16pt on an iPhone in landscape, as a list under the safe area (iOS 26)', () => {
+    windowSize(874);
+    const tree = render(twoRows);
+    const landscape = {
+      width: 710,
+      safeAreaLeft: 62,
+      safeAreaRight: 62,
+    };
+    // 20pt inside the safe area, where a full-width list puts its card
+    reportGeometry(tree, { ...landscape, windowLeft: 82, windowRight: 82 });
+    expect(insetOf(tree)).toBe(16);
+    // Out under the safe area
+    reportGeometry(tree, { ...landscape, windowLeft: 20, windowRight: 20 });
+    expect(insetOf(tree)).toBe(16);
+    // In a narrower column: the list it lines up with stays inside the
+    // safe area
+    reportGeometry(tree, {
+      ...landscape,
+      width: 600,
+      windowLeft: 137,
+      windowRight: 137,
+    });
+    expect(insetOf(tree)).toBe(20);
+    // Against the safe area on one side only
+    reportGeometry(tree, { ...landscape, windowLeft: 82, windowRight: 200 });
+    expect(insetOf(tree)).toBe(20);
+    // No safe area at the sides (iPhone SE, iPad)
+    reportGeometry(tree, { width: 627, windowLeft: 20, windowRight: 20 });
+    expect(insetOf(tree)).toBe(20);
+  });
+
+  it('uses 16pt before iOS 26 on iPad, on 375pt phones and in narrow cards', () => {
+    mockLiquidGlass = false;
+    mockIOSVersion = '18.5';
+    windowSize(393);
+    const tree = render(twoRows);
+    expect(insetOf(tree)).toBe(20);
+    reportGeometry(tree, { width: 321 });
+    expect(insetOf(tree)).toBe(20);
+    reportGeometry(tree, { width: 320 });
+    expect(insetOf(tree)).toBe(16);
+    // Landscape: the safe area makes no difference
+    reportGeometry(tree, {
+      width: 694,
+      windowLeft: 79,
+      windowRight: 79,
+      safeAreaLeft: 59,
+      safeAreaRight: 59,
+    });
+    expect(insetOf(tree)).toBe(20);
+
+    mockScreen = { width: 375, height: 667 };
+    windowSize(375);
+    const se = render(twoRows);
+    expect(insetOf(se)).toBe(16);
+    reportGeometry(se, { width: 627 });
+    expect(insetOf(se)).toBe(16);
+
+    mockScreen = { width: 834, height: 1210 };
+    mockPad = true;
+    windowSize(834);
+    const pad = render(twoRows);
+    expect(insetOf(pad)).toBe(16);
+    reportGeometry(pad, { width: 794 });
+    expect(insetOf(pad)).toBe(16);
   });
 
   it('draws the card of earlier iOS versions', () => {

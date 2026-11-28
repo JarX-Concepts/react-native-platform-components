@@ -281,7 +281,8 @@
         "PCLiquidGlass": "PCLiquidGlass",
         "PCLiquidGlassContainer": "PCLiquidGlassContainer",
         "PCProgressIndicator": "PCProgressIndicator",
-        "PCTextField": "PCTextField"
+        "PCTextField": "PCTextField",
+        "PCFormSectionGeometry": "PCFormSectionGeometry"
       }
     }
   },

@@ -8,12 +8,14 @@ import React, {
   useState,
 } from 'react';
 import {
+  Dimensions,
   Platform,
   PlatformColor,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
+  type NativeSyntheticEvent,
   type StyleProp,
   type ViewProps,
   type ViewStyle,
@@ -24,6 +26,9 @@ import {
   type FormSectionRowContent,
   type FormSectionRowContext,
 } from './FormSectionContext';
+import NativeFormSectionGeometry, {
+  type FormSectionGeometryEvent,
+} from './FormSectionGeometryNativeComponent';
 import * as LiquidGlass from './LiquidGlass';
 
 export interface FormSectionProps extends Omit<ViewProps, 'children'> {
@@ -144,13 +149,60 @@ const IOS_18: GroupedMetrics = {
 
 const FOOTER_FONT_SIZE = 13;
 
-// UIKit's list margins: 20pt on the wider phones and iPad, 16pt otherwise.
-// iOS 26 moved the 402pt phones (iPhone 17 Pro) to 16; before, every phone
-// wider than 375pt had 20. The margins follow the OS, not the design: an app
-// that keeps the iOS 18 design (UIDesignRequiresCompatibility) has 16pt ones
-// on a 402pt phone on iOS 26.5 and 27.
-function rowInset(windowWidth: number, ios26: boolean): number {
-  return windowWidth >= (ios26 ? 410 : 380) ? 20 : 16;
+// The side margins of an inset grouped list's card, inside the safe area:
+// 20pt on lists 360pt wide and wider (16 on narrower ones, where the row
+// inset is 16 anyway)
+const CARD_MARGIN = 20;
+
+// The row inset of UITableView(style: .insetGrouped): where the rows'
+// content, the separators and the header and footer text start, measured
+// from the card's edge. Measured (#196) on iOS 26.5 (iPhone 17 portrait and
+// landscape, iPad Pro 11-inch, iPad mini) and iOS 18.5 (iPhone 16 portrait
+// and landscape, iPad Pro 11-inch), on tables 300pt to 1400pt wide, with
+// regular and compact size classes and text sizes XS to AX5. Neither the
+// size class nor the text size changes it.
+//
+// iOS 26 goes by the list's width: 16 up to 402pt (the card and its 20pt
+// margins), 20 above, except that a list running under the safe area on
+// both sides (an iPhone in landscape, full width) is back to 16. Before iOS
+// 26 it goes by the device and the card's width: 16 on iPad and on 375pt
+// phones (iPhone SE, mini) at any width, and on cards 320pt wide or
+// narrower; 20 otherwise.
+//
+// The margins follow the OS, not the design: an app that keeps the iOS 18
+// design (UIDesignRequiresCompatibility) has iOS 26 margins on iOS 26.5 and 27
+// (16pt on a 402pt phone), so `ios26Margins` is the OS version.
+//
+// `section` is the card's place in its window, from the native view over
+// the card. Until it reports, the card is taken to fill the window less
+// the margins.
+function rowInset(
+  section: FormSectionGeometryEvent | null,
+  windowWidth: number,
+  ios26Margins: boolean
+): number {
+  const width = section?.width ?? windowWidth - 2 * CARD_MARGIN;
+  if (ios26Margins) {
+    if (width + 2 * CARD_MARGIN <= 402) return 16;
+    return section != null && spansSafeArea(section) ? 16 : 20;
+  }
+  if (Platform.OS === 'ios' && Platform.isPad) return 16;
+  const screen = Dimensions.get('screen');
+  if (Math.min(screen.width, screen.height) <= 375) return 16;
+  return width > 320 ? 20 : 16;
+}
+
+// Whether the card sits where a full-width list puts it on a window with a
+// safe area on both sides: no more than the list margin inside the safe
+// area at either end (or out under it). A native list there runs under the
+// safe area, edge to edge.
+function spansSafeArea(section: FormSectionGeometryEvent): boolean {
+  const near = (gap: number, safeArea: number) =>
+    safeArea > 0 && gap <= safeArea + CARD_MARGIN + 0.5;
+  return (
+    near(section.windowLeft, section.safeAreaLeft) &&
+    near(section.windowRight, section.safeAreaRight)
+  );
 }
 
 function iosMajorVersion(): number {
@@ -278,6 +330,15 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
     ...viewProps
   } = props;
   const { width, fontScale } = useWindowDimensions();
+  // iOS: the card's place in its window, for the row inset
+  const [geometry, setGeometry] = useState<FormSectionGeometryEvent | null>(
+    null
+  );
+  const onGeometryChange = useCallback(
+    (event: NativeSyntheticEvent<FormSectionGeometryEvent>) =>
+      setGeometry(event.nativeEvent),
+    []
+  );
   const part = (suffix: string) => (testID ? `${testID}-${suffix}` : undefined);
   const textCap =
     maxFontSizeMultiplier != null && maxFontSizeMultiplier >= 1
@@ -316,7 +377,7 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
   // honours (iOS 27 ignores it in builds made with the iOS 27 SDK)
   const ios26 = LiquidGlass.isLiquidGlassSupported;
   const metrics = ios26 ? IOS_26 : IOS_18;
-  const inset = rowInset(width, ios26 || iosMajorVersion() >= 26);
+  const inset = rowInset(geometry, width, ios26 || iosMajorVersion() >= 26);
   const gapScale = textCap != null ? Math.min(fontScale, textCap) : fontScale;
   const rows = rowsOf(children);
   const headerCase = metrics.headerUppercase ? 'uppercase' : 'none';
@@ -347,6 +408,11 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
         testID={part('card')}
         style={[styles.card, { borderRadius: metrics.cornerRadius }]}
       >
+        <NativeFormSectionGeometry
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+          onGeometryChange={onGeometryChange}
+        />
         {rows.map((row, index) => (
           <GroupedRow
             key={
