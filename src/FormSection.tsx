@@ -26,6 +26,7 @@ import {
   type FormSectionRowContent,
   type FormSectionRowContext,
 } from './FormSectionContext';
+import { useFontScaleRemountKey } from './fontScaleKey';
 import NativeFormSectionGeometry, {
   type FormSectionGeometryEvent,
 } from './FormSectionGeometryNativeComponent';
@@ -330,6 +331,9 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
     ...viewProps
   } = props;
   const { width, fontScale } = useWindowDimensions();
+  // Remounts only the header and footer Text after a text-size change on
+  // React Native < 0.87 (react/react-native#57512)
+  const textKey = useFontScaleRemountKey();
   // iOS: the card's place in its window, for the row inset
   const [geometry, setGeometry] = useState<FormSectionGeometryEvent | null>(
     null
@@ -350,6 +354,7 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
       <View testID={testID} style={style} {...viewProps}>
         {header ? (
           <Text
+            key={`header:${textKey}`}
             testID={part('header')}
             accessibilityRole="header"
             maxFontSizeMultiplier={maxFontSizeMultiplier}
@@ -361,6 +366,7 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
         {children}
         {footer ? (
           <Text
+            key={`footer:${textKey}`}
             testID={part('footer')}
             maxFontSizeMultiplier={maxFontSizeMultiplier}
             style={[styles.materialFooter, MATERIAL_COLORS.footer]}
@@ -386,6 +392,7 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
     <View testID={testID} style={style} {...viewProps}>
       {header ? (
         <Text
+          key={`header:${textKey}`}
           testID={part('header')}
           accessibilityRole="header"
           dynamicTypeRamp={metrics.headerRamp}
@@ -433,6 +440,7 @@ export function FormSection(props: FormSectionProps): React.ReactElement {
       </View>
       {footer ? (
         <Text
+          key={`footer:${textKey}`}
           testID={part('footer')}
           dynamicTypeRamp="footnote"
           maxFontSizeMultiplier={maxFontSizeMultiplier}

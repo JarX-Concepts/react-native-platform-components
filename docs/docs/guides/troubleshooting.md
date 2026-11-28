@@ -21,19 +21,21 @@ Common ways to get there:
 
 ### Text goes back to its old size after a text-size change
 
-**Symptom:** the user changes the system text size (iOS Dynamic Type, Android font size) while the app is running. React Native `Text` grows to the new size, then on the next render goes back to its old size, or keeps its old frame and draws the larger text clipped inside it. Text that mounts after the change gets the right size. In this library you can see it wherever a component contains React Native `Text`, such as the closed pill of `GlassDisclosure`. Text that the components draw natively isn't affected.
+**Symptom:** the user changes the system text size (iOS Dynamic Type, Android font size) while the app is running. React Native `Text` grows to the new size, then on the next render goes back to its old size, or keeps its old frame and draws the larger text clipped inside it. Text that mounts after the change gets the right size.
 
-**Cause:** a React Native bug, seen on 0.86 with the New Architecture. When the font scale changes, React Native measures the text again, but only in the native copy of the view tree. The next render from React, wherever in the tree it happens (a state update, a `useWindowDimensions` change), builds on React's own copy, which still has the old measurements. On Android this only happens when the activity handles font-scale changes itself (`fontScale` in its `android:configChanges`). Otherwise Android recreates the activity and everything mounts again. Turning on React Native's `updateRuntimeShadowNodeReferencesOnCommit` feature flag doesn't fix it (checked on 0.86.3).
+**Cause:** React Native's bug [react/react-native#57512](https://github.com/react/react-native/issues/57512), on the New Architecture before 0.87. When the font scale changes, React Native measures the text again, but only in the native copy of the view tree. The next render from React, wherever in the tree it happens (a state update, a `useWindowDimensions` change), builds on React's own copy, which still has the old measurements. On Android this only happens when the activity handles font-scale changes itself (`fontScale` in its `android:configChanges`). Otherwise Android recreates the activity and everything mounts again. React Native 0.87 fixes it ([#57246](https://github.com/react/react-native/pull/57246)).
 
-**Fix:** remount the affected part of the screen when the font scale changes, by giving it a `key` from `useWindowDimensions`:
+**In this library:** the components handle it on older React Native versions. The React Native `Text` they render themselves (the `GlassDisclosure` pill and panel titles, the `FormSection` header and footer) remounts when the font scale changes, and nothing else does. Text the components draw natively isn't affected.
+
+**Fix for your own `Text`** on React Native < 0.87: remount it when the font scale changes, by giving it a `key` from `useWindowDimensions`. Turning on the `updateRuntimeShadowNodeReferencesOnCommit` feature flag doesn't help.
 
 ```tsx
 const { fontScale } = useWindowDimensions();
 
-return <GlassDisclosure key={fontScale} {...props} />;
+return <Text key={fontScale}>{title}</Text>;
 ```
 
-A remount resets the state inside it: an open panel closes, and an uncontrolled field loses what was typed. Put the `key` on the smallest part that shows the problem, and keep state you need above it.
+A remount resets the state inside it, so put the `key` on the `Text` itself or the smallest part that shows the problem, and keep state you need above it.
 
 ### Detox doesn't wait for a native dialog
 

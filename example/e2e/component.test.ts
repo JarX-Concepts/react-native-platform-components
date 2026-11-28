@@ -3027,19 +3027,14 @@ describe('Platform Components Example', () => {
     try {
       contentSize('accessibility-extra-extra-extra-large');
       await pause(1500);
-      // React Native re-measures text for a new text size, but a later React
-      // render brings back the text measured at the old size. The pill
-      // measured afresh after opening and closing is what an app launched
-      // at this size shows.
-      await element(by.id('disclosure-pill')).tap();
-      await waitFor(element(by.id('disclosure-close')))
-        .toBeVisible()
-        .withTimeout(5000);
-      await element(by.id('disclosure-close')).tap();
-      await waitFor(element(by.id('disclosure-pill')))
-        .toBeVisible()
-        .withTimeout(5000);
-      await pause(1000);
+      // The header buttons stay tappable. Each tap is a React render that
+      // leaves the pill alone: on React Native < 0.87 such a render brought
+      // back the pill's text measured at the old size until the library
+      // remounted its Text on a text-size change (react/react-native#57512)
+      await element(by.id('disclosure-header-search')).tap();
+      await expectText('disclosure-last-event', 'Search');
+      await element(by.id('disclosure-header-channels')).tap();
+      await expectText('disclosure-last-event', 'Channels');
       const pill = await expectPillBetweenButtons();
       // 1.5x: two title lines and the subtitle, not the 3.6x of AX5
       if (
@@ -3050,10 +3045,6 @@ describe('Platform Components Example', () => {
           `The pill is ${pill.height}pt tall (${defaultPill.height} at the default size): expected it to grow up to 1.5x text`
         );
       }
-      await element(by.id('disclosure-header-search')).tap();
-      await expectText('disclosure-last-event', 'Search');
-      await element(by.id('disclosure-header-channels')).tap();
-      await expectText('disclosure-last-event', 'Channels');
     } finally {
       contentSize('large');
     }

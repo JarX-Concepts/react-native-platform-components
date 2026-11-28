@@ -611,3 +611,67 @@ describe('FormSection on Android', () => {
     expect(props.minFieldHeight).toBe(0);
   });
 });
+
+// React Native < 0.87 keeps a Text's old size after a runtime text-size
+// change (react/react-native#57512): the header and footer remount, the
+// card and its rows don't
+describe('FormSection after a text-size change', () => {
+  let mockMinor = 86;
+  const realConstants = Object.getOwnPropertyDescriptor(Platform, 'constants')!;
+  beforeAll(() => {
+    Object.defineProperty(Platform, 'constants', {
+      configurable: true,
+      get: () => ({
+        isTesting: true,
+        reactNativeVersion: { major: 0, minor: mockMinor, patch: 0 },
+      }),
+    });
+  });
+  afterAll(() => {
+    Object.defineProperty(Platform, 'constants', realConstants);
+  });
+  beforeEach(() => {
+    mockLiquidGlass = true;
+    mockIOSVersion = '26.5';
+    windowSize(420);
+  });
+  afterEach(() => {
+    Platform.OS = 'ios';
+  });
+
+  const parts = ['header', 'footer', 'card', 'row-0'];
+  const section = () => (
+    <FormSection testID="section" header="Payee" footer="Footer">
+      <Text>One</Text>
+    </FormSection>
+  );
+  // The host views before and after: a new instance means a remount
+  function changeFontScale() {
+    const tree = render(section());
+    const before = parts.map((part) => hostOrNull(tree, `section-${part}`));
+    windowSize(420, 3.12);
+    act(() => tree.update(section()));
+    const after = parts.map((part) => hostOrNull(tree, `section-${part}`));
+    return { before, after };
+  }
+
+  it.each(['ios', 'android'] as const)(
+    'remounts the header and footer before React Native 0.87 (%s)',
+    (os) => {
+      Platform.OS = os;
+      mockMinor = 86;
+      const { before, after } = changeFontScale();
+      expect(after[0]).not.toBe(before[0]);
+      expect(after[1]).not.toBe(before[1]);
+      // On Android there is no card
+      expect(after[2]).toBe(before[2]);
+      expect(after[3]).toBe(before[3]);
+    }
+  );
+
+  it('keeps them from React Native 0.87', () => {
+    mockMinor = 88;
+    const { before, after } = changeFontScale();
+    after.forEach((node, index) => expect(node).toBe(before[index]));
+  });
+});
